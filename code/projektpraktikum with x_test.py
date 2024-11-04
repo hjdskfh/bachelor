@@ -12,11 +12,22 @@ class dataManager:
     def add_data(self, csv_file, column1, column2, rows, name):
         df = pd.read_csv(csv_file, nrows = rows)              #erste 9 Datenpunkte
         df.columns = df.columns.str.strip()
+        
+        # Access first and last elements directly from the DataFrame
+        x_min = df[column1].iloc[0]  # First element
+        x_max = df[column1].iloc[-1]  # Last element
+
         self.curves[name] = {
             'tck': splrep(df[column1], df[column2]),  # Store the tck
+            'x_min': x_min,  # Store minimum x-value
+            'x_max': x_max   # Store maximum x-value
             }
 
-    def get_data(self, name):
+    def get_data(self, x_data, name):
+        x_min = self.curves[name]['x_min']
+        x_max = self.curves[name]['x_max']
+        if x_data < x_min or x_data > x_max:
+            raise ValueError(f"x data isn't in table")
         if name not in self.curves:
             raise ValueError(f"Spline '{name}' not found.")
         return self.curves[name]['tck'] # Return tck
@@ -27,9 +38,11 @@ class Simulation:
         self.n_samples = n_samples  # Number of samples to generate
         #self.outputs = [] 
 
-    def get_interpolated_value(self, x_data, name):
+    def get_interpolated_value(self, x_data, which_data):
         #calculate tck for which curve
-        tck = self.data.get_data(name)
+        tck = self.data.get_data(x_data, which_data)
+
+
         return splev(x_data, tck)
 
     def random_laser_output(self, current_power, voltage_shift, current_wavelength):
