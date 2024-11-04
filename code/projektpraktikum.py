@@ -69,9 +69,9 @@ start_time = time.time()  # Record start time
 database = dataManager()
 
 #readin
-database.add_data('current_power_data.csv', 'Current (mA)', 'Optical Power (mW)', 9, 'current_power') 
-database.add_data('voltage_shift_data.csv', 'Voltage (V)', 'Wavelength Shift (nm)', 20, 'voltage_shift')
-database.add_data('current_wavelength_modified.csv', 'Current (mA)', 'Wavelength (nm)', 9, 'current_wavelength')#modified sodass mA Werte stimmen (/1000)
+database.add_data('data/current_power_data.csv', 'Current (mA)', 'Optical Power (mW)', 9, 'current_power') 
+database.add_data('data/voltage_shift_data.csv', 'Voltage (V)', 'Wavelength Shift (nm)', 20, 'voltage_shift')
+database.add_data('data/current_wavelength_modified.csv', 'Current (mA)', 'Wavelength (nm)', 9, 'current_wavelength')#modified sodass mA Werte stimmen (/1000)
 
 #create simulation
 simulation = Simulation(database)   
