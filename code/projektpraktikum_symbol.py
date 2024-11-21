@@ -11,9 +11,26 @@ class dataManager:
         self.curves = {}
 
     def add_data(self, csv_file, column1, column2, rows, name):
+               
         df = pd.read_csv(csv_file, nrows = rows)            
         df.columns = df.columns.str.strip()
-        
+
+        # Debugging input data & flip
+        print("Column 1 values (x):", df[column1].values)
+        print("Column 2 values (y):", df[column2].values)
+        #df.sort_values(by=column1, ascending=True)
+        if not all(df[column1].diff().dropna() > 0):  # Check if the values are not in ascending order
+            df[column1] = df[column1].iloc[::-1].reset_index(drop=True)  # Reverse the order of the column
+            df[column2] = df[column2].iloc[::-1].reset_index(drop=True)  # Reverse the corresponding column
+
+        # Ensure valid input
+        df = df.sort_values(by=column1).drop_duplicates(subset=column1)
+        df = df.dropna(subset=[column1, column2])
+        df[column1] = pd.to_numeric(df[column1], errors='coerce')
+        df[column2] = pd.to_numeric(df[column2], errors='coerce')
+        if name == 'eam_transmission':
+            print(df)
+             
         # Access first and last elements directly from the DataFrame
         x_min = df[column1].iloc[0]  # First element
         x_max = df[column1].iloc[-1]  # Last element
@@ -36,8 +53,6 @@ class dataManager:
 
         # Normalize weights to get probabilities (sum to 1)
         probabilities_array = weights / weights.sum()
-        print('prob_array' + str(probabilities_array))
-        print('sum ' + str(np.sum(probabilities_array)))
         self.curves['probabilities'] = {
             'prob': probabilities_array,
             'x': x
@@ -49,11 +64,20 @@ class dataManager:
             return self.curves[name]['prob'], self.curves[name]['x']
         x_min = self.curves[name]['x_min']
         x_max = self.curves[name]['x_max']
+        #if name == 'eam_transmission':
+        #    print(f"x_min: {self.curves[name]['x_min']}, x_max: {self.curves[name]['x_max']}")
         if x_data < x_min or x_data > x_max:
             raise ValueError(str(x_data)  + "x data isn't in table")
         if name not in self.curves:
             raise ValueError(f"Spline '{name}' not found.")
         return self.curves[name]['tck'] # Return tck
+    
+    def show_data(self, csv_file, column1, column2, rows):
+        table = pd.read_csv(csv_file, nrows = rows)
+        table.columns = table.columns.str.strip()
+        plt.plot(table[column1], table[column2])
+        plt.show()
+
     
     
 class Simulation:
@@ -248,18 +272,23 @@ class Simulation:
 
         #include the eam_voltage and multiply with calculated optical power from laser
         power = np.empty(len(s_filtered_repeating))
+        #j = 0
         for i in range(len(s_filtered_repeating)):
-            print(self.get_interpolated_value(-s_filtered_repeating[i], 'eam_transmission'))
-            power[i] = self.get_interpolated_value(-s_filtered_repeating[i], 'eam_transmission') * optical_power * s_filtered_repeating[i]
+            '''j = j+1
+            if s_filtered_repeating[i] < 0:
+                print('eam: ' + str(self.get_interpolated_value(s_filtered_repeating[i], 'eam_transmission')))'''
+            power[i] = self.get_interpolated_value(s_filtered_repeating[i], 'eam_transmission') * optical_power * s_filtered_repeating[i]
+            #print('power: ' + str(power[i]))
+        
 
-        plt.plot(t * 1e9, s_filtered_repeating * optical_power * 1e3, label = 'without shift')
-        plt.plot(t_jitter * 1e9, power * 1e3 , label = 'with shift')
+        plt.plot(t_jitter * 1e9, s_filtered_repeating * optical_power * 1e3, label = 'without eam') #fehlt optical power
+        plt.plot(t_jitter * 1e9, power * 1e3 , label = 'with eam')
         plt.title("Power of Square Signal with Bandwidth Limitation with 1e-11 jitter")
         plt.xlabel("Time in ns")
         plt.ylabel("Power in mW")
         plt.legend()
         plt.grid(True)
-        save_plot('different_pattern_with_4_GHz_bandwidth_and_1e-11s_jitter')
+        #save_plot('different_pattern_with_4_GHz_bandwidth_and_1e-11s_jitter')
         plt.show()
 
         return (basis, value, decoy, repeating_square_pulse)
@@ -301,7 +330,7 @@ database = dataManager()
 database.add_data('data/current_power_data.csv', 'Current (mA)', 'Optical Power (mW)', 9, 'current_power') 
 database.add_data('data/voltage_shift_data.csv', 'Voltage (V)', 'Wavelength Shift (nm)', 20, 'voltage_shift')
 database.add_data('data/current_wavelength_modified.csv', 'Current (mA)', 'Wavelength (nm)', 9, 'current_wavelength')#modified sodass mA Werte stimmen (/1000)
-database.add_data('data/eam_transmission_data.csv', 'Voltage (V)', 'Transmission', 11, 'eam_transmission')
+database.add_data('data/eam_transmission_data_modified.csv', 'Voltage (V)', 'Transmission', 12, 'eam_transmission') #modified, mit 12.Zeile dass negative Werte Spannungswerte einefach durchgelassen werden und VZ geflippt von Spannungswerten
 
 database.add_jitter(jitter = 1e-11)
 
@@ -319,6 +348,9 @@ alice_symbols = simulation.generate_alice_choices()
 end_time_2 = time.time()  # Record end time
 execution_time_2 = end_time_2 - start_time  # Calculate execution time
 print(f"Execution time after writing in Array: {execution_time_2:.9f} seconds for {simulation.n_samples} samples")
+
+database.show_data('data/eam_transmission_data_modified.csv', 'Voltage (V)', 'Transmission', 12)
+print('handmade: ' + str(simulation.get_interpolated_value(-0.5, 'eam_transmission')))
 
 '''x = np.linspace(0, simulation.n_pulses // simulation.symbol_length -1, simulation.n_pulses // simulation.symbol_length)
 plt.plot(x, alice_symbols, label='alice_symbol')
