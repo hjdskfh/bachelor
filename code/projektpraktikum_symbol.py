@@ -16,15 +16,10 @@ class dataManager:
         df = pd.read_csv(csv_file, nrows = rows)            
         df.columns = df.columns.str.strip()
 
-        # Debugging input data & flip
-        print("Column 1 values (x):", df[column1].values)
-        print("Column 2 values (y):", df[column2].values)
         #df.sort_values(by=column1, ascending=True)
         if not all(df[column1].diff().dropna() > 0):  # Check if the values are not in ascending order
             df[column1] = df[column1].iloc[::-1].reset_index(drop=True)  # Reverse the order of the column
             df[column2] = df[column2].iloc[::-1].reset_index(drop=True)  # Reverse the corresponding column
-            print(df[column1])
-            print(df[column2])
 
         # Ensure valid input
         df = df.sort_values(by=column1).drop_duplicates(subset=column1)
@@ -84,7 +79,8 @@ class dataManager:
     
 class Simulation:
     def __init__(self, data, n_samples = 10000, n_pulses = 4, p_z_alice=0.5, p_z_1=0.5, 
-                 p_decoy=0.1, sampling_rate_fft = 100e11, freq = 6.75e9, jitter = 1e-11, voltage_decoy = 1, voltage = 1, T1_dampening = 1,
+                 p_decoy=0.1, sampling_rate_fft = 100e11, freq = 6.75e9, jitter = 1e-11, voltage_decoy = 1, 
+                 voltage = 1, T1_dampening_0 = 1, T1_dampening_1 = 1,
                  eam_transmission_TP = -1, eam_transmission_HP = 0, eam_transmission_TP_decoy = -1, 
                  eam_transmission_HP_decoy = -0.6, mean_photon_nr = 0.7, mean_photon_decoy = 0.1):
         self.data = data
@@ -98,7 +94,8 @@ class Simulation:
         self.jitter = jitter
         self.voltage_decoy = voltage_decoy
         self.voltage = voltage
-        self.T1_dampening = T1_dampening
+        self.T1_dampening_0 = T1_dampening_0
+        self.T1_dampening_1 = T1_dampening_1
         self.eam_transmission_TP = eam_transmission_TP                  #V we use transmission curve till -1V Tiefpunkt
         self.eam_transmission_HP = eam_transmission_HP                  #V we use eam_transmission curve till 0V Hochpunkt
         self.eam_transmission_TP_decoy = eam_transmission_TP_decoy      
@@ -160,7 +157,7 @@ class Simulation:
 
         return (basis, value, decoy)
     
-    def signal_bandwidth_jitter(self, basis, value, decoy):
+    def signal_bandwidth_jitter(self, value, decoy):
         
         pulse_duration = 1 / self.freq  # Pulse duration for a 6.75e9 GHz square wave
         t = np.arange(0, self.n_pulses * pulse_duration, 1 / self.sampling_rate_fft)  # Time vector
@@ -184,35 +181,6 @@ class Simulation:
             repeating_square_pulse[:one_signal] = pulse_height
             repeating_square_pulse[2 * one_signal : 3* one_signal] = pulse_height
 
-        '''# Create a repeating square wave signal in time domain
-        one_signal = len(t) // self.n_pulses
-
-        basis = basis.item()
-        value = value.item()
-        value = decoy.item()
-
-        pulse_height = self.voltage_decoy if decoy == 1 else 1
-
-        
-        
-        patterns = {
-            1: [1, 0, 0, 0],  # 1000
-            0: [0, 0, 1, 0],  # 0010
-            -1: [1, 0, 0, 0]   # 1010
-            }
-        
-        print(f"Value: {value}")
-        if value not in patterns:
-            raise ValueError(f"Invalid value: {value}, must be one of {list(patterns.keys())}")
-
-        # Map the value to its corresponding pattern
-        base_pattern = np.array(patterns[value])
-        
-        # Repeat the base pattern and scale by pulse height
-        repeating_square_pulse = np.tile(base_pattern, one_signal) * pulse_height
-        '''
-        
-
         # Fourier transform to frequency domain for the repeating signal
         n_repeating = len(t)
         S_f_repeating = fft(repeating_square_pulse)
@@ -233,11 +201,12 @@ class Simulation:
         # Inverse Fourier transform back to the time domain
         s_filtered_repeating = np.real(ifft(S_filtered_repeating))
 
-        '''# Plot the filtered signal and the original signal
-        plt.figure(figsize=(12, 6))
+        # Plot the filtered signal and the original signal
+        '''#plt.figure(figsize=(12, 6))
         plt.plot(t * 1e9, repeating_square_pulse, label="Original Signal", alpha=1, marker="")
         plt.plot(t * 1e9, s_filtered_repeating, label="Cutoff: 4 GHz", alpha=0.7, marker ="")
-
+        plt.show()
+        
         # Final plot adjustments
         plt.title("voltage signal with bandwidth limitation and jitter")
         plt.xlabel("Time (ns)")
@@ -254,141 +223,149 @@ class Simulation:
         
         return s_filtered_repeating, t_jitter
 
-    def eam_transmission(self, s_filtered_repeating, t_jitter, optical_power, peak_wavelength, decoy):
-        #s_filtered_repeating, _, t_jitter, decoy = self.signal_bandwidth_jitter()
-        #optical_power, peak_wavelength = self.random_laser_output('current_power','voltage_shift', 'current_wavelength')
-
+    def eam_transmission(self, s_filtered_repeating, t_jitter, optical_power, peak_wavelength, basis, value, decoy):
         #include the eam_voltage and multiply with calculated optical power from laser
         power = np.empty(len(s_filtered_repeating))
-        voltage_min = np.min(s_filtered_repeating)
-        voltage_max = np.max(s_filtered_repeating)
+        if decoy == 1:
+            s_filtered_repeating_non_decoy, _ = self.signal_bandwidth_jitter(value, decoy = 0)
+            decoy = 1
+            voltage_min = np.min(s_filtered_repeating_non_decoy)
+            #print('voltage_min' +str(voltage_min))
+            voltage_max = np.max(s_filtered_repeating_non_decoy)
+            #print('voltage_max' +str(voltage_max))
+        else:
+            voltage_min = np.min(s_filtered_repeating)
+            voltage_max = np.max(s_filtered_repeating)
+        
+        print('optical power' +str(optical_power))
         for i in range(len(s_filtered_repeating)):
             voltage_for_eam_table = (s_filtered_repeating[i]-voltage_min) / (voltage_max - voltage_min) * (self.eam_transmission_HP-self.eam_transmission_TP) + self.eam_transmission_TP 
             transmission = self.get_interpolated_value(voltage_for_eam_table, 'eam_transmission')
             power[i] = transmission * optical_power
+        print('optical_power_imp'+str(optical_power))
+        
 
-        '''plt.plot(t_jitter * 1e9, power * 1e3, label = 'after eam') #fehlt optical power
+        if basis == 0:
+            power_dampened = power / self.T1_dampening_0
+        else:
+            power_dampened = power / self.T1_dampening_1
+        print('peakwavelength' + str(peak_wavelength))
+        energy_pp = np.trapz(power_dampened, t_jitter)
+
+        '''plt.plot(t_jitter * 1e9, power, label = 'after eam') #fehlt optical power
         plt.title("Power of Square Signal with Bandwidth Limitation with 1e-11 jitter")
         plt.xlabel("Time in ns")
-        plt.ylabel("Power in mW")
+        plt.ylabel("Power in W")
         plt.legend()
         plt.grid(True)
-        save_plot('power_after_transmission_with_4_GHz_bandwidth_and_1e-11s_jitter')'''
-        #plt.show()'''
+        #save_plot('power_after_transmission_with_4_GHz_bandwidth_and_1e-11s_jitter')
+        plt.show()'''
 
-        power_dampened = power / self.T1_dampening
-        energy_pp = np.trapz(power, t_jitter)
+        print('energy_pp' + str(energy_pp))
         calc_mean_photon_nr = energy_pp / (constants.h*constants.c/peak_wavelength)
         
         return power, power_dampened, calc_mean_photon_nr
 
-    def find_T1(self):
+    '''def find_T1(self):
+        #for 0 basis
         optical_power, peak_wavelength = self.random_laser_output('current_power','voltage_shift', 'current_wavelength')
         basis, value, decoy = self.generate_alice_choices_fixed(basis = 0, value = 0, decoy = 0)
-        s_filtered_repeating, t_jitter = self.signal_bandwidth_jitter(basis, value, decoy)
-        power, _, calc_mean_photon_nr = self.eam_transmission(s_filtered_repeating, t_jitter, optical_power, peak_wavelength, decoy)
+        s_filtered_repeating, t_jitter = self.signal_bandwidth_jitter(value, decoy)
+        power, _, calc_mean_photon_nr = self.eam_transmission(s_filtered_repeating, t_jitter, optical_power, peak_wavelength, basis, value, decoy)
 
-        #first round: calculate T1 dampening
+        #first round: calculate T1 dampening_0
+        if basis == 0:
+            power_dampened = power / self.T1_dampening_0
+        else:
+            power_dampened = power / self.T1_dampening_1
+        test_energy_pp = np.trapz(power_dampened, t_jitter)
+        test_nr_photons_pp = test_energy_pp / (constants.h*constants.c/peak_wavelength)
+        self.T1_dampening_0 = test_nr_photons_pp / self.mean_photon_nr
+        T1_dampening_dB_0 = 10* np.log(self.mean_photon_nr / test_nr_photons_pp)  #<0 ist Abschwächung
+
+        #for basis 1
+        basis, value, decoy = self.generate_alice_choices_fixed(basis = 1, value = 0, decoy = 0)
+        s_filtered_repeating, t_jitter = self.signal_bandwidth_jitter(value, decoy)
+        power, _, calc_mean_photon_nr = self.eam_transmission(s_filtered_repeating, t_jitter, optical_power, peak_wavelength, basis, value, decoy)
+
+        #first round: calculate T1 dampening_1
         test_energy_pp = np.trapz(power, t_jitter)
         test_nr_photons_pp = test_energy_pp / (constants.h*constants.c/peak_wavelength)
-        T1_dampening = test_nr_photons_pp / self.mean_photon_nr
-        T1_dampening_dB = 10* np.log(self.mean_photon_nr / test_nr_photons_pp)  #<0 ist Abschwächung
-        return T1_dampening, T1_dampening_dB
+        self.T1_dampening_1 = test_nr_photons_pp / self.mean_photon_nr
+        T1_dampening_dB_1 = 10* np.log(self.mean_photon_nr / test_nr_photons_pp)  #<0 ist Abschwächung
+        return T1_dampening_dB_0, T1_dampening_dB_1'''
     
-    def binary_search_for_voltage_decoy(self, lower_limit=0, upper_limit=10, tol=1e-5):
+    def find_T1_neu(self, lower_limit, upper_limit, tol):
+        # für 0 Basis
+        optical_power, peak_wavelength = self.random_laser_output('current_power','voltage_shift', 'current_wavelength')
+        basis, value, decoy = self.generate_alice_choices_fixed(basis = 0, value = 0, decoy = 0)
+
+        while upper_limit - lower_limit > tol:
+            self.T1_dampening_0 = (lower_limit + upper_limit) / 2
+            s_filtered_repeating, t_jitter = self.signal_bandwidth_jitter(value, decoy)
+            _, _, calc_mean_photon_nr = self.eam_transmission(s_filtered_repeating, t_jitter, optical_power, peak_wavelength, basis, value, decoy)
+            print('calc_mean_photon_nr: ' + str(calc_mean_photon_nr) + 'with dampening t1_0: ' + str(self.T1_dampening_0))
+
+            #compare calculated mean with target mean
+            if calc_mean_photon_nr < self.mean_photon_nr:  #!hier kleiner weil durch T1 geteilt wird ! anders als in find_voltage
+                upper_limit = self.T1_dampening_0 #reduce upper bound
+            else:
+                lower_limit = self.T1_dampening_0 #increase lower bound
+
+        #final voltage decoy
+        self.T1_dampening_0 = (lower_limit + upper_limit) / 2
+
+        # für Basis 1
+        optical_power, peak_wavelength = self.random_laser_output('current_power','voltage_shift', 'current_wavelength')
+        basis, value, decoy = self.generate_alice_choices_fixed(basis = 1, value = 0, decoy = 0)
+
+        while upper_limit - lower_limit > tol:
+            self.T1_dampening_1 = (lower_limit + upper_limit) / 2
+            s_filtered_repeating, t_jitter = self.signal_bandwidth_jitter(value, decoy)
+            _, _, calc_mean_photon_nr = self.eam_transmission(s_filtered_repeating, t_jitter, optical_power, peak_wavelength, basis, value, decoy)
+            print('calc_mean_photon_nr: ' + str(calc_mean_photon_nr))
+
+
+            #compare calculated mean with target mean
+            if calc_mean_photon_nr < self.mean_photon_decoy:   #!hier kleiner weil durch T1 geteilt wird !anders als in find_voltage
+                upper_limit = self.T1_dampening_1 #reduce upper bound
+            else:
+                lower_limit = self.T1_dampening_1 #increase lower bound
+
+        #final voltage decoy
+        self.T1_dampening_1 = (lower_limit + upper_limit) / 2
+        return None
+    
+    def binary_search_for_voltage_decoy(self, lower_limit, upper_limit, tol):
         basis, value, decoy = self.generate_alice_choices_fixed(basis = 0, value = 0, decoy = 1)
         optical_power, peak_wavelength = self.random_laser_output('current_power','voltage_shift', 'current_wavelength')
 
         while upper_limit - lower_limit > tol:
+            print('T1_dampening_0: ' + str(self.T1_dampening_0))
             self.voltage_decoy = (lower_limit + upper_limit) / 2
-            s_filtered_repeating, t_jitter = self.signal_bandwidth_jitter(basis, value, decoy)
-            _, _, calc_mean_photon_nr = self.eam_transmission(s_filtered_repeating, t_jitter, optical_power, peak_wavelength, decoy)
-            current_mean = abs(calc_mean_photon_nr-self.mean_photon_decoy)
-            
-            if current_mean > self.mean_photon_decoy:
-                upper_limit = self.voltage_decoy
-            else:
-                lower_limit = self.voltage_decoy
+            print('self.voltage_decoy: ' +str(self.voltage_decoy))
+            s_filtered_repeating, t_jitter = self.signal_bandwidth_jitter(value, decoy)
+            _, _, calc_mean_photon_nr = self.eam_transmission(s_filtered_repeating, t_jitter, optical_power, peak_wavelength, basis, value, decoy)
+            print('calc_mean_photon_nr: ' + str(calc_mean_photon_nr))
 
+            #compare calculated mean with target mean
+            if calc_mean_photon_nr > self.mean_photon_decoy:
+                upper_limit = self.voltage_decoy #reduce upper bound
+            else:
+                lower_limit = self.voltage_decoy #increase lower bound
+
+        #final voltage decoy
         self.voltage_decoy = (lower_limit + upper_limit) / 2
         return None
 
-    '''def find_voltage_decoy(self, lower_limit = 0.3, upper_limit = 1, tol=1e5):
-        optical_power, peak_wavelength = self.random_laser_output('current_power','voltage_shift', 'current_wavelength')
-        basis, value, decoy = self.generate_alice_choices_fixed(basis = 0, value = 0, decoy = 0)
-        s_filtered_repeating, t_jitter = self.signal_bandwidth_jitter(basis, value, decoy)
-        power = self.eam_transmission(s_filtered_repeating, t_jitter, optical_power, peak_wavelength, decoy)
-
-        closest_number = None
-        closest_difference = float('inf')
-        for candidate in range(start_voltage, end_voltage + 1):
-            #calculate mean photon number
-            s_filtered_repeating, t_jitter = self.signal_bandwidth_jitter(basis, value, decoy)
-            power = self.eam_transmission(s_filtered_repeating, t_jitter, optical_power, peak_wavelength, decoy)
-            calc_mean_photon_nr = self.calc_mean_photon_nr(candidate, s_filtered_repeating, power, t_jitter, optical_power, peak_wavelength, T1_dampening)
-            difference = abs(calc_mean_photon_nr - self.mean_photon_decoy)
-            
-            # Update if this is the closest so far
-            if difference < closest_difference:
-                closest_difference = difference
-                closest_number = candidate
-
-            # Stop searching if within tolerance
-            if difference <= tolerance:
-                return candidate, calc_mean_photon_nr, difference
-            
-            self.voltage_decoy = 
-        return closest_number, calc_mean_photon_nr(closest_number), closest_difference'''
-
-    def calc_mean_photon_nr(self, candidate, s_filtered_repeating, power, t_jitter, optical_power, peak_wavelength, T1_dampening):
-        #include the eam_voltage and multiply with calculated optical power from laser
-        power = np.empty(len(s_filtered_repeating))*candidate
-        voltage_min = np.min(s_filtered_repeating)
-        voltage_max = np.max(s_filtered_repeating)
-        voltage_for_eam_table = (s_filtered_repeating-voltage_min) / (voltage_max - voltage_min) * (self.eam_transmission_HP-self.eam_transmission_TP) + self.eam_transmission_TP 
-        transmission = self.get_interpolated_value(voltage_for_eam_table, 'eam_transmission')
-        power = transmission * optical_power
-
-        #calculate mean photon number
-        test_energy_pp = np.trapz(power, t_jitter)
-        test_nr_photons_pp = test_energy_pp / (constants.h*constants.c/peak_wavelength)
-        calc_mean_photon_nr = test_nr_photons_pp / T1_dampening
-        return calc_mean_photon_nr
-
-    def get_output(self):
-        #alternative: self.laser_outputs = [self.random_laser_output() for _ in range(self.n_samples)]
-        all_optical_power = np.empty(self.n_samples)
-        all_peak_wavelength = np.empty(self.n_samples)
-
-        for i in range(self.n_samples):
-            all_optical_power[i], all_peak_wavelength[i] = self.random_laser_output('current_power','voltage_shift', 'current_wavelength')
-        return all_optical_power, all_peak_wavelength
-    
-    def get_output_symbols(self):
-        all_jitter = np.empty(self.n_samples)
-        for i in range(self.n_samples):
-            _, _, _, all_jitter[i] = self.generate_alice_choices()
-        print(all_jitter)
-        return all_jitter
-
-    def get_output_power_decoy(self):
-        '''power_dampened, T1_dampening, t_jitter = self.eam_transmission()
-        plt.plot(t_jitter * 1e9, power_dampened * 1e3, label = 'dampened_power') #fehlt optical power
-        plt.title("Power of Square Signal with Bandwidth Limitation with 1e-11 jitter")
-        plt.xlabel("Time in ns")
-        plt.ylabel("Power in mW")
-        plt.legend()
-        plt.grid(True)
-        save_plot('new_T1_dampening_power_after_transmission_with_4_GHz_bandwidth_and_1e-11s_jitter')
-        #plt.show()'''
-
     def initialize(self):
         #first round: calculate T1 dampening 
-        T1_dampening, T1_dampening_dB = self.find_T1()
-        print('T1_dampening' +str(T1_dampening))
+        self.find_T1_neu(lower_limit = 0, upper_limit = 100, tol = 1e-3)
+        print('T1_dampening_0 at initialize end' +str(self.T1_dampening_0))
+        print('T1_dampening_1 at initialize end' + str(self.T1_dampening_1))
 
         #with first decoy state: calculate decoy height
-        self.binary_search_for_voltage_decoy(lower_limit=0, upper_limit=10, tol=1e-5)
+        self.binary_search_for_voltage_decoy(lower_limit=0, upper_limit=1, tol=1e-7)
         print('Voltage_decoy' + str(self.voltage_decoy))
 
         return None
@@ -397,9 +374,9 @@ class Simulation:
         
         self.initialize()
         optical_power, peak_wavelength = self.random_laser_output('current_power','voltage_shift', 'current_wavelength')
-        basis, value, decoy = self.generate_alice_choices_fixed(basis = 0, value = 0, decoy = 0)
-        s_filtered_repeating, t_jitter = self.signal_bandwidth_jitter(basis, value, decoy)
-        power, power_dampened, calc_mean_photon_nr = self.eam_transmission(s_filtered_repeating, t_jitter, optical_power, peak_wavelength, decoy)    
+        basis, value, decoy = self.generate_alice_choices_fixed(basis = 0, value = 0, decoy = 0)   #11: 1000, 10: 0010, 00: 1010
+        s_filtered_repeating, t_jitter = self.signal_bandwidth_jitter(value, decoy)
+        power, power_dampened, calc_mean_photon_nr = self.eam_transmission(s_filtered_repeating, t_jitter, optical_power, peak_wavelength, basis, value, decoy)    
         
         plt.plot(t_jitter * 1e9, power_dampened * 1e3, label = 'dampened_power') #fehlt optical power
         plt.title("Power of Square Signal with Bandwidth Limitation with 1e-11 jitter")
@@ -408,7 +385,7 @@ class Simulation:
         plt.legend()
         plt.grid(True)
         save_plot('new_T1_dampening_power_after_transmission_with_4_GHz_bandwidth_and_1e-11s_jitter')
-        #plt.show()
+        #plt.show()'''
 
     
 
@@ -448,15 +425,12 @@ execution_time = end_time - start_time  # Calculate execution time
 print(f"Execution time: {execution_time:.9f} seconds for {simulation.n_samples} samples")
 
 #plot results
-#all_jitter = simulation.get_output_symbols()
-#basis, value, decoy, jittershift = simulation.generate_alice_choices()
 simulation.run_simultation()
 
 end_time_2 = time.time()  # Record end time
 execution_time_2 = end_time_2 - start_time  # Calculate execution time
 print(f"Execution time after writing in Array: {execution_time_2:.9f} seconds for {simulation.n_samples} samples")
 
-simulation.get_output_power_decoy()
 '''x = np.linspace(0, simulation.n_pulses // simulation.symbol_length -1, simulation.n_pulses // simulation.symbol_length)
 plt.hist(all_jitter * 1e12, bins=30, label='jitter', alpha=0.7)
 plt.title('jittershift over ' + str(simulation.n_samples) + ' iterations',size = 14)
