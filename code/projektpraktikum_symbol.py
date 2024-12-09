@@ -81,8 +81,7 @@ class SimulationConfig:
     def __init__(self, data, n_samples=10000, n_pulses=4, mean_voltage=1.0, mean_amplitude=0.08,
                  p_z_alice=0.5, p_z_1=0.5, p_decoy=0.1, freq=6.75e9, jitter=1e-11,voltage_decoy=1.0,
                  voltage=1.0, voltage_decoy_sup=1.0, voltage_sup=1.0, 
-                 eam_transmission_TP=-1.0, eam_transmission_HP=0.0, eam_transmission_TP_decoy=-1.0,
-                 eam_transmission_HP_decoy=-0.6,
+                 eam_transmission_TP=-1.0, eam_transmission_HP=0.0, 
                  mean_photon_nr=0.7, mean_photon_decoy=0.1,
                  ):
         # Input data
@@ -116,8 +115,6 @@ class SimulationConfig:
         # Transmission settings
         self.eam_transmission_TP = eam_transmission_TP  # Transmission Tiefpunkt (-1V)
         self.eam_transmission_HP = eam_transmission_HP  # Transmission Hochpunkt (0V)
-        self.eam_transmission_TP_decoy = eam_transmission_TP_decoy
-        self.eam_transmission_HP_decoy = eam_transmission_HP_decoy
 
         # Photon number settings
         self.mean_photon_nr = mean_photon_nr
@@ -167,12 +164,12 @@ class Simulation:
     def generate_alice_choices_fixed(self, basis, value, decoy):
 
         # Basis and value choices
-        basis_arr = np.array([basis])
-        value_arr = np.array([value])
-        value_arr[basis == 0] = -1  # Mark X basis values
+        basis = np.array([basis])
+        value = np.array([value])
+        value[basis == 0] = -1  # Mark X basis values
 
-        decoy_arr = np.array([decoy])
-        return (basis_arr, value_arr, decoy_arr)
+        decoy = np.array([decoy])
+        return (basis, value, decoy)
 
     
     def generate_alice_choices(self):
@@ -270,15 +267,10 @@ class Simulation:
         #include the eam_voltage and multiply with calculated optical power from laser
         power = np.empty(len(s_filtered_repeating))
         transmission = np.empty(len(s_filtered_repeating))
-        if decoy == 1:
-            s_filtered_repeating_non_decoy, _ = self.signal_bandwidth_jitter(basis, value, decoy = 0)
-            decoy = np.array([1])
-            voltage_min = np.min(s_filtered_repeating_non_decoy)
-            if voltage_min < -0.5:
-                print('voltage_min' +str(voltage_min))
-            voltage_max = np.max(s_filtered_repeating_non_decoy)
-            if voltage_max > 2:
-                print('voltage_max' +str(voltage_max))
+        if basis != 1 or decoy != 0: #000 -> 1010 non-decoy state or 111 -> 1000 decoy state or 001 -> 1010 decoy state
+            s_filtered_repeating_non_decoy_non_sup, _ = self.signal_bandwidth_jitter(basis = 1, value = value, decoy = 0)
+            voltage_min = np.min(s_filtered_repeating_non_decoy_non_sup)
+            voltage_max = np.max(s_filtered_repeating_non_decoy_non_sup)
         else:
             voltage_min = np.min(s_filtered_repeating)
             voltage_max = np.max(s_filtered_repeating)
@@ -362,10 +354,16 @@ class Simulation:
         """Helper method to perform binary search and set the voltage."""
         while upper_limit - lower_limit > tol:
             voltage = (lower_limit + upper_limit) / 2
-            setattr(self, voltage_type, voltage)
+            
+            # Dynamically set the voltage attribute based on voltage_type
+            setattr(self.config, voltage_type, voltage)
+
             s_filtered_repeating, t_jitter = self.signal_bandwidth_jitter(*self.generate_alice_choices_fixed(basis, value, decoy))
+            '''plt.plot(t_jitter, s_filtered_repeating, label = 'first run with voltage = '+ str(voltage))
+            plt.show()'''
             _, calc_mean_photon_nr, _, _ = self.eam_transmission_1_mean_photon_number(
-                s_filtered_repeating, t_jitter, optical_power, peak_wavelength, T1_dampening, *self.generate_alice_choices_fixed(basis, value, decoy))
+                s_filtered_repeating, t_jitter, optical_power, peak_wavelength, T1_dampening, 
+                *self.generate_alice_choices_fixed(basis, value, decoy))
 
             # Compare the calculated mean with the target mean
             if calc_mean_photon_nr > target_mean:
@@ -373,8 +371,9 @@ class Simulation:
             else:
                 lower_limit = voltage  # Increase lower bound
 
-        # Final voltage assignment
-        return (lower_limit + upper_limit) / 2
+        final_voltage = (lower_limit + upper_limit) / 2
+        setattr(self.config, voltage_type, final_voltage)  # Set the final voltage dynamically
+        return final_voltage
 
     def find_voltage_decoy(self, T1_dampening, lower_limit, upper_limit, tol):
         """Find the appropriate voltage values for decoy and non-decoy states using binary search."""
@@ -385,20 +384,20 @@ class Simulation:
         # Set the optical power and peak wavelength for the simulation
         optical_power, peak_wavelength = self.random_laser_output_fixed('current_power', 'voltage_shift', 'current_wavelength')
 
-        # Find voltage for 111 -> 1000 decoy state
-        self.config.voltage_decoy = self._set_voltage(optical_power, peak_wavelength, lower_limit, upper_limit, tol, 
-                                               self.config.mean_photon_decoy, "voltage_decoy", T1_dampening, 
-                                               basis = 1, value = 1, decoy = 1)
-
-        print('voltage_decoy', self.config.voltage_decoy)
-        # Reset limits for next voltage calculation
-        lower_limit, upper_limit = store_lower_limit, store_upper_limit
-
         # Find voltage for 000 -> 1010 non-decoy state
         self.config.voltage_sup = self._set_voltage(optical_power, peak_wavelength, lower_limit, upper_limit, tol, 
                                              self.config.mean_photon_nr, "voltage_sup", T1_dampening, 
                                              basis = 0, value = 0, decoy = 0)
         print('voltage_sup', self.config.voltage_sup)
+
+        # Reset limits for next voltage calculation
+        lower_limit, upper_limit = store_lower_limit, store_upper_limit
+
+        # Find voltage for 111 -> 1000 decoy state
+        self.config.voltage_decoy = self._set_voltage(optical_power, peak_wavelength, lower_limit, upper_limit, tol, 
+                                               self.config.mean_photon_decoy, "voltage_decoy", T1_dampening, 
+                                               basis = 1, value = 1, decoy = 1)
+        print('voltage_decoy', self.config.voltage_decoy)
 
 
         # Reset limits for next voltage calculation
@@ -407,7 +406,7 @@ class Simulation:
         # Find voltage for 001 -> 1010 decoy state
         self.config.voltage_decoy_sup = self._set_voltage(optical_power, peak_wavelength, lower_limit, upper_limit, tol, 
                                                    self.config.mean_photon_decoy, "voltage_decoy_sup", T1_dampening, 
-                                                   basis = 0, value = 0, decoy = 0)
+                                                   basis = 0, value = 0, decoy = 1)
         print('voltage_decoy_sup', self.config.voltage_decoy_sup)
 
         return None
@@ -440,7 +439,7 @@ class Simulation:
         print('T1_dampening at initialize end in dB: ' + str(T1_dampening_in_dB))
 
         #with simulated decoy state: calculate decoy height
-        self.find_voltage_decoy(T1_dampening, lower_limit=0, upper_limit=100, tol=1e-7, )
+        self.find_voltage_decoy(T1_dampening, lower_limit=0, upper_limit=2, tol=1e-7, )
         print('Voltage_decoy at initialize end' + str(self.config.voltage_decoy))
         print('Voltage_decoy_sup at initialize end' + str(self.config.voltage_decoy_sup))
         print('Voltage_sup at initialize end' + str(self.config.voltage_sup))
@@ -495,6 +494,7 @@ database.add_data('data/current_power_data.csv', 'Current (mA)', 'Optical Power 
 database.add_data('data/voltage_shift_data.csv', 'Voltage (V)', 'Wavelength Shift (nm)', 20, 'voltage_shift')
 database.add_data('data/current_wavelength_modified.csv', 'Current (mA)', 'Wavelength (nm)', 9, 'current_wavelength')#modified sodass mA Werte stimmen (/1000)
 database.add_data('data/eam_transmission_data.csv', 'Voltage (V)', 'Transmission', 11, 'eam_transmission') #modified,VZ geflippt von Spannungswerten
+print("eam_transmission range:", database.curves['eam_transmission']['x_min'], database.curves['eam_transmission']['x_max'])
 
 database.add_jitter(jitter = 1e-11)
 
@@ -502,8 +502,7 @@ database.add_jitter(jitter = 1e-11)
 config = SimulationConfig(database, n_samples=10000, n_pulses=4, mean_voltage=1.0, mean_amplitude=0.08,
                  p_z_alice=0.5, p_z_1=0.5, p_decoy=0.1, freq=6.75e9, jitter=1e-11,voltage_decoy=1.0,
                  voltage=1.0, voltage_decoy_sup=1.0, voltage_sup=1.0, 
-                 eam_transmission_TP=-1.0, eam_transmission_HP=0.0, eam_transmission_TP_decoy=-1.0,
-                 eam_transmission_HP_decoy=-0.6,
+                 eam_transmission_TP=-1.0, eam_transmission_HP=0.0,
                  mean_photon_nr=0.7, mean_photon_decoy=0.1)
 simulation = Simulation(config)   
 
