@@ -329,7 +329,7 @@ class Simulation:
     
     def find_T1(self, lower_limit, upper_limit, tol):
         # für X-Basis -> 110 ist 1000 non-decoy
-        optical_power, peak_wavelength = self.random_laser_output('current_power','voltage_shift', 'current_wavelength')
+        optical_power, peak_wavelength = self.random_laser_output_fixed('current_power','voltage_shift', 'current_wavelength')
         basis, value, decoy = self.generate_alice_choices_fixed(basis = 1, value = 1, decoy = 0)
 
         while upper_limit- lower_limit > tol:
