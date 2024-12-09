@@ -300,8 +300,6 @@ class Simulation:
 
         # Define a range of values (e.g., from 0 to an upper bound like mean + 5 standard deviations)
         upper_bound = int(calc_mean_photon_nr + 5 * np.sqrt(calc_mean_photon_nr))
-        print('calc_mean_photon_nr: ' ,calc_mean_photon_nr)
-        print('target mean photon number: ', self.config.mean_photon_nr)
         x = np.arange(0, upper_bound + 1)
 
         # Compute Poisson probabilities
@@ -312,7 +310,6 @@ class Simulation:
                 
         #choose amount of photons and calculate energy per Photons and initialize Wavelength Arrays
         nr_photons = np.random.choice(x, p = probabilities_array_poisson)
-        print('nr photons per pulse: ', nr_photons)
         if nr_photons != 0:
             energy_per_photon = energy_pp / nr_photons
             wavelength_photons = np.zeros(nr_photons)
@@ -328,7 +325,7 @@ class Simulation:
             wavelength_photons = np.empty(0)
             time_photons = np.empty(0)
 
-        return wavelength_photons, time_photons
+        return wavelength_photons, time_photons, nr_photons
     
     def find_T1(self, lower_limit, upper_limit, tol):
         # für X-Basis -> 110 ist 1000 non-decoy
@@ -388,7 +385,7 @@ class Simulation:
         self.config.voltage_sup = self._set_voltage(optical_power, peak_wavelength, lower_limit, upper_limit, tol, 
                                              self.config.mean_photon_nr, "voltage_sup", T1_dampening, 
                                              basis = 0, value = 0, decoy = 0)
-        print('voltage_sup', self.config.voltage_sup)
+        #print('voltage_sup', self.config.voltage_sup)
 
         # Reset limits for next voltage calculation
         lower_limit, upper_limit = store_lower_limit, store_upper_limit
@@ -397,7 +394,7 @@ class Simulation:
         self.config.voltage_decoy = self._set_voltage(optical_power, peak_wavelength, lower_limit, upper_limit, tol, 
                                                self.config.mean_photon_decoy, "voltage_decoy", T1_dampening, 
                                                basis = 1, value = 1, decoy = 1)
-        print('voltage_decoy', self.config.voltage_decoy)
+        #print('voltage_decoy', self.config.voltage_decoy)
 
 
         # Reset limits for next voltage calculation
@@ -407,28 +404,8 @@ class Simulation:
         self.config.voltage_decoy_sup = self._set_voltage(optical_power, peak_wavelength, lower_limit, upper_limit, tol, 
                                                    self.config.mean_photon_decoy, "voltage_decoy_sup", T1_dampening, 
                                                    basis = 0, value = 0, decoy = 1)
-        print('voltage_decoy_sup', self.config.voltage_decoy_sup)
+        #print('voltage_decoy_sup', self.config.voltage_decoy_sup)
 
-        return None
-    
-    def find_voltage_decoy_old(self, lower_limit, upper_limit, tol):
-        basis, value, decoy = self.generate_alice_choices_fixed(basis = 0, value = 0, decoy = 1)
-        optical_power, peak_wavelength = self.random_laser_output('current_power','voltage_shift', 'current_wavelength')
-
-        while upper_limit - lower_limit > tol:
-            self.config.voltage_decoy = (lower_limit + upper_limit) / 2
-            s_filtered_repeating, t_jitter = self.signal_bandwidth_jitter(basis, value, decoy)
-            _, calc_mean_photon_nr, _, _ = self.eam_transmission_1_mean_photon_number(s_filtered_repeating, t_jitter, optical_power, peak_wavelength, basis, value, decoy)
-            #print('calc_mean_photon_nr: ' + str(calc_mean_photon_nr) + 'with voltage_decoy: ' +str(self.voltage_decoy))
-
-            #compare calculated mean with target mean
-            if calc_mean_photon_nr > self.config.mean_photon_decoy:
-                upper_limit = self.config.voltage_decoy #reduce upper bound
-            else:
-                lower_limit = self.config.voltage_decoy #increase lower bound
-
-        #final voltage decoy
-        self.config.voltage_decoy = (lower_limit + upper_limit) / 2
         return None
     
     def initialize(self):
@@ -436,15 +413,13 @@ class Simulation:
         T1_dampening = self.find_T1(lower_limit = 0, upper_limit = 100, tol = 1e-3)
         print('T1_dampening at initialize end: ' +str(T1_dampening))
         T1_dampening_in_dB = 10* np.log(1/T1_dampening) 
-        print('T1_dampening at initialize end in dB: ' + str(T1_dampening_in_dB))
+        #print('T1_dampening at initialize end in dB: ' + str(T1_dampening_in_dB))
 
         #with simulated decoy state: calculate decoy height
         self.find_voltage_decoy(T1_dampening, lower_limit=0, upper_limit=2, tol=1e-7, )
-        print('Voltage_decoy at initialize end' + str(self.config.voltage_decoy))
-        print('Voltage_decoy_sup at initialize end' + str(self.config.voltage_decoy_sup))
-        print('Voltage_sup at initialize end' + str(self.config.voltage_sup))
-
-
+        #print('Voltage_decoy at initialize end' + str(self.config.voltage_decoy))
+        #print('Voltage_decoy_sup at initialize end' + str(self.config.voltage_decoy_sup))
+        #print('Voltage_sup at initialize end' + str(self.config.voltage_sup))
 
         return T1_dampening
     
@@ -452,22 +427,180 @@ class Simulation:
         
         T1_dampening = self.initialize()
         optical_power, peak_wavelength = self.random_laser_output('current_power','voltage_shift', 'current_wavelength')
-        basis, value, decoy = self.generate_alice_choices_fixed(basis = 0, value = 0, decoy = 0)   #11: 1000, 10: 0010, 00: 1010
+        
+        basis, value, decoy = self.generate_alice_choices_fixed(basis = 1, value = 1, decoy = 1)
         s_filtered_repeating, t_jitter = self.signal_bandwidth_jitter(basis, value, decoy)
         power_dampened, calc_mean_photon_nr, energy_pp, transmission = self.eam_transmission_1_mean_photon_number(s_filtered_repeating, t_jitter, optical_power, peak_wavelength, T1_dampening, basis, value, decoy)    
         wavelength_photons, time_photons = self.eam_transmission_2_choose_photons(calc_mean_photon_nr, energy_pp, transmission, t_jitter)
-        print(f"wavelength photons: {wavelength_photons}, time photons: {time_photons}")
+        #print(f"wavelength photons: {wavelength_photons}, time photons: {time_photons}")
 
-        plt.plot(t_jitter * 1e9, power_dampened * 1e3, label = 'dampened_power') #fehlt optical power
-        plt.title("Power of Square Signal with Bandwidth Limitation with 1e-11 jitter")
-        plt.xlabel("Time in ns")
-        plt.ylabel("Power in mW")
-        plt.legend()
-        plt.grid(True)
-        save_plot('new_T1_dampening_power_after_transmission_with_4_GHz_bandwidth_and_1e-11s_jitter')
-        #plt.show()'''
+        fig, ax = plt.subplots(figsize=(8, 5))
+        ax2 = ax.twinx()  # Create a second y-axis
+        
+        # Plot voltage (left y-axis)
+        ax.plot(t_jitter *1e9, s_filtered_repeating, color='blue', label='Voltage', linestyle='-', marker='o', markersize=1)
+        ax.set_ylabel('Voltage (V)', color='blue')
+        ax.tick_params(axis='y', labelcolor='blue')
+
+        # Plot transmission (right y-axis)
+        ax2.plot(t_jitter * 1e9, transmission, color='red', label='Transmission', linestyle='--', marker='o', markersize=1)
+        ax2.set_ylabel('Transmission', color='red')
+        ax2.tick_params(axis='y', labelcolor='red')
+        
+        # Titles and labels
+        ax.set_title(f"State: Z0 decoy")
+        ax.set_xlabel('Time in ns')
+        ax.grid(True)
+
+        # Save or show the plot
+        plt.tight_layout()
+        save_plot('9_12_Z0dec_111aka1000d_voltage_and_transmission_for_4GHz_and_1e-11_jitter')
 
     
+    def run_simulation_states(self):
+        T1_dampening = self.initialize()
+        optical_power, peak_wavelength = self.random_laser_output('current_power', 'voltage_shift', 'current_wavelength')
+        
+        # Define the states and their corresponding arguments
+        states = [
+            {"title": "State: Z0", "basis": 1, "value": 1, "decoy": 0},
+            {"title": "State: Z1", "basis": 1, "value": 0, "decoy": 0},
+            {"title": "State: X+", "basis": 0, "value": -1, "decoy": 0},
+            {"title": "State: Z0 decoy", "basis": 1, "value": 1, "decoy": 1},
+            {"title": "State: Z1 decoy", "basis": 1, "value": 0, "decoy": 1},
+            {"title": "State: X+ decoy", "basis": 0, "value": -1, "decoy": 1},
+            ]
+    
+        # Iterate over each state
+        for state in states:
+            # Generate Alice's choices
+            basis, value, decoy = self.generate_alice_choices_fixed(basis=state["basis"], value=state["value"], decoy=state["decoy"])
+            
+            # Simulate signal and transmission
+            s_filtered_repeating, t_jitter = self.signal_bandwidth_jitter(basis, value, decoy)
+            power_dampened, calc_mean_photon_nr, energy_pp, transmission = self.eam_transmission_1_mean_photon_number(
+                s_filtered_repeating, t_jitter, optical_power, peak_wavelength, T1_dampening, basis, value, decoy
+            )
+            
+           # wavelength_photons, time_photons, nr_photons = self.eam_transmission_2_choose_photons(calc_mean_photon_nr, energy_pp, transmission, t_jitter)
+
+            # Create the plot
+            fig, ax = plt.subplots(figsize=(8, 5))
+            ax2 = ax.twinx()  # Create a second y-axis
+
+            # Plot voltage (left y-axis)
+            ax.plot(t_jitter * 1e9, s_filtered_repeating, color='blue', label='Voltage',linestyle='-', marker='o', markersize=1)
+            ax.set_ylabel('Voltage (V)', color='blue')
+            ax.tick_params(axis='y', labelcolor='blue')
+
+            # Plot transmission (right y-axis)
+            ax2.plot(t_jitter * 1e9, transmission, color='red', label='Transmission',linestyle='--', marker='o', markersize=1)
+            ax2.set_ylabel('Transmission', color='red')
+            ax2.tick_params(axis='y', labelcolor='red')
+
+            # Titles and labels
+            ax.set_title(state["title"])
+            ax.set_xlabel('Time in ns')
+            ax.grid(True)
+
+            # Save or show the plot
+            plt.tight_layout()
+            save_plot(f"9_12_{state['title'].replace(' ', '_').replace(':', '').lower()}_voltage_and_transmission_for_4GHz_and_1e-11_jitter")
+            plt.show()
+    
+    def run_simulation_histograms(self):
+        #initialize
+        T1_dampening = self.initialize()
+
+        # Define the states and their corresponding arguments
+        states = [
+                {"title": "State: Z0", "basis": 1, "value": 1, "decoy": 0},
+                {"title": "State: Z1", "basis": 1, "value": 0, "decoy": 0},
+                {"title": "State: X+", "basis": 0, "value": -1, "decoy": 0},
+                {"title": "State: Z0 decoy", "basis": 1, "value": 1, "decoy": 1},
+                {"title": "State: Z1 decoy", "basis": 1, "value": 0, "decoy": 1},
+                {"title": "State: X+ decoy", "basis": 0, "value": -1, "decoy": 1},
+                ]
+        
+        for state in states:
+
+            nr_photons_arr = []
+            time_arr = []
+            wavelength_arr = []
+            mean_photon_nr_arr = np.empty(self.config.n_samples + 1)
+
+            for i in range(self.config.n_samples):
+                if state["decoy"] == 0:
+                    mean_photon_nr_arr[0] = self.config.mean_photon_nr
+                else:
+                    mean_photon_nr_arr[0] = self.config.mean_photon_decoy
+                optical_power, peak_wavelength = self.random_laser_output('current_power', 'voltage_shift', 'current_wavelength')
+                
+                # Generate Alice's choices
+                basis, value, decoy = self.generate_alice_choices_fixed(basis=state["basis"], value=state["value"], decoy=state["decoy"])
+                
+                # Simulate signal and transmission
+                s_filtered_repeating, t_jitter = self.signal_bandwidth_jitter(basis, value, decoy)
+                _, calc_mean_photon_nr, energy_pp, transmission = self.eam_transmission_1_mean_photon_number(
+                    s_filtered_repeating, t_jitter, optical_power, peak_wavelength, T1_dampening, basis, value, decoy
+                )
+                mean_photon_nr_arr[i+1] = calc_mean_photon_nr
+                wavelength_photons, time_photons, nr_photons = self.eam_transmission_2_choose_photons(calc_mean_photon_nr, energy_pp, transmission, t_jitter)
+                if nr_photons != 0:
+                    wavelength_arr.extend([wavelength_photons])
+                    time_arr.extend([time_photons])
+                    nr_photons_arr.extend([nr_photons])
+                else:
+                    nr_photons_arr.extend([nr_photons])
+
+            plt.hist(mean_photon_nr_arr[1:], bins=30, alpha=0.7, label="Mean Photon Number")
+            plt.axvline(mean_photon_nr_arr[0], color='red', linestyle='--', linewidth=2, label='target mean photon number')
+            plt.title(f"{state['title'].replace(':', '').lower()} mean photon number over {self.config.n_samples} iterations")
+            plt.ylabel('iterations')
+            plt.xlabel('mean photon number')
+            plt.legend()
+            plt.tight_layout()
+            save_plot(f"9_12_hist_mean_photon_nr_{state['title'].replace(' ', '_').replace(':', '').lower()}_for_4GHz_and_1e-11_jitter")       
+
+            plt.hist(nr_photons_arr, bins=np.arange(0, 11) - 0.5, alpha=0.7)
+            plt.title(f"{state['title'].replace(':', '').lower()} photon number over {self.config.n_samples} iterations with {sum(nr_photons_arr)} total photons")
+            plt.xticks(np.arange(0, 11))  # Set x-ticks to be integers 
+            plt.ylabel('iterations')
+            plt.xlabel('photon number')
+            plt.tight_layout()
+            save_plot(f"9_12_hist_nr_photons_{state['title'].replace(' ', '_').replace(':', '').lower()}_for_4GHz_and_1e-11_jitter")   
+
+            time_arr_flat = np.concatenate(time_arr)
+            if len(time_arr) > 0:
+                '''min_val = np.min(time_arr_flat)
+                max_val = np.max(time_arr_flat)
+                bins = np.linspace(min_val, max_val, num = 20)  # Create bins based on the min and max
+                '''
+                plt.hist(time_arr, bins=int(np.sqrt(len(time_arr_flat))), alpha=0.7, density=True)
+            else:
+                plt.hist(time_arr, bins=int(np.sqrt(len(time_arr_flat))), alpha=0.7, density=True)
+            plt.title(f"{state['title'].replace(':', '').lower()} photon time over {self.config.n_samples} iterations")
+            plt.ylabel('iterations')
+            plt.xlabel('photon time')
+            plt.tight_layout()
+            save_plot(f"9_12_hist_photon_time_{state['title'].replace(' ', '_').replace(':', '').lower()}_for_4GHz_and_1e-11_jitter")  
+           
+            wavelength_arr_flat = np.concatenate(wavelength_arr)
+            if len(wavelength_arr) > 0:
+                '''min_val = np.min(wavelength_arr_flat)
+                max_val = np.max(wavelength_arr_flat)
+                bins = np.linspace(min_val, max_val, num=20)  # Create bins based on the min and max#
+                '''
+                # Create histogram with dynamic x-axis scaling
+                plt.hist(wavelength_arr, bins=int(np.sqrt(len(wavelength_arr_flat))) , alpha=0.7, density=True)
+            else:
+                plt.hist(wavelength_arr, bins=int(np.sqrt(len(wavelength_arr_flat))), alpha=0.7, density=True)
+            plt.title(f"{state['title'].replace(':', '').lower()} photon wavelength over {self.config.n_samples} iterations")
+            plt.ylabel('iterations')
+            plt.xlabel('wavelengths photon')
+            plt.tight_layout()
+            save_plot(f"9_12_hist_wavelength_{state['title'].replace(' ', '_').replace(':', '').lower()}_for_4GHz_and_1e-11_jitter")         
+     
 
 def save_plot(filename, dpi=600):
   """Saves the current Matplotlib plot to a file in the 'img' directory."""
@@ -494,12 +627,11 @@ database.add_data('data/current_power_data.csv', 'Current (mA)', 'Optical Power 
 database.add_data('data/voltage_shift_data.csv', 'Voltage (V)', 'Wavelength Shift (nm)', 20, 'voltage_shift')
 database.add_data('data/current_wavelength_modified.csv', 'Current (mA)', 'Wavelength (nm)', 9, 'current_wavelength')#modified sodass mA Werte stimmen (/1000)
 database.add_data('data/eam_transmission_data.csv', 'Voltage (V)', 'Transmission', 11, 'eam_transmission') #modified,VZ geflippt von Spannungswerten
-print("eam_transmission range:", database.curves['eam_transmission']['x_min'], database.curves['eam_transmission']['x_max'])
 
 database.add_jitter(jitter = 1e-11)
 
 #create simulation
-config = SimulationConfig(database, n_samples=10000, n_pulses=4, mean_voltage=1.0, mean_amplitude=0.08,
+config = SimulationConfig(database, n_samples=200, n_pulses=4, mean_voltage=1.0, mean_amplitude=0.08,
                  p_z_alice=0.5, p_z_1=0.5, p_decoy=0.1, freq=6.75e9, jitter=1e-11,voltage_decoy=1.0,
                  voltage=1.0, voltage_decoy_sup=1.0, voltage_sup=1.0, 
                  eam_transmission_TP=-1.0, eam_transmission_HP=0.0,
@@ -507,7 +639,7 @@ config = SimulationConfig(database, n_samples=10000, n_pulses=4, mean_voltage=1.
 simulation = Simulation(config)   
 
 #plot results
-simulation.run_simulation()
+simulation.run_simulation_histograms()
 
 end_time = time.time()  # Record end time
 execution_time = end_time - start_time  # Calculate execution time
@@ -516,35 +648,3 @@ print(f"Execution time: {execution_time:.9f} seconds for {config.n_samples} samp
 end_time_2 = time.time()  # Record end time
 execution_time_2 = end_time_2 - start_time  # Calculate execution time
 print(f"Execution time after writing in Array: {execution_time_2:.9f} seconds for {simulation.config.n_samples} samples")
-
-'''x = np.linspace(0, simulation.n_pulses // simulation.symbol_length -1, simulation.n_pulses // simulation.symbol_length)
-plt.hist(all_jitter * 1e12, bins=30, label='jitter', alpha=0.7)
-plt.title('jittershift over ' + str(simulation.n_samples) + ' iterations',size = 14)
-plt.ylabel('iterations')
-plt.xlabel('jitter in ps')
-save_plot('jitter_over_' + str(simulation.n_samples) + '_iterations_05_11.png')
-#plt.show()
-'''
-'''x = np.linspace(0, simulation.n_pulses // simulation.symbol_length -1, simulation.n_pulses // simulation.symbol_length)
-plt.plot(x, alice_symbols, label='alice_symbol')
-plt.title('alice symbol',size = 14)
-plt.ylabel('shape of symbol')
-plt.xlabel('pulses per symbol length')
-plt.show()
-print(alice_symbols[10], alice_symbols[11])'''
-
-'''plt.hist(optical_power, bins=30, label='Optical Power', alpha=0.7)
-plt.title('optical power over ' + str(simulation.n_samples) + ' iterations',size = 14)
-plt.ylabel('iterations')
-plt.xlabel('optical power in mW')
-save_plot('power_over_' + str(simulation.n_samples) + '_iterations_05_11.png')
-plt.show()
-
-
-plt.hist(peak_wavelength, bins=30, label='Peak Wavelength', alpha=0.7)
-plt.title('peak wavelengths over ' + str(simulation.n_samples) + ' iterations',size = 14)
-plt.ylabel('iterations')
-plt.xlabel('peak wavelength in nm')
-save_plot('peak_wavelength_over_' + str(simulation.n_samples) + '_iterations_05_11.png')
-plt.show()
-'''
