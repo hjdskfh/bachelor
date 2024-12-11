@@ -1,0 +1,21 @@
+{
+    "n_samples": 3,
+    "n_pulses": 4,
+    "mean_voltage": 1.0,
+    "mean_current": 0.08,
+    "current_amplitude": 0.005,
+    "p_z_alice": 0.5,
+    "p_z_1": 0.5,
+    "p_decoy": 0.1,
+    "freq": 6750000000.0,
+    "jitter": 1e-11,
+    "voltage_decoy": 0.1498221457004547,
+    "voltage": 1.0,
+    "voltage_decoy_sup": 0.16402241587638855,
+    "voltage_sup": 0.7448436319828033,
+    "eam_transmission_TP": -1.0,
+    "eam_transmission_HP": 0.0,
+    "mean_photon_nr": 0.7,
+    "mean_photon_decoy": 0.1,
+    "mlp": "C:/Users/leavi/OneDrive/Dokumente/Uni/Semester 7/NeuMoQP/Programm/code/Presentation_style_1_adjusted_no_grid.mplstyle"
+}

@@ -7,6 +7,12 @@ from pathlib import Path
 from scipy.fftpack import fft, ifft, fftfreq
 from scipy import constants
 from scipy.special import factorial
+from tqdm import tqdm
+import json
+from pathlib import Path
+import datetime
+from matplotlib.ticker import MaxNLocator
+
 
 class dataManager:
     def __init__(self):
@@ -78,11 +84,11 @@ class dataManager:
         plt.show()
 
 class SimulationConfig:
-    def __init__(self, data, n_samples=10000, n_pulses=4, mean_voltage=1.0, mean_amplitude=0.08,
+    def __init__(self, data, n_samples=10000, n_pulses=4, mean_voltage=1.0, mean_current=0.08, current_amplitude = 0.02,
                  p_z_alice=0.5, p_z_1=0.5, p_decoy=0.1, freq=6.75e9, jitter=1e-11,voltage_decoy=1.0,
                  voltage=1.0, voltage_decoy_sup=1.0, voltage_sup=1.0, 
                  eam_transmission_TP=-1.0, eam_transmission_HP=0.0, 
-                 mean_photon_nr=0.7, mean_photon_decoy=0.1,
+                 mean_photon_nr=0.7, mean_photon_decoy=0.1, mlp = None
                  ):
         # Input data
         self.data = data
@@ -93,7 +99,8 @@ class SimulationConfig:
 
         # Voltage and amplitude settings
         self.mean_voltage = mean_voltage  # Voltage (in V)
-        self.mean_amplitude = mean_amplitude  # Amplitude (in A)
+        self.mean_current = mean_current  # current (in A)
+        self.current_amplitude = current_amplitude  # in A
 
         # Probability parameters
         self.p_z_alice = p_z_alice
@@ -119,11 +126,23 @@ class SimulationConfig:
         # Photon number settings
         self.mean_photon_nr = mean_photon_nr
         self.mean_photon_decoy = mean_photon_decoy
-    
-class Simulation:
-    def __init__(self, config: SimulationConfig):
-        self.config = config
+
+        # mlp-style
+        self.mlp = mlp
+
+    def to_dict(self):
+        """Convert instance parameters to dictionary, excluding non-serializable objects."""
+        result = vars(self).copy()
         
+        # Remove non-serializable attributes like 'data_manager'
+        if 'data' in result:
+            del result['data']
+        
+        return result
+        
+class Simulation:
+    def __init__(self, config: SimulationConfig, logger=None):
+        self.config = config       
 
     def get_interpolated_value(self, x_data, name):
         #calculate tck for which curve
@@ -139,7 +158,7 @@ class Simulation:
         chosen_voltage = self.config.mean_voltage
     
             #current_laserdiode = 0.08 in A, current_amplitude = 0.020 in A, current_frequency = 1
-        chosen_current = (self.config.mean_amplitude)* 1e3 #damit in mA
+        chosen_current = (self.config.mean_current)* 1e3 #damit in mA
 
         optical_power = self.get_interpolated_value(chosen_current, current_power)
         peak_wavelength = self.get_interpolated_value(chosen_current, current_wavelength) + self.get_interpolated_value(chosen_voltage, voltage_shift)
@@ -154,7 +173,7 @@ class Simulation:
         chosen_voltage = self.config.mean_voltage + 0.050 * np.sin(2 * np.pi * 1 * time)  
     
             #current_laserdiode = 0.08 in A, current_amplitude = 0.020 in A, current_frequency = 1
-        chosen_current = (self.config.mean_amplitude + 0.02 * np.sin(2 * np.pi * 1 * time) )* 1e3 #damit in mA
+        chosen_current = (self.config.mean_current + self.config.current_amplitude * np.sin(2 * np.pi * 1 * time) )* 1e3 #damit in mA
 
         optical_power = self.get_interpolated_value(chosen_current, current_power)
         peak_wavelength = self.get_interpolated_value(chosen_current, current_wavelength) + self.get_interpolated_value(chosen_voltage, voltage_shift)
@@ -409,9 +428,10 @@ class Simulation:
         return None
     
     def initialize(self):
+        plt.style.use(self.config.mlp)
         #calculate T1 dampening 
         T1_dampening = self.find_T1(lower_limit = 0, upper_limit = 100, tol = 1e-3)
-        print('T1_dampening at initialize end: ' +str(T1_dampening))
+        #print('T1_dampening at initialize end: ' +str(T1_dampening))
         T1_dampening_in_dB = 10* np.log(1/T1_dampening) 
         #print('T1_dampening at initialize end in dB: ' + str(T1_dampening_in_dB))
 
@@ -455,7 +475,6 @@ class Simulation:
         # Save or show the plot
         plt.tight_layout()
         save_plot('9_12_Z0dec_111aka1000d_voltage_and_transmission_for_4GHz_and_1e-11_jitter')
-
     
     def run_simulation_states(self):
         T1_dampening = self.initialize()
@@ -553,63 +572,179 @@ class Simulation:
                 else:
                     nr_photons_arr.extend([nr_photons])
 
-            plt.hist(mean_photon_nr_arr[1:], bins=30, alpha=0.7, label="Mean Photon Number")
+            plt.hist(mean_photon_nr_arr[1:], bins=40, alpha=0.7, label="Mean Photon Number")
             plt.axvline(mean_photon_nr_arr[0], color='red', linestyle='--', linewidth=2, label='target mean photon number')
-            plt.title(f"{state['title'].replace(':', '').lower()} mean photon number over {self.config.n_samples} iterations")
+            plt.title(f"{state['title'].replace(':', '').lower()}: mean photon number over {self.config.n_samples} iterations")
             plt.ylabel('iterations')
-            plt.xlabel('mean photon number')
+            plt.gca().yaxis.set_major_locator(MaxNLocator(integer=True))
+            plt.xlabel(r'$\Delta \langle \mu \rangle$')
             plt.legend()
             plt.tight_layout()
-            save_plot(f"9_12_hist_mean_photon_nr_{state['title'].replace(' ', '_').replace(':', '').lower()}_for_4GHz_and_1e-11_jitter")       
+            save_plot(f"hist_mean_photon_nr_{state['title'].replace(' ', '_').replace(':', '').lower()}_for_4GHz_and_1e-11_jitter")       
 
             plt.hist(nr_photons_arr, bins=np.arange(0, 11) - 0.5, alpha=0.7)
-            plt.title(f"{state['title'].replace(':', '').lower()} photon number over {self.config.n_samples} iterations with {sum(nr_photons_arr)} total photons")
+            plt.title(f"{state['title'].replace(':', '').lower()}: photon number over {self.config.n_samples} iterations")
             plt.xticks(np.arange(0, 11))  # Set x-ticks to be integers 
             plt.ylabel('iterations')
+            plt.gca().yaxis.set_major_locator(MaxNLocator(integer=True))
             plt.xlabel('photon number')
             plt.tight_layout()
-            save_plot(f"9_12_hist_nr_photons_{state['title'].replace(' ', '_').replace(':', '').lower()}_for_4GHz_and_1e-11_jitter")   
+            save_plot(f"hist_nr_photons_{state['title'].replace(' ', '_').replace(':', '').lower()}_for_4GHz_and_1e-11_jitter")   
 
-            time_arr_flat = np.concatenate(time_arr)
-            if len(time_arr) > 0:
-                '''min_val = np.min(time_arr_flat)
-                max_val = np.max(time_arr_flat)
-                bins = np.linspace(min_val, max_val, num = 20)  # Create bins based on the min and max
-                '''
-                plt.hist(time_arr, bins=int(np.sqrt(len(time_arr_flat))), alpha=0.7, density=True)
+            if len(time_arr) == 0:
+                plt.hist(time_arr, bins=40, alpha=0.7)
+                plt.ylim(0, 10) 
             else:
-                plt.hist(time_arr, bins=int(np.sqrt(len(time_arr_flat))), alpha=0.7, density=True)
-            plt.title(f"{state['title'].replace(':', '').lower()} photon time over {self.config.n_samples} iterations")
+                if len(time_arr) == 1:
+                    time_arr = np.concatenate(time_arr)
+                else:
+                    time_arr = np.concatenate([arr.flatten() for arr in time_arr])
+                time_arr = time_arr * 1e9
+                plt.hist(time_arr, bins=40, alpha=0.7)
+            plt.title(f"{state['title'].replace(':', '').lower()}: photon time over {self.config.n_samples} iterations")
             plt.ylabel('iterations')
-            plt.xlabel('photon time')
+            plt.gca().yaxis.set_major_locator(MaxNLocator(integer=True))
+            plt.xlabel('photon time (ns)')
             plt.tight_layout()
-            save_plot(f"9_12_hist_photon_time_{state['title'].replace(' ', '_').replace(':', '').lower()}_for_4GHz_and_1e-11_jitter")  
+            save_plot(f"hist_photon_time_{state['title'].replace(' ', '_').replace(':', '').lower()}_for_4GHz_and_1e-11_jitter")
            
-            wavelength_arr_flat = np.concatenate(wavelength_arr)
-            if len(wavelength_arr) > 0:
-                '''min_val = np.min(wavelength_arr_flat)
-                max_val = np.max(wavelength_arr_flat)
-                bins = np.linspace(min_val, max_val, num=20)  # Create bins based on the min and max#
-                '''
-                # Create histogram with dynamic x-axis scaling
-                plt.hist(wavelength_arr, bins=int(np.sqrt(len(wavelength_arr_flat))) , alpha=0.7, density=True)
+            print(wavelength_arr)
+            if len(wavelength_arr) == 0:
+                plt.hist(wavelength_arr, bins=40, alpha=0.7)
+                plt.ylim(0, 10) 
             else:
-                plt.hist(wavelength_arr, bins=int(np.sqrt(len(wavelength_arr_flat))), alpha=0.7, density=True)
-            plt.title(f"{state['title'].replace(':', '').lower()} photon wavelength over {self.config.n_samples} iterations")
+                if len(wavelength_arr) == 1:
+                    wavelength_arr = np.concatenate(wavelength_arr)
+                else:
+                    wavelength_arr = np.concatenate([arr.flatten() for arr in wavelength_arr])
+                wavelength_arr = wavelength_arr * 1e9
+                plt.hist(wavelength_arr, bins=40, alpha=0.7)
+            plt.title(f"{state['title'].replace(':', '').lower()}: photon wavelength over {self.config.n_samples} iterations")
             plt.ylabel('iterations')
-            plt.xlabel('wavelengths photon')
+            plt.gca().yaxis.set_major_locator(MaxNLocator(integer=True))
+            plt.xlabel('photon wavelength (nm)')
             plt.tight_layout()
-            save_plot(f"9_12_hist_wavelength_{state['title'].replace(' ', '_').replace(':', '').lower()}_for_4GHz_and_1e-11_jitter")         
+            save_plot(f"hist_wavelength_{state['title'].replace(' ', '_').replace(':', '').lower()}_for_4GHz_and_1e-11_jitter")         
      
+    def run_simulation_parameter_sweep_amplitude(self):
+        #9.12. Parameter sweep von amplitudenschwankung 0,5 mA bis 5 mA für Z0 und Z0 decoy gebe spread in mean photon number wieder
 
+        #initialize
+        T1_dampening = self.initialize()
+
+        # Define the states and their corresponding arguments
+        states = [
+                {"title": "State: Z0", "basis": 1, "value": 1, "decoy": 0},
+                {"title": "State: Z0 decoy", "basis": 1, "value": 1, "decoy": 1},
+                ]
+        
+        parameters_amplitude =  np.linspace(0.0005, 0.005, 20)
+        differences_mean_photon_nr = np.empty((len(states), len(parameters_amplitude)))
+        
+        for index, state in tqdm(enumerate(states), desc= "running simulation for different states", unit=" states", position=0):
+            mean_photon_nr_min = 1000
+            mean_photon_nr_max = 0
+           
+            for idx_param, param in tqdm(enumerate(parameters_amplitude), desc="parameters", unit="parameters", leave = False, position=1):
+                self.config.current_amplitude = param
+            
+                mean_of_mean_photon = np.empty(self.config.n_samples)
+
+                for i in range(self.config.n_samples):
+                    optical_power, peak_wavelength = self.random_laser_output('current_power', 'voltage_shift', 'current_wavelength')
+                    
+                    # Generate Alice's choices
+                    basis, value, decoy = self.generate_alice_choices_fixed(basis=state["basis"], value=state["value"], decoy=state["decoy"])
+                    
+                    # Simulate signal and transmission
+                    s_filtered_repeating, t_jitter = self.signal_bandwidth_jitter(basis, value, decoy)
+                    _, calc_mean_photon_nr, _, _ = self.eam_transmission_1_mean_photon_number(
+                        s_filtered_repeating, t_jitter, optical_power, peak_wavelength, T1_dampening, basis, value, decoy)
+                    mean_of_mean_photon[i] = calc_mean_photon_nr
+
+                    if mean_photon_nr_min > calc_mean_photon_nr:
+                        mean_photon_nr_min = calc_mean_photon_nr
+                    if mean_photon_nr_max < calc_mean_photon_nr:
+                        mean_photon_nr_max = calc_mean_photon_nr
+
+                differences_mean_photon_nr[index][idx_param] = (mean_photon_nr_max-mean_photon_nr_min) / np.mean(mean_of_mean_photon)
+
+            plt.plot(parameters_amplitude*1e3, differences_mean_photon_nr[index], label= 'for ' + str(state['title'].replace(':', '').lower()))
+            '''
+            plt.title(f" spread of mean photon number for {state['title'].replace(':', '').lower()} over {self.config.n_samples} iterations")                    
+            plt.xlabel(r'$\Delta I \, (\mathrm{mA})$')  # ΔI (mA)
+            plt.ylabel(r'$\frac{\Delta \langle \mu \rangle}{\langle \mu \rangle}$')  # Δ⟨μ⟩
+            plt.tight_layout()
+            plt.legend()
+            all_titles = state['title'].replace(' ', '_').replace(':', '').lower()
+            save_plot(f"10_12_plot_spread_photon_nr_{all_titles}_for_4GHz_and_1e-11_jitter")'''
+
+        plt.title(f" spread of mean photon number over {self.config.n_samples} iterations")
+        plt.xlabel(r'$\Delta I \, (\mathrm{mA})$')  # ΔI (mA)
+        plt.ylabel(r'$\frac{\Delta \langle \mu \rangle}{\langle \mu \rangle}$')  # Δ⟨μ⟩ / ⟨μ⟩
+        plt.tight_layout()
+        plt.legend()    
+        all_titles = "_".join([state['title'].replace(' ', '_').replace(':', '').lower() for state in states])
+        save_plot(f"spread_photon_nr_{all_titles}_for_4GHz_and_1e-11_jitter")
+    
+     
 def save_plot(filename, dpi=600):
-  """Saves the current Matplotlib plot to a file in the 'img' directory."""
-  script_dir = Path(__file__).parent
-  img_dir = script_dir / 'img'
-  img_dir.mkdir(exist_ok=True)
-  filepath = img_dir / filename
-  plt.savefig(filepath, dpi=dpi)
-  plt.close()
+    """Saves the current Matplotlib plot to a file in a folder next to 'code'."""
+    
+    # Get the script's parent directory (the directory where the script is located)
+    script_dir = Path(__file__).parent
+    
+    # Navigate to the parent folder (next to 'code') and then to the 'data' folder
+    target_dir = script_dir.parent / 'images'
+    
+    # Create the directory if it doesn't exist
+    target_dir.mkdir(exist_ok=True)
+    
+    # Generate a timestamp (e.g., '20231211_153012' for 11th December 2023 at 15:30:12)
+    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+    
+    # Append the timestamp to the filename
+    filename_with_timestamp = f"{timestamp}_{filename}"
+    
+    # Define the file path
+    filepath = target_dir / filename_with_timestamp
+    
+    # Save the plot
+    plt.savefig(filepath, dpi=dpi)
+    
+    # Close the plot to free up memory
+    plt.close()
+
+def save_to_json(config_object):
+    """Save data to a JSON file with timestamp in the 'logs' folder next to the code."""
+    
+    # Get the directory of the current script (code folder)
+    script_dir = Path(__file__).parent  # The folder where the script is located
+    
+    # Navigate to the parent directory (next to the code) and then to the 'logs' folder
+    logs_dir = script_dir.parent / 'logs'  # Go one level up and look for 'logs'
+    
+    # Create the 'logs' directory if it doesn't exist
+    logs_dir.mkdir(exist_ok=True)
+
+    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+
+    # Construct the filename with the timestamp
+    filename_with_timestamp = f"simulation_config_{timestamp}.json"
+
+    try:        
+        # Define the full file path where the JSON file will be saved
+        file_path = logs_dir / filename_with_timestamp  # Combine 'logs' folder and the filename
+        
+        # Write the dictionary to a JSON file
+        with open(file_path, 'w') as f:
+            json.dump(config_object, f, indent=4)
+        
+        print(f"Configuration saved to {file_path}")
+    
+    except Exception as e:
+        print(f"Error saving to JSON: {e}")
+
 
 
 # ================================================
@@ -631,20 +766,25 @@ database.add_data('data/eam_transmission_data.csv', 'Voltage (V)', 'Transmission
 database.add_jitter(jitter = 1e-11)
 
 #create simulation
-config = SimulationConfig(database, n_samples=200, n_pulses=4, mean_voltage=1.0, mean_amplitude=0.08,
+config = SimulationConfig(database, n_samples=500, n_pulses=4, mean_voltage=1.0, mean_current=0.08, current_amplitude=0.02,
                  p_z_alice=0.5, p_z_1=0.5, p_decoy=0.1, freq=6.75e9, jitter=1e-11,voltage_decoy=1.0,
                  voltage=1.0, voltage_decoy_sup=1.0, voltage_sup=1.0, 
                  eam_transmission_TP=-1.0, eam_transmission_HP=0.0,
-                 mean_photon_nr=0.7, mean_photon_decoy=0.1)
-simulation = Simulation(config)   
+                 mean_photon_nr=0.7, mean_photon_decoy=0.1, 
+                 mlp = 'C:/Users/leavi/OneDrive/Dokumente/Uni/Semester 7/NeuMoQP/Programm/code/Presentation_style_1_adjusted_no_grid.mplstyle')
+# Extract the parameters as a dictionary
+simulation = Simulation(config)
 
 #plot results
+#simulation.run_simulation_parameter_sweep_amplitude()
 simulation.run_simulation_histograms()
 
 end_time = time.time()  # Record end time
 execution_time = end_time - start_time  # Calculate execution time
 print(f"Execution time: {execution_time:.9f} seconds for {config.n_samples} samples")
 
-end_time_2 = time.time()  # Record end time
-execution_time_2 = end_time_2 - start_time  # Calculate execution time
-print(f"Execution time after writing in Array: {execution_time_2:.9f} seconds for {simulation.config.n_samples} samples")
+# Convert the config object to a dictionary
+config_params = config.to_dict()    
+
+# Save the config parameters to a JSON file
+save_to_json(config_params)
