@@ -580,7 +580,7 @@ class Simulation:
             plt.xlabel(r'$\Delta \langle \mu \rangle$')
             plt.legend()
             plt.tight_layout()
-            save_plot(f"hist_mean_photon_nr_{state['title'].replace(' ', '_').replace(':', '').lower()}_for_4GHz_and_1e-11_jitter")       
+            save_plot(f"hist_mean_photon_nr_{state['title'].replace(' ', '_').replace(':', '').lower()}")       
 
             plt.hist(nr_photons_arr, bins=np.arange(0, 11) - 0.5, alpha=0.7)
             plt.title(f"{state['title'].replace(':', '').lower()}: photon number over {self.config.n_samples} iterations")
@@ -589,7 +589,7 @@ class Simulation:
             plt.gca().yaxis.set_major_locator(MaxNLocator(integer=True))
             plt.xlabel('photon number')
             plt.tight_layout()
-            save_plot(f"hist_nr_photons_{state['title'].replace(' ', '_').replace(':', '').lower()}_for_4GHz_and_1e-11_jitter")   
+            save_plot(f"hist_nr_photons_{state['title'].replace(' ', '_').replace(':', '').lower()}")   
 
             if len(time_arr) == 0:
                 plt.hist(time_arr, bins=40, alpha=0.7)
@@ -606,7 +606,7 @@ class Simulation:
             plt.gca().yaxis.set_major_locator(MaxNLocator(integer=True))
             plt.xlabel('photon time (ns)')
             plt.tight_layout()
-            save_plot(f"hist_photon_time_{state['title'].replace(' ', '_').replace(':', '').lower()}_for_4GHz_and_1e-11_jitter")
+            save_plot(f"hist_photon_time_{state['title'].replace(' ', '_').replace(':', '').lower()}")
            
             print(wavelength_arr)
             if len(wavelength_arr) == 0:
@@ -624,7 +624,7 @@ class Simulation:
             plt.gca().yaxis.set_major_locator(MaxNLocator(integer=True))
             plt.xlabel('photon wavelength (nm)')
             plt.tight_layout()
-            save_plot(f"hist_wavelength_{state['title'].replace(' ', '_').replace(':', '').lower()}_for_4GHz_and_1e-11_jitter")         
+            save_plot(f"hist_wavelength_{state['title'].replace(' ', '_').replace(':', '').lower()}")         
      
     def run_simulation_parameter_sweep_amplitude(self):
         #9.12. Parameter sweep von amplitudenschwankung 0,5 mA bis 5 mA für Z0 und Z0 decoy gebe spread in mean photon number wieder
@@ -677,7 +677,7 @@ class Simulation:
             plt.tight_layout()
             plt.legend()
             all_titles = state['title'].replace(' ', '_').replace(':', '').lower()
-            save_plot(f"10_12_plot_spread_photon_nr_{all_titles}_for_4GHz_and_1e-11_jitter")'''
+            save_plot(f"spread_photon_nr_{all_titles}")'''
 
         plt.title(f" spread of mean photon number over {self.config.n_samples} iterations")
         plt.xlabel(r'$\Delta I \, (\mathrm{mA})$')  # ΔI (mA)
