@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 from scipy.interpolate import splev
 from scipy.fftpack import fft, ifft, fftfreq
 from scipy import constants
+from scipy.special import factorial
 
 class SimulationEngine:
     def __init__(self, config):
@@ -137,7 +138,7 @@ class SimulationEngine:
     def signal_bandwidth_jitter(self, basis, value, decoy):
         """Process signal with bandwidth limitation and apply jitter."""
         pulse_height = self.get_pulse_height(basis, decoy)
-        pulse_duration = 1 / self.config.freq
+        pulse_duration = 1 / self.config.sampling_rate_FPGA
         sampling_rate_fft = 100e11
         t, signal = self.generate_encoded_pulse(pulse_height, pulse_duration, value, sampling_rate_fft)
         filtered_signal = self.apply_bandwidth_filter(signal, sampling_rate_fft)
@@ -170,22 +171,27 @@ class SimulationEngine:
 
         calc_mean_photon_nr = energy_pp / (constants.h*constants.c/peak_wavelength)
         return power_dampened, calc_mean_photon_nr, energy_pp, transmission
-        
-    def eam_transmission_2_choose_photons(self, calc_mean_photon_nr, energy_pp, transmission, t_jitter):
+    
+    def poisson_distr(self, calc_value):
         #Poisson distribution to get amount of photons
-
         # Define a range of values (e.g., from 0 to an upper bound like mean + 5 standard deviations)
-        upper_bound = int(calc_mean_photon_nr + 5 * np.sqrt(calc_mean_photon_nr))
+        upper_bound = int(calc_value + 5 * np.sqrt(calc_value))
         x = np.arange(0, upper_bound + 1)
 
         # Compute Poisson probabilities
-        probabilities_array_poisson = np.exp(-calc_mean_photon_nr) * (calc_mean_photon_nr ** x) / factorial(x)
+        probabilities_array_poisson = np.exp(-calc_value) * (calc_value ** x) / factorial(x)
 
         # Normalize probabilities (optional, as Poisson probabilities already sum to ~1)
         probabilities_array_poisson = probabilities_array_poisson / probabilities_array_poisson.sum()
                 
         #choose amount of photons and calculate energy per Photons and initialize Wavelength Arrays
         nr_photons = np.random.choice(x, p = probabilities_array_poisson)
+        return nr_photons
+        
+    def eam_transmission_2_choose_photons(self, calc_mean_photon_nr, energy_pp, transmission, t_jitter):
+
+        #Poisson distribution to get amount of photons
+        nr_photons = self.poisson_distr(calc_mean_photon_nr)
         if nr_photons != 0:
             energy_per_photon = energy_pp / nr_photons
             wavelength_photons = np.zeros(nr_photons)
@@ -203,6 +209,47 @@ class SimulationEngine:
 
         return wavelength_photons, time_photons, nr_photons
     
+    def fiber_attenuation(self, nr_photons):
+        attennuation_in_factor = 10 ** (self.config.fiber_attenuation / 10)
+        calc_nr_photons_fiber = nr_photons / attennuation_in_factor
+        
+        #Poisson distribution to get amount of photons
+        nr_photons_fiber = self.poisson_distr(calc_nr_photons_fiber)
+        return nr_photons_fiber
+    
+    def generate_bob_choices(self, basis_alice, value_alice, decoy_alice):
+        """Generates Bob's choices for a quantum communication protocol."""
+        # Bob's basis choice is random
+        basis_bob = np.random.choice([0, 1], size = 1, p=[1-self.config.p_z_bob, self.config.p_z_bob]) # Randomly selects whether each pulse block is prepared in the Z-basis (0) or the X-basis (1) with a bias controlled by p_z_alice
+        '''
+        # Bob's measurement
+        if basis_bob == basis_alice:  # X-basis
+            value_bob = value_alice
+        else:  # Z-basis
+            value_bob = np.random.choice([0, 1], size = 1, p=[1-self.config.p_z_1, self.config.p_z_1])  # Randomly selects the value to measure in the Z-basis with a bias controlled by p_z_1
+            decoy_bob = decoy_alice'''
+        return basis_bob
+
+    def generate_bob_choices_fixed(self, basis_bob):
+        # Basis and value choices
+        basis_bob = np.array([basis_bob])
+
+        return (basis_bob)
+    
+    def detector(self, t_jitter, wavelength_photons, time_photons, nr_photons, basis_alice, value_alice, decoy_alice, basis_bob):
+        #will the photon pass the detection efficiency?
+        pass_detection = np.random.choice([0, 1], p=[1-self.config.detector_efficiency, self.config.detector_efficiency])
+
+        #How many darkcount photons will be detected?
+        pulse_duration = 1 / self.config.sampling_rate_FPGA
+        num_dark_counts = np.random.poisson(self.config.darkcount_frequency * pulse_duration)
+        dark_count_times = np.sort(np.random.uniform(0, pulse_duration, num_dark_counts))   #ODER mit Transmission? Ne oder?
+        
+        #last photon detected --> can next photon be detected?
+        ''' time_photons = np.sort(time_photons)
+        if pulse_duration - time_photons[:-1] '''
+        return None
+
     def find_T1(self, lower_limit, upper_limit, tol):
         # für X-Basis -> 110 ist 1000 non-decoy
         optical_power, peak_wavelength = self.random_laser_output_fixed('current_power','voltage_shift', 'current_wavelength')
