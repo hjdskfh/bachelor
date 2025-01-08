@@ -4,6 +4,7 @@ from scipy.interpolate import splev
 from scipy.fftpack import fft, ifft, fftfreq
 from scipy import constants
 from scipy.special import factorial
+import random
 
 class SimulationEngine:
     def __init__(self, config):
@@ -69,7 +70,7 @@ class SimulationEngine:
 
         # Basis and value choices
         basis = np.random.choice([0, 1], size = 1, p=[1-self.config.p_z_alice, self.config.p_z_alice]) # Randomly selects whether each pulse block is prepared in the Z-basis (0) or the X-basis (1) with a bias controlled by p_z_alice
-        value = np.random.choice([0, 1], size = 1, p=[1-self.config.p_z_1, self.config.p_z_1]) #Assigns logical values (0 or 1) to the pulses with probabilities defined by p_z_1. If the basis is 0 (X-basis), the values are set to -1 to differentiate them.   
+        value = np.random.choice([0, 1], size = 1, p=[1-0.5, 0.5]) #Assigns logical values (0 or 1) to the pulses with probabilities defined by p_z_1. If the basis is 0 (X-basis), the values are set to -1 to differentiate them.   
         value[basis == 0] = -1  # Mark X basis values
 
         # Decoy state selection
@@ -129,9 +130,9 @@ class SimulationEngine:
         S_filtered = S_f * np.interp(np.abs(frequencies), freq_x, freq_y)
         return np.real(ifft(S_filtered))
 
-    def apply_jitter(self, t):
+    def apply_jitter(self, t, name_jitter):
         """Add jitter to the time array."""
-        probabilities, jitter_values = self.config.data.get_data(x_data=None, name='probabilities')
+        probabilities, jitter_values = self.config.data.get_data(x_data=None, name='probabilities' + name_jitter)
         jitter_shift = np.random.choice(jitter_values, p=probabilities)
         return t + jitter_shift
 
@@ -142,7 +143,7 @@ class SimulationEngine:
         sampling_rate_fft = 100e11
         t, signal = self.generate_encoded_pulse(pulse_height, pulse_duration, value, sampling_rate_fft)
         filtered_signal = self.apply_bandwidth_filter(signal, sampling_rate_fft)
-        t_jittered = self.apply_jitter(t)
+        t_jittered = self.apply_jitter(t, name_jitter = 'laser')
         return filtered_signal, t_jittered, signal
 
     def eam_transmission_1_mean_photon_number(self, voltage_signal, t_jitter, optical_power, peak_wavelength, T1_dampening, basis, value, decoy):
@@ -209,25 +210,53 @@ class SimulationEngine:
 
         return wavelength_photons, time_photons, nr_photons
     
-    def fiber_attenuation(self, nr_photons):
+    def eam_transmission_2_choose_photons_fixed(self, energy_pp, transmission, t_jitter, fixed_nr_photons):
+        "This function is similar to eam_transmission_2_choose_photons but uses a fixed number of photons for testing purposes."
+        
+        #Poisson distribution to get amount of photons
+        nr_photons = fixed_nr_photons  
+        if nr_photons != 0:
+            energy_per_photon = energy_pp / nr_photons
+            wavelength_photons = np.zeros(nr_photons)
+
+            #choose time for photons
+            norm_transmission = transmission / transmission.sum()
+            time_photons = np.zeros(nr_photons)
+        
+            for i in range(nr_photons):
+                wavelength_photons[i] = (constants.h * constants.c) / energy_per_photon
+                time_photons[i] = np.random.choice(t_jitter, p = norm_transmission)
+        else:
+            wavelength_photons = np.empty(0)
+            time_photons = np.empty(0)
+
+        return wavelength_photons, time_photons, nr_photons
+    
+    def fiber_attenuation(self, wavelength_photons, time_photons, nr_photons):
+        # Step 1: Calculate the number of photons to keep
         attennuation_in_factor = 10 ** (self.config.fiber_attenuation / 10)
         calc_nr_photons_fiber = nr_photons / attennuation_in_factor
         
-        #Poisson distribution to get amount of photons
+        # Poisson distribution to get amount of photons
         nr_photons_fiber = self.poisson_distr(calc_nr_photons_fiber)
-        return nr_photons_fiber
+
+        if nr_photons_fiber < 0:
+            raise ValueError("Number of photons for fiber attenuation must be non-negative")
+        if nr_photons_fiber > len(time_photons):
+            nr_photons_fiber = len(time_photons)  # Set to the maximum number of available photons
+    
+        # Step 2: Randomly select photons to keep (random selection of indices)
+        selected_indices = random.sample(range(len(time_photons)), nr_photons_fiber)
+
+        # Step 3: Keep the selected photons and discard the rest
+        time_photons_fiber = time_photons[selected_indices]
+        wavelength_photons_fiber = wavelength_photons[selected_indices]
+        return wavelength_photons_fiber, time_photons_fiber, nr_photons_fiber
     
     def generate_bob_choices(self, basis_alice, value_alice, decoy_alice):
         """Generates Bob's choices for a quantum communication protocol."""
         # Bob's basis choice is random
         basis_bob = np.random.choice([0, 1], size = 1, p=[1-self.config.p_z_bob, self.config.p_z_bob]) # Randomly selects whether each pulse block is prepared in the Z-basis (0) or the X-basis (1) with a bias controlled by p_z_alice
-        '''
-        # Bob's measurement
-        if basis_bob == basis_alice:  # X-basis
-            value_bob = value_alice
-        else:  # Z-basis
-            value_bob = np.random.choice([0, 1], size = 1, p=[1-self.config.p_z_1, self.config.p_z_1])  # Randomly selects the value to measure in the Z-basis with a bias controlled by p_z_1
-            decoy_bob = decoy_alice'''
         return basis_bob
 
     def generate_bob_choices_fixed(self, basis_bob):
@@ -236,19 +265,45 @@ class SimulationEngine:
 
         return (basis_bob)
     
-    def detector(self, t_jitter, wavelength_photons, time_photons, nr_photons, basis_alice, value_alice, decoy_alice, basis_bob):
-        #will the photon pass the detection efficiency?
-        pass_detection = np.random.choice([0, 1], p=[1-self.config.detector_efficiency, self.config.detector_efficiency])
+    def detector(self, last_photon_time_minus_end_time, t_jitter, wavelength_photons_fiber, time_photons_fiber, nr_photons_fiber):
+        #will the photons pass the detection efficiency?
+        pass_detection = np.ones(nr_photons_fiber, dtype = bool)
+        for i in range(nr_photons_fiber):
+            pass_detection[i] = np.random.choice([False, True], p=[1-self.config.detector_efficiency, self.config.detector_efficiency])
+        wavelength_photons_det = wavelength_photons_fiber[pass_detection]
+        time_photons_det = time_photons_fiber[pass_detection]
+        nr_photons_det = np.sum(pass_detection)
 
         #How many darkcount photons will be detected?
         pulse_duration = 1 / self.config.sampling_rate_FPGA
-        num_dark_counts = np.random.poisson(self.config.darkcount_frequency * pulse_duration)
-        dark_count_times = np.sort(np.random.uniform(0, pulse_duration, num_dark_counts))   #ODER mit Transmission? Ne oder?
+        num_dark_counts = np.random.poisson(self.config.dark_count_frequency * pulse_duration)
+        dark_count_times = np.sort(np.random.uniform(0, pulse_duration, num_dark_counts))
+
+        #last photon detected --> can next photon be detected? --> sort stuff
+        sorted_indices = np.argsort(time_photons_det)
+        wavelength_photons_det = wavelength_photons_det[sorted_indices]
+        time_photons_det = time_photons_det[sorted_indices]
+            # Compute differences with vectorized operations
+        time_diffs = np.diff(time_photons_det, prepend=last_photon_time_minus_end_time)
+            # Create a boolean mask for valid indices
+        valid_mask = time_diffs >= self.config.detection_time
+            # Get valid indices
+        valid_indices = np.where(valid_mask)[0]
+            # Apply the mask to both timestamps and wavelengths
+        valid_timestamps = time_photons_det[valid_indices]
+        valid_wavelengths = wavelength_photons_det[valid_indices]
+        valid_nr_photons = len(valid_indices)
         
-        #last photon detected --> can next photon be detected?
-        ''' time_photons = np.sort(time_photons)
-        if pulse_duration - time_photons[:-1] '''
-        return None
+        #store last detected photon for next run only if it exists
+        if len(time_photons_det) > 0:
+            last_photon_time_minus_end_time = time_photons_det[-1] - t_jitter[-1]
+        else: #subtract max time so the difference gets bigger so the detection time gets passed
+            last_photon_time_minus_end_time = last_photon_time_minus_end_time - t_jitter[-1]
+
+        #add detector jitter
+        t_detector_jittered = self.apply_jitter(t_jitter, name_jitter = 'detector')
+
+        return valid_timestamps, valid_wavelengths, valid_nr_photons, t_detector_jittered, wavelength_photons_det, nr_photons_det, num_dark_counts
 
     def find_T1(self, lower_limit, upper_limit, tol):
         # für X-Basis -> 110 ist 1000 non-decoy

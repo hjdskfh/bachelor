@@ -115,6 +115,7 @@ class SimulationManager:
             mean_photon_nr_arr = np.empty(self.config.n_samples + 1)
 
             for i in range(self.config.n_samples):
+                # 0tes Element ist baseline
                 if state["decoy"] == 0:
                     mean_photon_nr_arr[0] = self.config.mean_photon_nr
                 else:
@@ -253,3 +254,57 @@ class SimulationManager:
         all_titles = "_".join([state['title'].replace(' ', '_').replace(':', '').lower() for state in states])
         Saver.save_plot(f"spread_photon_nr_{all_titles}_for_4GHz_and_1e-11_jitter")
     
+
+    def run_simulation_after_detector(self):
+        T1_dampening = self.simulation_engine.initialize()
+        time_in_simulation = 0
+        #normally is negative so the difference gets calculated right
+        last_photon_time_minus_end_time = 0
+
+        nr_photons_fiber_array = np.ones(self.config.n_samples)
+        nr_photons_after_detector_array = np.ones(self.config.n_samples)
+
+        for i in range(self.config.n_samples):
+            optical_power, peak_wavelength = self.simulation_engine.random_laser_output('current_power', 'voltage_shift', 'current_wavelength')
+            
+            # Generate Alice's choices
+            basis, value, decoy = self.simulation_engine.generate_alice_choices()
+
+            # Simulate signal and transmission
+            voltage_signal, t_jitter, _ = self.simulation_engine.signal_bandwidth_jitter(basis, value, decoy)
+            _, calc_mean_photon_nr, energy_pp, transmission = self.simulation_engine.eam_transmission_1_mean_photon_number(
+                voltage_signal, t_jitter, optical_power, peak_wavelength, T1_dampening, basis, value, decoy
+            )
+            #wavelength_photons, time_photons, nr_photons = self.simulation_engine.eam_transmission_2_choose_photons_fixed(energy_pp, transmission, t_jitter, fixed_nr_photons = 10)
+            wavelength_photons, time_photons, nr_photons = self.simulation_engine.eam_transmission_2_choose_photons(calc_mean_photon_nr, energy_pp, transmission, t_jitter)
+            wavelength_photons_fiber, time_photons_fiber, nr_photons_fiber = self.simulation_engine.fiber_attenuation(wavelength_photons, time_photons, nr_photons)
+            valid_timestamps, valid_wavelengths, valid_nr_photons, t_detector_jittered, wavelength_photons_det, nr_photons_det, num_dark_counts = self.simulation_engine.detector(last_photon_time_minus_end_time, 
+                                                                                                                            t_jitter, wavelength_photons_fiber, 
+                                                                                                                            time_photons_fiber, nr_photons_fiber)
+            print(f"num dark counts: {num_dark_counts}")
+            '''print(f"run {i}: wavelength photon after fiber:{wavelength_photons}")
+            print(f"run {i}: wavelength after detection efficiency:{wavelength_photons_det}")
+            print(f"run {i}: nr after detection efficiency:{nr_photons_det}")
+            print(f"run {i}: wavelength photon after detector:{valid_wavelengths}")
+            print(f"run {i}: nr dark counts:{num_dark_counts}")'''
+            time_in_simulation = time_in_simulation + t_jitter[-1]
+            
+            nr_photons_fiber_array[i] = nr_photons_fiber
+            nr_photons_after_detector_array[i] = nr_photons_det
+        
+        # Bar width
+        bar_width = 0.4
+
+        # Plot the bar graph
+        iterations = np.arange(1, self.config.n_samples + 1)
+        plt.bar(iterations - bar_width/2, nr_photons_fiber_array, width=bar_width, label='fiber', color='blue')
+        plt.bar(iterations + bar_width/2, nr_photons_after_detector_array, width=bar_width, label='detector', color='orange')
+
+        # Add labels and title
+        plt.xlabel('iteration')
+        plt.ylabel('number of photons')
+        plt.title('photons in fiber vs photons after detector per iteration')
+        plt.legend()
+
+        # Show the plot
+        Saver.save_plot(f"photons_in_fiber_vs_after detector")    

@@ -33,7 +33,7 @@ class DataManager:
             'x_max': x_max   # Store maximum x-value
             }
     
-    def add_jitter(self, jitter): #Gaussian
+    def add_jitter(self, jitter, name): #Gaussian
         # Calculate standard deviation based on FWHM
         std_dev = jitter / (2 * np.sqrt(2 * np.log(2)))
 
@@ -45,13 +45,13 @@ class DataManager:
 
         # Normalize weights to get probabilities (sum to 1)
         probabilities_array = weights / weights.sum()
-        self.curves['probabilities'] = {
+        self.curves['probabilities' + name] = {
             'prob': probabilities_array,
             'x': x
             }
 
     def get_data(self, x_data, name):
-        if name == 'probabilities':
+        if name.startswith("probabilities"):
             return self.curves[name]['prob'], self.curves[name]['x']
         x_min = self.curves[name]['x_min']
         x_max = self.curves[name]['x_max']
