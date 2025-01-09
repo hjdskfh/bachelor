@@ -54,7 +54,13 @@ class Saver:
         # Construct the filename with the timestamp
         filename_with_timestamp = f"simulation_config_{timestamp}.json"
 
-        try:        
+        try:                   
+            
+            # If 'rng' is present in the config, remove it and store only the seed
+            if 'rng' in config_object:
+                del config_object['rng']  # Remove the rng object from the dictionary
+
+
             # Define the full file path where the JSON file will be saved
             file_path = logs_dir / filename_with_timestamp  # Combine 'logs' folder and the filename
             

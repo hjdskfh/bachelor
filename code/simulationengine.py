@@ -15,68 +15,34 @@ class SimulationEngine:
         tck = self.config.data.get_data(x_data, name)
         return splev(x_data, tck)
     
-    def random_laser_output_fixed(self, current_power, voltage_shift, current_wavelength):
+
+    def random_laser_output(self, current_power, voltage_shift, current_wavelength, fixed = None):
         # Generate a random time within the desired range
-        time = np.random.uniform(0, 10) 
-        
+        time = self.config.rng.uniform(0, 10) 
+             
         # Calculate voltage and current based on this time of laserdiode and heater
-            #voltage_heater = 1 in V, voltage_amplitude = 0.050 in V, voltage_frequency = 1
-        chosen_voltage = self.config.mean_voltage
-    
-            #current_laserdiode = 0.08 in A, current_amplitude = 0.020 in A, current_frequency = 1
-        chosen_current = (self.config.mean_current)* 1e3 #damit in mA
+        chosen_voltage = self.config.mean_voltage if fixed else self.config.mean_voltage + 0.050 * np.sin(2 * np.pi * 1 * time)
+        chosen_current = (self.config.mean_current if fixed else (self.config.mean_current + self.config.current_amplitude * np.sin(2 * np.pi * 1 * time))) * 1e3
 
         optical_power = self.get_interpolated_value(chosen_current, current_power)
         peak_wavelength = self.get_interpolated_value(chosen_current, current_wavelength) + self.get_interpolated_value(chosen_voltage, voltage_shift)
         return optical_power * 1e-3, peak_wavelength * 1e-9  #in W and m
 
-    def random_laser_output(self, current_power, voltage_shift, current_wavelength):
-        # Generate a random time within the desired range
-        time = np.random.uniform(0, 10) 
-        
-        # Calculate voltage and current based on this time of laserdiode and heater
-            #voltage_heater = 1 in V, voltage_amplitude = 0.050 in V, voltage_frequency = 1
-        chosen_voltage = self.config.mean_voltage + 0.050 * np.sin(2 * np.pi * 1 * time)  
+    def generate_alice_choices(self, basis=None, value=None, decoy=None, fixed=False):
+        """Generates Alice's choices for a quantum communication protocol."""
+        if fixed:
+            basis = np.array([basis])
+            value = np.array([value])
+            value[basis == 0] = -1  # Mark X basis values
+            decoy = np.array([decoy])
+        else:
+            basis = self.config.rng.choice([0, 1], size=1, p=[1 - self.config.p_z_alice, self.config.p_z_alice])
+            value = self.config.rng.choice([0, 1], size=1, p=[1 - 0.5, 0.5])
+            value[basis == 0] = -1  # Mark X basis values
+            decoy = self.config.rng.choice([0, 1], size=1, p=[1 - self.config.p_decoy, self.config.p_decoy])
+
+        return basis, value, decoy
     
-            #current_laserdiode = 0.08 in A, current_amplitude = 0.020 in A, current_frequency = 1
-        chosen_current = (self.config.mean_current + self.config.current_amplitude * np.sin(2 * np.pi * 1 * time) )* 1e3 #damit in mA
-
-        optical_power = self.get_interpolated_value(chosen_current, current_power)
-        peak_wavelength = self.get_interpolated_value(chosen_current, current_wavelength) + self.get_interpolated_value(chosen_voltage, voltage_shift)
-        return optical_power * 1e-3, peak_wavelength * 1e-9  #in W and m
-    
-    def generate_alice_choices_fixed(self, basis, value, decoy):
-
-        # Basis and value choices
-        basis = np.array([basis])
-        value = np.array([value])
-        value[basis == 0] = -1  # Mark X basis values
-
-        decoy = np.array([decoy])
-        return (basis, value, decoy)
-
-    def generate_alice_choices(self):
-
-        """Generates Alice's choices for a quantum communication protocol, including 
-        basis selection, value encoding, decoy states, and does the fft.
-
-        Args:
-        n_pulses: Elektronik kann so viele channels
-        symbol_length: iterations per symbol
-        p_z_alice: Probability of Alice choosing the Z basis.
-        p_z_1: Probability of encoding a '1' in the Z basis.
-        p_decoy: Probability of sending a decoy state.
-        """
-
-        # Basis and value choices
-        basis = np.random.choice([0, 1], size = 1, p=[1-self.config.p_z_alice, self.config.p_z_alice]) # Randomly selects whether each pulse block is prepared in the Z-basis (0) or the X-basis (1) with a bias controlled by p_z_alice
-        value = np.random.choice([0, 1], size = 1, p=[1-0.5, 0.5]) #Assigns logical values (0 or 1) to the pulses with probabilities defined by p_z_1. If the basis is 0 (X-basis), the values are set to -1 to differentiate them.   
-        value[basis == 0] = -1  # Mark X basis values
-
-        # Decoy state selection
-        decoy = np.random.choice([0, 1], size = 1, p=[1-self.config.p_decoy, self.config.p_decoy])
-
-        return (basis, value, decoy)
     
     def get_pulse_height(self, basis, decoy):
         """
@@ -107,6 +73,7 @@ class SimulationEngine:
     def generate_square_pulse(self, pulse_height, pulse_duration, pattern, sampling_rate_fft):
         """Generate a square pulse signal for a given height and pattern."""
         t = np.arange(0, self.config.n_pulses * pulse_duration, 1 / sampling_rate_fft)
+        #print(f"last t:{t[-1]}")
         repeating_square_pulse = np.full(len(t), self.config.non_signal_voltage)
         one_signal = len(t) // self.config.n_pulses
 
@@ -133,7 +100,7 @@ class SimulationEngine:
     def apply_jitter(self, t, name_jitter):
         """Add jitter to the time array."""
         probabilities, jitter_values = self.config.data.get_data(x_data=None, name='probabilities' + name_jitter)
-        jitter_shift = np.random.choice(jitter_values, p=probabilities)
+        jitter_shift = self.config.rng.choice(jitter_values, p=probabilities)
         return t + jitter_shift
 
     def signal_bandwidth_jitter(self, basis, value, decoy):
@@ -186,7 +153,7 @@ class SimulationEngine:
         probabilities_array_poisson = probabilities_array_poisson / probabilities_array_poisson.sum()
                 
         #choose amount of photons and calculate energy per Photons and initialize Wavelength Arrays
-        nr_photons = np.random.choice(x, p = probabilities_array_poisson)
+        nr_photons = self.config.rng.choice(x, p = probabilities_array_poisson)
         return nr_photons
         
     def eam_transmission_2_choose_photons(self, calc_mean_photon_nr, energy_pp, transmission, t_jitter):
@@ -203,7 +170,7 @@ class SimulationEngine:
         
             for i in range(nr_photons):
                 wavelength_photons[i] = (constants.h * constants.c) / energy_per_photon
-                time_photons[i] = np.random.choice(t_jitter, p = norm_transmission)
+                time_photons[i] = self.config.rng.choice(t_jitter, p = norm_transmission)
         else:
             wavelength_photons = np.empty(0)
             time_photons = np.empty(0)
@@ -225,7 +192,7 @@ class SimulationEngine:
         
             for i in range(nr_photons):
                 wavelength_photons[i] = (constants.h * constants.c) / energy_per_photon
-                time_photons[i] = np.random.choice(t_jitter, p = norm_transmission)
+                time_photons[i] = self.config.rng.choice(t_jitter, p = norm_transmission)
         else:
             wavelength_photons = np.empty(0)
             time_photons = np.empty(0)
@@ -256,7 +223,7 @@ class SimulationEngine:
     def generate_bob_choices(self, basis_alice, value_alice, decoy_alice):
         """Generates Bob's choices for a quantum communication protocol."""
         # Bob's basis choice is random
-        basis_bob = np.random.choice([0, 1], size = 1, p=[1-self.config.p_z_bob, self.config.p_z_bob]) # Randomly selects whether each pulse block is prepared in the Z-basis (0) or the X-basis (1) with a bias controlled by p_z_alice
+        basis_bob = self.config.rng.choice([0, 1], size = 1, p=[1-self.config.p_z_bob, self.config.p_z_bob]) # Randomly selects whether each pulse block is prepared in the Z-basis (0) or the X-basis (1) with a bias controlled by p_z_alice
         return basis_bob
 
     def generate_bob_choices_fixed(self, basis_bob):
@@ -269,15 +236,16 @@ class SimulationEngine:
         #will the photons pass the detection efficiency?
         pass_detection = np.ones(nr_photons_fiber, dtype = bool)
         for i in range(nr_photons_fiber):
-            pass_detection[i] = np.random.choice([False, True], p=[1-self.config.detector_efficiency, self.config.detector_efficiency])
+            pass_detection[i] = self.config.rng.choice([False, True], p=[1-self.config.detector_efficiency, self.config.detector_efficiency])
         wavelength_photons_det = wavelength_photons_fiber[pass_detection]
         time_photons_det = time_photons_fiber[pass_detection]
         nr_photons_det = np.sum(pass_detection)
 
         #How many darkcount photons will be detected?
         pulse_duration = 1 / self.config.sampling_rate_FPGA
-        num_dark_counts = np.random.poisson(self.config.dark_count_frequency * pulse_duration)
-        dark_count_times = np.sort(np.random.uniform(0, pulse_duration, num_dark_counts))
+        symbol_duration = pulse_duration * self.config.n_pulses
+        num_dark_counts = self.config.rng.poisson(self.config.dark_count_frequency * symbol_duration)
+        dark_count_times = np.sort(self.config.rng.uniform(0, symbol_duration, num_dark_counts))
 
         #last photon detected --> can next photon be detected? --> sort stuff
         sorted_indices = np.argsort(time_photons_det)
@@ -303,12 +271,26 @@ class SimulationEngine:
         #add detector jitter
         t_detector_jittered = self.apply_jitter(t_jitter, name_jitter = 'detector')
 
-        return valid_timestamps, valid_wavelengths, valid_nr_photons, t_detector_jittered, wavelength_photons_det, nr_photons_det, num_dark_counts
+        return valid_timestamps, valid_wavelengths, valid_nr_photons, t_detector_jittered, num_dark_counts, dark_count_times
+    
+    def darkcount(self):
+        #How many darkcount photons will be detected?
+        pulse_duration = 1 / self.config.sampling_rate_FPGA
+        symbol_duration = pulse_duration * self.config.n_pulses
+        num_dark_counts = self.config.rng.poisson(self.config.dark_count_frequency * symbol_duration)
+        dark_count_times = np.sort(self.config.rng.uniform(0, symbol_duration, num_dark_counts))
+        return dark_count_times, num_dark_counts
+    
+    def classificator(self, t, valid_timestamps, valid_wavelengths, valid_nr_photons):
+        # classify timebins
+        timebins = np.linspace(0, t[-1], self.config.n_pulses + 1)
+        classified_photons = np.digitize(valid_timestamps, timebins) - 1
+
 
     def find_T1(self, lower_limit, upper_limit, tol):
         # für X-Basis -> 110 ist 1000 non-decoy
-        optical_power, peak_wavelength = self.random_laser_output_fixed('current_power','voltage_shift', 'current_wavelength')
-        basis, value, decoy = self.generate_alice_choices_fixed(basis = 1, value = 1, decoy = 0)
+        optical_power, peak_wavelength = self.random_laser_output('current_power','voltage_shift', 'current_wavelength', fixed = True)
+        basis, value, decoy = self.generate_alice_choices(basis = 1, value = 1, decoy = 0, fixed = True)
 
         while upper_limit- lower_limit > tol:
             T1_dampening = (lower_limit + upper_limit) / 2
@@ -333,12 +315,12 @@ class SimulationEngine:
             # Dynamically set the voltage attribute based on voltage_type
             setattr(self.config, voltage_type, voltage)
 
-            voltage_signal, t_jitter, _ = self.signal_bandwidth_jitter(*self.generate_alice_choices_fixed(basis, value, decoy))
+            voltage_signal, t_jitter, _ = self.signal_bandwidth_jitter(*self.generate_alice_choices(basis, value, decoy, fixed = True))
             '''plt.plot(t_jitter, s_filtered_repeating, label = 'first run with voltage = '+ str(voltage))
             plt.show()'''
             _, calc_mean_photon_nr, _, _ = self.eam_transmission_1_mean_photon_number(
                 voltage_signal, t_jitter, optical_power, peak_wavelength, T1_dampening, 
-                *self.generate_alice_choices_fixed(basis, value, decoy))
+                *self.generate_alice_choices(basis, value, decoy, fixed = True))
 
             # Compare the calculated mean with the target mean
             if calc_mean_photon_nr > target_mean:
@@ -357,7 +339,7 @@ class SimulationEngine:
         store_upper_limit = upper_limit
 
         # Set the optical power and peak wavelength for the simulation
-        optical_power, peak_wavelength = self.random_laser_output_fixed('current_power', 'voltage_shift', 'current_wavelength')
+        optical_power, peak_wavelength = self.random_laser_output('current_power', 'voltage_shift', 'current_wavelength', fixed = True)
 
         # Find voltage for 000 -> 1010 non-decoy state
         self.config.voltage_sup = self._set_voltage(optical_power, peak_wavelength, lower_limit, upper_limit, tol, 
