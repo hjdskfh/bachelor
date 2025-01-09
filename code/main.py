@@ -51,6 +51,10 @@ end_time = time.time()  # Record end time
 execution_time = end_time - start_time  # Calculate execution time
 print(f"Execution time: {execution_time:.9f} seconds for {config.n_samples} samples")
 
+# Print profiling results
+stats = pstats.Stats(profiler).sort_stats('cumtime')
+stats.print_stats()
+
 # Convert the config object to a dictionary
 config_params = config.to_dict()    
 
