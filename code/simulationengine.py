@@ -73,13 +73,13 @@ class SimulationEngine:
     def generate_square_pulse(self, pulse_height, pulse_duration, pattern, sampling_rate_fft):
         """Generate a square pulse signal for a given height and pattern."""
         t = np.arange(0, self.config.n_pulses * pulse_duration, 1 / sampling_rate_fft)
-        #print(f"last t:{t[-1]}")
         repeating_square_pulse = np.full(len(t), self.config.non_signal_voltage)
         one_signal = len(t) // self.config.n_pulses
 
+        indices = np.arange(len(t))
         for i, bit in enumerate(pattern):
             if bit == 1:
-                repeating_square_pulse[i * one_signal:(i + 1) * one_signal] = pulse_height
+                repeating_square_pulse[(indices // one_signal) == i] = pulse_height
 
         return t, repeating_square_pulse
     
@@ -94,8 +94,9 @@ class SimulationEngine:
 
         freq_x = [0, self.config.bandwidth * 0.8, self.config.bandwidth, self.config.bandwidth * 1.2, sampling_rate_fft / 2]
         freq_y = [1, 1, 0.7, 0.01, 0.001]  # Smooth drop-off
-        S_filtered = S_f * np.interp(np.abs(frequencies), freq_x, freq_y)
-        return np.real(ifft(S_filtered))
+        # do S_f * np.interp(np.abs(frequencies), freq_x, freq_y) and store in S_f
+        np.multiply(S_f, np.interp(frequencies, freq_x, freq_y), out=S_f)
+        return np.real(ifft(S_f))
 
     def apply_jitter(self, t, name_jitter):
         """Add jitter to the time array."""
@@ -162,15 +163,11 @@ class SimulationEngine:
         nr_photons = self.poisson_distr(calc_mean_photon_nr)
         if nr_photons != 0:
             energy_per_photon = energy_pp / nr_photons
-            wavelength_photons = np.zeros(nr_photons)
+            wavelength_photons = np.full(nr_photons, (constants.h * constants.c) / energy_per_photon)
 
             #choose time for photons
             norm_transmission = transmission / transmission.sum()
-            time_photons = np.zeros(nr_photons)
-        
-            for i in range(nr_photons):
-                wavelength_photons[i] = (constants.h * constants.c) / energy_per_photon
-                time_photons[i] = self.config.rng.choice(t_jitter, p = norm_transmission)
+            time_photons = self.config.rng.choice(t_jitter, size=nr_photons, p=norm_transmission)
         else:
             wavelength_photons = np.empty(0)
             time_photons = np.empty(0)
