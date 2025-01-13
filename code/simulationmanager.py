@@ -2,7 +2,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator
 from concurrent.futures import ThreadPoolExecutor
-import tqdm
 
 from saver import Saver
 from simulationengine import SimulationEngine
@@ -18,9 +17,8 @@ class SimulationManager:
         optical_power, peak_wavelength = self.simulation_engine.random_laser_output('current_power','voltage_shift', 'current_wavelength')
         
         basis, value, decoy = self.simulation_engine.generate_alice_choices(basis = 0, value = 0, decoy = 0, fixed = True)
-        voltage_signal, t_jitter, _ = self.simulation_engine.signal_bandwidth_jitter(basis, value, decoy)
+        voltage_signal, t_jitter, signal = self.simulation_engine.signal_bandwidth_jitter(basis, value, decoy)
         _, _, _, transmission = self.simulation_engine.eam_transmission_1_mean_photon_number(voltage_signal, t_jitter, optical_power, peak_wavelength, T1_dampening, basis, value, decoy)    
-        #print(f"wavelength photons: {wavelength_photons}, time photons: {time_photons}")
 
         fig, ax = plt.subplots(figsize=(8, 5))
         ax2 = ax.twinx()  # Create a second y-axis
@@ -63,7 +61,8 @@ class SimulationManager:
             basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=state["basis"], value=state["value"], decoy=state["decoy"], fixed = True)
             
             # Simulate signal and transmission
-            voltage_signal, t_jitter, _ = self.simulation_engine.signal_bandwidth_jitter(basis, value, decoy)
+            voltage_signal, t_jitter, _ = self.simulation_engine.signal_bandwidth_jitter(basis, value, decoy
+                                                                                         )
             _, _, _, transmission = self.simulation_engine.eam_transmission_1_mean_photon_number(
                 voltage_signal, t_jitter, optical_power, peak_wavelength, T1_dampening, basis, value, decoy
             )
@@ -99,57 +98,6 @@ class SimulationManager:
             # Save or show the plot
             plt.tight_layout()
             Saver.save_plot(f"9_12_{state['title'].replace(' ', '_').replace(':', '').lower()}_voltage_and_transmission_for_4GHz_and_1e-11_jitter")
-
-    def run_simulation_states_old(self):
-            T1_dampening = self.simulation_engine.initialize()
-            optical_power, peak_wavelength = self.simulation_engine.random_laser_output('current_power', 'voltage_shift', 'current_wavelength')
-            
-            # Define the states and their corresponding arguments
-            states = [
-                {"title": "State: Z0", "basis": 1, "value": 1, "decoy": 0},
-                {"title": "State: Z1", "basis": 1, "value": 0, "decoy": 0},
-                {"title": "State: X+", "basis": 0, "value": -1, "decoy": 0},
-                {"title": "State: Z0 decoy", "basis": 1, "value": 1, "decoy": 1},
-                {"title": "State: Z1 decoy", "basis": 1, "value": 0, "decoy": 1},
-                {"title": "State: X+ decoy", "basis": 0, "value": -1, "decoy": 1},
-                ]
-        
-            # Iterate over each state
-            for state in states:
-                # Generate Alice's choices
-                basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=state["basis"], value=state["value"], decoy=state["decoy"], fixed = True)
-                
-                # Simulate signal and transmission
-                voltage_signal, t_jitter, _ = self.simulation_engine.signal_bandwidth_jitter(basis, value, decoy)
-                _, _, _, transmission = self.simulation_engine.eam_transmission_1_mean_photon_number(
-                    voltage_signal, t_jitter, optical_power, peak_wavelength, T1_dampening, basis, value, decoy
-                )
-                
-            # wavelength_photons, time_photons, nr_photons = self.simulation_engine.eam_transmission_2_choose_photons(calc_mean_photon_nr, energy_pp, transmission, t_jitter)
-
-                # Create the plot
-                fig, ax = plt.subplots(figsize=(8, 5))
-                ax2 = ax.twinx()  # Create a second y-axis
-
-                # Plot voltage (left y-axis)
-                ax.plot(t_jitter * 1e9, voltage_signal, color='blue', label='Voltage',linestyle='-', marker='o', markersize=1)
-                ax.set_ylabel('Voltage (V)', color='blue')
-                ax.tick_params(axis='y', labelcolor='blue')
-
-                # Plot transmission (right y-axis)
-                ax2.plot(t_jitter * 1e9, transmission, color='red', label='Transmission',linestyle='--', marker='o', markersize=1)
-                ax2.set_ylabel('Transmission', color='red')
-                ax2.tick_params(axis='y', labelcolor='red')
-
-                # Titles and labels
-                ax.set_title(state["title"])
-                ax.set_xlabel('Time in ns')
-                ax.grid(True)
-
-                # Save or show the plot
-                plt.tight_layout()
-                Saver.save_plot(f"9_12_{state['title'].replace(' ', '_').replace(':', '').lower()}_voltage_and_transmission_for_4GHz_and_1e-11_jitter")
-    
 
     def run_simulation_histograms(self):
         #initialize
@@ -312,7 +260,6 @@ class SimulationManager:
         all_titles = "_".join([state['title'].replace(' ', '_').replace(':', '').lower() for state in states])
         Saver.save_plot(f"spread_photon_nr_{all_titles}_for_4GHz_and_1e-11_jitter")
     
-
     def run_simulation_after_detector(self):
         T1_dampening = self.simulation_engine.initialize()
         time_in_simulation = 0
@@ -370,7 +317,6 @@ class SimulationManager:
         # Show the plot
         Saver.save_plot(f"photons_in_fiber_vs_after detector")   ''' 
 
-
     def run_simulation_dc(self):
         for i in range(self.config.n_samples):
             _, num_dark_counts = self.simulation_engine.darkcount()
@@ -380,4 +326,26 @@ class SimulationManager:
 
         print(f"min 1 dark count detected per run: {timer}")
 
-            
+    def run_simulation_initialize(self):
+        T1_dampening = self.simulation_engine.initialize()
+        print(f"T1 dampening: {T1_dampening}")
+    
+    def run_simulation_till_signal(self):
+        T1_dampening = self.simulation_engine.initialize()
+        optical_power, peak_wavelength = self.simulation_engine.random_laser_output('current_power','voltage_shift', 'current_wavelength')
+        
+        basis, value, decoy = self.simulation_engine.generate_alice_choices(basis = 0, value = 0, decoy = 0, fixed = True)
+        voltage_signal, t_jitter, signal = self.simulation_engine.signal_bandwidth_jitter(basis, value, decoy)
+
+        fig, ax = plt.subplots(figsize=(8, 5))
+        ax2 = ax.twinx()  # Create a second y-axis
+
+        # Plot voltage (left y-axis)
+        ax.plot(t_jitter *1e9, voltage_signal, color='blue', label='bandwidth', linestyle='-', marker='o', markersize=1)
+        ax.set_ylabel('Voltage (V)', color='blue')
+        ax.tick_params(axis='y', labelcolor='blue')
+
+        # Plot transmission (right y-axis)
+        ax2.plot(t_jitter * 1e9, signal, color='red', label='signal', linestyle='-', marker='o', markersize=1)
+        ax2.set_ylabel('Voltage (V)', color='red')
+        ax2.tick_params(axis='y', labelcolor='red')

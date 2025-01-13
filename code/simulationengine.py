@@ -4,7 +4,8 @@ from scipy.interpolate import splev
 from scipy.fftpack import fft, ifft, fftfreq
 from scipy import constants
 from scipy.special import factorial
-import random
+
+from saver import Saver
 
 class SimulationEngine:
     def __init__(self, config):
@@ -14,7 +15,6 @@ class SimulationEngine:
         #calculate tck for which curve
         tck = self.config.data.get_data(x_data, name)
         return splev(x_data, tck)
-    
 
     def random_laser_output(self, current_power, voltage_shift, current_wavelength, fixed = None):
         # Generate a random time within the desired range
@@ -72,15 +72,13 @@ class SimulationEngine:
 
     def generate_square_pulse(self, pulse_height, pulse_duration, pattern, sampling_rate_fft):
         """Generate a square pulse signal for a given height and pattern."""
-        t = np.arange(0, self.config.n_pulses * pulse_duration, 1 / sampling_rate_fft)
-        repeating_square_pulse = np.full(len(t), self.config.non_signal_voltage)
+        t = np.arange(0, self.config.n_pulses * pulse_duration, 1 / sampling_rate_fft, dtype = np.float64)
+        repeating_square_pulse = np.full(len(t), self.config.non_signal_voltage, dtype = np.float64) #np.full(len(t), 0, dtype = np.float64)#np.zeros(len(t)) #np.full(len(t), 0) #np.full(len(t), self.config.non_signal_voltage) #np.zeros(len(t)) #
         one_signal = len(t) // self.config.n_pulses
-
         indices = np.arange(len(t))
         for i, bit in enumerate(pattern):
             if bit == 1:
                 repeating_square_pulse[(indices // one_signal) == i] = pulse_height
-
         return t, repeating_square_pulse
     
     def generate_encoded_pulse(self, pulse_height, pulse_duration, value, sampling_rate_fft):
@@ -89,18 +87,29 @@ class SimulationEngine:
 
     def apply_bandwidth_filter(self, signal, sampling_rate_fft):
         """Apply a frequency-domain filter to a signal."""
-        S_f = fft(signal)
+        S_fourier = fft(signal)
         frequencies = fftfreq(len(signal), d=1 / sampling_rate_fft)
 
         freq_x = [0, self.config.bandwidth * 0.8, self.config.bandwidth, self.config.bandwidth * 1.2, sampling_rate_fft / 2]
         freq_y = [1, 1, 0.7, 0.01, 0.001]  # Smooth drop-off
-        # do S_f * np.interp(np.abs(frequencies), freq_x, freq_y) and store in S_f
-        np.multiply(S_f, np.interp(frequencies, freq_x, freq_y), out=S_f)
-        return np.real(ifft(S_f))
+        S_freq = S_fourier * np.interp(np.abs(frequencies), freq_x, freq_y)
+        #np.multiply(S_f, np.interp(frequencies, freq_x, freq_y), out=S_f) funktioniert nich!
+        # Print intermediate results for debugging
+        #interpolated_values = np.interp(np.abs(frequencies), freq_x, freq_y)
+        #print("Interpolated Values:", interpolated_values)
+
+        # Option 1: Create new array
+        #S_freq = S_fourier * interpolated_values
+        #print("S_freq:", np.real(ifft(S_freq)))
+
+        # Option 2: In-place modification
+        #np.multiply(S_fourier, interpolated_values, out=S_fourier)
+        #print("Modified S_f:", np.real(ifft(S_fourier)))
+        return np.real(ifft(S_freq))
 
     def apply_jitter(self, t, name_jitter):
         """Add jitter to the time array."""
-        probabilities, jitter_values = self.config.data.get_data(x_data=None, name='probabilities' + name_jitter)
+        probabilities, jitter_values = self.config.data.get_probabilities(x_data=None, name='probabilities' + name_jitter)
         jitter_shift = self.config.rng.choice(jitter_values, p=probabilities)
         return t + jitter_shift
 
@@ -113,6 +122,18 @@ class SimulationEngine:
         filtered_signal = self.apply_bandwidth_filter(signal, sampling_rate_fft)
         t_jittered = self.apply_jitter(t, name_jitter = 'laser')
         return filtered_signal, t_jittered, signal
+    
+    def eam_transmission_1_mean_photon_number_new(self, voltage_signal, t_jitter, optical_power, peak_wavelength, T1_dampening, basis, value, decoy):
+        transmission = np.where(voltage_signal < 0, 
+                                self.get_interpolated_value(voltage_signal, 'eam_transmission'), 
+                                self.get_interpolated_value(0, 'eam_transmission'))
+
+        power = transmission * optical_power
+        power_dampened = power / T1_dampening
+        energy_pp = np.trapz(power_dampened, t_jitter)
+
+        calc_mean_photon_nr = energy_pp / (constants.h * constants.c / peak_wavelength)
+        return power_dampened, calc_mean_photon_nr, energy_pp, transmission
 
     def eam_transmission_1_mean_photon_number(self, voltage_signal, t_jitter, optical_power, peak_wavelength, T1_dampening, basis, value, decoy):
         #include the eam_voltage and multiply with calculated optical power from laser
@@ -128,15 +149,6 @@ class SimulationEngine:
 
         power_dampened = power / T1_dampening
         energy_pp = np.trapz(power_dampened, t_jitter)
-
-        '''plt.plot(t_jitter * 1e9, power, label = 'after eam') #fehlt optical power
-        plt.title("Power of Square Signal with Bandwidth Limitation with 1e-11 jitter")
-        plt.xlabel("Time in ns")
-        plt.ylabel("Power in W")
-        plt.legend()
-        plt.grid(True)
-        #save_plot('power_after_transmission_with_4_GHz_bandwidth_and_1e-11s_jitter')
-        plt.show()'''
 
         calc_mean_photon_nr = energy_pp / (constants.h*constants.c/peak_wavelength)
         return power_dampened, calc_mean_photon_nr, energy_pp, transmission
@@ -163,7 +175,7 @@ class SimulationEngine:
         nr_photons = self.poisson_distr(calc_mean_photon_nr)
         if nr_photons != 0:
             energy_per_photon = energy_pp / nr_photons
-            wavelength_photons = np.full(nr_photons, (constants.h * constants.c) / energy_per_photon)
+            wavelength_photons = np.full(nr_photons, (constants.h * constants.c) / energy_per_photon, dtype = np.float64)
 
             #choose time for photons
             norm_transmission = transmission / transmission.sum()
@@ -210,7 +222,7 @@ class SimulationEngine:
             nr_photons_fiber = len(time_photons)  # Set to the maximum number of available photons
     
         # Step 2: Randomly select photons to keep (random selection of indices)
-        selected_indices = random.sample(range(len(time_photons)), nr_photons_fiber)
+        selected_indices = self.config.rng.sample(range(len(time_photons)), nr_photons_fiber)
 
         # Step 3: Keep the selected photons and discard the rest
         time_photons_fiber = time_photons[selected_indices]
@@ -312,14 +324,11 @@ class SimulationEngine:
             # Dynamically set the voltage attribute based on voltage_type
             setattr(self.config, voltage_type, voltage)
 
-            voltage_signal, t_jitter, _ = self.signal_bandwidth_jitter(*self.generate_alice_choices(basis, value, decoy, fixed = True))
-            '''plt.plot(t_jitter, s_filtered_repeating, label = 'first run with voltage = '+ str(voltage))
-            plt.show()'''
-            _, calc_mean_photon_nr, _, _ = self.eam_transmission_1_mean_photon_number(
+            voltage_signal, t_jitter, signal = self.signal_bandwidth_jitter(*self.generate_alice_choices(basis, value, decoy, fixed = True))
+            _, calc_mean_photon_nr, _, transmission = self.eam_transmission_1_mean_photon_number(
                 voltage_signal, t_jitter, optical_power, peak_wavelength, T1_dampening, 
                 *self.generate_alice_choices(basis, value, decoy, fixed = True))
 
-            # Compare the calculated mean with the target mean
             if calc_mean_photon_nr > target_mean:
                 upper_limit = voltage  # Reduce upper bound
             else:
@@ -342,7 +351,9 @@ class SimulationEngine:
         self.config.voltage_sup = self._set_voltage(optical_power, peak_wavelength, lower_limit, upper_limit, tol, 
                                              self.config.mean_photon_nr, "voltage_sup", T1_dampening, 
                                              basis = 0, value = 0, decoy = 0)
-        #print('voltage_sup', self.config.voltage_sup)
+        # Check if voltage_sup is within the limits and tolerances
+        if self.config.voltage_sup > (upper_limit - 10 * tol) or self.config.voltage_sup < (lower_limit + 10 * tol):
+            raise ValueError(f"Voltage for non-decoy state (voltage_sup) is very close to limit [{store_lower_limit}, {store_upper_limit}] with tolerance {tol}")
 
         # Reset limits for next voltage calculation
         lower_limit, upper_limit = store_lower_limit, store_upper_limit
@@ -351,7 +362,9 @@ class SimulationEngine:
         self.config.voltage_decoy = self._set_voltage(optical_power, peak_wavelength, lower_limit, upper_limit, tol, 
                                                self.config.mean_photon_decoy, "voltage_decoy", T1_dampening, 
                                                basis = 1, value = 1, decoy = 1)
-        #print('voltage_decoy', self.config.voltage_decoy)
+        # Check if voltage_sup is within the limits and tolerances
+        if self.config.voltage_decoy > (upper_limit - 10 * tol) or self.config.voltage_sup < (lower_limit + 10 * tol):
+            raise ValueError(f"Voltage for decoy state (voltage_decoy) is very close to limit [{store_lower_limit}, {store_upper_limit}] with tolerance {tol}")
 
 
         # Reset limits for next voltage calculation
@@ -361,23 +374,29 @@ class SimulationEngine:
         self.config.voltage_decoy_sup = self._set_voltage(optical_power, peak_wavelength, lower_limit, upper_limit, tol, 
                                                    self.config.mean_photon_decoy, "voltage_decoy_sup", T1_dampening, 
                                                    basis = 0, value = 0, decoy = 1)
-        #print('voltage_decoy_sup', self.config.voltage_decoy_sup)
+        # Check if voltage_sup is within the limits and tolerances
+        if self.config.voltage_decoy > (upper_limit - 10 * tol) or self.config.voltage_sup < (lower_limit + 10 * tol):
+            raise ValueError(f"Voltage for decoy sup state (voltage_decoy_sup) is very close to limit [{store_lower_limit}, {store_upper_limit}] with tolerance {tol}")
 
         return None
     
     def initialize(self):
         plt.style.use(self.config.mlp)
         #calculate T1 dampening 
-        T1_dampening = self.find_T1(lower_limit = 0, upper_limit = 100, tol = 1e-3)
+        lower_limit_t1, upper_limit_t1, tol_t1 = 0, 100, 1e-3
+        T1_dampening = self.find_T1(lower_limit_t1, upper_limit_t1, tol_t1)
+        if T1_dampening > (upper_limit_t1 - 10*tol_t1) or T1_dampening < (lower_limit_t1 + 10*tol_t1):
+            raise ValueError(f"T1 dampening is very close to limit [{lower_limit_t1}, {upper_limit_t1}] with tolerance {tol_t1}")
         #print('T1_dampening at initialize end: ' +str(T1_dampening))
         #T1_dampening_in_dB = 10* np.log(1/T1_dampening) 
         #print('T1_dampening at initialize end in dB: ' + str(T1_dampening_in_dB))
 
         #with simulated decoy state: calculate decoy height
-        self.find_voltage_decoy(T1_dampening, lower_limit=-2, upper_limit=2, tol=1e-7, )
-        #print('Voltage_decoy at initialize end' + str(self.config.voltage_decoy))
-        #print('Voltage_decoy_sup at initialize end' + str(self.config.voltage_decoy_sup))
-        #print('Voltage_sup at initialize end' + str(self.config.voltage_sup))
+        self.find_voltage_decoy(T1_dampening, lower_limit=-1, upper_limit=1.5, tol=1e-7)
+        #print('voltage at initialize end: ' + str(self.config.voltage))
+        #print('Voltage_decoy at initialize end: ' + str(self.config.voltage_decoy))
+        #print('Voltage_decoy_sup at initialize end: ' + str(self.config.voltage_decoy_sup))
+        #print('Voltage_sup at initialize end: ' + str(self.config.voltage_sup))
 
         return T1_dampening
     

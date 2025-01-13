@@ -50,13 +50,22 @@ class DataManager:
             'x': x
             }
 
+    def get_probabilities(self, x_data, name):
+        if not name.startswith("probabilities"):
+            raise ValueError(f"Invalid name for probabilities: {name}")
+        return self.curves[name]['prob'], self.curves[name]['x']
+
     def get_data(self, x_data, name):
-        if name.startswith("probabilities"):
-            return self.curves[name]['prob'], self.curves[name]['x']
         x_min = self.curves[name]['x_min']
         x_max = self.curves[name]['x_max']
-        if x_data < x_min or x_data > x_max:
-            raise ValueError(x_data, " x data isn't in table for ", name)
+        if isinstance(x_data, np.ndarray):
+            if (x_data < x_min).any() or (x_data > x_max).any():
+                print(f"x_data: {x_data}, x_min: {x_min}, x_max: {x_max}")
+                raise ValueError(x_data, " x data isn't in table for ", name)
+        else:
+            if x_data < x_min or x_data > x_max:
+                print(f"x_data: {x_data}, x_min: {x_min}, x_max: {x_max}")
+                raise ValueError(x_data, " x data isn't in table for ", name)
         if name not in self.curves:
             raise ValueError(f"Spline '{name}' not found.")
         return self.curves[name]['tck'] # Return tck
