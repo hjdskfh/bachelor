@@ -55,16 +55,29 @@ class DataManager:
             raise ValueError(f"Invalid name for probabilities: {name}")
         return self.curves[name]['prob'], self.curves[name]['x']
 
+    def get_data_array(self, x_data, name):
+        x_min = self.curves[name]['x_min']
+        x_max = self.curves[name]['x_max']
+        if (x_data < x_min).any() or (x_data > x_max).any():
+            out_of_bounds = np.where((x_data < x_min) | (x_data > x_max))[0]
+            raise ValueError(x_data, " x data array isn't in table for ", name, " x_data: ", x_data, 
+                             " x_min ", x_min, " and x_max: ", x_max, " out of bounds index: ", out_of_bounds, 
+                             " out of bounds: ",x_data[out_of_bounds])
+        if name not in self.curves:
+            raise ValueError(f"Spline '{name}' not found.")
+        return self.curves[name]['tck'] # Return tck
+
     def get_data(self, x_data, name):
         x_min = self.curves[name]['x_min']
         x_max = self.curves[name]['x_max']
+        x_data = np.asarray(x_data, dtype=np.float64)
+        x_min = np.float64(x_min)
+        x_max = np.float64(x_max)
         if isinstance(x_data, np.ndarray):
             if (x_data < x_min).any() or (x_data > x_max).any():
-                print(f"x_data: {x_data}, x_min: {x_min}, x_max: {x_max}")
-                raise ValueError(x_data, " x data isn't in table for ", name)
+                raise ValueError(x_data, " x data array isn't in table for ", name, " x_data: ", x_data, " x_min ", x_min, " and x_max: ", x_max)
         else:
             if x_data < x_min or x_data > x_max:
-                print(f"x_data: {x_data}, x_min: {x_min}, x_max: {x_max}")
                 raise ValueError(x_data, " x data isn't in table for ", name)
         if name not in self.curves:
             raise ValueError(f"Spline '{name}' not found.")

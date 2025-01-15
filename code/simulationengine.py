@@ -11,9 +11,12 @@ class SimulationEngine:
     def __init__(self, config):
         self.config = config       
 
-    def get_interpolated_value(self, x_data, name):
+    def get_interpolated_value(self, x_data, name, array = False):
         #calculate tck for which curve
-        tck = self.config.data.get_data(x_data, name)
+        if array == True:
+            tck = self.config.data.get_data_array(x_data, name)
+        else:
+            tck = self.config.data.get_data(x_data, name)
         return splev(x_data, tck)
 
     def random_laser_output(self, current_power, voltage_shift, current_wavelength, fixed = None):
@@ -92,20 +95,9 @@ class SimulationEngine:
 
         freq_x = [0, self.config.bandwidth * 0.8, self.config.bandwidth, self.config.bandwidth * 1.2, sampling_rate_fft / 2]
         freq_y = [1, 1, 0.7, 0.01, 0.001]  # Smooth drop-off
-        S_freq = S_fourier * np.interp(np.abs(frequencies), freq_x, freq_y)
-        #np.multiply(S_f, np.interp(frequencies, freq_x, freq_y), out=S_f) funktioniert nich!
-        # Print intermediate results for debugging
-        #interpolated_values = np.interp(np.abs(frequencies), freq_x, freq_y)
-        #print("Interpolated Values:", interpolated_values)
 
-        # Option 1: Create new array
-        #S_freq = S_fourier * interpolated_values
-        #print("S_freq:", np.real(ifft(S_freq)))
-
-        # Option 2: In-place modification
-        #np.multiply(S_fourier, interpolated_values, out=S_fourier)
-        #print("Modified S_f:", np.real(ifft(S_fourier)))
-        return np.real(ifft(S_freq))
+        np.multiply(S_fourier, np.interp(np.abs(frequencies), freq_x, freq_y), out=S_fourier)
+        return np.real(ifft(S_fourier))
 
     def apply_jitter(self, t, name_jitter):
         """Add jitter to the time array."""
@@ -124,9 +116,13 @@ class SimulationEngine:
         return filtered_signal, t_jittered, signal
     
     def eam_transmission_1_mean_photon_number_new(self, voltage_signal, t_jitter, optical_power, peak_wavelength, T1_dampening, basis, value, decoy):
-        transmission = np.where(voltage_signal < 0, 
-                                self.get_interpolated_value(voltage_signal, 'eam_transmission'), 
-                                self.get_interpolated_value(0, 'eam_transmission'))
+        #from where is transmission 0?
+        #print(f"voltage_signal: {(voltage_signal < 7.023775e-05).sum()}")
+        #print(f"difference: {len(voltage_signal) - (voltage_signal < 7.023775e-05).sum()}")
+        signal_over_threshold = self.get_interpolated_value(7.023775e-05, 'eam_transmission')
+        transmission = np.where(voltage_signal < 7.023775e-05, 
+                                self.get_interpolated_value(voltage_signal, 'eam_transmission', array = True), 
+                                signal_over_threshold)
 
         power = transmission * optical_power
         power_dampened = power / T1_dampening
@@ -154,6 +150,13 @@ class SimulationEngine:
         return power_dampened, calc_mean_photon_nr, energy_pp, transmission
     
     def poisson_distr(self, calc_value):
+        """
+        Calculate the number of photons based on a Poisson distribution.
+        Parameters:
+        calc_value (float): The mean value (λ) for the Poisson distribution.
+        Returns:
+        int: The number of photons sampled from the Poisson distribution.
+        """
         #Poisson distribution to get amount of photons
         # Define a range of values (e.g., from 0 to an upper bound like mean + 5 standard deviations)
         upper_bound = int(calc_value + 5 * np.sqrt(calc_value))
@@ -169,10 +172,24 @@ class SimulationEngine:
         nr_photons = self.config.rng.choice(x, p = probabilities_array_poisson)
         return nr_photons
         
-    def eam_transmission_2_choose_photons(self, calc_mean_photon_nr, energy_pp, transmission, t_jitter):
+    def eam_transmission_2_choose_photons(self, calc_mean_photon_nr, energy_pp, transmission, t_jitter, fixed_nr_photons):
+        """
+        Simulates the transmission of photons through an Electro-Absorption Modulator (EAM) and chooses the properties of the photons.
+        Parameters:
+        calc_mean_photon_nr (float): The mean number of photons to be calculated using a Poisson distribution if fixed_nr_photons is None.
+        energy_pp (float): The total energy per pulse.
+        transmission (np.ndarray): The transmission probabilities for each time jitter slot.
+        t_jitter (np.ndarray): The time jitter slots to choose from.
+        fixed_nr_photons (int or None): If not None, this fixed number of photons will be used instead of sampling from a Poisson distribution.
+        Returns:
+        tuple: A tuple containing:
+            - wavelength_photons (np.ndarray): The wavelengths of the chosen photons.
+            - time_photons (np.ndarray): The times at which the photons are chosen.
+            - nr_photons (int): The number of photons chosen.
+        """
 
         #Poisson distribution to get amount of photons
-        nr_photons = self.poisson_distr(calc_mean_photon_nr)
+        nr_photons = fixed_nr_photons if fixed_nr_photons is not None else self.poisson_distr(calc_mean_photon_nr)
         if nr_photons != 0:
             energy_per_photon = energy_pp / nr_photons
             wavelength_photons = np.full(nr_photons, (constants.h * constants.c) / energy_per_photon, dtype = np.float64)
@@ -186,33 +203,11 @@ class SimulationEngine:
 
         return wavelength_photons, time_photons, nr_photons
     
-    def eam_transmission_2_choose_photons_fixed(self, energy_pp, transmission, t_jitter, fixed_nr_photons):
-        "This function is similar to eam_transmission_2_choose_photons but uses a fixed number of photons for testing purposes."
-        
-        #Poisson distribution to get amount of photons
-        nr_photons = fixed_nr_photons  
-        if nr_photons != 0:
-            energy_per_photon = energy_pp / nr_photons
-            wavelength_photons = np.zeros(nr_photons)
-
-            #choose time for photons
-            norm_transmission = transmission / transmission.sum()
-            time_photons = np.zeros(nr_photons)
-        
-            for i in range(nr_photons):
-                wavelength_photons[i] = (constants.h * constants.c) / energy_per_photon
-                time_photons[i] = self.config.rng.choice(t_jitter, p = norm_transmission)
-        else:
-            wavelength_photons = np.empty(0)
-            time_photons = np.empty(0)
-
-        return wavelength_photons, time_photons, nr_photons
-    
     def fiber_attenuation(self, wavelength_photons, time_photons, nr_photons):
         # Step 1: Calculate the number of photons to keep
         attennuation_in_factor = 10 ** (self.config.fiber_attenuation / 10)
-        calc_nr_photons_fiber = nr_photons / attennuation_in_factor
-        
+        calc_nr_photons_fiber = nr_photons * attennuation_in_factor
+        print(f"nr photons {nr_photons} vs calc nr photons fiber {calc_nr_photons_fiber}")
         # Poisson distribution to get amount of photons
         nr_photons_fiber = self.poisson_distr(calc_nr_photons_fiber)
 
@@ -222,12 +217,12 @@ class SimulationEngine:
             nr_photons_fiber = len(time_photons)  # Set to the maximum number of available photons
     
         # Step 2: Randomly select photons to keep (random selection of indices)
-        selected_indices = self.config.rng.sample(range(len(time_photons)), nr_photons_fiber)
-
+        selected_indices = self.config.rng.choice(range(len(time_photons)), nr_photons_fiber)
         # Step 3: Keep the selected photons and discard the rest
-        time_photons_fiber = time_photons[selected_indices]
-        wavelength_photons_fiber = wavelength_photons[selected_indices]
-        return wavelength_photons_fiber, time_photons_fiber, nr_photons_fiber
+        if len(selected_indices) > 0:
+            time_photons = time_photons[selected_indices]
+            wavelength_photons = wavelength_photons[selected_indices]
+        return wavelength_photons, time_photons, nr_photons_fiber
     
     def generate_bob_choices(self, basis_alice, value_alice, decoy_alice):
         """Generates Bob's choices for a quantum communication protocol."""
@@ -249,12 +244,6 @@ class SimulationEngine:
         wavelength_photons_det = wavelength_photons_fiber[pass_detection]
         time_photons_det = time_photons_fiber[pass_detection]
         nr_photons_det = np.sum(pass_detection)
-
-        #How many darkcount photons will be detected?
-        pulse_duration = 1 / self.config.sampling_rate_FPGA
-        symbol_duration = pulse_duration * self.config.n_pulses
-        num_dark_counts = self.config.rng.poisson(self.config.dark_count_frequency * symbol_duration)
-        dark_count_times = np.sort(self.config.rng.uniform(0, symbol_duration, num_dark_counts))
 
         #last photon detected --> can next photon be detected? --> sort stuff
         sorted_indices = np.argsort(time_photons_det)
@@ -280,21 +269,32 @@ class SimulationEngine:
         #add detector jitter
         t_detector_jittered = self.apply_jitter(t_jitter, name_jitter = 'detector')
 
-        return valid_timestamps, valid_wavelengths, valid_nr_photons, t_detector_jittered, num_dark_counts, dark_count_times
+        return valid_timestamps, valid_wavelengths, valid_nr_photons, t_detector_jittered
     
     def darkcount(self):
         #How many darkcount photons will be detected?
         pulse_duration = 1 / self.config.sampling_rate_FPGA
         symbol_duration = pulse_duration * self.config.n_pulses
         num_dark_counts = self.config.rng.poisson(self.config.dark_count_frequency * symbol_duration)
-        dark_count_times = np.sort(self.config.rng.uniform(0, symbol_duration, num_dark_counts))
+        if num_dark_counts > 0:
+            dark_count_times = np.sort(self.config.rng.uniform(0, symbol_duration, num_dark_counts))
+        else:
+            dark_count_times = np.empty(0)
         return dark_count_times, num_dark_counts
     
-    def classificator(self, t, valid_timestamps, valid_wavelengths, valid_nr_photons):
-        # classify timebins
-        timebins = np.linspace(0, t[-1], self.config.n_pulses + 1)
-        classified_photons = np.digitize(valid_timestamps, timebins) - 1
-
+    def classificator(self, t, valid_timestamps, valid_wavelengths, valid_nr_photons, value):
+        if valid_nr_photons > 0:
+            # classify timebins
+            timebins = np.linspace(0, t[-1], self.config.n_pulses)
+            detected_indices = np.digitize(valid_timestamps, timebins) - 1
+            pattern = self.config.encode_pulse(value)
+            # All photons are classified as correct (True)
+            if np.all(pattern[detected_indices] == 1):
+                return np.ones(valid_nr_photons, dtype=bool) 
+            else:  # Any photon in a wrong bin gets classified as incorrect (False)
+                return np.zeros(valid_nr_photons, dtype=bool)
+        else: # If no valid photons, return an empty array
+            return np.empty(0) 
 
     def find_T1(self, lower_limit, upper_limit, tol):
         # für X-Basis -> 110 ist 1000 non-decoy
@@ -324,7 +324,7 @@ class SimulationEngine:
             # Dynamically set the voltage attribute based on voltage_type
             setattr(self.config, voltage_type, voltage)
 
-            voltage_signal, t_jitter, signal = self.signal_bandwidth_jitter(*self.generate_alice_choices(basis, value, decoy, fixed = True))
+            voltage_signal, t_jitter, _ = self.signal_bandwidth_jitter(*self.generate_alice_choices(basis, value, decoy, fixed = True))
             _, calc_mean_photon_nr, _, transmission = self.eam_transmission_1_mean_photon_number(
                 voltage_signal, t_jitter, optical_power, peak_wavelength, T1_dampening, 
                 *self.generate_alice_choices(basis, value, decoy, fixed = True))
@@ -382,6 +382,13 @@ class SimulationEngine:
     
     def initialize(self):
         plt.style.use(self.config.mlp)
+        # check if voltage input makes sense
+        if (self.config.non_signal_voltage - self.config.voltage) != -1:
+            raise ValueError(f"The difference between non_signal_voltage and voltage is not 1")
+        if self.config.voltage != self.config.voltage_decoy or self.config.voltage != self.config.voltage_sup or self.config.voltage_decoy_sup:
+            raise ValueError(f"The starting voltage values are not the same") 
+
+
         #calculate T1 dampening 
         lower_limit_t1, upper_limit_t1, tol_t1 = 0, 100, 1e-3
         T1_dampening = self.find_T1(lower_limit_t1, upper_limit_t1, tol_t1)

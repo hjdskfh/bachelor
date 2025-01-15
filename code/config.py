@@ -36,7 +36,7 @@ class SimulationConfig:
         self.bandwidth = bandwidth
         self.jitter = jitter  # Timing jitter (s)
 
-        # Voltage configurations
+        # Voltage configurations: all voltages should be the same and non signal one lower, here 0 and -1 bc of eam transmission curve
         self.non_signal_voltage = non_signal_voltage
         self.voltage_decoy = voltage_decoy #Z-basis decoy state
         self.voltage = voltage #Z-Basis non decoy state
