@@ -63,7 +63,7 @@ class SimulationManager:
             # Simulate signal and transmission
             voltage_signal, t_jitter, _ = self.simulation_engine.signal_bandwidth_jitter(basis, value, decoy
                                                                                          )
-            _, _, _, transmission = self.simulation_engine.eam_transmission_1_mean_photon_number_new(
+            _, _, _, transmission = self.simulation_engine.eam_transmission_1_mean_photon_number(
                 voltage_signal, t_jitter, optical_power, peak_wavelength, T1_dampening, basis, value, decoy
             )
             
