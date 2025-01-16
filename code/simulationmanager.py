@@ -265,7 +265,9 @@ class SimulationManager:
         time_in_simulation = 0
         #normally is negative so the difference gets calculated right
         last_photon_time_minus_end_time = 0
-
+        basis_array = np.ones(self.config.n_samples)
+        value_array = np.ones(self.config.n_samples)
+        decoy_array = np.ones(self.config.n_samples)    
         nr_photons_before_fiber_array = np.ones(self.config.n_samples)
         nr_photons_fiber_array = np.ones(self.config.n_samples)
         nr_photons_after_detector_array = np.ones(self.config.n_samples)
@@ -278,9 +280,9 @@ class SimulationManager:
 
             # Simulate signal and transmission
             voltage_signal, t_jitter, _ = self.simulation_engine.signal_bandwidth_jitter(basis, value, decoy)
-            _, calc_mean_photon_nr, energy_pp, transmission = self.simulation_engine.eam_transmission_1_mean_photon_number(
-                voltage_signal, t_jitter, optical_power, peak_wavelength, T1_dampening, basis, value, decoy
-            )
+            _, calc_mean_photon_nr, energy_pp, transmission = self.simulation_engine.eam_transmission_1_mean_photon_number(voltage_signal, t_jitter, 
+                                                                                                                           optical_power, peak_wavelength, 
+                                                                                                                           T1_dampening, basis, value, decoy)
             wavelength_photons, time_photons, nr_photons = self.simulation_engine.eam_transmission_2_choose_photons(calc_mean_photon_nr, energy_pp, 
                                                                                                                     transmission, t_jitter, fixed_nr_photons=None)
             wavelength_photons_fiber, time_photons_fiber, nr_photons_fiber = self.simulation_engine.fiber_attenuation(wavelength_photons, time_photons, nr_photons)
@@ -301,6 +303,9 @@ class SimulationManager:
             nr_photons_before_fiber_array[i] = nr_photons
             nr_photons_fiber_array[i] = nr_photons_fiber
             nr_photons_after_detector_array[i] = valid_nr_photons
+            basis_array[i] = basis
+            value_array[i] = value  
+            decoy_array[i] = decoy
         
         print(f"min 1 dark count detected per run divided by all runs: {timer/self.config.n_samples}")
         # Bar width
