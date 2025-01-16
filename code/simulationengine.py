@@ -33,17 +33,12 @@ class SimulationEngine:
 
     def generate_alice_choices(self, basis=None, value=None, decoy=None, fixed=False):
         """Generates Alice's choices for a quantum communication protocol."""
-        if fixed:
-            basis = np.array([basis])
-            value = np.array([value])
-            value[basis == 0] = -1  # Mark X basis values
-            decoy = np.array([decoy])
-        else:
-            basis = self.config.rng.choice([0, 1], size=1, p=[1 - self.config.p_z_alice, self.config.p_z_alice])
-            value = self.config.rng.choice([0, 1], size=1, p=[1 - 0.5, 0.5])
-            value[basis == 0] = -1  # Mark X basis values
-            decoy = self.config.rng.choice([0, 1], size=1, p=[1 - self.config.p_decoy, self.config.p_decoy])
-
+        if fixed == False:
+            basis = self.config.rng.choice([0, 1], size=None, p=[1 - self.config.p_z_alice, self.config.p_z_alice])
+            value = self.config.rng.choice([0, 1], size=None, p=[1 - 0.5, 0.5])
+            decoy = self.config.rng.choice([0, 1], size=None, p=[1 - self.config.p_decoy, self.config.p_decoy])
+        if basis == 0:
+            value = -1 # Apply the modification: Set value elements where basis is 0 to -1
         return basis, value, decoy
     
     
@@ -207,7 +202,7 @@ class SimulationEngine:
         # Step 1: Calculate the number of photons to keep
         attennuation_in_factor = 10 ** (self.config.fiber_attenuation / 10)
         calc_nr_photons_fiber = nr_photons * attennuation_in_factor
-        print(f"nr photons {nr_photons} vs calc nr photons fiber {calc_nr_photons_fiber}")
+        #print(f"nr photons {nr_photons} vs calc nr photons fiber {calc_nr_photons_fiber}")
         # Poisson distribution to get amount of photons
         nr_photons_fiber = self.poisson_distr(calc_nr_photons_fiber)
 
@@ -226,7 +221,7 @@ class SimulationEngine:
     
     def generate_bob_choices(self, basis_alice, value_alice, decoy_alice):
         """Generates Bob's choices for a quantum communication protocol."""
-        # Bob's basis choice is random
+        # Bob's basis choice is random, muss nich 50:50
         basis_bob = self.config.rng.choice([0, 1], size = 1, p=[1-self.config.p_z_bob, self.config.p_z_bob]) # Randomly selects whether each pulse block is prepared in the Z-basis (0) or the X-basis (1) with a bias controlled by p_z_alice
         return basis_bob
 

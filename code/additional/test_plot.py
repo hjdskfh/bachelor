@@ -1,24 +1,19 @@
-import matplotlib.pyplot as plt
+import random
 import numpy as np
+import time
 
-# Example data (replace with your actual numbers)
-iterations = np.arange(1, 11)  # Iteration numbers
-photons_not_filtered = [50, 45, 40, 38, 35, 30, 28, 25, 22, 20]
-photons_filtered = [10, 15, 20, 22, 25, 30, 32, 35, 38, 40]
+# Timing Python's random module for 100,000 * 3 iterations
+start = time.time()
+random.seed(42)
+for _ in range(100000 * 3):
+    random_number = random.randint(0, 10)  # generating one random number
+random_time = time.time() - start
+print("random module time:", random_time)
 
-# Bar width
-bar_width = 0.4
-
-# Plot the bar graph
-plt.bar(iterations - bar_width/2, photons_not_filtered, width=bar_width, label='Not Filtered', color='blue')
-plt.bar(iterations + bar_width/2, photons_filtered, width=bar_width, label='Filtered', color='orange')
-
-# Add labels and title
-plt.xlabel('Iteration')
-plt.ylabel('Number of Photons')
-plt.title('Photons Filtered vs Not Filtered per Iteration')
-plt.xticks(iterations)  # Set x-axis ticks to iterations
-plt.legend()
-
-# Show the plot
-plt.show()
+# Timing NumPy's default_rng for 100,000 * 3 iterations
+start = time.time()
+rng = np.random.default_rng(42)
+for _ in range(100000 * 3):
+    numpy_number = rng.integers(0, 10)  # generating one random number
+numpy_time = time.time() - start
+print("NumPy RNG time:", numpy_time)

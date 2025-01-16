@@ -2,7 +2,8 @@ import matplotlib.pyplot as plt
 from pathlib import Path
 import datetime
 import json
-
+import psutil
+import os
 
 class Saver:
     def __init__(self):
@@ -72,3 +73,11 @@ class Saver:
         
         except Exception as e:
             print(f"Error saving to JSON: {e}")
+
+    @staticmethod
+    def memory_usage(description):
+        process = psutil.Process(os.getpid())  # Get the current process
+        memory_info = process.memory_info()
+        memory_used = memory_info.rss  # Memory used by the process in bytes
+        memory_used_mb = memory_used / (1024 ** 2)  # Convert to MB
+        print(f"[{description}] Memory used: {memory_used_mb:.2f} MB")
