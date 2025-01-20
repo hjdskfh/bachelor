@@ -262,9 +262,7 @@ class SimulationManager:
     
     def run_simulation_after_detector(self):
         T1_dampening = self.simulation_engine.initialize()
-        time_in_simulation = 0
-        #normally is negative so the difference gets calculated right
-        last_photon_time_minus_end_time = 0
+        time_in_simulation = 0 
   
         optical_power, peak_wavelength = self.simulation_engine.random_laser_output('current_power', 'voltage_shift', 'current_wavelength')
         
@@ -274,33 +272,22 @@ class SimulationManager:
         # Simulate signal and transmission
         voltage_signal, t_jitter, _ = self.simulation_engine.signal_bandwidth_jitter(basis, value, decoy)
         power_dampened, transmission = self.simulation_engine.eam_transmission(voltage_signal, optical_power, T1_dampening)
-        print(f"transmission: {transmission.shape}")
         calc_power_fiber = self.simulation_engine.fiber_attenuation(power_dampened)
-        print(f"calc_power_fiber shape:{calc_power_fiber.shape}")
 
         #print(f"calc_power_fiber: {calc_power_fiber.shape()}")
-        wavelength_photons, time_photons, nr_photons = self.simulation_engine.choose_photons(calc_power_fiber, transmission, t_jitter, peak_wavelength)
-        valid_timestamps, valid_wavelengths, valid_nr_photons, t_detector_jittered = self.simulation_engine.detector(last_photon_time_minus_end_time, 
-                                                                                                                        t_jitter, wavelength_photons, time_photons, nr_photons)
+        wavelength_photons, time_photons, nr_photons, list_where_photons, non_zero_photons = self.simulation_engine.choose_photons(calc_power_fiber, transmission, 
+                                                                                                                 t_jitter, peak_wavelength)
+        valid_timestamps, valid_wavelengths, valid_nr_photons, t_detector_jittered = self.simulation_engine.detector(t_jitter, wavelength_photons, 
+                                                                                                                     time_photons, nr_photons)
         dark_count_times, num_dark_counts = self.simulation_engine.darkcount()
-        timer = 0
-        if num_dark_counts > 0: 
-            timer = timer + 1
-        '''print(f"run {i}: wavelength photon after fiber:{wavelength_photons}")
-        print(f"run {i}: wavelength after detection efficiency:{wavelength_photons_det}")
-        print(f"run {i}: nr after detection efficiency:{nr_photons_det}")
-        print(f"run {i}: wavelength photon after detector:{valid_wavelengths}")
-        print(f"run {i}: nr dark counts:{num_dark_counts}")'''
-        time_in_simulation = time_in_simulation + t_jitter[-1]
             
-        print(f"min 1 dark count detected per run divided by all runs: {timer/self.config.n_samples}")
         # Bar width
         bar_width = 0.3
-        print(f"shape nr photons: {valid_nr_photons.shape()}")
+        print(f"valid nr photons: {valid_nr_photons}")
         # Plot the bar graph
         iterations = np.arange(1, self.config.n_samples + 1)
-        plt.bar(iterations - 0.5*bar_width, nr_photons, width=bar_width, label='fiber', color='blue')
-        plt.bar(iterations + 0.5*bar_width, valid_nr_photons, width=bar_width, label='detector', color='green')
+        plt.bar(list_where_photons - 0.5*bar_width, nr_photons, width=bar_width, label='fiber', color='blue')
+        plt.bar(list_where_photons + 0.5*bar_width, valid_nr_photons, width=bar_width, label='detector', color='green')
 
         # Add labels and title
         plt.xlabel('iteration')
