@@ -187,46 +187,47 @@ class SimulationEngine:
         nr_iterations_where_photons = len(index_where_photons)
 
         # Pre-allocate arrays for the photon properties
-        max_nr_photons = max(nr_photons)
-        energy_per_photon = np.full((nr_iterations_where_photons, max_nr_photons), np.nan)
+        all_time_max_nr_photons = max(nr_photons)
+        energy_per_photon = np.full((nr_iterations_where_photons, all_time_max_nr_photons), np.nan)
         wavelength_photons = np.full_like(energy_per_photon, np.nan)
         time_photons = np.full_like(energy_per_photon, np.nan)
+        nr_photons = nr_photons[non_zero_photons] #delete rows where number of photons is 0
 
         # Calculate the normalized transmission
         norm_transmission = transmission / transmission.sum(axis=1, keepdims=True)
 
         # Generate the photon properties for each sample with non-zero photons
         for i, idx in enumerate(index_where_photons):
-            photon_count = nr_photons[idx]
+            photon_count = nr_photons[i]
             energy_per_photon[i, :photon_count] = energy_per_pulse[idx] / photon_count
             wavelength_photons[i, :photon_count] = (constants.h * constants.c) / energy_per_photon[i, :photon_count]
             time_photons[i, :photon_count] = self.config.rng.choice(t_jitter[idx], size=photon_count, p=norm_transmission[idx])
 
-        return wavelength_photons, time_photons, nr_photons, index_where_photons, non_zero_photons, max_nr_photons
+        return wavelength_photons, time_photons, nr_photons, index_where_photons, all_time_max_nr_photons
     
-    def detector(self, t_jitter, wavelength_photons, time_photons, index_where_photons, max_nr_photons):
+    def detector(self, t_jitter, wavelength_photons, time_photons, nr_photons, index_where_photons, all_time_max_nr_photons):
         """Simulate the detector process."""
         # Will the photons pass the detection efficiency?
-        pass_detection = self.config.rng.choice([False, True], size=(len(index_where_photons), max_nr_photons), p=[1 - self.config.detector_efficiency, self.config.detector_efficiency])
-        print(f"pass_detection: {pass_detection.shape}")
+        pass_detection = self.config.rng.choice([False, True], size=(len(index_where_photons), all_time_max_nr_photons), p=[1 - self.config.detector_efficiency, self.config.detector_efficiency])
 
+        # Apply the detection efficiency to the photon properties
         wavelength_photons = np.where(pass_detection, wavelength_photons, np.nan)
-        print(f"wavelength_photons: {wavelength_photons.shape}")
         time_photons = np.where(pass_detection, time_photons, np.nan)
 
         # delete all Nan values
         valid_rows = ~np.isnan(wavelength_photons).all(axis=1)
-        index_where_photons = index_where_photons[valid_rows]
-        wavelength_photons = wavelength_photons[valid_rows]
-        print(f"wavelength_photons after del nan: {wavelength_photons.shape}")
-        time_photons = time_photons[valid_rows]
+        nr_photons_det = nr_photons[valid_rows] #nr_photons only for the ones we carry, rest 0
+        index_where_photons_det = index_where_photons[valid_rows]
+        wavelength_photons_det = wavelength_photons[valid_rows]
+        #print(f"wavelength_photons after del nan: {wavelength_photons.shape}")
+        time_photons_det = time_photons[valid_rows]
 
         # Last photon detected --> can next photon be detected? --> sort stuff
-        sorted_indices = [np.argsort(time) for time in time_photons]
-        wavelength_photons = [wavelength_photon[indices] for wavelength_photon, indices in zip(wavelength_photons, sorted_indices)]
-        time_photons = [time_photon[indices] for time_photon, indices in zip(time_photons, sorted_indices)]
-        print(f"in fct time_photons: {time_photons}")
-        # Compute differences with vectorized operations
+        sorted_indices = [np.argsort(time) for time in time_photons_det]
+        wavelength_photons = [wavelength_photon[indices] for wavelength_photon, indices in zip(wavelength_photons_det, sorted_indices)]
+        time_photons = [time_photon[indices] for time_photon, indices in zip(time_photons_det, sorted_indices)]
+        #print(f"in fct time_photons: {time_photons}")
+        '''# Compute differences with vectorized operations
         last_photon_time_minus_end_time = np.empty(self.config.n_samples)
         last_photon_time_minus_end_time[0] = 0
         last_photon_time_minus_end_time = [time_p[-1] - t_jitter[i, -1] if len(time_p) > 0 
@@ -237,16 +238,102 @@ class SimulationEngine:
 
         # Create valid indices
         valid_indices = [np.where(time_diff >= self.config.detection_time)[0] for time_diff in time_diffs]
-        print(f"valid_indices: {valid_indices}")
+        print(f"valid_indices: {valid_indices}")'''
 
-        # Apply the mask to both timestamps and wavelengths, ignoring np.nan values
-        valid_timestamps = [time_photon[indices] for time_photon, indices in zip(time_photons, valid_indices) if not np.isnan(indices).all()]
-        valid_wavelengths = [wavelength_photon[indices] for wavelength_photon, indices in zip(wavelength_photons, valid_indices) if not np.isnan(indices).all()]
-        valid_nr_photons = [len(indices) for indices in valid_indices if not np.isnan(indices).all()]
+        '''last_index = 0
+        simulation_time = 0
+        last_photon_time_minus_end_time = 0 
+        time_diffs = np.empty_like(time_photons)
+        for k, time_phot in enumerate(time_photons):
+            index_w = index_where_photons[k]
+            index_skip = index_w - last_index
+            if index_skip > 1:
+                for l in range(index_skip):
+                    last_photon_time_minus_end_time -= t_jitter[last_index + l, -1]
+            last_photon_time_minus_end_time = time_photons[k][-1] - t_jitter[index_w, -1]
+            last_index = index_w
+            time_diff = np.diff(time_phot, prepend=last_photon_time_minus_end_time)
         
+        time_diffs = [np.diff(time_photon, prepend=last_photon_time_minus_end_time[i]) for i, time_photon in enumerate(time_photons)]
+        valid_indices = time_diffs >= self.config.detection_time
+            '''
+        print(f"time_photons_det vor {np.count_nonzero(~np.isnan(time_photons_det))}")
+        # Initialize the adjusted times array with NaN values
+        for i, time_p in enumerate(time_photons_det):
+            # Initialize a list to store valid photons for this row
+            last_valid_time = 0  # Start with time 0 to allow the first photon
+
+            for j, time in enumerate(time_p):
+                if np.isnan(time):
+                    # If it's NaN, skip it (no photon detected)
+                    continue
+                else:
+                    # If it's a valid photon, check if it's after the dead time
+                    #print(f"differenz{time - last_valid_time}")
+                    if time - last_valid_time < self.config.detection_time:
+                        # If it's to close to the last valid time, skip it
+                        time_photons_det[i, j] = np.nan  # Set the invalid photon to NaN
+                        #print(f"delete time{time}")
+                        wavelength_photons_det[i, j] = np.nan  # Set the invalid wavelength to NaN
+                    else:
+                        last_valid_time = time - t_jitter[i, -1]
+
+        print(f"time_photons_det nach {np.count_nonzero(~np.isnan(time_photons_det))}")
+
+
+        '''
+        # Initialize the array
+        last_photon_time_minus_end_time = np.zeros(self.config.n_samples)
+        last_photon_time_minus_end_time[0] = 0  # First value is zero or some other initial value
+
+        # Calculate the last photon time minus the end time for each time_p
+        for i, time_p in enumerate(time_photons):
+            if len(time_p) > 0:
+                # Ignore NaN values by filtering out NaNs and then using the last valid time
+                time_p_no_nan = [t for t in time_p if not np.isnan(t)]
+                if time_p_no_nan:  # Ensure there's at least one valid time
+                    last_photon_time_minus_end_time[i] = time_p_no_nan[-1] - t_jitter[i, -1]
+            else:
+                # Handle empty time_p
+                last_photon_time_minus_end_time[i] = last_photon_time_minus_end_time[i] - t_jitter[i, -1]
+            
+
+        # Calculate time differences with dead time (detection time) consideration
+        time_diffs = [np.diff(time_photon, prepend=last_photon_time_minus_end_time[i]) for i, time_photon in enumerate(time_photons)]
+
+        # Create valid indices where the time difference is larger than the dead time (detection_time)
+        valid_indices = [
+            np.where(time_diff >= self.config.detection_time)[0]  # Indices where the time difference meets the detection threshold
+            for time_diff in time_diffs
+        ]'''
+
+        '''# Use np.nanmax to get the last valid time in each row (for the last photon), time_photons hat schon mind 1 nicht NaN value
+        last_photon_times = np.nanmax(time_photons, axis=1)
+
+        # Adjust last photon time by subtracting the jitter time (t_jitter) for each row
+        last_photon_time_minus_end_time = last_photon_times - np.nanmax(t_jitter, axis=1)
+
+        # Calculate time differences, using np.diff and prepending the adjusted last photon time
+        time_diffs = np.diff(time_photons, axis=1, prepend=last_photon_time_minus_end_time[:, np.newaxis])
+
+        # Vectorized operation to calculate valid indices where time difference is greater than detection_time
+        valid_indices = time_diffs >= self.config.detection_time
+
+        # Now, valid_indices will be a boolean array where True means the photon is allowed
+        # You can use this mask to filter `time_photons` and any other related data (like wavelengths)
+
+        # Example usage of valid indices to filter the timestamps (ignoring NaN values)
+        valid_photons = time_photons[valid_indices]'''
+        valid_rows = ~np.isnan(wavelength_photons_det).all(axis=1)
+        nr_photons_det = nr_photons_det[valid_rows] #nr_photons only for the ones we carry, rest 0
+        index_where_photons_det = index_where_photons_det[valid_rows]
+        wavelength_photons_det = wavelength_photons_det[valid_rows]
+        time_photons_det = time_photons_det[valid_rows]
+
+
         t_detector_jittered = self.apply_jitter_to_t(t_jitter, name_jitter='detector')
 
-        return valid_timestamps, valid_wavelengths, valid_nr_photons, t_detector_jittered
+        return time_photons_det, wavelength_photons_det, nr_photons_det, index_where_photons_det, t_detector_jittered
     
     def darkcount(self):
         """Calculate the number of dark count photons detected."""
