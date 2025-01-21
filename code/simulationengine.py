@@ -173,80 +173,76 @@ class SimulationEngine:
 
     def choose_photons(self, calc_power_fiber, transmission, t_jitter, peak_wavelength, fixed_nr_photons=None):
         """Calculate and choose photons based on the transmission and jitter."""
-        #calc mean photon number
-        #energy_per_pulse = np.array([np.trapz(calc_power_fiber[i], t_jitter[i])
-        #                      for i in range(self.config.n_samples)])
+        # Calculate the mean photon number
         energy_per_pulse = np.trapz(calc_power_fiber, t_jitter, axis=1)
         calc_mean_photon_nr = energy_per_pulse / (constants.h * constants.c / peak_wavelength)
-        #Poisson distribution to get amount of photons
+        
+        # Use Poisson distribution to get the number of photons
         nr_photons = fixed_nr_photons if fixed_nr_photons is not None else self.poisson_distr(calc_mean_photon_nr)
         print(f"nr_photons: {nr_photons}")
+        
+        # Find the indices where the number of photons is greater than 0
         non_zero_photons = nr_photons > 0
         index_where_photons = np.where(non_zero_photons)[0]
+        nr_iterations_where_photons = len(index_where_photons)
 
-        nr_iterations_where_photons = non_zero_photons.sum()
-        #energy_per_photon = np.where(non_zero_photons, energy_per_pulse / nr_photons, 0)
-        #wavelength_photons = np.where(non_zero_photons[:, None], (constants.h * constants.c) / energy_per_photon[:, None], 0)   
+        # Pre-allocate arrays for the photon properties
+        max_nr_photons = max(nr_photons)
+        energy_per_photon = np.full((nr_iterations_where_photons, max_nr_photons), np.nan)
+        wavelength_photons = np.full_like(energy_per_photon, np.nan)
+        time_photons = np.full_like(energy_per_photon, np.nan)
+
+        # Calculate the normalized transmission
         norm_transmission = transmission / transmission.sum(axis=1, keepdims=True)
 
-        
+        # Generate the photon properties for each sample with non-zero photons
+        for i, idx in enumerate(index_where_photons):
+            photon_count = nr_photons[idx]
+            energy_per_photon[i, :photon_count] = energy_per_pulse[idx] / photon_count
+            wavelength_photons[i, :photon_count] = (constants.h * constants.c) / energy_per_photon[i, :photon_count]
+            time_photons[i, :photon_count] = self.config.rng.choice(t_jitter[idx], size=photon_count, p=norm_transmission[idx])
 
-        start_time_choose = time.time()  # Record start time
-        energy_per_photon = np.ones((nr_iterations_where_photons, max(nr_photons)))*-1
-        wavelength_photons = np.ones_like(energy_per_photon)*-1
-        time_photons = np.ones_like(energy_per_photon)*-1
-        nr_photons = nr_photons[non_zero_photons] #shape: (nr_iterations_where_photons,)
-        
-        for i, index_phot in enumerate(index_where_photons):
-                energy_per_photon[i] = energy_per_pulse[index_phot] / nr_photons[i]
-                wavelength_photons[i] = (constants.h * constants.c) / energy_per_photon[i]
-                time_photons[i] = self.config.rng.choice(t_jitter[index_phot], size=nr_photons[i], p=norm_transmission[index_phot])
-        end_time_choose = time.time()  # Record end time
-        execution_time = end_time_choose - start_time_choose  # Calculate execution time
-        print(f"Execution time for choose: {execution_time:.9f} seconds for {self.config.n_samples} samples")
-        
-
-        '''start_time_choose_2 = time.time()  # Record start time
-        energy_per_photon = []
-        wavelength_photons = []
-        time_photons = []
-        for idx, photons in enumerate(nr_photons):
-            if photons > 0:
-                energy_per_photon_current = energy_per_pulse[idx] / photons
-                energy_per_photon.append(energy_per_photon_current)
-                wavelength_photons.append((constants.h * constants.c) / energy_per_photon_current)
-                time_photons.append(self.config.rng.choice(t_jitter[idx], size=nr_photons[idx], p=norm_transmission[idx]))
-        end_time_choose_2 = time.time()  # Record end time
-        execution_time_2 = end_time_choose_2 - start_time_choose_2  # Calculate execution time
-        print(f"Execution time var 2 for choose: {execution_time_2:.9f} seconds for {self.config.n_samples} samples")'''
-        return wavelength_photons, time_photons, nr_photons, index_where_photons, non_zero_photons
+        return wavelength_photons, time_photons, nr_photons, index_where_photons, non_zero_photons, max_nr_photons
     
-    def detector(self, t_jitter, wavelength_photons, time_photons, nr_photons):
+    def detector(self, t_jitter, wavelength_photons, time_photons, index_where_photons, max_nr_photons):
         """Simulate the detector process."""
-        #will the photons pass the detection efficiency?
-        pass_detection = self.config.rng.choice([False, True], size=(len(nr_photons), max(nr_photons)), p=[1 - self.config.detector_efficiency, self.config.detector_efficiency])
+        # Will the photons pass the detection efficiency?
+        pass_detection = self.config.rng.choice([False, True], size=(len(index_where_photons), max_nr_photons), p=[1 - self.config.detector_efficiency, self.config.detector_efficiency])
         print(f"pass_detection: {pass_detection.shape}")
-        wavelength_photons_det = [wavelength_photon[pass_detection[i]] for i, wavelength_photon in enumerate(wavelength_photons)]
-        time_photons_det = [time_photon[pass_detection[i]] for i, time_photon in enumerate(time_photons)]
-        nr_photons_det = np.sum(pass_detection, axis=1)
 
-        #last photon detected --> can next photon be detected? --> sort stuff
-        sorted_indices = [np.argsort(time_photon) for time_photon in time_photons_det]
-        wavelength_photons_det = [wavelength_photon[indices] for wavelength_photon, indices in zip(wavelength_photons_det, sorted_indices)]
-        time_photons_det = [time_photon[indices] for time_photon, indices in zip(time_photons_det, sorted_indices)]
+        wavelength_photons = np.where(pass_detection, wavelength_photons, np.nan)
+        print(f"wavelength_photons: {wavelength_photons.shape}")
+        time_photons = np.where(pass_detection, time_photons, np.nan)
+
+        # delete all Nan values
+        valid_rows = ~np.isnan(wavelength_photons).all(axis=1)
+        index_where_photons = index_where_photons[valid_rows]
+        wavelength_photons = wavelength_photons[valid_rows]
+        print(f"wavelength_photons after del nan: {wavelength_photons.shape}")
+        time_photons = time_photons[valid_rows]
+
+        # Last photon detected --> can next photon be detected? --> sort stuff
+        sorted_indices = [np.argsort(time) for time in time_photons]
+        wavelength_photons = [wavelength_photon[indices] for wavelength_photon, indices in zip(wavelength_photons, sorted_indices)]
+        time_photons = [time_photon[indices] for time_photon, indices in zip(time_photons, sorted_indices)]
+        print(f"in fct time_photons: {time_photons}")
         # Compute differences with vectorized operations
         last_photon_time_minus_end_time = np.empty(self.config.n_samples)
         last_photon_time_minus_end_time[0] = 0
-        last_photon_time_minus_end_time = [time_photon[-1] - t_jitter[i, -1] if len(time_photon) > 0 
-                                           else last_photon_time_minus_end_time[i] - t_jitter[i, -1] 
-                                           for i, time_photon in enumerate(time_photons_det)]
-        time_diffs = [np.diff(time_photon, prepend=last_photon_time_minus_end_time[i]) for i, time_photon in enumerate(time_photons_det)]
+        last_photon_time_minus_end_time = [time_p[-1] - t_jitter[i, -1] if len(time_p) > 0 
+                                        else last_photon_time_minus_end_time[i] - t_jitter[i, -1] 
+                                        for i, time_p in enumerate(time_photons)]
+        time_diffs = [np.diff(time_photon, prepend=last_photon_time_minus_end_time[i]) for i, time_photon in enumerate(time_photons)]
+        print(f"time_diffs: {time_diffs}")
+
         # Create valid indices
         valid_indices = [np.where(time_diff >= self.config.detection_time)[0] for time_diff in time_diffs]
-        # Apply the mask to both timestamps and wavelengths
-        valid_timestamps = [time_photon[indices] for time_photon, indices in zip(time_photons_det, valid_indices)]
-        valid_wavelengths = [wavelength_photon[indices] for wavelength_photon, indices in zip(wavelength_photons_det, valid_indices)]
-        valid_nr_photons = [len(indices) for indices in valid_indices]            
+        print(f"valid_indices: {valid_indices}")
+
+        # Apply the mask to both timestamps and wavelengths, ignoring np.nan values
+        valid_timestamps = [time_photon[indices] for time_photon, indices in zip(time_photons, valid_indices) if not np.isnan(indices).all()]
+        valid_wavelengths = [wavelength_photon[indices] for wavelength_photon, indices in zip(wavelength_photons, valid_indices) if not np.isnan(indices).all()]
+        valid_nr_photons = [len(indices) for indices in valid_indices if not np.isnan(indices).all()]
         
         t_detector_jittered = self.apply_jitter_to_t(t_jitter, name_jitter='detector')
 
