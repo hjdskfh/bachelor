@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator
 from concurrent.futures import ThreadPoolExecutor
+from tqdm import tqdm
 
 from saver import Saver
 from simulationengine import SimulationEngine
@@ -17,8 +18,8 @@ class SimulationManager:
         optical_power, peak_wavelength = self.simulation_engine.random_laser_output('current_power','voltage_shift', 'current_wavelength')
         
         basis, value, decoy = self.simulation_engine.generate_alice_choices(basis = 0, value = 0, decoy = 0, fixed = True)
-        voltage_signal, t_jitter, signal = self.simulation_engine.signal_bandwidth_jitter(basis, value, decoy)
-        _, _, _, transmission = self.simulation_engine.eam_transmission_1_mean_photon_number(voltage_signal, t_jitter, optical_power, peak_wavelength, T1_dampening, basis, value, decoy)    
+        voltage_signal, t_jitter, _ = self.simulation_engine.signal_bandwidth_jitter(basis, value, decoy)
+        _, transmission = self.simulation_engine.eam_transmission(voltage_signal, optical_power, T1_dampening)
 
         fig, ax = plt.subplots(figsize=(8, 5))
         ax2 = ax.twinx()  # Create a second y-axis
@@ -58,14 +59,11 @@ class SimulationManager:
     
         def process_state(state):
             # Generate Alice's choices
-            basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=state["basis"], value=state["value"], decoy=state["decoy"], fixed = True)
+            basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=state["basis"], value=state["value"], decoy=state["decoy"])
             
             # Simulate signal and transmission
-            voltage_signal, t_jitter, _ = self.simulation_engine.signal_bandwidth_jitter(basis, value, decoy
-                                                                                         )
-            _, _, _, transmission = self.simulation_engine.eam_transmission_1_mean_photon_number(
-                voltage_signal, t_jitter, optical_power, peak_wavelength, T1_dampening, basis, value, decoy
-            )
+            voltage_signal, t_jitter, _ = self.simulation_engine.signal_bandwidth_jitter(basis, value, decoy)
+            _, transmission = self.simulation_engine.eam_transmission(voltage_signal, optical_power, T1_dampening)
             
             return state, t_jitter, voltage_signal, transmission
 
@@ -73,9 +71,11 @@ class SimulationManager:
         with ThreadPoolExecutor() as executor:
             futures = [executor.submit(process_state, state) for state in states]
             results = [future.result() for future in futures]
+            print(f"results len: {len(results)}")
 
         # Plotting results sequentially to avoid threading issues with Matplotlib
-        for result in results:
+        for result in enumerate(results): #, desc="parameters", unit="parameters", leave = False, position=0):
+            print(f"result: {result}")
             state, t_jitter, voltage_signal, transmission = result
             fig, ax = plt.subplots(figsize=(8, 5))
             ax2 = ax.twinx()  # Create a second y-axis
@@ -133,11 +133,13 @@ class SimulationManager:
                 
                 # Simulate signal and transmission
                 voltage_signal, t_jitter, _ = self.simulation_engine.signal_bandwidth_jitter(basis, value, decoy)
-                _, calc_mean_photon_nr, energy_pp, transmission = self.simulation_engine.eam_transmission_1_mean_photon_number(
-                    voltage_signal, t_jitter, optical_power, peak_wavelength, T1_dampening, basis, value, decoy
-                )
+                power_dampened, transmission = self.simulation_engine.eam_transmission(voltage_signal, optical_power, T1_dampening)
+                calc_mean_photon_nr, wavelength_photons, time_photons, nr_photons, index_where_photons, all_time_max_nr_photons, sum_nr_photons_at_chosen = self.simulation_engine.choose_photons(calc_power_fiber, transmission, 
+                                                                                                                                                                     t_jitter, peak_wavelength)
+    
+                time_photons_det, wavelength_photons_det, nr_photons_det, index_where_photons_det, t_detector_jittered = self.simulation_engine.detector(t_jitter, wavelength_photons, time_photons, 
+                                                                                                                     nr_photons, index_where_photons, all_time_max_nr_photons)
                 mean_photon_nr_arr[i+1] = calc_mean_photon_nr
-                wavelength_photons, time_photons, nr_photons = self.simulation_engine.eam_transmission_2_choose_photons(calc_mean_photon_nr, energy_pp, transmission, t_jitter, fixed_nr_photons=None)
                 if nr_photons != 0:
                     wavelength_arr.extend([wavelength_photons])
                     time_arr.extend([time_photons])
@@ -231,8 +233,12 @@ class SimulationManager:
                     
                     # Simulate signal and transmission
                     voltage_signal, t_jitter, _ = self.simulation_engine.signal_bandwidth_jitter(basis, value, decoy)
-                    _, calc_mean_photon_nr, _, _ = self.simulation_engine.eam_transmission_1_mean_photon_number(
-                        voltage_signal, t_jitter, optical_power, peak_wavelength, T1_dampening, basis, value, decoy)
+                    power_dampened, transmission = self.simulation_engine.eam_transmission(voltage_signal, optical_power, T1_dampening)
+                    calc_power_fiber = self.simulation_engine.fiber_attenuation(power_dampened)
+
+                    calc_mean_photon_nr, wavelength_photons, time_photons, nr_photons, index_where_photons, all_time_max_nr_photons, sum_nr_photons_at_chosen = self.simulation_engine.choose_photons(calc_power_fiber, transmission, 
+                                                                                                                                                                                t_jitter, peak_wavelength)
+            
                     mean_of_mean_photon[i] = calc_mean_photon_nr
 
                     if mean_photon_nr_min > calc_mean_photon_nr:
@@ -275,7 +281,7 @@ class SimulationManager:
         calc_power_fiber = self.simulation_engine.fiber_attenuation(power_dampened)
 
         #print(f"calc_power_fiber: {calc_power_fiber.shape()}")
-        wavelength_photons, time_photons, nr_photons, index_where_photons, all_time_max_nr_photons, sum_nr_photons_at_chosen = self.simulation_engine.choose_photons(calc_power_fiber, transmission, 
+        calc_mean_photon_nr, wavelength_photons, time_photons, nr_photons, index_where_photons, all_time_max_nr_photons, sum_nr_photons_at_chosen = self.simulation_engine.choose_photons(calc_power_fiber, transmission, 
                                                                                                                                                                      t_jitter, peak_wavelength)
     
         time_photons_det, wavelength_photons_det, nr_photons_det, index_where_photons_det, t_detector_jittered = self.simulation_engine.detector(t_jitter, wavelength_photons, time_photons, 

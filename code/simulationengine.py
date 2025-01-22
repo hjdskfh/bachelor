@@ -33,10 +33,25 @@ class SimulationEngine:
 
     def generate_alice_choices(self, basis=None, value=None, decoy=None):
         """Generates Alice's choices for a quantum communication protocol."""
-        # Generate arrays if any parameter is missing
-        basis = basis or self.config.rng.choice([0, 1], size=self.config.n_samples, p=[1 - self.config.p_z_alice, self.config.p_z_alice])
-        value = value or self.config.rng.choice([0, 1], size=self.config.n_samples, p=[1 - 0.5, 0.5])
-        decoy = decoy or self.config.rng.choice([0, 1], size=self.config.n_samples, p=[1 - self.config.p_decoy, self.config.p_decoy])
+        # Generate arrays if parameters are not provided
+
+        if basis is None:
+            basis = self.config.rng.choice(
+                [0, 1], size=self.config.n_samples, p=[1 - self.config.p_z_alice, self.config.p_z_alice]
+            )
+        if value is None:
+            value = self.config.rng.choice(
+                [0, 1], size=self.config.n_samples, p=[0.5, 0.5]
+            )
+        if decoy is None:
+            decoy = self.config.rng.choice(
+                [0, 1], size=self.config.n_samples, p=[1 - self.config.p_decoy, self.config.p_decoy]
+            )
+
+        # Ensure all inputs are NumPy arrays
+        basis = np.array(basis, dtype=int)
+        value = np.array(value, dtype=int)
+        decoy = np.array(decoy, dtype=int)
         
         # Adjust value for array case if basis is 0
         if isinstance(basis, np.ndarray):
@@ -44,10 +59,13 @@ class SimulationEngine:
         else:
             value = -1 if basis == 0 else value
 
-        # Ensure outputs are arrays for non-single-value case
-        basis = np.full(self.config.n_samples, basis)
-        value = np.full(self.config.n_samples, value)
-        decoy = np.full(self.config.n_samples, decoy)
+        # Ensure outputs are arrays of the correct size
+        if basis.size == 1:  # Scalar case
+            basis = np.full(self.config.n_samples, basis, dtype=int)
+        if value.size == 1:
+            value = np.full(self.config.n_samples, value, dtype=int)
+        if decoy.size == 1:
+            decoy = np.full(self.config.n_samples, decoy, dtype=int)
 
         return basis, value, decoy
     
@@ -198,7 +216,7 @@ class SimulationEngine:
             wavelength_photons[i, :photon_count] = (constants.h * constants.c) / energy_per_photon[i, :photon_count]
             time_photons[i, :photon_count] = self.config.rng.choice(t_jitter[idx], size=photon_count, p=norm_transmission[idx])
 
-        return wavelength_photons, time_photons, nr_photons, index_where_photons, all_time_max_nr_photons, sum_nr_photons_at_chosen
+        return calc_mean_photon_nr, wavelength_photons, time_photons, nr_photons, index_where_photons, all_time_max_nr_photons, sum_nr_photons_at_chosen
     
     def detector(self, t_jitter, wavelength_photons, time_photons, nr_photons, index_where_photons, all_time_max_nr_photons):
         """Simulate the detector process."""
