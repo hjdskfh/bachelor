@@ -55,26 +55,45 @@ class DataManager:
             raise ValueError(f"Invalid name for probabilities: {name}")
         return self.curves[name]['prob'], self.curves[name]['x']
 
-    def get_data_array(self, x_data, name):
-        x_min = self.curves[name]['x_min']
-        x_max = self.curves[name]['x_max']
-        if (x_data < x_min).any() or (x_data > x_max).any():
-            out_of_bounds = np.where((x_data < x_min) | (x_data > x_max))[0]
-            raise ValueError(x_data, " x data array isn't in table for ", name, " x_data: ", x_data, 
-                             " x_min ", x_min, " and x_max: ", x_max, " out of bounds index: ", out_of_bounds, 
-                             " out of bounds: ",x_data[out_of_bounds])
-        if name not in self.curves:
-            raise ValueError(f"Spline '{name}' not found.")
-        return self.curves[name]['tck'] # Return tck
-
     def get_data(self, x_data, name):
         x_min = self.curves[name]['x_min']
         x_max = self.curves[name]['x_max']
-        if x_data < x_min or x_data > x_max:
-            raise ValueError(x_data, " x data isn't in table for ", name)
+        if isinstance(x_data, np.ndarray) and x_data.ndim == 2:
+            print(f"First few elements of x_data: {x_data[:5, :5]}")
+            print(f"x_min: {x_min}, x_max: {x_max}")
+            print(f"x_data shape: {x_data.shape}")
+        if np.isscalar(x_data):
+            if x_data < x_min or x_data > x_max:
+                raise ValueError(x_data, " x data isn't in table for ", name)
+        elif isinstance(x_data, np.ndarray):
+            if x_data.ndim == 1:
+                if (x_data < x_min).any() or (x_data > x_max).any():
+                    out_of_bounds = np.where((x_data < x_min) | (x_data > x_max))
+                    raise ValueError(x_data, " x data array isn't in table for ", name, " x_data: ", x_data, 
+                                    " x_min ", x_min, " and x_max: ", x_max, " out of bounds index: ", out_of_bounds, 
+                                    " out of bounds: ",x_data[out_of_bounds])
+            else:
+                out_of_bounds = np.where((x_data < x_min) | (x_data > x_max))
+                print(f"out_of_bounds: {out_of_bounds}")
+                if out_of_bounds[0].size > 0:
+                    out_of_bounds_values = x_data[out_of_bounds]
+                    out_of_bounds_indices = list(zip(out_of_bounds[0], out_of_bounds[1]))  # Pair indices
+                    print("Out of bounds values:", out_of_bounds_values[:20])
+                    print("Out of bounds indices:", out_of_bounds_indices)
+                    raise ValueError(x_data, " x data array isn't in table for ", name, " x_data: ", x_data, 
+                                    " x_min ", x_min, " and x_max: ", x_max, " out of bounds index: ", out_of_bounds, 
+                                    " out of bounds: ",x_data[out_of_bounds])
+        else:
+            raise ValueError("Invalid x_data type")
         if name not in self.curves:
             raise ValueError(f"Spline '{name}' not found.")
+        
         return self.curves[name]['tck'] # Return tck
+
+    def get_data_x_min_x_max(self, name):
+        x_min = self.curves[name]['x_min']
+        x_max = self.curves[name]['x_max']
+        return x_min, x_max
     
     def show_data(self, csv_file, column1, column2, rows):
         table = pd.read_csv(csv_file, nrows = rows)

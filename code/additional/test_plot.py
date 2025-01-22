@@ -1,19 +1,19 @@
-import random
 import numpy as np
 import time
 
-# Timing Python's random module for 100,000 * 3 iterations
-start = time.time()
-random.seed(42)
-for _ in range(100000 * 3):
-    random_number = random.randint(0, 10)  # generating one random number
-random_time = time.time() - start
-print("random module time:", random_time)
+# Create random data of shape (1000000, 6153)
+x_data = np.random.randn(100000, 6153)
 
-# Timing NumPy's default_rng for 100,000 * 3 iterations
-start = time.time()
-rng = np.random.default_rng(42)
-for _ in range(100000 * 3):
-    numpy_number = rng.integers(0, 10)  # generating one random number
-numpy_time = time.time() - start
-print("NumPy RNG time:", numpy_time)
+# Define some min and max values for the bounds check
+x_min = -2
+x_max = 2
+
+# Start the timer
+start_time = time.time()
+
+# Perform np.where on the large array
+out_of_bounds = np.where((x_data < x_min) | (x_data > x_max))
+
+# Measure the time elapsed
+elapsed_time = time.time() - start_time
+print(f"Execution time: {elapsed_time:.5f} seconds")

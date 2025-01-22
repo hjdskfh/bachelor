@@ -275,39 +275,56 @@ class SimulationManager:
         calc_power_fiber = self.simulation_engine.fiber_attenuation(power_dampened)
 
         #print(f"calc_power_fiber: {calc_power_fiber.shape()}")
-        wavelength_photons, time_photons, nr_photons, index_where_photons, all_time_max_nr_photons = self.simulation_engine.choose_photons(calc_power_fiber, transmission, 
-                                                                                                                 t_jitter, peak_wavelength)
-        print(f"wave: {wavelength_photons.shape}")
-        print(f"time: {time_photons.shape}")
-        print(f"nr: {nr_photons.shape}")
-        print(f"index_where: {index_where_photons.shape}")
+        wavelength_photons, time_photons, nr_photons, index_where_photons, all_time_max_nr_photons, sum_nr_photons_at_chosen = self.simulation_engine.choose_photons(calc_power_fiber, transmission, 
+                                                                                                                                                                     t_jitter, peak_wavelength)
+    
         time_photons_det, wavelength_photons_det, nr_photons_det, index_where_photons_det, t_detector_jittered = self.simulation_engine.detector(t_jitter, wavelength_photons, time_photons, 
                                                                                                                      nr_photons, index_where_photons, all_time_max_nr_photons)
         dark_count_times, num_dark_counts = self.simulation_engine.darkcount()
             
-        # Bar width
-        bar_width = 0.3
         # Plot the bar graph
-        iterations = np.arange(1, self.config.n_samples + 1)
-        '''print(f"list_where_photons: {index_where_photons.shape}")
-        print(f"nr_photons: {nr_photons.shape}")'''
         #plt.bar(index_where_photons - 0.5*bar_width, nr_photons, width=bar_width, label='fiber', color='blue')
         #plt.bar(index_where_photons_det + 0.5*bar_width, nr_photons_det, width=bar_width, label='detector', color='green')
 
-        # Scatter plot
-        plt.scatter(index_where_photons - 0.5*bar_width, nr_photons, c='blue', alpha=0.6, label='photon in fiber')
-        plt.scatter(index_where_photons_det + 0.5*bar_width, nr_photons_det, c='green', alpha=0.6, label='Photons detected')
-        plt.xlabel('Iteration')
-        plt.ylabel('Number of photons')
-        plt.title('Photons detected per iteration')
-        plt.legend()
-        #plt.show()
+        # Count occurrences for photons in bins
+        fiber_counts = np.bincount(nr_photons, minlength=4)  # Counts of 0, 1, 2, 3 photons in fiber
+        detector_counts = np.bincount(nr_photons_det, minlength=4)  # Counts of 0, 1, 2, 3 photons in detector
 
-        '''# Add labels and title
-        plt.xlabel('iteration')
-        plt.ylabel('number of photons')
-        plt.title('photons for ' + str(self.config.n_samples) + ' iterations for detection time of ' + str(self.config.detection_time) + 's')
-        plt.legend()'''
+        # Calculate the number of "no photon" bins
+        fiber_no_photon_bins = sum_nr_photons_at_chosen - len(nr_photons)  # For fiber
+        detector_no_photon_bins = sum_nr_photons_at_chosen - len(nr_photons_det)  # For detector
+
+        # Add the "no photon" counts to the 0-photon category
+        fiber_counts[0] += fiber_no_photon_bins
+        detector_counts[0] += detector_no_photon_bins
+
+        # Labels for the x-axis
+        photon_labels = [f"{i}" for i in range(all_time_max_nr_photons + 1)]
+
+        # Plotting
+        x = np.arange(len(photon_labels))  # Positions for the bars
+        bar_width = 0.35
+
+        plt.bar(x - bar_width/2, fiber_counts, width=bar_width, label="Fiber", color="teal")
+        plt.bar(x + bar_width/2, detector_counts, width=bar_width, label="Detector", color="coral")
+
+        # Add labels, title, and legend
+        plt.xlabel("Number of Photons")
+        plt.ylabel("Count")
+        plt.title("Photon Count Distribution in Fiber and Detector")
+        plt.text(
+            s="for "  + str(self.config.n_samples) + " symbols with\n"+ str(sum_nr_photons_at_chosen) + " Photons at fiber\n"+ str(nr_photons_det.sum()) + " Photons at detector",
+            x=0.79,  # Position the text closer to the right
+            y=0.65,   # Position the text in the vertical middle
+            transform=plt.gca().transAxes,
+            ha='center',
+            va='center',
+            fontsize=12,
+            bbox=dict(facecolor='white', edgecolor='black', boxstyle='round,pad=0.5')  # Box around the text
+        )
+        plt.xticks(x, photon_labels)  # Set x-axis tick labels
+        plt.legend()
+        plt.tight_layout()
 
         # Show the plot
         Saver.save_plot(f"photons_in_fiber_vs_after detector")
