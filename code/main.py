@@ -39,7 +39,7 @@ config = SimulationConfig(database, seed = seed, n_samples=4, n_pulses=4, mean_v
                  p_z_alice=0.5, p_decoy=0.1, p_z_bob = 0.5, sampling_rate_FPGA=6.5e9, bandwidth = 4e9, jitter=jitter, 
                  non_signal_voltage = -1, voltage_decoy=0, voltage=0, voltage_decoy_sup=0, voltage_sup=0,
                  mean_photon_nr=0.7, mean_photon_decoy=0.1, 
-                 fiber_attenuation=-3, detector_efficiency = 0.3, dark_count_frequency = 10, detection_time = 1e-10, detector_jitter = detector_jitter,
+                 fiber_attenuation=-3, fraction_long_arm = 0.6, detector_efficiency = 0.3, dark_count_frequency = 10, detection_time = 1e-10, detector_jitter = detector_jitter,
                  mlp = 'C:/Users/leavi/OneDrive/Dokumente/Uni/Semester 7/NeuMoQP/Programm/code/Presentation_style_1_adjusted_no_grid.mplstyle'
                  )
 simulation = SimulationManager(config)
@@ -58,7 +58,7 @@ execution_time = end_time_read - start_time  # Calculate execution time
 print(f"Execution time for readin: {execution_time:.9f} seconds for {config.n_samples} samples")
 
 #plot results
-simulation.run_simulation_states()
+simulation.run_simulation_after_detector()
 #simulation.run_simulation_histograms()
 
 # Disable profiler
