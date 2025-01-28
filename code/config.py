@@ -34,7 +34,7 @@ class SimulationConfig:
 
         # Bandwidth & Timing parameters 
         self.bandwidth = bandwidth
-        self.jitter = jitter  # Timing jitter (s)
+        self.jitter = jitter  # Timing jitter in general (s)
 
         # Voltage configurations: all voltages should be the same and non signal one lower, here 0 and -1 bc of eam transmission curve
         self.non_signal_voltage = non_signal_voltage
@@ -71,4 +71,45 @@ class SimulationConfig:
             del result['data']
         
         return result
+    
+    def validate_parameters(self):
+        """Check if the configuration parameters are within valid ranges."""
+        # Example validation checks:
+        if self.n_samples <= 0:
+            print("Error: n_samples must be positive.")
+        if self.n_pulses <= 0 or self.n_pulses % 2 != 0:
+            print("Error: n_pulses must be positive and even.")
+        if self.mean_voltage < 0:
+            print("Error: mean_voltage must be positive.")
+        if self.mean_current < 0:
+            print("Error: mean_current must be positive.")
+        if self.current_amplitude < 0:
+            print("Error: current_amplitude must be positive.")
+        if not (0 <= self.p_z_alice <= 1):
+            print("Error: p_z_alice must be between 0 and 1.")
+        if not (0 <= self.p_z_bob <= 1):
+            print("Error: p_z_bob must be between 0 and 1.")
+        if self.sampling_rate_FPGA <= 0:
+            print("Error: sampling_rate_FPGA must be positive.")
+        if self.bandwidth <= 0:
+            print("Error: bandwidth must be positive.")
+        if self.jitter > 1/self.sampling_rate_FPGA:
+            print("Error: jitter must be less than the inverse of the sampling rate.")
+        if (self.non_signal_voltage - self.voltage) != -1:
+            print("The difference between non_signal_voltage and voltage is not 1")
+        if self.voltage != self.voltage_decoy or self.voltage != self.voltage_sup or self.voltage_decoy_sup:
+            print("The starting voltage values are not the same") 
+        if self.mean_photon_nr < 0 or self.mean_photon_decoy < 0 or self.mean_photon_nr < self.mean_photon_decoy or self.mean_photon_nr > 1:
+            print("Error: mean_photon_nr and mean_photon_decoy must be between 0 and 1 and mean_photon_nr must be larger than mean_photon_decoy.")
+        if not (0 <= self.fraction_long_arm <= 1):
+            print("Error: fraction_long_arm must be between 0 and 1.")
+        if self.detector_efficiency < 0 or self.detector_efficiency > 1:
+            print("Error: detector_efficiency must be between 0 and 1.")
+        if self.dark_count_frequency < 0:
+            print("Error: dark_count_frequency cannot be negative.")
+        if self.detection_time < 0:
+            print("Error: detection_time must be non negative.")
+        if self.detector_jitter < 0:
+            print("Error: detector_jitter cannot be negative.")
+       
         

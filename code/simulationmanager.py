@@ -288,7 +288,7 @@ class SimulationManager:
         power_dampened, transmission = self.simulation_engine.eam_transmission(voltage_signal, optical_power, T1_dampening)
         calc_power_fiber = self.simulation_engine.fiber_attenuation(power_dampened)
         calc_power_fiber_rearr = self.simulation_engine.shift_jitter_to_bins(calc_power_fiber, t, jitter_shifts, peak_wavelength)
-        calc_power_fiber_total = self.simulation_engine.delay_line_interferometer(calc_power_fiber_rearr, t_jitter,t , peak_wavelength)
+        calc_power_fiber_total = self.simulation_engine.delay_line_interferometer(calc_power_fiber_rearr, t, peak_wavelength)
         #print(f"calc_power_fiber: {calc_power_fiber.shape()}")
         calc_mean_photon_nr, wavelength_photons, time_photons, nr_photons, index_where_photons, all_time_max_nr_photons, sum_nr_photons_at_chosen = self.simulation_engine.choose_photons(calc_power_fiber_total, transmission, 
                                                                                                                                                                      t_jitter, peak_wavelength)

@@ -9,6 +9,7 @@ import time
 from saver import Saver
 from simulationsingle import SimulationSingle
 
+
 class SimulationEngine:
     def __init__(self, config):
         self.config = config
@@ -171,27 +172,6 @@ class SimulationEngine:
         time_all_bins_size = t[-1] 
         frequency = constants.c / peak_wavelength  # Frequency of light (Hz)
         omega = 2 * np.pi * frequency
-        print(f"omega shape: {omega.shape}")
-        """Shift the jitter to the correct time bins."""
-        '''symbol_amount_indices = len(t)
-        time_bin_size = t[-1]
-
-        # Convert jitter to index shift
-        index_shift = int(np.round(symbol_amount_indices / time_bin_size))  # Round to nearest integer to get index shift
-
-        for n in range(self.config.n_samples - 1): 
-            # Check if jitter is positive or negative and shift accordingly
-            if index_shift > 0:
-                # Positive jitter: Shift symbol n+1 to the right by taking the appropriate slice
-                overlap_start = 0
-                overlap_end = symbol_amount_indices - index_shift
-                calc_power_fiber[n, :] += calc_power_fiber[n + 1, overlap_start:overlap_end]  # Add overlapping power
-
-            else:
-                # Negative jitter: Shift symbol n+1 to the left by taking the appropriate slice
-                overlap_start = -index_shift
-                overlap_end = symbol_amount_indices
-                calc_power_fiber[n, :] += calc_power_fiber[n + 1, overlap_start:overlap_end]  # Add overlapping power'''
         
         # Convert time jitter to index shift
         index_shift_per_symbol = np.round((symbol_amount_indices / time_all_bins_size) * jitter_shifts).astype(int)
@@ -235,25 +215,21 @@ class SimulationEngine:
         return calc_power_fiber
 
 
-    def delay_line_interferometer(self, calc_power_fiber, t_jitter,t , peak_wavelength):
+    def delay_line_interferometer(self, calc_power_fiber, t, peak_wavelength):
         print(f"calc_power_fiber shape: {calc_power_fiber.shape}")
         assert self.config.fraction_long_arm <= 1
         eta_long = self.config.fraction_long_arm
         eta_short = 1 - eta_long
-        print(f"t shape: {t.shape}")
+
         # phase difference between the two arms: w*delta T_bin, w = 2pi*f = 2pic/lambda
         delta_t_bin = t[-1] / 2                             # Time bin duration (float64)
-        print(f"peak_wavelength shape: {peak_wavelength.shape}")
         delta_phi = np.empty_like(peak_wavelength)
         delta_phi = (2* np.pi * constants.c / peak_wavelength) * delta_t_bin # Phase difference (radians)
+        print(f"cos(deltaphi): {np.cos(delta_phi[:10])}")
 
         # Time bin split point ( for late time bin start)
         split_point = len(t) // 2
 
-        print("Shape of late-time bins calc:", calc_power_fiber[:-1, split_point:].shape)
-        print("Shape of early-time bins calc:", calc_power_fiber[1:, :split_point].shape)
-        print(f"Shape of delta_phi: {delta_phi.shape}")
-        print(f"delta_phi{delta_phi}")
         late_bin_ex_last = calc_power_fiber[:-1, split_point:]
         early_bin_ex_first = calc_power_fiber[1:, :split_point]
         whole_early_bin = calc_power_fiber[:, :split_point]
@@ -310,10 +286,10 @@ class SimulationEngine:
         nr_photons = x[sampled_indices]
         return nr_photons
 
-    def choose_photons(self, calc_power_fiber, transmission, t_jitter, peak_wavelength, fixed_nr_photons=None):
+    def choose_photons(self, calc_power_fiber_total, transmission, t_jitter, peak_wavelength, fixed_nr_photons=None):
         """Calculate and choose photons based on the transmission and jitter."""
         # Calculate the mean photon number
-        energy_per_pulse = np.trapezoid(calc_power_fiber, t_jitter, axis=1)
+        energy_per_pulse = np.trapezoid(calc_power_fiber_total, t_jitter, axis=1)
         calc_mean_photon_nr = energy_per_pulse / (constants.h * constants.c / peak_wavelength)
         
         # Use Poisson distribution to get the number of photons
@@ -431,11 +407,7 @@ class SimulationEngine:
     
     def initialize(self):
         plt.style.use(self.config.mlp)
-        # check if voltage input makes sense
-        if (self.config.non_signal_voltage - self.config.voltage) != -1:
-            raise ValueError(f"The difference between non_signal_voltage and voltage is not 1")
-        if self.config.voltage != self.config.voltage_decoy or self.config.voltage != self.config.voltage_sup or self.config.voltage_decoy_sup:
-            raise ValueError(f"The starting voltage values are not the same") 
+        self.config.validate_parameters() #some checks if parameters are in valid ranges
         #calculate T1 dampening 
         lower_limit_t1, upper_limit_t1, tol_t1 = 0, 100, 1e-3
         T1_dampening = self.simulation_single.find_T1(lower_limit_t1, upper_limit_t1, tol_t1)
