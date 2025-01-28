@@ -127,7 +127,7 @@ class SimulationSingle:
             T1_dampening = (lower_limit + upper_limit) / 2
             voltage_signal, t_jitter, _ = self.signal_bandwidth_jitter_single(basis, value, decoy)
             power_dampened, _ = self.eam_transmission_single(voltage_signal, optical_power, T1_dampening)
-            energy_pp = np.trapz(power_dampened, t_jitter)
+            energy_pp = np.trapezoid(power_dampened, t_jitter)
             calc_mean_photon_nr = energy_pp / (constants.h * constants.c / peak_wavelength)
 
             if calc_mean_photon_nr < self.config.mean_photon_nr:
@@ -148,7 +148,7 @@ class SimulationSingle:
 
             voltage_signals, t_jitter, _ = self.signal_bandwidth_jitter_single(*self.generate_alice_choices_single(basis, value, decoy))
             power_dampened, _ = self.eam_transmission_single(voltage_signals, optical_power, T1_dampening)
-            energy_pp = np.trapz(power_dampened, t_jitter)
+            energy_pp = np.trapezoid(power_dampened, t_jitter)
             calc_mean_photon_nr = energy_pp / (constants.h * constants.c / peak_wavelength)
 
             if calc_mean_photon_nr > target_mean:
