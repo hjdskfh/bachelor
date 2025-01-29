@@ -165,7 +165,6 @@ class SimulationEngine:
             decoy_bob = self.config.rng.choice([0, 1], size=self.config.n_samples, p=[1 - self.config.p_decoy, self.config.p_decoy])
         value_bob[basis_bob == 0] = -1
         return basis_bob, value_bob, decoy_bob
-    
 
     def shift_jitter_to_bins(self, calc_power_fiber, t, jitter_shifts, peak_wavelength):
         symbol_amount_indices = len(t)
@@ -176,41 +175,70 @@ class SimulationEngine:
         # Convert time jitter to index shift
         index_shift_per_symbol = np.round((symbol_amount_indices / time_all_bins_size) * jitter_shifts).astype(int)
 
-        for n in range(self.config.n_samples - 1): 
-            # Get the index shift for this symbol
-            index_shift = index_shift_per_symbol[n]
+        # The last value will be the sum of the last and first element, which can be discarded
+        index_shift_neighbor_diffs = np.diff(index_shift_per_symbol)
 
-            if index_shift > 0:
-                # Positive jitter: Symbol n+1 shifts to the right
-                overlap_start = 0
-                overlap_end = symbol_amount_indices - index_shift
+        # Find the maximum shift value to allocate memory for interference
+        max_shift = max(abs(index_shift_per_symbol))  # maximum positive or negative shift
+        
+        # Store interference terms for the necessary regions only
+        interference_terms = np.full((self.config.n_samples, max_shift), np.nan)  # Use a reduced size based on the max shift
 
-                # Compute the phase shift for the overlapping region
-                delta_t = t[:overlap_end] - t[overlap_start]
+        for n in range(1, self.config.n_samples - 1): # Loop over all samples
+            index_shift_symbol = index_shift_per_symbol[n]
+
+            if index_shift_symbol > 0:
+                # Get the index shift for this symbol (eg for symbol 1 it is between 1 and 2, so index 1 in index_shift_neighbor_sums)
+                index_shift_diff = index_shift_neighbor_diffs[n]
+
+                # Convert index shift to time shift
+                delta_t = index_shift_diff * (t[1] - t[0])  
                 delta_phi = omega[n] * delta_t
-                interference = 2 * np.sqrt(calc_power_fiber[n, overlap_start:overlap_end] *
-                                        calc_power_fiber[n + 1, overlap_start:overlap_end]) * np.cos(delta_phi)
 
-                # Add the interference term to the total power
-                calc_power_fiber[n, overlap_start:overlap_end] += (
-                    calc_power_fiber[n + 1, overlap_start:overlap_end] + interference
-                )
+                #! schon np.roll gemacht dh wenn shift nach rechts dann geshiftete teil am Anfang
+                late_n_start = symbol_amount_indices - index_shift_symbol	# index_shift is positive	
+                late_n_end = symbol_amount_indices 
 
-            else:
-                # Negative jitter: Symbol n+1 shifts to the left
-                overlap_start = -index_shift
-                overlap_end = symbol_amount_indices
+                # Positive jitter: Symbol n shifts forward → add late part of n to early part of n+1
+                '''unsicher! wieviel darf dich überlappen?'''
+                interference = 2 * np.multiply(np.sqrt(np.multiply(calc_power_fiber[n, late_n_start:late_n_end], calc_power_fiber[n + 1, :index_shift_symbol])), np.cos(delta_phi))
 
-                # Compute the phase shift for the overlapping region
-                delta_t = t[overlap_start:] - t[:overlap_end]
-                delta_phi = omega * delta_t
-                interference = 2 * np.sqrt(calc_power_fiber[n, overlap_start:overlap_end] *
-                                        calc_power_fiber[n + 1, overlap_start:overlap_end]) * np.cos(delta_phi)
+                # Add interference to symbol n+1 (since it takes in part of n)
+                interference_terms[n + 1, :index_shift_symbol] = calc_power_fiber[n, late_n_start:late_n_end] + interference
 
-                # Add the interference term to the total power
-                calc_power_fiber[n, overlap_start:overlap_end] += (
-                    calc_power_fiber[n + 1, overlap_start:overlap_end] + interference
-                )
+            elif index_shift_symbol < 0:
+                # Get the index shift for this symbol (eg for symbol 1 it is between 0 and 1, so index 0 in index_shift_neighbor_sums)
+                index_shift_diff = index_shift_neighbor_diffs[n-1]
+
+                # Convert index shift to time shift
+                delta_t = index_shift_diff * (t[1] - t[0])  
+                delta_phi = omega[n] * delta_t
+
+                #! schon np.roll gemacht dh wenn shift nach links dann geshiftete teil am Ende
+                late_n_start = index_shift_symbol  # index_shift is negative
+                late_n_end = symbol_amount_indices
+
+                print(f"late_n_start: {late_n_start}, late_n_end: {late_n_end}")
+                print(f"Shape of calc_power_fiber[n, late_n_start:late_n_end]: {calc_power_fiber[n, late_n_start:late_n_end].shape}")
+                print(f"Shape of calc_power_fiber[n + 1, :index_shift_symbol]: {calc_power_fiber[n + 1, :index_shift_symbol].shape}")
+
+
+                # Negative jitter: Symbol n+1 shifts backward → add early part of n+1 to late part of n, - important bc of negative shift
+                interference = 2 * np.multiply(np.sqrt(np.multiply(calc_power_fiber[n, late_n_start:late_n_end], calc_power_fiber[n + 1, :-index_shift_symbol])), np.cos(delta_phi))
+
+                # Add interference to symbol n (since it takes in part of n+1)
+                interference_terms[n, :-index_shift_symbol] = calc_power_fiber[n + 1, :-index_shift_symbol] + interference 
+
+            # Shift the array in place row-by-row
+            for i in range(1, self.config.n_samples - 1):
+                shift = index_shift_per_symbol[i]
+                np.roll(calc_power_fiber[i], shift)  # In-place shift for each row
+                if shift > 0:
+                    calc_power_fiber[i, :shift] = 0  # Set the first 'shift' elements of each row to zero
+                    calc_power_fiber[i + 1, :shift] += interference_terms[i + 1, :shift]
+                elif shift < 0:  #! negative shift
+                    calc_power_fiber[n, :-shift] = 0  # For negative shift, set the end of the symbol to 0
+                    calc_power_fiber[n, :-shift] += interference_terms[n, :-shift]
 
         return calc_power_fiber
 
@@ -286,10 +314,10 @@ class SimulationEngine:
         nr_photons = x[sampled_indices]
         return nr_photons
 
-    def choose_photons(self, calc_power_fiber_total, transmission, t_jitter, peak_wavelength, fixed_nr_photons=None):
+    def choose_photons(self, calc_power_fiber, transmission, t_jitter, peak_wavelength, fixed_nr_photons=None):
         """Calculate and choose photons based on the transmission and jitter."""
         # Calculate the mean photon number
-        energy_per_pulse = np.trapezoid(calc_power_fiber_total, t_jitter, axis=1)
+        energy_per_pulse = np.trapezoid(calc_power_fiber, t_jitter, axis=1)
         calc_mean_photon_nr = energy_per_pulse / (constants.h * constants.c / peak_wavelength)
         
         # Use Poisson distribution to get the number of photons
