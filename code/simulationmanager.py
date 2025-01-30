@@ -142,7 +142,7 @@ class SimulationManager:
             # Simulate signal and transmission
             voltage_signal, t_jitter, _, _, _ = self.simulation_single.signal_bandwidth_jitter_single(basis, value, decoy)
             power_dampened, transmission = self.simulation_single.eam_transmission_single(voltage_signal, optical_power, T1_dampening)
-            calc_mean_photon_nr, wavelength_photons, time_photons, nr_photons, index_where_photons, all_time_max_nr_photons, sum_nr_photons_at_chosen = self.simulation_engine.choose_photons_single(calc_power_fiber, transmission, 
+            calc_mean_photon_nr, wavelength_photons, time_photons, nr_photons, index_where_photons, all_time_max_nr_photons, sum_nr_photons_at_chosen = self.simulation_engine.choose_photons_single(power_dampened, transmission, 
                                                                                                                                                                     t_jitter, peak_wavelength)
 
             time_photons_det, wavelength_photons_det, nr_photons_det, index_where_photons_det, t_detector_jittered = self.simulation_engine.detector(t_jitter, wavelength_photons, time_photons, 
@@ -242,9 +242,9 @@ class SimulationManager:
                     # Simulate signal and transmission
                     voltage_signal, t_jitter, _, _, _ = self.simulation_engine.signal_bandwidth_jitter(basis, value, decoy)
                     power_dampened, transmission = self.simulation_engine.eam_transmission(voltage_signal, optical_power, T1_dampening)
-                    calc_power_fiber = self.simulation_engine.fiber_attenuation(power_dampened)
+                    power_dampened = self.simulation_engine.fiber_attenuation(power_dampened)
 
-                    calc_mean_photon_nr, wavelength_photons, time_photons, nr_photons, index_where_photons, all_time_max_nr_photons, sum_nr_photons_at_chosen = self.simulation_engine.choose_photons(calc_power_fiber, transmission, 
+                    calc_mean_photon_nr, wavelength_photons, time_photons, nr_photons, index_where_photons, all_time_max_nr_photons, sum_nr_photons_at_chosen = self.simulation_engine.choose_photons(power_dampened, transmission, 
                                                                                                                                                                                 t_jitter, peak_wavelength)
             
                     mean_of_mean_photon[i] = calc_mean_photon_nr
@@ -286,11 +286,17 @@ class SimulationManager:
         # Simulate signal and transmission
         voltage_signal, t_jitter, signals, t, jitter_shifts = self.simulation_engine.signal_bandwidth_jitter(basis, value, decoy)
         power_dampened, transmission = self.simulation_engine.eam_transmission(voltage_signal, optical_power, T1_dampening)
-        calc_power_fiber = self.simulation_engine.fiber_attenuation(power_dampened)
-        calc_power_fiber = self.simulation_engine.shift_jitter_to_bins(calc_power_fiber, t, jitter_shifts, peak_wavelength)
-        calc_power_fiber = self.simulation_engine.delay_line_interferometer(calc_power_fiber, t, peak_wavelength)
-        #print(f"calc_power_fiber: {calc_power_fiber.shape()}")
-        calc_mean_photon_nr, wavelength_photons, time_photons, nr_photons, index_where_photons, all_time_max_nr_photons, sum_nr_photons_at_chosen = self.simulation_engine.choose_photons(calc_power_fiber, transmission, 
+        power_dampened = self.simulation_engine.fiber_attenuation(power_dampened)
+        power_dampened = self.simulation_engine.shift_jitter_to_bins(power_dampened, t, jitter_shifts, peak_wavelength)
+
+        plt.plot(t * 1e9, power_dampened[0], color='blue', label='0', linestyle='-', marker='o', markersize=1)
+        plt.plot(t * 1e9, power_dampened[1], color='green', label='1', linestyle='-', marker='o', markersize=1)
+        Saver.save_plot(f"power_fiber")
+
+
+        power_dampened = self.simulation_engine.delay_line_interferometer(power_dampened, t, peak_wavelength)
+        #print(f"power_dampened: {power_dampened.shape()}")
+        calc_mean_photon_nr, wavelength_photons, time_photons, nr_photons, index_where_photons, all_time_max_nr_photons, sum_nr_photons_at_chosen = self.simulation_engine.choose_photons(power_dampened, transmission, 
                                                                                                                                                                      t_jitter, peak_wavelength)
     
         time_photons_det, wavelength_photons_det, nr_photons_det, index_where_photons_det, t_detector_jittered = self.simulation_engine.detector(t_jitter, wavelength_photons, time_photons, 
@@ -302,9 +308,16 @@ class SimulationManager:
         #plt.bar(index_where_photons - 0.5*bar_width, nr_photons, width=bar_width, label='fiber', color='blue')
         #plt.bar(index_where_photons_det + 0.5*bar_width, nr_photons_det, width=bar_width, label='detector', color='green')
 
+        # Labels for the x-axis
+        photon_labels = [f"{i}" for i in range(all_time_max_nr_photons + 1)]
+
+        # Plotting
+        x = np.arange(len(photon_labels))  # Positions for the bars
+        bar_width = 0.35
+
         # Count occurrences for photons in bins
-        fiber_counts = np.bincount(nr_photons, minlength=4)  # Counts of 0, 1, 2, 3 photons in fiber
-        detector_counts = np.bincount(nr_photons_det, minlength=4)  # Counts of 0, 1, 2, 3 photons in detector
+        fiber_counts = np.bincount(nr_photons, minlength=len(photon_labels))  # Counts of 0, 1, 2, 3 photons in fiber
+        detector_counts = np.bincount(nr_photons_det, minlength=len(photon_labels))  # Counts of 0, 1, 2, 3 photons in detector
 
         # Calculate the number of "no photon" bins
         fiber_no_photon_bins = sum_nr_photons_at_chosen - len(nr_photons)  # For fiber
@@ -313,13 +326,6 @@ class SimulationManager:
         # Add the "no photon" counts to the 0-photon category
         fiber_counts[0] += fiber_no_photon_bins
         detector_counts[0] += detector_no_photon_bins
-
-        # Labels for the x-axis
-        photon_labels = [f"{i}" for i in range(all_time_max_nr_photons + 1)]
-
-        # Plotting
-        x = np.arange(len(photon_labels))  # Positions for the bars
-        bar_width = 0.35
 
         plt.bar(x - bar_width/2, fiber_counts, width=bar_width, label="Fiber", color="teal")
         plt.bar(x + bar_width/2, detector_counts, width=bar_width, label="Detector", color="darkred")
@@ -345,6 +351,8 @@ class SimulationManager:
         # Show the plot
         Saver.save_plot(f"photons_in_fiber_vs_after detector")
 
+        
+
     def run_simulation_dc(self):
         for i in range(self.config.n_samples):
             _, num_dark_counts = self.simulation_engine.darkcount()
@@ -363,19 +371,19 @@ class SimulationManager:
         optical_power, peak_wavelength = self.simulation_engine.random_laser_output('current_power','voltage_shift', 'current_wavelength')
         
         basis, value, decoy = self.simulation_engine.generate_alice_choices(basis = 0, value = 0, decoy = 0, fixed = True)
-        voltage_signal, t_jitter, signal, _, _, _ = self.simulation_engine.signal_bandwidth_jitter(basis, value, decoy)
+        filtered_signal, t_jittered, signals, t, jitter_shifts = self.simulation_engine.signal_bandwidth_jitter(basis, value, decoy)
 
-        print(f"second_signal: {second_signal[0:100]}")
+        print(f"second_signal: {signals[0:100]}")
         fig, ax = plt.subplots(figsize=(8, 5))
         ax2 = ax.twinx()  # Create a second y-axis
 
         # Plot voltage (left y-axis)
-        ax.plot(t_jitter *1e9, second_signal, color='blue', label='np.multi', linestyle='-', marker='o', markersize=1)
+        ax.plot(t_jittered *1e9, signals, color='blue', label='np.multi', linestyle='-', marker='o', markersize=1)
         ax.set_ylabel('Voltage (V)', color='blue')
         ax.tick_params(axis='y', labelcolor='blue')
 
         # Plot transmission (right y-axis)
-        #ax2.plot(t_jitter * 1e9, voltage_signal, color='red', label='normal multi', linestyle='-', marker='o', markersize=1)
+        ax2.plot(t_jittered * 1e9, filtered_signal, color='red', label='normal multi', linestyle='-', marker='o', markersize=1)
         ax2.set_ylabel('Voltage (V)', color='red')
         ax2.tick_params(axis='y', labelcolor='red')
 

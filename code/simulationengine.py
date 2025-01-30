@@ -126,7 +126,7 @@ class SimulationEngine:
         t, signals = self.generate_encoded_pulse(pulse_heights, pulse_duration, values, sampling_rate_fft)
         filtered_signal = self.apply_bandwidth_filter(signals, sampling_rate_fft)
         t_jittered, jitter_shifts = self.apply_jitter_to_t(t, name_jitter='laser')
-        print(f"t_jittered: {t_jittered[:, 0]}")
+        print(f"jitter_shifts: {jitter_shifts[:10]}")
         return filtered_signal, t_jittered, signals, t, jitter_shifts
 
     def eam_transmission(self, voltage_signal, optical_power, T1_dampening):
@@ -146,15 +146,14 @@ class SimulationEngine:
         # fill transmission array with interpolated_values where mask is True
         transmission[mask] = interpolated_values
        
-        power = transmission * optical_power[:, None]
-        power_dampened = power / T1_dampening
+        power_dampened = transmission * optical_power[:, None] / T1_dampening
         return power_dampened, transmission
     
     def fiber_attenuation(self, power_dampened):
         """Apply fiber attenuation to the power."""
         attenuation_factor = 10 ** (self.config.fiber_attenuation / 10)
-        calc_power_fiber = power_dampened * attenuation_factor
-        return calc_power_fiber
+        power_dampened = power_dampened * attenuation_factor
+        return power_dampened
     
     def generate_bob_choices(self, basis_bob = None, value_bob = None, decoy_bob = None, fixed = None):
         """Generates Bob's choices for a quantum communication protocol."""
@@ -166,34 +165,40 @@ class SimulationEngine:
         value_bob[basis_bob == 0] = -1
         return basis_bob, value_bob, decoy_bob
 
-    def shift_jitter_to_bins(self, calc_power_fiber, t, jitter_shifts, peak_wavelength):
+    def shift_jitter_to_bins(self, power_dampened, t, jitter_shifts, peak_wavelength):
         symbol_amount_indices = len(t)
         time_all_bins_size = t[-1] 
-        frequency = constants.c / peak_wavelength  # Frequency of light (Hz)
-        omega = 2 * np.pi * frequency
+        frequency_symbol = self.config.sampling_rate_FPGA / 4 #constants.c / peak_wavelength  # Frequency of light wrong, I want to have the frequency of the signal
+        omega = 2 * np.pi * frequency_symbol
         
         # Convert time jitter to index shift
         index_shift_per_symbol = np.round((symbol_amount_indices / time_all_bins_size) * jitter_shifts).astype(int)
-
+        
         # The last value will be the sum of the last and first element, which can be discarded
         index_shift_neighbor_diffs = np.diff(index_shift_per_symbol)
 
         # Find the maximum shift value to allocate memory for interference
         max_shift = max(abs(index_shift_per_symbol))  # maximum positive or negative shift
-        
+        print(f"max_shift: {max_shift}")
+
         # Store interference terms for the necessary regions only
         interference_terms = np.full((self.config.n_samples, max_shift), np.nan)  # Use a reduced size based on the max shift
 
-        for n in range(1, self.config.n_samples - 1): # Loop over all samples
+        for n in range(self.config.n_samples): # Loop over all samples
             index_shift_symbol = index_shift_per_symbol[n]
+            print(f"n: {n}, jitter_shifts: {jitter_shifts[n]}, index_shift_symbol: {index_shift_symbol}")
 
             if index_shift_symbol > 0:
+                if n == (self.config.n_samples - 1):
+                    # Skip the last element since its jitter is positive
+                    continue
+                    
                 # Get the index shift for this symbol (eg for symbol 1 it is between 1 and 2, so index 1 in index_shift_neighbor_sums)
                 index_shift_diff = index_shift_neighbor_diffs[n]
 
                 # Convert index shift to time shift
                 delta_t = index_shift_diff * (t[1] - t[0])  
-                delta_phi = omega[n] * delta_t
+                delta_phi = omega * delta_t
 
                 #! schon np.roll gemacht dh wenn shift nach rechts dann geshiftete teil am Anfang
                 late_n_start = symbol_amount_indices - index_shift_symbol	# index_shift is positive	
@@ -201,103 +206,111 @@ class SimulationEngine:
 
                 # Positive jitter: Symbol n shifts forward → add late part of n to early part of n+1
                 '''unsicher! wieviel darf dich überlappen?'''
-                interference = 2 * np.multiply(np.sqrt(np.multiply(calc_power_fiber[n, late_n_start:late_n_end], calc_power_fiber[n + 1, :index_shift_symbol])), np.cos(delta_phi))
-
+                interference = 2 * np.multiply(np.sqrt(np.multiply(power_dampened[n, late_n_start:late_n_end], power_dampened[n + 1, :index_shift_symbol])), np.cos(delta_phi))
+                print(f"Anfang > interference: {interference}")
+                print(f"add to power_dampened_power_fiber[n, late_n_start:late_n_end]:{power_dampened[n, late_n_start:late_n_end]}")
                 # Add interference to symbol n+1 (since it takes in part of n)
-                interference_terms[n + 1, :index_shift_symbol] = calc_power_fiber[n, late_n_start:late_n_end] + interference
+                interference_terms[n + 1, :index_shift_symbol] = power_dampened[n, late_n_start:late_n_end] + interference
 
             elif index_shift_symbol < 0:
+                if n == 0:
+                    # Skip the first element since its jitter negative positive
+                    continue
+
                 # Get the index shift for this symbol (eg for symbol 1 it is between 0 and 1, so index 0 in index_shift_neighbor_sums)
                 index_shift_diff = index_shift_neighbor_diffs[n-1]
 
                 # Convert index shift to time shift
                 delta_t = index_shift_diff * (t[1] - t[0])  
-                delta_phi = omega[n] * delta_t
+                delta_phi = omega * delta_t
 
                 #! schon np.roll gemacht dh wenn shift nach links dann geshiftete teil am Ende
-                late_n_start = index_shift_symbol  # index_shift is negative
-                late_n_end = symbol_amount_indices
+                late_nm1_start = index_shift_symbol  # index_shift is negative
+                late_nm1_end = symbol_amount_indices
 
-                print(f"late_n_start: {late_n_start}, late_n_end: {late_n_end}")
-                print(f"Shape of calc_power_fiber[n, late_n_start:late_n_end]: {calc_power_fiber[n, late_n_start:late_n_end].shape}")
-                print(f"Shape of calc_power_fiber[n + 1, :index_shift_symbol]: {calc_power_fiber[n + 1, :index_shift_symbol].shape}")
-
-
-                # Negative jitter: Symbol n+1 shifts backward → add early part of n+1 to late part of n, - important bc of negative shift
-                interference = 2 * np.multiply(np.sqrt(np.multiply(calc_power_fiber[n, late_n_start:late_n_end], calc_power_fiber[n + 1, :-index_shift_symbol])), np.cos(delta_phi))
+                # Negative jitter: Symbol n shifts backward → add early part of n to late part of n-1, - important bc of negative shift
+                interference = 2 * np.multiply(np.sqrt(np.multiply(power_dampened[n - 1, late_nm1_start:late_nm1_end], power_dampened[n, :-index_shift_symbol])), np.cos(delta_phi))
+                print(f"Anfang < interference: {interference}")
 
                 # Add interference to symbol n (since it takes in part of n+1)
-                interference_terms[n, :-index_shift_symbol] = calc_power_fiber[n + 1, :-index_shift_symbol] + interference 
+                interference_terms[n - 1, :-index_shift_symbol] = power_dampened[n, :-index_shift_symbol] + interference 
 
-            # Shift the array in place row-by-row
-            for i in range(1, self.config.n_samples - 1):
-                shift = index_shift_per_symbol[i]
-                np.roll(calc_power_fiber[i], shift)  # In-place shift for each row
-                if shift > 0:
-                    calc_power_fiber[i, :shift] = 0  # Set the first 'shift' elements of each row to zero
-                    calc_power_fiber[i + 1, :shift] += interference_terms[i + 1, :shift]
-                elif shift < 0:  #! negative shift
-                    calc_power_fiber[n, :-shift] = 0  # For negative shift, set the end of the symbol to 0
-                    calc_power_fiber[n, :-shift] += interference_terms[n, :-shift]
+        print(f"interference_terms: {interference_terms}")
+        # Shift the array in place row-by-row
+        for i in range(self.config.n_samples):
+            shift = index_shift_per_symbol[i]
+            np.roll(power_dampened[i], shift)  # In-place shift for each row
+            if shift > 0:
+                power_dampened[i, :shift] = 0  # Set the first 'shift' elements of each row to zero
+                if n == (self.config.n_samples - 1):
+                    # Skip the last element since its jitter is positive
+                    continue
+                power_dampened[i + 1, :shift] += interference_terms[i + 1, :shift]
+            elif shift < 0:  #! negative shift
+                power_dampened[n, symbol_amount_indices + shift:symbol_amount_indices] = 0  # For negative shift, set the end of the symbol to 0
+                if n == 0:
+                    # Skip the first element since its jitter negative positive
+                    continue
+                power_dampened[n - 1, symbol_amount_indices + shift:symbol_amount_indices] += interference_terms[n - 1, :-shift]
 
-        return calc_power_fiber
+        return power_dampened
 
-
-    def delay_line_interferometer(self, calc_power_fiber, t, peak_wavelength):
-        print(f"calc_power_fiber shape: {calc_power_fiber.shape}")
+    def delay_line_interferometer(self, power_dampened, t, peak_wavelength):
+        print(f"power_dampened shape: {power_dampened.shape}")
         assert self.config.fraction_long_arm <= 1
         eta_long = self.config.fraction_long_arm
         eta_short = 1 - eta_long
 
         # phase difference between the two arms: w*delta T_bin, w = 2pi*f = 2pic/lambda
         delta_t_bin = t[-1] / 2                             # Time bin duration (float64)
-        delta_phi = np.empty_like(peak_wavelength)
-        delta_phi = (2* np.pi * constants.c / peak_wavelength) * delta_t_bin # Phase difference (radians)
-        print(f"cos(deltaphi): {np.cos(delta_phi[:10])}")
+        frequency_symbol = self.config.sampling_rate_FPGA / 4 # Frequency of light wrong, I want to have the frequency of the signal
+        delta_phi = (2* np.pi *frequency_symbol) * delta_t_bin # Phase difference (radians) ALT:* constants.c / peak_wavelength
 
         # Time bin split point ( for late time bin start)
         split_point = len(t) // 2
 
-        late_bin_ex_last = calc_power_fiber[:-1, split_point:]
-        early_bin_ex_first = calc_power_fiber[1:, :split_point]
-        whole_early_bin = calc_power_fiber[:, :split_point]
-        whole_late_bin = calc_power_fiber[:, split_point:]
+        late_bin_ex_last = power_dampened[:-1, split_point:]
+        early_bin_ex_first = power_dampened[1:, :split_point]
+        whole_early_bin = power_dampened[:, :split_point]
+        whole_late_bin = power_dampened[:, split_point:]
 
         # Calculate the interference term nth symbol and n+1th symbol (early-time and late-time bins)
         interference_term1 = (
             2 * np.sqrt(eta_long * eta_short) *
-            np.multiply(np.sqrt(np.multiply(late_bin_ex_last, early_bin_ex_first)),np.cos(delta_phi[:-1]).reshape(-1,1))  #letzter Wert von delta_phi wird nicht verwendet weil zwischen 0 und n-1
+            np.multiply(np.sqrt(np.multiply(late_bin_ex_last, early_bin_ex_first)),np.cos(delta_phi))  #ALTnp.cos(delta_phi[:-1]).reshape(-1,1)letzter Wert von delta_phi wird nicht verwendet weil zwischen 0 und n-1
         )
         print(f"interference_term1 shape: {interference_term1.shape}")
         
         # Interference term within the (n+1)th symbol (early-time and late-time bins)
         interference_term2 = (
             2 * np.sqrt(eta_short * eta_long) *
-            np.multiply(np.sqrt(np.multiply(whole_early_bin, whole_late_bin)), np.cos(delta_phi).reshape(-1,1)) #alle n Werte für phi
+            np.multiply(np.sqrt(np.multiply(whole_early_bin, whole_late_bin)), np.cos(delta_phi)) # ALTalle n Werte für phi
         )
 
         # Pre-allocate arrays for the total power
-        calc_power_fiber_total = np.zeros((self.config.n_samples, len(t)))
+        power_dampened_total = np.zeros((self.config.n_samples, len(t)))
 
         # Sum the contributions for total power (including interference)
         # For the nth and (n+1)th symbol:
-        calc_power_fiber_total[1:, :split_point] = (
+        power_dampened_total[1:, :split_point] = (
             late_bin_ex_last + early_bin_ex_first + interference_term1  # nth and (n+1)th interference
         )
 
         # For the (n+1)th symbol:
-        calc_power_fiber_total[:, split_point:] = (
+        power_dampened_total[:, split_point:] = (
             whole_early_bin + whole_late_bin + interference_term2  # (n+1)th symbol interference
         )
 
         # for first row early bin
-        calc_power_fiber_total[0, :split_point] = calc_power_fiber[0, :split_point]
+        power_dampened_total[0, :split_point] = power_dampened[0, :split_point]
 
-        return calc_power_fiber_total
-
+        return power_dampened_total
 
     def poisson_distr(self, calc_value):
         """Calculate the number of photons based on a Poisson distribution."""
+        print(f"np.any(array < 0): {np.isnan(calc_value < 0)}")
+        print(f"np.any(np.isnan(array)):{np.any(np.isnan(calc_value))}")
+
         upper_bounds = (calc_value + 5 * np.sqrt(calc_value)).astype(int) # shape: (n_samples,)
         max_upper_bound = upper_bounds.max()
         x = np.arange(0, max_upper_bound + 1)
@@ -314,10 +327,10 @@ class SimulationEngine:
         nr_photons = x[sampled_indices]
         return nr_photons
 
-    def choose_photons(self, calc_power_fiber, transmission, t_jitter, peak_wavelength, fixed_nr_photons=None):
+    def choose_photons(self, power_dampened, transmission, t_jitter, peak_wavelength, fixed_nr_photons=None):
         """Calculate and choose photons based on the transmission and jitter."""
         # Calculate the mean photon number
-        energy_per_pulse = np.trapezoid(calc_power_fiber, t_jitter, axis=1)
+        energy_per_pulse = np.trapezoid(power_dampened, t_jitter, axis=1)
         calc_mean_photon_nr = energy_per_pulse / (constants.h * constants.c / peak_wavelength)
         
         # Use Poisson distribution to get the number of photons
