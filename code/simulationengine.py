@@ -141,7 +141,7 @@ class SimulationEngine:
                 signals[old_idx:new_idx] = signals[old_idx - 1]
             elif old_idx > new_idx:
                 # Shift left: Fill new transition spot with flipped value
-                signals[new_idx:old_idx] = 1 - signals[old_idx]
+                signals[new_idx:old_idx] = signals[old_idx + 1]
 
         return signals
 
@@ -151,24 +151,27 @@ class SimulationEngine:
         pulse_duration = 1 / self.config.sampling_rate_FPGA
         sampling_rate_fft = 100e11
         t, signals = self.generate_encoded_pulse(pulse_heights, pulse_duration, values, sampling_rate_fft)
+        plt.plot(signals[0], label = 'before everything')
+        plt.legend()
+        plt.show()	
 
         for i in range(0, len(values), self.config.batchsize):
             signals_batch = signals[i:i + 1000, :]
-            flattened_signals_batch = signals_batch.flatten()
-            signals_batch_jitter = self.apply_jitter_to_pulse(t, flattened_signals_batch, jitter_shifts[self.config.n_pulses * i:self.config.n_pulses *(i + 1000)])
+            flattened_signals_batch = signals_batch.reshape(-1)
+            plt.plot(flattened_signals_batch[:3*len(t)], label = 'before jitter')
+
+            flattened_signals_batch = self.apply_jitter_to_pulse(t, flattened_signals_batch, jitter_shifts[self.config.n_pulses * i:self.config.n_pulses *(i + 1000)])
+            plt.plot(flattened_signals_batch[:3*len(t)], label = 'after jitter')
+
             filtered_signals = self.apply_bandwidth_filter(flattened_signals_batch, sampling_rate_fft)
             reshaped_signals = filtered_signals.reshape(self.config.batchsize, len(t))
             signals[i:i + 1000, :] = reshaped_signals
 
-            plt.plot(signals_batch_jitter[:len(t)], label = 'before jitter')
-            plt.plot(flattened_signals_batch[:len(t)], label = 'after jitter')
-            plt.plot(filtered_signals[:len(t)], label = 'filtered')
+            #plt.plot(filtered_signals[:len(t)], label = 'BW')
             plt.legend()
             plt.show()
-            plt.plot(reshaped_signals[0], label = 'ende')
+            plt.plot(filtered_signals[:3*len(t)], label = 'ende')
             plt.show()
-        print(f"signals shape: {signals.shape}")
-        print(f"signals: {signals[:100]}")
         return signals, t, jitter_shifts
 
     def eam_transmission(self, voltage_signal, optical_power, T1_dampening):

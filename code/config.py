@@ -76,6 +76,8 @@ class SimulationConfig:
     def validate_parameters(self):
         """Check if the configuration parameters are within valid ranges."""
         # Example validation checks:
+        if self.n_samples % self.batchsize != 0 or self.batchsize > self.n_samples:
+            print("Error: n_samples must be divisible by batchsize and batchsize must be smaller than n_samples.")
         if self.n_samples <= 0:
             print("Error: n_samples must be positive.")
         if self.n_pulses <= 0 or self.n_pulses % 2 != 0:
