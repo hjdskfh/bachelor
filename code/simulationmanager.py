@@ -287,12 +287,10 @@ class SimulationManager:
         voltage_signal, t_jitter, signals, t, jitter_shifts = self.simulation_engine.signal_bandwidth_jitter(basis, value, decoy)
         power_dampened, transmission = self.simulation_engine.eam_transmission(voltage_signal, optical_power, T1_dampening)
         power_dampened = self.simulation_engine.fiber_attenuation(power_dampened)
-        power_dampened = self.simulation_engine.shift_jitter_to_bins(power_dampened, t, jitter_shifts, peak_wavelength)
 
         plt.plot(t * 1e9, power_dampened[0], color='blue', label='0', linestyle='-', marker='o', markersize=1)
         plt.plot(t * 1e9, power_dampened[1], color='green', label='1', linestyle='-', marker='o', markersize=1)
         Saver.save_plot(f"power_fiber")
-
 
         power_dampened = self.simulation_engine.delay_line_interferometer(power_dampened, t, peak_wavelength)
         #print(f"power_dampened: {power_dampened.shape()}")

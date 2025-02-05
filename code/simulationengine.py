@@ -79,8 +79,13 @@ class SimulationEngine:
                         np.where(basis == 0, self.config.voltage_sup, self.config.voltage),
                         np.where(basis == 0, self.config.voltage_decoy_sup, self.config.voltage_decoy))
 
+    def get_jitter(self, name_jitter):
+        probabilities, jitter_values = self.config.data.get_probabilities(x_data=None, name='probabilities' + name_jitter)
+        jitter_shifts = self.config.rng.choice(jitter_values, size=self.config.n_samples * self.config.n_pulses, p=probabilities) # für jeden Querstrich kann man jitter haben
+        return jitter_shifts
+
     def encode_pulse(self, value):
-        """Return a binary pattern for a square pulse based on the given value."""
+        """Return a binary pattern for a square pulse based on the given value"""
         pattern = np.zeros((len(value), self.config.n_pulses), dtype=int)
         pattern[value == 1, 0] = 1
         pattern[value == 0, self.config.n_pulses // 2] = 1
@@ -90,14 +95,17 @@ class SimulationEngine:
 
     def generate_square_pulse(self, pulse_height, pulse_duration, sampling_rate_fft, pattern):
         """Generate a square pulse signal for a given height and pattern."""
-        t = np.arange(0, self.config.n_pulses * pulse_duration, 1 / sampling_rate_fft, dtype=np.float64)
+        # make len(t) divisible by n_pulses
+        inv_sampling = 1 / sampling_rate_fft
+        #inv_sampling = inv_sampling - inv_sampling % self.config.n_pulses
+        t = np.arange(0, self.config.n_pulses * pulse_duration, inv_sampling, dtype=np.float64)
         repeating_square_pulses = np.full((len(pulse_height), len(t)), self.config.non_signal_voltage, dtype=np.float64)
-        one_signal = len(t) // self.config.n_pulses
+        one_pulse = len(t) // self.config.n_pulses
         indices = np.arange(len(t))
         for i, pattern in enumerate(pattern):
             for j, bit in enumerate(pattern):
                 if bit == 1:
-                    repeating_square_pulses[i, (indices // one_signal) == j] = pulse_height[i]
+                    repeating_square_pulses[i, (indices // one_pulse) == j] = pulse_height[i]
         return t, repeating_square_pulses
     
     def generate_encoded_pulse(self, pulse_height, pulse_duration, value, sampling_rate_fft):
@@ -107,27 +115,60 @@ class SimulationEngine:
         filtered_signal = np.empty_like(signal)
         freq_x = [0, self.config.bandwidth * 0.8, self.config.bandwidth, self.config.bandwidth * 1.2, sampling_rate_fft / 2]
         freq_y = [1, 1, 0.7, 0.01, 0.001]
+         
+        # Adjust the sample spacing d to account for concatenation
+        sample_spacing = 1 / (sampling_rate_fft * self.config.batchsize)
+
         for i, signal in enumerate(signal):
             S_fourier = fft(signal)
-            frequencies = fftfreq(len(signal), d=1 / sampling_rate_fft)
+            frequencies = fftfreq(len(signal), d= sample_spacing)
             S_fourier *= np.interp(np.abs(frequencies), freq_x, freq_y)
             filtered_signal[i] = np.real(ifft(S_fourier))
         return filtered_signal
 
-    def apply_jitter_to_t(self, t, name_jitter):
-        probabilities, jitter_values = self.config.data.get_probabilities(x_data=None, name='probabilities' + name_jitter)
-        jitter_shifts = self.config.rng.choice(jitter_values, size=self.config.n_samples, p=probabilities)
-        return t + jitter_shifts[:, None], jitter_shifts
+    def apply_jitter_to_pulse(self, t, signals, jitter_shifts, pulse_heights, name_jitter):
+        index_shift_per_symbol = ((len(t) // t[-1]) * jitter_shifts).astype(int)
+        index_shift_per_symbol = index_shift_per_symbol[: self.config.n_pulses * self.config.batchsize - 1]  #size = n_pulses * batchsize - 1 (minus Anfang und Ende)
+        print(f"index shift per symbol size: {index_shift_per_symbol.size}")
+        index_one_signal = len(t) // self.config.n_pulses
+        print(f"len(signals): {len(signals)}")
+        print(f"index_one_signal: {index_one_signal}")
+        transition_indices = np.arange(index_one_signal, len(signals), index_one_signal)
+        print(f"transition_indices: {transition_indices[:10], transition_indices[-10:]}")
+        print(f"len(signals): {len(signals)}")
+        print(f"len(t):{len(t)}")
+
+        new_transition_indices = transition_indices + index_shift_per_symbol
+        # Step through and shift transitions **in-place**
+        for i, old_idx in enumerate(transition_indices):
+            new_idx = new_transition_indices[i]  # Get the new shifted index
+            
+            if old_idx < new_idx:
+                # Shift right: Fill original transition spot with previous value
+                signals[old_idx:new_idx] = signals[old_idx - 1]
+            elif old_idx > new_idx:
+                # Shift left: Fill new transition spot with flipped value
+                signals[new_idx:old_idx] = 1 - signals[old_idx]
+
+        return signals
 
     def signal_bandwidth_jitter(self, basis, values, decoy):
         pulse_heights = self.get_pulse_height(basis, decoy)
+        jitter_shifts = self.get_jitter('laser')
+        print(f"jitter_shifts shape: {jitter_shifts.shape}")
         pulse_duration = 1 / self.config.sampling_rate_FPGA
         sampling_rate_fft = 100e11
         t, signals = self.generate_encoded_pulse(pulse_heights, pulse_duration, values, sampling_rate_fft)
-        filtered_signal = self.apply_bandwidth_filter(signals, sampling_rate_fft)
-        t_jittered, jitter_shifts = self.apply_jitter_to_t(t, name_jitter='laser')
-        print(f"jitter_shifts: {jitter_shifts[:10]}")
-        return filtered_signal, t_jittered, signals, t, jitter_shifts
+
+        for i in range(0, len(values), self.config.batchsize):
+            signals_batch = signals[i:i + 1000, :]
+            flattened_signals_batch = signals_batch.flatten()
+            flattened_signals_batch = self.apply_jitter_to_pulse(t, flattened_signals_batch, jitter_shifts[self.config.n_pulses * i:self.config.n_pulses *(i + 1000)], pulse_heights[i:i + 1000], name_jitter='laser')
+            filtered_signals = self.apply_bandwidth_filter(flattened_signals_batch, sampling_rate_fft)
+            reshaped_signals = filtered_signals.reshape(self.config.batchsize, len(t))
+            signals[i:i + 1000, :] = reshaped_signals
+
+        return signals, t, jitter_shifts
 
     def eam_transmission(self, voltage_signal, optical_power, T1_dampening):
         """fastest? prob not: Calculate the transmission and power for all elements in the arrays."""
@@ -164,96 +205,6 @@ class SimulationEngine:
             decoy_bob = self.config.rng.choice([0, 1], size=self.config.n_samples, p=[1 - self.config.p_decoy, self.config.p_decoy])
         value_bob[basis_bob == 0] = -1
         return basis_bob, value_bob, decoy_bob
-
-    def shift_jitter_to_bins(self, power_dampened, t, jitter_shifts, peak_wavelength):
-        symbol_amount_indices = len(t)
-        time_all_bins_size = t[-1] 
-        frequency_symbol = self.config.sampling_rate_FPGA / 4 #constants.c / peak_wavelength  # Frequency of light wrong, I want to have the frequency of the signal
-        omega = 2 * np.pi * frequency_symbol
-        
-        # Convert time jitter to index shift
-        index_shift_per_symbol = np.round((symbol_amount_indices / time_all_bins_size) * jitter_shifts).astype(int)
-        
-        # The last value will be the sum of the last and first element, which can be discarded
-        index_shift_neighbor_diffs = np.diff(index_shift_per_symbol)
-
-        # Find the maximum shift value to allocate memory for interference
-        max_shift = max(abs(index_shift_per_symbol))  # maximum positive or negative shift
-        print(f"max_shift: {max_shift}")
-
-        # Store interference terms for the necessary regions only
-        interference_terms = np.full((self.config.n_samples, max_shift), np.nan)  # Use a reduced size based on the max shift
-
-        for n in range(self.config.n_samples): # Loop over all samples
-            index_shift_symbol = index_shift_per_symbol[n]
-            print(f"n: {n}, jitter_shifts: {jitter_shifts[n]}, index_shift_symbol: {index_shift_symbol}")
-
-            if index_shift_symbol > 0:
-                if n == (self.config.n_samples - 1):
-                    # Skip the last element since its jitter is positive
-                    continue
-                    
-                # Get the index shift for this symbol (eg for symbol 1 it is between 1 and 2, so index 1 in index_shift_neighbor_sums)
-                index_shift_diff = index_shift_neighbor_diffs[n]
-
-                # Convert index shift to time shift
-                delta_t = index_shift_diff * (t[1] - t[0])  
-                delta_phi = omega * delta_t
-
-                #! schon np.roll gemacht dh wenn shift nach rechts dann geshiftete teil am Anfang
-                late_n_start = symbol_amount_indices - index_shift_symbol	# index_shift is positive	
-                late_n_end = symbol_amount_indices 
-
-                # Positive jitter: Symbol n shifts forward → add late part of n to early part of n+1
-                '''unsicher! wieviel darf dich überlappen?'''
-                interference = 2 * np.multiply(np.sqrt(np.multiply(power_dampened[n, late_n_start:late_n_end], power_dampened[n + 1, :index_shift_symbol])), np.cos(delta_phi))
-                print(f"Anfang > interference: {interference}")
-                print(f"add to power_dampened_power_fiber[n, late_n_start:late_n_end]:{power_dampened[n, late_n_start:late_n_end]}")
-                # Add interference to symbol n+1 (since it takes in part of n)
-                interference_terms[n + 1, :index_shift_symbol] = power_dampened[n, late_n_start:late_n_end] + interference
-
-            elif index_shift_symbol < 0:
-                if n == 0:
-                    # Skip the first element since its jitter negative positive
-                    continue
-
-                # Get the index shift for this symbol (eg for symbol 1 it is between 0 and 1, so index 0 in index_shift_neighbor_sums)
-                index_shift_diff = index_shift_neighbor_diffs[n-1]
-
-                # Convert index shift to time shift
-                delta_t = index_shift_diff * (t[1] - t[0])  
-                delta_phi = omega * delta_t
-
-                #! schon np.roll gemacht dh wenn shift nach links dann geshiftete teil am Ende
-                late_nm1_start = index_shift_symbol  # index_shift is negative
-                late_nm1_end = symbol_amount_indices
-
-                # Negative jitter: Symbol n shifts backward → add early part of n to late part of n-1, - important bc of negative shift
-                interference = 2 * np.multiply(np.sqrt(np.multiply(power_dampened[n - 1, late_nm1_start:late_nm1_end], power_dampened[n, :-index_shift_symbol])), np.cos(delta_phi))
-                print(f"Anfang < interference: {interference}")
-
-                # Add interference to symbol n (since it takes in part of n+1)
-                interference_terms[n - 1, :-index_shift_symbol] = power_dampened[n, :-index_shift_symbol] + interference 
-
-        print(f"interference_terms: {interference_terms}")
-        # Shift the array in place row-by-row
-        for i in range(self.config.n_samples):
-            shift = index_shift_per_symbol[i]
-            np.roll(power_dampened[i], shift)  # In-place shift for each row
-            if shift > 0:
-                power_dampened[i, :shift] = 0  # Set the first 'shift' elements of each row to zero
-                if n == (self.config.n_samples - 1):
-                    # Skip the last element since its jitter is positive
-                    continue
-                power_dampened[i + 1, :shift] += interference_terms[i + 1, :shift]
-            elif shift < 0:  #! negative shift
-                power_dampened[n, symbol_amount_indices + shift:symbol_amount_indices] = 0  # For negative shift, set the end of the symbol to 0
-                if n == 0:
-                    # Skip the first element since its jitter negative positive
-                    continue
-                power_dampened[n - 1, symbol_amount_indices + shift:symbol_amount_indices] += interference_terms[n - 1, :-shift]
-
-        return power_dampened
 
     def delay_line_interferometer(self, power_dampened, t, peak_wavelength):
         print(f"power_dampened shape: {power_dampened.shape}")
@@ -303,13 +254,14 @@ class SimulationEngine:
 
         # for first row early bin
         power_dampened_total[0, :split_point] = power_dampened[0, :split_point]
-
+        nan_indices = np.where(np.isnan(power_dampened))
+        print(f"nan_indices dli:{nan_indices}")  # Output: (array([1, 3]),)
         return power_dampened_total
 
     def poisson_distr(self, calc_value):
         """Calculate the number of photons based on a Poisson distribution."""
-        print(f"np.any(array < 0): {np.isnan(calc_value < 0)}")
-        print(f"np.any(np.isnan(array)):{np.any(np.isnan(calc_value))}")
+        #print(f"np.any(array < 0): {np.isnan(calc_value < 0)}")
+        #print(f"np.any(np.isnan(array)):{np.any(np.isnan(calc_value))}")
 
         upper_bounds = (calc_value + 5 * np.sqrt(calc_value)).astype(int) # shape: (n_samples,)
         max_upper_bound = upper_bounds.max()
