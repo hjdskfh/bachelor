@@ -282,23 +282,28 @@ class SimulationManager:
         
         # Generate Alice's choices
         basis, value, decoy = self.simulation_engine.generate_alice_choices()
-
+        Saver.memory_usage("before signal bandwidth jitter")
         # Simulate signal and transmission
-        voltage_signal, t_jitter, signals, t, jitter_shifts = self.simulation_engine.signal_bandwidth_jitter(basis, value, decoy)
-        power_dampened, transmission = self.simulation_engine.eam_transmission(voltage_signal, optical_power, T1_dampening)
+        signals, t, jitter_shifts = self.simulation_engine.signal_bandwidth_jitter(basis, value, decoy)
+        Saver.memory_usage("After signal bandwidth jitter")
+        power_dampened, transmission = self.simulation_engine.eam_transmission(signals, optical_power, T1_dampening)
+        Saver.memory_usage("After eam transmission")
         power_dampened = self.simulation_engine.fiber_attenuation(power_dampened)
+        Saver.memory_usage("After fiber attenuation")
 
         plt.plot(t * 1e9, power_dampened[0], color='blue', label='0', linestyle='-', marker='o', markersize=1)
         plt.plot(t * 1e9, power_dampened[1], color='green', label='1', linestyle='-', marker='o', markersize=1)
         Saver.save_plot(f"power_fiber")
-
+        
         power_dampened = self.simulation_engine.delay_line_interferometer(power_dampened, t, peak_wavelength)
+        Saver.memory_usage("After DLI")
         #print(f"power_dampened: {power_dampened.shape()}")
         calc_mean_photon_nr, wavelength_photons, time_photons, nr_photons, index_where_photons, all_time_max_nr_photons, sum_nr_photons_at_chosen = self.simulation_engine.choose_photons(power_dampened, transmission, 
-                                                                                                                                                                     t_jitter, peak_wavelength)
-    
-        time_photons_det, wavelength_photons_det, nr_photons_det, index_where_photons_det, t_detector_jittered = self.simulation_engine.detector(t_jitter, wavelength_photons, time_photons, 
+                                                                                                                                                                     t, peak_wavelength)
+        Saver.memory_usage("After choose photons")
+        time_photons_det, wavelength_photons_det, nr_photons_det, index_where_photons_det = self.simulation_engine.detector(t, wavelength_photons, time_photons, 
                                                                                                                      nr_photons, index_where_photons, all_time_max_nr_photons)
+        Saver.memory_usage("After detector")
         dark_count_times, num_dark_counts = self.simulation_engine.darkcount()
 
             

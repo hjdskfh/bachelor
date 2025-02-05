@@ -97,8 +97,10 @@ class SimulationEngine:
         """Generate a square pulse signal for a given height and pattern."""
         # make len(t) divisible by n_pulses
         inv_sampling = 1 / sampling_rate_fft
-        #inv_sampling = inv_sampling - inv_sampling % self.config.n_pulses
-        t = np.arange(0, self.config.n_pulses * pulse_duration, inv_sampling, dtype=np.float64)
+        samples_per_pulse = int(pulse_duration / inv_sampling)
+        total_samples = self.config.n_pulses * samples_per_pulse
+        t = np.linspace(0, self.config.n_pulses * pulse_duration, total_samples, endpoint=False)
+        #t = np.arange(0, self.config.n_pulses * pulse_duration, inv_sampling, dtype=np.float64)
         repeating_square_pulses = np.full((len(pulse_height), len(t)), self.config.non_signal_voltage, dtype=np.float64)
         one_pulse = len(t) // self.config.n_pulses
         indices = np.arange(len(t))
@@ -112,31 +114,22 @@ class SimulationEngine:
         return self.generate_square_pulse(pulse_height, pulse_duration, sampling_rate_fft, pattern = self.encode_pulse(value))
 
     def apply_bandwidth_filter(self, signal, sampling_rate_fft):
-        filtered_signal = np.empty_like(signal)
+        """Apply a frequency-domain filter to a signal."""
+        S_fourier = fft(signal)
+        frequencies = fftfreq(len(signal), d=1 / sampling_rate_fft)
+
         freq_x = [0, self.config.bandwidth * 0.8, self.config.bandwidth, self.config.bandwidth * 1.2, sampling_rate_fft / 2]
-        freq_y = [1, 1, 0.7, 0.01, 0.001]
-         
-        # Adjust the sample spacing d to account for concatenation
-        sample_spacing = 1 / (sampling_rate_fft * self.config.batchsize)
+        freq_y = [1, 1, 0.7, 0.01, 0.001]  # Smooth drop-off
 
-        for i, signal in enumerate(signal):
-            S_fourier = fft(signal)
-            frequencies = fftfreq(len(signal), d= sample_spacing)
-            S_fourier *= np.interp(np.abs(frequencies), freq_x, freq_y)
-            filtered_signal[i] = np.real(ifft(S_fourier))
-        return filtered_signal
+        np.multiply(S_fourier, np.interp(np.abs(frequencies), freq_x, freq_y), out=S_fourier)
 
-    def apply_jitter_to_pulse(self, t, signals, jitter_shifts, pulse_heights, name_jitter):
+        return np.real(ifft(S_fourier))
+
+    def apply_jitter_to_pulse(self, t, signals, jitter_shifts):
         index_shift_per_symbol = ((len(t) // t[-1]) * jitter_shifts).astype(int)
         index_shift_per_symbol = index_shift_per_symbol[: self.config.n_pulses * self.config.batchsize - 1]  #size = n_pulses * batchsize - 1 (minus Anfang und Ende)
-        print(f"index shift per symbol size: {index_shift_per_symbol.size}")
         index_one_signal = len(t) // self.config.n_pulses
-        print(f"len(signals): {len(signals)}")
-        print(f"index_one_signal: {index_one_signal}")
         transition_indices = np.arange(index_one_signal, len(signals), index_one_signal)
-        print(f"transition_indices: {transition_indices[:10], transition_indices[-10:]}")
-        print(f"len(signals): {len(signals)}")
-        print(f"len(t):{len(t)}")
 
         new_transition_indices = transition_indices + index_shift_per_symbol
         # Step through and shift transitions **in-place**
@@ -155,7 +148,6 @@ class SimulationEngine:
     def signal_bandwidth_jitter(self, basis, values, decoy):
         pulse_heights = self.get_pulse_height(basis, decoy)
         jitter_shifts = self.get_jitter('laser')
-        print(f"jitter_shifts shape: {jitter_shifts.shape}")
         pulse_duration = 1 / self.config.sampling_rate_FPGA
         sampling_rate_fft = 100e11
         t, signals = self.generate_encoded_pulse(pulse_heights, pulse_duration, values, sampling_rate_fft)
@@ -163,11 +155,20 @@ class SimulationEngine:
         for i in range(0, len(values), self.config.batchsize):
             signals_batch = signals[i:i + 1000, :]
             flattened_signals_batch = signals_batch.flatten()
-            flattened_signals_batch = self.apply_jitter_to_pulse(t, flattened_signals_batch, jitter_shifts[self.config.n_pulses * i:self.config.n_pulses *(i + 1000)], pulse_heights[i:i + 1000], name_jitter='laser')
+            signals_batch_jitter = self.apply_jitter_to_pulse(t, flattened_signals_batch, jitter_shifts[self.config.n_pulses * i:self.config.n_pulses *(i + 1000)])
             filtered_signals = self.apply_bandwidth_filter(flattened_signals_batch, sampling_rate_fft)
             reshaped_signals = filtered_signals.reshape(self.config.batchsize, len(t))
             signals[i:i + 1000, :] = reshaped_signals
 
+            plt.plot(signals_batch_jitter[:len(t)], label = 'before jitter')
+            plt.plot(flattened_signals_batch[:len(t)], label = 'after jitter')
+            plt.plot(filtered_signals[:len(t)], label = 'filtered')
+            plt.legend()
+            plt.show()
+            plt.plot(reshaped_signals[0], label = 'ende')
+            plt.show()
+        print(f"signals shape: {signals.shape}")
+        print(f"signals: {signals[:100]}")
         return signals, t, jitter_shifts
 
     def eam_transmission(self, voltage_signal, optical_power, T1_dampening):
@@ -195,16 +196,6 @@ class SimulationEngine:
         attenuation_factor = 10 ** (self.config.fiber_attenuation / 10)
         power_dampened = power_dampened * attenuation_factor
         return power_dampened
-    
-    def generate_bob_choices(self, basis_bob = None, value_bob = None, decoy_bob = None, fixed = None):
-        """Generates Bob's choices for a quantum communication protocol."""
-        # Bob's basis choice is random, muss nich 50:50
-        if not fixed:
-            basis_bob = self.config.rng.choice([0, 1], size=self.config.n_samples, p=[1 - self.config.p_z_bob, self.config.p_z_bob])
-            value_bob = self.config.rng.choice([0, 1], size=self.config.n_samples, p=[1 - 0.5, 0.5])
-            decoy_bob = self.config.rng.choice([0, 1], size=self.config.n_samples, p=[1 - self.config.p_decoy, self.config.p_decoy])
-        value_bob[basis_bob == 0] = -1
-        return basis_bob, value_bob, decoy_bob
 
     def delay_line_interferometer(self, power_dampened, t, peak_wavelength):
         print(f"power_dampened shape: {power_dampened.shape}")
@@ -230,7 +221,6 @@ class SimulationEngine:
             2 * np.sqrt(eta_long * eta_short) *
             np.multiply(np.sqrt(np.multiply(late_bin_ex_last, early_bin_ex_first)),np.cos(delta_phi))  #ALTnp.cos(delta_phi[:-1]).reshape(-1,1)letzter Wert von delta_phi wird nicht verwendet weil zwischen 0 und n-1
         )
-        print(f"interference_term1 shape: {interference_term1.shape}")
         
         # Interference term within the (n+1)th symbol (early-time and late-time bins)
         interference_term2 = (
@@ -254,8 +244,7 @@ class SimulationEngine:
 
         # for first row early bin
         power_dampened_total[0, :split_point] = power_dampened[0, :split_point]
-        nan_indices = np.where(np.isnan(power_dampened))
-        print(f"nan_indices dli:{nan_indices}")  # Output: (array([1, 3]),)
+        
         return power_dampened_total
 
     def poisson_distr(self, calc_value):
@@ -279,10 +268,10 @@ class SimulationEngine:
         nr_photons = x[sampled_indices]
         return nr_photons
 
-    def choose_photons(self, power_dampened, transmission, t_jitter, peak_wavelength, fixed_nr_photons=None):
+    def choose_photons(self, power_dampened, transmission, t, peak_wavelength, fixed_nr_photons=None):
         """Calculate and choose photons based on the transmission and jitter."""
         # Calculate the mean photon number
-        energy_per_pulse = np.trapezoid(power_dampened, t_jitter, axis=1)
+        energy_per_pulse = np.trapezoid(power_dampened, t, axis=1)
         calc_mean_photon_nr = energy_per_pulse / (constants.h * constants.c / peak_wavelength)
         
         # Use Poisson distribution to get the number of photons
@@ -309,11 +298,11 @@ class SimulationEngine:
             photon_count = nr_photons[i]
             energy_per_photon[i, :photon_count] = energy_per_pulse[idx] / photon_count
             wavelength_photons[i, :photon_count] = (constants.h * constants.c) / energy_per_photon[i, :photon_count]
-            time_photons[i, :photon_count] = self.config.rng.choice(t_jitter[idx], size=photon_count, p=norm_transmission[idx])
+            time_photons[i, :photon_count] = self.config.rng.choice(t, size=photon_count, p=norm_transmission[idx]) #t ist konstant
 
         return calc_mean_photon_nr, wavelength_photons, time_photons, nr_photons, index_where_photons, all_time_max_nr_photons, sum_nr_photons_at_chosen
     
-    def detector(self, t_jitter, wavelength_photons, time_photons, nr_photons, index_where_photons, all_time_max_nr_photons):
+    def detector(self, t, wavelength_photons, time_photons, nr_photons, index_where_photons, all_time_max_nr_photons):
         """Simulate the detector process."""
         # Will the photons pass the detection efficiency?
         pass_detection = self.config.rng.choice([False, True], size=(len(index_where_photons), all_time_max_nr_photons), p=[1 - self.config.detector_efficiency, self.config.detector_efficiency])
@@ -359,10 +348,9 @@ class SimulationEngine:
         wavelength_photons_det = wavelength_photons_det[valid_rows]
         time_photons_det = time_photons_det[valid_rows]
 
+        #t_detector_jittered = self.apply_jitter_to_pulse(t, name_jitter='detector')
 
-        t_detector_jittered = self.apply_jitter_to_t(t_jitter, name_jitter='detector')
-
-        return time_photons_det, wavelength_photons_det, nr_photons_det, index_where_photons_det, t_detector_jittered
+        return time_photons_det, wavelength_photons_det, nr_photons_det, index_where_photons_det#, t_detector_jittered
     
     def darkcount(self):
         """Calculate the number of dark count photons detected."""
@@ -386,10 +374,10 @@ class SimulationEngine:
         else: # If no valid photons, return an empty array
             return np.empty(0) 
 
-    def classificator(self, t, valid_timestamps, valid_wavelengths, valid_nr_photons, values):
+    def classificator(self, t, time_photons_det, wavelength_photons_det, nr_photons_det, index_where_photons_det, values):
         """Classify time bins."""
         timebins = np.linspace(0, t[-1], self.config.n_pulses)
-        detected_indices = [np.digitize(valid_timestamp, timebins) - 1 for valid_timestamp in valid_timestamps]
+        detected_indices = [np.digitize(time_photon, timebins) - 1 for time_photon in time_photons_det]
         patterns = self.encode_pulse(values)
         mask_classifications = np.zeros_like(patterns, dtype=bool)  # Initialize mask of the same shape as patterns
         for i, indices in enumerate(detected_indices):  # Fill mask based on detected_indices
