@@ -118,6 +118,12 @@ class SimulationSingle:
         power_dampened = power / T1_dampening
         return power_dampened, transmission
     
+    def fiber_attenuation_single(self, power_dampened):
+        """Apply fiber attenuation to the power."""
+        attenuation_factor = 10 ** (self.config.fiber_attenuation / 10)
+        power_dampened = power_dampened * attenuation_factor
+        return power_dampened
+    
     def find_T1(self, lower_limit, upper_limit, tol):
         # Generate a single instance for T1 dampening calculation
         optical_power, peak_wavelength = self.random_laser_output_single('current_power', 'voltage_shift', 'current_wavelength', fixed=True)

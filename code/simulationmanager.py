@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator
 from concurrent.futures import ThreadPoolExecutor
 from tqdm import tqdm
+import time
 
 from saver import Saver
 from simulationengine import SimulationEngine
@@ -14,25 +15,25 @@ class SimulationManager:
         self.simulation_engine = SimulationEngine(config)
         self.simulation_single = SimulationSingle(config)
     
-    def run_simulation(self):
+    def run_simulation_one_state(self):
         
         T1_dampening = self.simulation_engine.initialize()
-        optical_power, peak_wavelength = self.simulation_engine.random_laser_output('current_power','voltage_shift', 'current_wavelength')
+        optical_power, peak_wavelength = self.simulation_single.random_laser_output_single('current_power','voltage_shift', 'current_wavelength')
         
-        basis, value, decoy = self.simulation_engine.generate_alice_choices(basis = 0, value = 0, decoy = 0, fixed = True)
-        voltage_signal, t_jitter, _, _, _ = self.simulation_engine.signal_bandwidth_jitter(basis, value, decoy)
-        _, transmission = self.simulation_engine.eam_transmission(voltage_signal, optical_power, T1_dampening)
+        basis, value, decoy = self.simulation_single.generate_alice_choices_single(basis = 0, value = 0, decoy = 0)
+        signals, t, jitter_shifts = self.simulation_single.signal_bandwidth_jitter_single(basis, value, decoy)
+        _, transmission = self.simulation_single.eam_transmission_single(signals, optical_power, T1_dampening)
 
         fig, ax = plt.subplots(figsize=(8, 5))
         ax2 = ax.twinx()  # Create a second y-axis
         
         # Plot voltage (left y-axis)
-        ax.plot(t_jitter *1e9, voltage_signal, color='blue', label='Voltage', linestyle='-', marker='o', markersize=1)
+        ax.plot(t *1e9, signals, color='blue', label='Voltage', linestyle='-', marker='o', markersize=1)
         ax.set_ylabel('Voltage (V)', color='blue')
         ax.tick_params(axis='y', labelcolor='blue')
 
         # Plot transmission (right y-axis)
-        ax2.plot(t_jitter * 1e9, transmission, color='red', label='Transmission', linestyle='-', marker='o', markersize=1)
+        ax2.plot(t * 1e9, transmission, color='red', label='Transmission', linestyle='-', marker='o', markersize=1)
         ax2.set_ylabel('Transmission', color='red')
         ax2.tick_params(axis='y', labelcolor='red')
     
@@ -64,7 +65,7 @@ class SimulationManager:
             basis, value, decoy = self.simulation_single.generate_alice_choices_single(basis=state["basis"], value=state["value"], decoy=state["decoy"])
             
             # Simulate signal and transmission
-            voltage_signal, t_jitter, signals, _, _ = self.simulation_single.signal_bandwidth_jitter_single(basis, value, decoy)
+            voltage_signal, t_jitter, signals = self.simulation_single.signal_bandwidth_jitter_single(basis, value, decoy)
             _, transmission = self.simulation_single.eam_transmission_single(voltage_signal, optical_power, T1_dampening)
             
             return state, t_jitter, voltage_signal, transmission, signals
@@ -83,17 +84,17 @@ class SimulationManager:
             ax2 = ax.twinx()  # Create a second y-axis
 
             # Plot voltage (left y-axis)
-            ax.plot(t_jitter * 1e9, voltage_signal, color='blue', label='Voltage', lw = 0.1)
+            ax.plot(t_jitter * 1e9, voltage_signal, color='blue', label='Voltage')
             ax.set_ylabel('Voltage (V)', color='blue')
             ax.tick_params(axis='y', labelcolor='blue')
 
             # Plot voltage (left y-axis)
-            ax.plot(t_jitter * 1e9, signals, color='green', label='square voltage', lw = 0.1)
+            ax.plot(t_jitter * 1e9, signals, color='green', label='square voltage')
             ax.set_ylabel('Voltage (V)', color='green')
             ax.tick_params(axis='y', labelcolor='green')
 
             # Plot transmission (right y-axis)
-            ax2.plot(t_jitter * 1e9, transmission, color='red', label='Transmission', lw = 0.1)
+            ax2.plot(t_jitter * 1e9, transmission, color='red', label='Transmission')
             ax2.set_ylabel('Transmission', color='red')
             ax2.tick_params(axis='y', labelcolor='red')
 
@@ -108,7 +109,6 @@ class SimulationManager:
             Saver.save_plot(f"9_12_{state['title'].replace(' ', '_').replace(':', '').lower()}_voltage_and_transmission_for_4GHz_and_1e-11_jitter")
 
     def run_simulation_histograms(self):
-        'nicht fertig umgestellt von single auf double!'
         #initialize
         T1_dampening = self.simulation_engine.initialize()
 
@@ -122,41 +122,92 @@ class SimulationManager:
                 {"title": "State: X+ decoy", "basis": 0, "value": -1, "decoy": 1},
                 ]
         
+        def make_data_plottable(data):
+            data = data[~np.isnan(data)]
+            if str(data).startswith("nr_photons"):
+                # Step 1: Calculate the number of zeros (no photons detected)
+                num_zeros = self.config.n_samples - len(data)
+
+                # Step 2: Create the full dataset by combining the nr_photons and the zeros
+                zeros = np.zeros(num_zeros)
+                data = np.concatenate((data, zeros))
+
+            # If data is empty after removing NaNs, return an empty array
+            if data.size == 0:
+                return np.array([])
+
+            # If data is a scalar or zero-dimensional array, return it as a 1D array
+            if np.isscalar(data) or data.ndim == 0:
+                return np.array([data])
+                
+            # If data contains a single array, return it directly
+            if len(data) == 1:
+                return np.array(data)  # No need for np.concatenate
+
+            # Flatten and concatenate all elements
+            return np.concatenate([arr.flatten() for arr in data])
+        
+
         for state in states:
-
-            nr_photons_arr = []
-            time_arr = []
-            wavelength_arr = []
-            mean_photon_nr_arr = np.empty(self.config.n_samples + 1)
-
             # 0tes Element ist baseline
             if state["decoy"] == 0:
-                mean_photon_nr_arr[0] = self.config.mean_photon_nr
+                target_mean_photon_nr = self.config.mean_photon_nr
             else:
-                mean_photon_nr_arr[0] = self.config.mean_photon_decoy
-            optical_power, peak_wavelength = self.simulation_single.random_laser_output_single('current_power', 'voltage_shift', 'current_wavelength')
+                target_mean_photon_nr = self.config.mean_photon_decoy
+
+            optical_power, peak_wavelength = self.simulation_engine.random_laser_output('current_power', 'voltage_shift', 'current_wavelength')
             
             # Generate Alice's choices
-            basis, value, decoy = self.simulation_single.generate_alice_choices_single(basis=state["basis"], value=state["value"], decoy=state["decoy"], fixed = True)
+            basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=state["basis"], value=state["value"], decoy=state["decoy"])
             
             # Simulate signal and transmission
-            voltage_signal, t_jitter, _, _, _ = self.simulation_single.signal_bandwidth_jitter_single(basis, value, decoy)
-            power_dampened, transmission = self.simulation_single.eam_transmission_single(voltage_signal, optical_power, T1_dampening)
-            calc_mean_photon_nr, wavelength_photons, time_photons, nr_photons, index_where_photons, all_time_max_nr_photons, sum_nr_photons_at_chosen = self.simulation_engine.choose_photons_single(power_dampened, transmission, 
-                                                                                                                                                                    t_jitter, peak_wavelength)
 
-            time_photons_det, wavelength_photons_det, nr_photons_det, index_where_photons_det, t_detector_jittered = self.simulation_engine.detector(t_jitter, wavelength_photons, time_photons, 
-                                                                                                                    nr_photons, index_where_photons, all_time_max_nr_photons)
-            mean_photon_nr_arr[i+1] = calc_mean_photon_nr
-            if nr_photons != 0:
-                wavelength_arr.extend([wavelength_photons])
-                time_arr.extend([time_photons])
-                nr_photons_arr.extend([nr_photons])
-            else:
-                nr_photons_arr.extend([nr_photons])
+            signals, t, jitter_shifts = self.simulation_engine.signal_bandwidth_jitter(basis, value, decoy)
+            Saver.memory_usage("before eam " + str(time.time()))
+            power_dampened, transmission, calc_mean_photon_nr, energy_per_pulse = self.simulation_engine.eam_transmission(signals, optical_power, T1_dampening, peak_wavelength, t)
+            Saver.memory_usage("before fiber " + str(time.time()))
+            power_dampened = self.simulation_engine.fiber_attenuation(power_dampened)
+            Saver.memory_usage("before basis " + str(time.time()))
+            power_dampened_x, power_dampened_z = self.simulation_engine.basis_selection_bob(power_dampened)
+            Saver.memory_usage("before DLI " + str(time.time()))
 
-            plt.hist(mean_photon_nr_arr[1:], bins=40, alpha=0.7, label="Mean Photon Number")
-            plt.axvline(mean_photon_nr_arr[0], color='red', linestyle='--', linewidth=2, label='target mean photon number')
+            # path for X basis
+            power_dampened_x = self.simulation_engine.delay_line_interferometer(power_dampened_x, t, peak_wavelength)
+            Saver.memory_usage("before choose x " + str(time.time()))
+            wavelength_photons_x, time_photons_x, nr_photons_x, index_where_photons_x, all_time_max_nr_photons_x, sum_nr_photons_at_chosen_x = self.simulation_engine.choose_photons(power_dampened_x, 
+                                                                                                                                                                                                            transmission, t, 
+                                                                                                                                                                                                            peak_wavelength, 
+                                                                                                                                                                                                            calc_mean_photon_nr, 
+                                                                                                                                                                                                            energy_per_pulse, 
+                                                                                                                                                                                                            fixed_nr_photons=None)
+            time_photons_det_x, wavelength_photons_det_x, nr_photons_det_x, index_where_photons_det_x = self.simulation_engine.detector(t, wavelength_photons_x, 
+                                                                                                                                time_photons_x, nr_photons_x, 
+                                                                                                                                index_where_photons_x, 
+                                                                                                                                all_time_max_nr_photons_x)
+            # path fo Z basis
+            wavelength_photons_z, time_photons_z, nr_photons_z, index_where_photons_z, all_time_max_nr_photons_z, sum_nr_photons_at_chosen_z = self.simulation_engine.choose_photons(power_dampened_z, 
+                                                                                                                                                                                              transmission, t, 
+                                                                                                                                                                                              peak_wavelength, 
+                                                                                                                                                                                              calc_mean_photon_nr, 
+                                                                                                                                                                                              energy_per_pulse, 
+                                                                                                                                                                                              fixed_nr_photons=None)
+            time_photons_det_z, wavelength_photons_det_z, nr_photons_det_z, index_where_photons_det_z = self.simulation_engine.detector(t, wavelength_photons_z, 
+                                                                                                                                time_photons_z, nr_photons_z, 
+                                                                                                                                index_where_photons_z, 
+                                                                                                                                all_time_max_nr_photons_z)
+            print(f"print time photon: {time_photons_det_x[:10]}")	
+
+
+            calc_mean_photon_nr = make_data_plottable(calc_mean_photon_nr)
+            nr_photons_det_z = make_data_plottable(nr_photons_det_z)
+            time_photons_det_z = make_data_plottable(time_photons_det_z)
+            wavelength_photons_det_z = make_data_plottable(wavelength_photons_det_z)
+            nr_photons_det_x = make_data_plottable(nr_photons_det_x)
+            time_photons_det_x = make_data_plottable(time_photons_det_x)
+            wavelength_photons_det_x = make_data_plottable(wavelength_photons_det_x)
+            
+            plt.hist(calc_mean_photon_nr, color = 'green', bins=40, alpha=0.7, label="Mean Photon Number")
+            plt.axvline(target_mean_photon_nr, color='darkred', linestyle='--', linewidth=2, label='target mean photon number')
             plt.title(f"{state['title'].replace(':', '').lower()}: mean photon number over {self.config.n_samples} iterations")
             plt.ylabel('iterations')
             plt.gca().yaxis.set_major_locator(MaxNLocator(integer=True))
@@ -165,47 +216,34 @@ class SimulationManager:
             plt.tight_layout()
             Saver.save_plot(f"hist_mean_photon_nr_{state['title'].replace(' ', '_').replace(':', '').lower()}")       
 
-            plt.hist(nr_photons_arr, bins=np.arange(0, 11) - 0.5, alpha=0.7)
+            plt.hist(nr_photons_det_x, label = 'X basis', bins=np.arange(0, 11) - 0.5, alpha=0.7)
+            plt.hist(nr_photons_det_z, label = 'Z basis', bins=np.arange(0, 11) - 0.5, alpha=0.7)
             plt.title(f"{state['title'].replace(':', '').lower()}: photon number over {self.config.n_samples} iterations")
             plt.xticks(np.arange(0, 11))  # Set x-ticks to be integers 
             plt.ylabel('iterations')
             plt.gca().yaxis.set_major_locator(MaxNLocator(integer=True))
             plt.xlabel('photon number')
+            plt.legend()
             plt.tight_layout()
             Saver.save_plot(f"hist_nr_photons_{state['title'].replace(' ', '_').replace(':', '').lower()}")   
 
-            if len(time_arr) == 0:
-                plt.hist(time_arr, bins=40, alpha=0.7)
-                plt.ylim(0, 10) 
-            else:
-                if len(time_arr) == 1:
-                    time_arr = np.concatenate(time_arr)
-                else:
-                    time_arr = np.concatenate([arr.flatten() for arr in time_arr])
-                time_arr = time_arr * 1e9
-                plt.hist(time_arr, bins=40, alpha=0.7)
+            plt.hist(time_photons_det_x * 1e9, label = 'X basis', bins=40, alpha=0.7)
+            plt.hist(time_photons_det_z * 1e9, label = 'Z basis', bins=40, alpha=0.7)
             plt.title(f"{state['title'].replace(':', '').lower()}: photon time over {self.config.n_samples} iterations")
             plt.ylabel('iterations')
             plt.gca().yaxis.set_major_locator(MaxNLocator(integer=True))
             plt.xlabel('photon time (ns)')
+            plt.legend()
             plt.tight_layout()
             Saver.save_plot(f"hist_photon_time_{state['title'].replace(' ', '_').replace(':', '').lower()}")
-            
-            print(wavelength_arr)
-            if len(wavelength_arr) == 0:
-                plt.hist(wavelength_arr, bins=40, alpha=0.7)
-                plt.ylim(0, 10) 
-            else:
-                if len(wavelength_arr) == 1:
-                    wavelength_arr = np.concatenate(wavelength_arr)
-                else:
-                    wavelength_arr = np.concatenate([arr.flatten() for arr in wavelength_arr])
-                wavelength_arr = wavelength_arr * 1e9
-                plt.hist(wavelength_arr, bins=40, alpha=0.7)
+        
+            plt.hist(wavelength_photons_det_x * 1e9, label = 'X basis', bins=40, alpha=0.7)
+            plt.hist(wavelength_photons_det_z * 1e9, label = 'Z basis', bins=40, alpha=0.7)
             plt.title(f"{state['title'].replace(':', '').lower()}: photon wavelength over {self.config.n_samples} iterations")
             plt.ylabel('iterations')
             plt.gca().yaxis.set_major_locator(MaxNLocator(integer=True))
             plt.xlabel('photon wavelength (nm)')
+            plt.legend()
             plt.tight_layout()
             Saver.save_plot(f"hist_wavelength_{state['title'].replace(' ', '_').replace(':', '').lower()}")         
         
@@ -240,8 +278,8 @@ class SimulationManager:
                     basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=state["basis"], value=state["value"], decoy=state["decoy"], fixed = True)
                     
                     # Simulate signal and transmission
-                    voltage_signal, t_jitter, _, _, _ = self.simulation_engine.signal_bandwidth_jitter(basis, value, decoy)
-                    power_dampened, transmission = self.simulation_engine.eam_transmission(voltage_signal, optical_power, T1_dampening)
+                    signals, t, jitter_shifts = self.simulation_engine.signal_bandwidth_jitter(basis, value, decoy)
+                    power_dampened, transmission = self.simulation_engine.eam_transmission(signals, optical_power, T1_dampening)
                     power_dampened = self.simulation_engine.fiber_attenuation(power_dampened)
 
                     calc_mean_photon_nr, wavelength_photons, time_photons, nr_photons, index_where_photons, all_time_max_nr_photons, sum_nr_photons_at_chosen = self.simulation_engine.choose_photons(power_dampened, transmission, 
@@ -284,9 +322,9 @@ class SimulationManager:
         basis, value, decoy = self.simulation_engine.generate_alice_choices()
         Saver.memory_usage("before signal bandwidth jitter")
         # Simulate signal and transmission
-        signals, t, jitter_shifts = self.simulation_engine.signal_bandwidth_jitter(basis, value, decoy)
+        signals, t, _ = self.simulation_engine.signal_bandwidth_jitter(basis, value, decoy)
         Saver.memory_usage("After signal bandwidth jitter")
-        power_dampened, transmission = self.simulation_engine.eam_transmission(signals, optical_power, T1_dampening)
+        power_dampened, transmission, calc_mean_photon_nr, energy_per_pulse = self.simulation_engine.eam_transmission(signals, optical_power, T1_dampening, peak_wavelength, t)
         Saver.memory_usage("After eam transmission")
         power_dampened = self.simulation_engine.fiber_attenuation(power_dampened)
         Saver.memory_usage("After fiber attenuation")
@@ -297,19 +335,15 @@ class SimulationManager:
         
         power_dampened = self.simulation_engine.delay_line_interferometer(power_dampened, t, peak_wavelength)
         Saver.memory_usage("After DLI")
-        #print(f"power_dampened: {power_dampened.shape()}")
         calc_mean_photon_nr, wavelength_photons, time_photons, nr_photons, index_where_photons, all_time_max_nr_photons, sum_nr_photons_at_chosen = self.simulation_engine.choose_photons(power_dampened, transmission, 
                                                                                                                                                                      t, peak_wavelength)
         Saver.memory_usage("After choose photons")
         time_photons_det, wavelength_photons_det, nr_photons_det, index_where_photons_det = self.simulation_engine.detector(t, wavelength_photons, time_photons, 
                                                                                                                      nr_photons, index_where_photons, all_time_max_nr_photons)
+        print(f"shape time_photons_det: {time_photons_det.shape}")
         Saver.memory_usage("After detector")
         dark_count_times, num_dark_counts = self.simulation_engine.darkcount()
 
-            
-        # Plot the bar graph
-        #plt.bar(index_where_photons - 0.5*bar_width, nr_photons, width=bar_width, label='fiber', color='blue')
-        #plt.bar(index_where_photons_det + 0.5*bar_width, nr_photons_det, width=bar_width, label='detector', color='green')
 
         # Labels for the x-axis
         photon_labels = [f"{i}" for i in range(all_time_max_nr_photons + 1)]
@@ -354,16 +388,7 @@ class SimulationManager:
         # Show the plot
         Saver.save_plot(f"photons_in_fiber_vs_after detector")
 
-        
 
-    def run_simulation_dc(self):
-        for i in range(self.config.n_samples):
-            _, num_dark_counts = self.simulation_engine.darkcount()
-            timer = 0
-            if num_dark_counts > 0:
-                timer = timer + 1
-
-        print(f"min 1 dark count detected per run: {timer}")
 
     def run_simulation_initialize(self):
         T1_dampening = self.simulation_engine.initialize()
@@ -374,24 +399,18 @@ class SimulationManager:
         optical_power, peak_wavelength = self.simulation_engine.random_laser_output('current_power','voltage_shift', 'current_wavelength')
         
         basis, value, decoy = self.simulation_engine.generate_alice_choices(basis = 0, value = 0, decoy = 0, fixed = True)
-        filtered_signal, t_jittered, signals, t, jitter_shifts = self.simulation_engine.signal_bandwidth_jitter(basis, value, decoy)
+        signals, t, jitter_shifts = self.simulation_engine.signal_bandwidth_jitter(basis, value, decoy)
 
         print(f"second_signal: {signals[0:100]}")
         fig, ax = plt.subplots(figsize=(8, 5))
         ax2 = ax.twinx()  # Create a second y-axis
 
         # Plot voltage (left y-axis)
-        ax.plot(t_jittered *1e9, signals, color='blue', label='np.multi', linestyle='-', marker='o', markersize=1)
+        ax.plot(t *1e9, signals, color='blue', label='np.multi', linestyle='-', marker='o', markersize=1)
         ax.set_ylabel('Voltage (V)', color='blue')
         ax.tick_params(axis='y', labelcolor='blue')
 
-        # Plot transmission (right y-axis)
-        ax2.plot(t_jittered * 1e9, filtered_signal, color='red', label='normal multi', linestyle='-', marker='o', markersize=1)
-        ax2.set_ylabel('Voltage (V)', color='red')
-        ax2.tick_params(axis='y', labelcolor='red')
-
         # Titles and labels
-        ax.set_title(f"State: Z0 decoy")
         ax.set_xlabel('Time in ns')
         ax.grid(True)
 

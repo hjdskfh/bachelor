@@ -1,7 +1,6 @@
 axes.titlesize : 14
 axes.labelsize : 11
-lines.linewidth : 2
-lines.marker : o
+lines.linewidth : 3    # lines.marker : o
 lines.markersize : 6
 xtick.labelsize : 11
 ytick.labelsize : 11

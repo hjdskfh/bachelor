@@ -21,13 +21,16 @@ class SimulationEngine:
         return splev(x_data, tck)
 
     def random_laser_output(self, current_power, voltage_shift, current_wavelength):
+        'every batchsize values we get a new chosen value'
         # Generate a random time within the desired range
-        times = self.config.rng.uniform(0, 10, self.config.n_samples)
+        times = self.config.rng.uniform(0, 10, self.config.n_samples // self.config.batchsize)
         # Use sinusoidal modulation for the entire array
         chosen_voltage = self.config.mean_voltage + 0.050 * np.sin(2 * np.pi * 1 * times)
         chosen_current = (self.config.mean_current + self.config.current_amplitude * np.sin(2 * np.pi * 1 * times)) * 1e3
-        optical_power = self.get_interpolated_value(chosen_current, current_power)
-        peak_wavelength = self.get_interpolated_value(chosen_current, current_wavelength) + self.get_interpolated_value(chosen_voltage, voltage_shift)
+        optical_power_short = self.get_interpolated_value(chosen_current, current_power)
+        peak_wavelength_short = self.get_interpolated_value(chosen_current, current_wavelength) + self.get_interpolated_value(chosen_voltage, voltage_shift)
+        optical_power = np.repeat(optical_power_short, self.config.batchsize)
+        peak_wavelength = np.repeat(peak_wavelength_short, self.config.batchsize)
         return optical_power * 1e-3, peak_wavelength * 1e-9  # in W and m
 
     def generate_alice_choices(self, basis=None, value=None, decoy=None):
@@ -96,8 +99,7 @@ class SimulationEngine:
     def generate_square_pulse(self, pulse_height, pulse_duration, sampling_rate_fft, pattern):
         """Generate a square pulse signal for a given height and pattern."""
         # make len(t) divisible by n_pulses
-        inv_sampling = 1 / sampling_rate_fft
-        samples_per_pulse = int(pulse_duration / inv_sampling)
+        samples_per_pulse = int(pulse_duration * sampling_rate_fft)
         total_samples = self.config.n_pulses * samples_per_pulse
         t = np.linspace(0, self.config.n_pulses * pulse_duration, total_samples, endpoint=False)
         #t = np.arange(0, self.config.n_pulses * pulse_duration, inv_sampling, dtype=np.float64)
@@ -151,30 +153,36 @@ class SimulationEngine:
         pulse_duration = 1 / self.config.sampling_rate_FPGA
         sampling_rate_fft = 100e11
         t, signals = self.generate_encoded_pulse(pulse_heights, pulse_duration, values, sampling_rate_fft)
-        plt.plot(signals[0], label = 'before everything')
-        plt.legend()
-        plt.show()	
-
+        #plt.plot(signals[0], label = 'before everything')
+        #plt.legend()
+        indexshift = len(t) // self.config.n_pulses // 2
+        old_save_shift = np.zeros(indexshift)
+        new_save_shift = np.empty(indexshift)
         for i in range(0, len(values), self.config.batchsize):
-            signals_batch = signals[i:i + 1000, :]
+            signals_batch = signals[i:i + self.config.batchsize, :]
             flattened_signals_batch = signals_batch.reshape(-1)
-            plt.plot(flattened_signals_batch[:3*len(t)], label = 'before jitter')
+            #plt.plot(flattened_signals_batch[:6*len(t)], label = 'before jitter')
 
-            flattened_signals_batch = self.apply_jitter_to_pulse(t, flattened_signals_batch, jitter_shifts[self.config.n_pulses * i:self.config.n_pulses *(i + 1000)])
-            plt.plot(flattened_signals_batch[:3*len(t)], label = 'after jitter')
+            flattened_signals_batch = self.apply_jitter_to_pulse(t, flattened_signals_batch, jitter_shifts[self.config.n_pulses * i:self.config.n_pulses *(i + self.config.batchsize)])
+            #plt.plot(flattened_signals_batch[:6*len(t)], label = 'after jitter')
 
-            filtered_signals = self.apply_bandwidth_filter(flattened_signals_batch, sampling_rate_fft)
-            reshaped_signals = filtered_signals.reshape(self.config.batchsize, len(t))
-            signals[i:i + 1000, :] = reshaped_signals
+            flattened_signals_batch = self.apply_bandwidth_filter(flattened_signals_batch, sampling_rate_fft)
+            #roll array for better readability later at the detector
+            ''' filtered_signals = np.roll(filtered_signals, indexshift)
+            new_save_shift = filtered_signals[:indexshift]
+            filtered_signals[: indexshift] = old_save_shift
+            old_save_shift = new_save_shift'''
 
+            flattened_signals_batch = flattened_signals_batch.reshape(self.config.batchsize, len(t))
+            signals[i:i + self.config.batchsize, :] = flattened_signals_batch
             #plt.plot(filtered_signals[:len(t)], label = 'BW')
-            plt.legend()
-            plt.show()
-            plt.plot(filtered_signals[:3*len(t)], label = 'ende')
-            plt.show()
+            '''plt.legend()
+            Saver.save_plot('without_bandwidth')
+            plt.plot(filtered_signals[:6*len(t)], label = 'ende')
+            Saver.save_plot('with_bandwidth')'''
         return signals, t, jitter_shifts
 
-    def eam_transmission(self, voltage_signal, optical_power, T1_dampening):
+    def eam_transmission(self, voltage_signal, optical_power, T1_dampening, peak_wavelength, t):
         """fastest? prob not: Calculate the transmission and power for all elements in the arrays."""
         # Create a mask where voltage_signal is less than 7.023775e-05 = x_max
         _, x_max = self.config.data.get_data_x_min_x_max('eam_transmission')            
@@ -192,43 +200,53 @@ class SimulationEngine:
         transmission[mask] = interpolated_values
        
         power_dampened = transmission * optical_power[:, None] / T1_dampening
-        return power_dampened, transmission
+
+        # Calculate the mean photon number
+        energy_per_pulse = np.trapezoid(power_dampened, t, axis=1)
+        calc_mean_photon_nr = energy_per_pulse / (constants.h * constants.c / peak_wavelength)
+
+        return power_dampened, transmission, calc_mean_photon_nr, energy_per_pulse
     
     def fiber_attenuation(self, power_dampened):
         """Apply fiber attenuation to the power."""
         attenuation_factor = 10 ** (self.config.fiber_attenuation / 10)
         power_dampened = power_dampened * attenuation_factor
         return power_dampened
+    
+    def basis_selection_bob(self, power_dampened):
+        """passive basis selection for Bob: in Beutel paper 85% without DLI"""
+        power_dampened_x = power_dampened * self.config.p_z_bob
+        power_dampened_z = power_dampened * (1 - self.config.p_z_bob)
+        return power_dampened_x, power_dampened_z
 
-    def delay_line_interferometer(self, power_dampened, t, peak_wavelength):
-        print(f"power_dampened shape: {power_dampened.shape}")
+    def delay_line_interferometer(self, power_dampened_x, t, peak_wavelength):
         assert self.config.fraction_long_arm <= 1
         eta_long = self.config.fraction_long_arm
         eta_short = 1 - eta_long
 
         # phase difference between the two arms: w*delta T_bin, w = 2pi*f = 2pic/lambda
         delta_t_bin = t[-1] / 2                             # Time bin duration (float64)
-        frequency_symbol = self.config.sampling_rate_FPGA / 4 # Frequency of light wrong, I want to have the frequency of the signal
-        delta_phi = (2* np.pi *frequency_symbol) * delta_t_bin # Phase difference (radians) ALT:* constants.c / peak_wavelength
+        frequency_symbol = constants.c / peak_wavelength     # Frequency of the symbol (float64)
+        delta_phi = (2* np.pi * frequency_symbol) * delta_t_bin # Phase difference (radians) ALT:* constants.c / peak_wavelength
 
         # Time bin split point ( for late time bin start)
         split_point = len(t) // 2
 
-        late_bin_ex_last = power_dampened[:-1, split_point:]
-        early_bin_ex_first = power_dampened[1:, :split_point]
-        whole_early_bin = power_dampened[:, :split_point]
-        whole_late_bin = power_dampened[:, split_point:]
+        late_bin_ex_last = power_dampened_x[:-1, split_point:]
+        early_bin_ex_first = power_dampened_x[1:, :split_point]
+        whole_early_bin = power_dampened_x[:, :split_point]
+        whole_late_bin = power_dampened_x[:, split_point:]
 
         # Calculate the interference term nth symbol and n+1th symbol (early-time and late-time bins)
         interference_term1 = (
             2 * np.sqrt(eta_long * eta_short) *
-            np.multiply(np.sqrt(np.multiply(late_bin_ex_last, early_bin_ex_first)),np.cos(delta_phi))  #ALTnp.cos(delta_phi[:-1]).reshape(-1,1)letzter Wert von delta_phi wird nicht verwendet weil zwischen 0 und n-1
+            np.multiply(np.sqrt(np.multiply(late_bin_ex_last, early_bin_ex_first)),np.cos(delta_phi[:-1]).reshape(-1,1)) #letzter Wert von delta_phi wird nicht verwendet weil zwischen 0 und n-1
         )
         
         # Interference term within the (n+1)th symbol (early-time and late-time bins)
         interference_term2 = (
             2 * np.sqrt(eta_short * eta_long) *
-            np.multiply(np.sqrt(np.multiply(whole_early_bin, whole_late_bin)), np.cos(delta_phi)) # ALTalle n Werte für phi
+            np.multiply(np.sqrt(np.multiply(whole_early_bin, whole_late_bin)), np.cos(delta_phi).reshape(-1,1)) # alle n Werte für phi
         )
 
         # Pre-allocate arrays for the total power
@@ -246,7 +264,7 @@ class SimulationEngine:
         )
 
         # for first row early bin
-        power_dampened_total[0, :split_point] = power_dampened[0, :split_point]
+        power_dampened_total[0, :split_point] = power_dampened_x[0, :split_point]
         
         return power_dampened_total
 
@@ -271,11 +289,8 @@ class SimulationEngine:
         nr_photons = x[sampled_indices]
         return nr_photons
 
-    def choose_photons(self, power_dampened, transmission, t, peak_wavelength, fixed_nr_photons=None):
+    def choose_photons(self, power_dampened, transmission, t, peak_wavelength, calc_mean_photon_nr, energy_per_pulse, fixed_nr_photons=None):
         """Calculate and choose photons based on the transmission and jitter."""
-        # Calculate the mean photon number
-        energy_per_pulse = np.trapezoid(power_dampened, t, axis=1)
-        calc_mean_photon_nr = energy_per_pulse / (constants.h * constants.c / peak_wavelength)
         
         # Use Poisson distribution to get the number of photons
         nr_photons = fixed_nr_photons if fixed_nr_photons is not None else self.poisson_distr(calc_mean_photon_nr)
@@ -303,7 +318,7 @@ class SimulationEngine:
             wavelength_photons[i, :photon_count] = (constants.h * constants.c) / energy_per_photon[i, :photon_count]
             time_photons[i, :photon_count] = self.config.rng.choice(t, size=photon_count, p=norm_transmission[idx]) #t ist konstant
 
-        return calc_mean_photon_nr, wavelength_photons, time_photons, nr_photons, index_where_photons, all_time_max_nr_photons, sum_nr_photons_at_chosen
+        return wavelength_photons, time_photons, nr_photons, index_where_photons, all_time_max_nr_photons, sum_nr_photons_at_chosen
     
     def detector(self, t, wavelength_photons, time_photons, nr_photons, index_where_photons, all_time_max_nr_photons):
         """Simulate the detector process."""
@@ -322,9 +337,9 @@ class SimulationEngine:
         time_photons_det = time_photons[valid_rows]
 
         # Last photon detected --> can next photon be detected? --> sort stuff
-        sorted_indices = [np.argsort(time) for time in time_photons_det]
-        wavelength_photons = [wavelength_photon[indices] for wavelength_photon, indices in zip(wavelength_photons_det, sorted_indices)]
-        time_photons = [time_photon[indices] for time_photon, indices in zip(time_photons_det, sorted_indices)]
+        sorted_indices = np.array([np.argsort(time) for time in time_photons_det])
+        wavelength_photons = np.array([wavelength_photon[indices] for wavelength_photon, indices in zip(wavelength_photons_det, sorted_indices)])
+        time_photons = np.array([time_photon[indices] for time_photon, indices in zip(time_photons_det, sorted_indices)])
 
         pulse_length = 1 / self.config.sampling_rate_FPGA
         # Initialize the adjusted times array with NaN values
@@ -363,31 +378,32 @@ class SimulationEngine:
         dark_count_times = [np.sort(self.config.rng.uniform(0, symbol_duration, count)) if count > 0 else np.empty(0) for count in num_dark_counts]
         return dark_count_times, num_dark_counts
     
-    def classificator_old(self, t, valid_timestamps, valid_wavelengths, valid_nr_photons, value):
-        if valid_nr_photons > 0:
-            # classify timebins
-            timebins = np.linspace(0, t[-1], self.config.n_pulses)
-            detected_indices = np.digitize(valid_timestamps, timebins) - 1
-            pattern = self.encode_pulse(value)
-            # All photons are classified as correct (True)
-            if np.all(pattern[detected_indices] == 1):
-                return np.ones(valid_nr_photons, dtype=bool) 
-            else:  # Any photon in a wrong bin gets classified as incorrect (False)
-                return np.zeros(valid_nr_photons, dtype=bool)
-        else: # If no valid photons, return an empty array
-            return np.empty(0) 
-
-    def classificator(self, t, time_photons_det, wavelength_photons_det, nr_photons_det, index_where_photons_det, values):
+    def classificator(self, t, time_photons_det_x, wavelength_photons_det_x, nr_photons_det_x, index_where_photons_det_x, time_photons_det_z, wavelength_photons_det_z, nr_photons_det_z, index_where_photons_det_z, basis, value):
         """Classify time bins."""
-        timebins = np.linspace(0, t[-1], self.config.n_pulses)
-        detected_indices = [np.digitize(time_photon, timebins) - 1 for time_photon in time_photons_det]
-        patterns = self.encode_pulse(values)
-        mask_classifications = np.zeros_like(patterns, dtype=bool)  # Initialize mask of the same shape as patterns
-        for i, indices in enumerate(detected_indices):  # Fill mask based on detected_indices
-            mask_classifications[i, indices] = True
-        # Check where the mask is True and the values in patterns are 1
-        classifications = np.all(np.where(mask_classifications, patterns == 1, True), axis=1)
-        return classifications
+        timebins = np.linspace(0, t[-1], self.config.n_pulses // 2)
+        detected_indices_x = np.array([np.digitize(time_photon, timebins) - 1 for time_photon in time_photons_det_x])  # 0 wenn early timebin, 1 wenn late timebin, -1 wenn nicht detektiert
+        detected_indices_z = np.array([np.digitize(time_photon, timebins) - 1 for time_photon in time_photons_det_z])
+        
+        # X detection
+        no_ones_rows_reduced = np.where(np.all((detected_indices_x != 1), axis=1))[0]
+        no_ones_rows_full = index_where_photons_det_x[no_ones_rows_reduced]
+        all_ind = np.arange(self.config.n_samples)
+        remaining_indices = np.setdiff1d(all_ind, index_where_photons_det_x)
+        no_ones_rows_all = np.concatenate((no_ones_rows_full, remaining_indices))
+        #only keep those where alice sent X+
+        mask_x = basis[no_ones_rows_all] == 0
+        xp_indices = no_ones_rows_all[mask_x]
+
+        # Z detection
+        #Find indices where there is exactly one 0 (Z0 detection)
+        Z0_indices_reduced = np.where(np.sum(detected_indices_z == 0, axis=1) == 1)[0]
+        #Find indices where there is exactly one 1 (Z1 detection)
+        Z1_indices_reduced = np.where(np.sum(detected_indices_z == 1, axis=1) == 1)[0]
+        #get indices in original indexing
+        Z0_indices_full = index_where_photons_det_z[Z0_indices_reduced]
+        Z1_indices_full = index_where_photons_det_z[Z1_indices_reduced]
+
+        return 
     
     def initialize(self):
         plt.style.use(self.config.mlp)
