@@ -82,9 +82,9 @@ class SimulationEngine:
                         np.where(basis == 0, self.config.voltage_sup, self.config.voltage),
                         np.where(basis == 0, self.config.voltage_decoy_sup, self.config.voltage_decoy))
 
-    def get_jitter(self, name_jitter):
+    def get_jitter(self, name_jitter, size_jitter=1):
         probabilities, jitter_values = self.config.data.get_probabilities(x_data=None, name='probabilities' + name_jitter)
-        jitter_shifts = self.config.rng.choice(jitter_values, size=self.config.n_samples * self.config.n_pulses, p=probabilities) # für jeden Querstrich kann man jitter haben
+        jitter_shifts = self.config.rng.choice(jitter_values, sizes = size_jitter, p=probabilities) # für jeden Querstrich kann man jitter haben
         return jitter_shifts
 
     def encode_pulse(self, value):
@@ -149,7 +149,7 @@ class SimulationEngine:
 
     def signal_bandwidth_jitter(self, basis, values, decoy):
         pulse_heights = self.get_pulse_height(basis, decoy)
-        jitter_shifts = self.get_jitter('laser')
+        jitter_shifts = self.get_jitter('laser', size_jitter = self.config.n_samples * self.config.n_pulses)
         pulse_duration = 1 / self.config.sampling_rate_FPGA
         sampling_rate_fft = 100e11
         t, signals = self.generate_encoded_pulse(pulse_heights, pulse_duration, values, sampling_rate_fft)
@@ -365,10 +365,29 @@ class SimulationEngine:
         index_where_photons_det = index_where_photons_det[valid_rows]
         wavelength_photons_det = wavelength_photons_det[valid_rows]
         time_photons_det = time_photons_det[valid_rows]
+        
+        # jitter detector: timing jitter
+        jitter_shifts = self.get_jitter('detector', size_jitter = time_photons_det.size)
+        #Apply jitter to non-NaN values, keeping NaNs unchanged
+        time_photons_det[~np.isnan(time_photons_det)] += jitter_shifts[~np.isnan(time_photons_det)]
+        #Create a mask for valid (non-NaN) entries
+        valid_mask = ~np.isnan(time_photons_det)
 
-        #t_detector_jittered = self.apply_jitter_to_pulse(t, name_jitter='detector')
+        #Apply jitter until all values are within bounds (0 <= time_photons_det <= t[-1])
+        while True:
+            #Create the mask for out-of-bounds values (non-NaN)
+            out_of_bounds_mask = (time_photons_det[valid_mask] < 0) | (time_photons_det[valid_mask] > t[-1])
+            #If no out-of-bounds values, exit the loop
+            if not np.any(out_of_bounds_mask):
+                break
+            #Remove the old jitter (subtract the previous jitter) for the out-of-bounds values
+            time_photons_det[valid_mask][out_of_bounds_mask] -= jitter_shifts[valid_mask][out_of_bounds_mask]
+            #Generate new jitter for the out-of-bounds values only
+            jitter_shifts[valid_mask][out_of_bounds_mask] = self.get_jitter('detector', size=np.sum(out_of_bounds_mask))
+            #Apply the new jitter to the out-of-bounds values
+            time_photons_det[valid_mask][out_of_bounds_mask] += jitter_shifts[valid_mask][out_of_bounds_mask]
 
-        return time_photons_det, wavelength_photons_det, nr_photons_det, index_where_photons_det#, t_detector_jittered
+        return time_photons_det, wavelength_photons_det, nr_photons_det, index_where_photons_det
     
     def darkcount(self):
         """Calculate the number of dark count photons detected."""
