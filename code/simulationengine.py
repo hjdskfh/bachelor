@@ -84,7 +84,7 @@ class SimulationEngine:
 
     def get_jitter(self, name_jitter, size_jitter=1):
         probabilities, jitter_values = self.config.data.get_probabilities(x_data=None, name='probabilities' + name_jitter)
-        jitter_shifts = self.config.rng.choice(jitter_values, sizes = size_jitter, p=probabilities) # für jeden Querstrich kann man jitter haben
+        jitter_shifts = self.config.rng.choice(jitter_values, size = size_jitter, p=probabilities) # für jeden Querstrich kann man jitter haben
         return jitter_shifts
 
     def encode_pulse(self, value):
@@ -366,8 +366,10 @@ class SimulationEngine:
         wavelength_photons_det = wavelength_photons_det[valid_rows]
         time_photons_det = time_photons_det[valid_rows]
         
+        
         # jitter detector: timing jitter
-        jitter_shifts = self.get_jitter('detector', size_jitter = time_photons_det.size)
+        jitter_shifts = self.get_jitter('detector', size_jitter = time_photons_det.shape)
+
         #Apply jitter to non-NaN values, keeping NaNs unchanged
         time_photons_det[~np.isnan(time_photons_det)] += jitter_shifts[~np.isnan(time_photons_det)]
         #Create a mask for valid (non-NaN) entries
@@ -397,32 +399,74 @@ class SimulationEngine:
         dark_count_times = [np.sort(self.config.rng.uniform(0, symbol_duration, count)) if count > 0 else np.empty(0) for count in num_dark_counts]
         return dark_count_times, num_dark_counts
     
-    def classificator(self, t, time_photons_det_x, wavelength_photons_det_x, nr_photons_det_x, index_where_photons_det_x, time_photons_det_z, wavelength_photons_det_z, nr_photons_det_z, index_where_photons_det_z, basis, value):
+    def classificator(self, t, time_photons_det_x, index_where_photons_det_x, time_photons_det_z, index_where_photons_det_z, basis, value):
         """Classify time bins."""
         timebins = np.linspace(0, t[-1], self.config.n_pulses // 2)
         detected_indices_x = np.array([np.digitize(time_photon, timebins) - 1 for time_photon in time_photons_det_x])  # 0 wenn early timebin, 1 wenn late timebin, -1 wenn nicht detektiert
         detected_indices_z = np.array([np.digitize(time_photon, timebins) - 1 for time_photon in time_photons_det_z])
         
+        # Z detection
+        #Find indices where there is exactly one 0 (Z0 detection)
+        Z0_indices_measured_reduced = np.where(np.sum(detected_indices_z == 0, axis=1) == 1)[0]
+        #Find indices where there is exactly one 1 (Z1 detection)
+        Z1_indices_measured_reduced = np.where(np.sum(detected_indices_z == 1, axis=1) == 1)[0]
+        #get indices in original indexing
+        Z0_indices_measured = index_where_photons_det_z[Z0_indices_measured_reduced]
+        Z1_indices_measured = index_where_photons_det_z[Z1_indices_measured_reduced]
+        #only keep those where alice sent Z: CHECK
+        mask_z0 = (basis[Z0_indices_measured] == 1) & (value[Z0_indices_measured] == 1)
+        Z0_indices_checked = Z0_indices_measured[mask_z0]
+        mask_z1 = (basis[Z1_indices_measured] == 1) & (value[Z1_indices_measured] == 0)
+        Z1_indices_checked = Z1_indices_measured[mask_z1]
+        #also check Z detection???
+
         # X detection
         no_ones_rows_reduced = np.where(np.all((detected_indices_x != 1), axis=1))[0]
         no_ones_rows_full = index_where_photons_det_x[no_ones_rows_reduced]
         all_ind = np.arange(self.config.n_samples)
         remaining_indices = np.setdiff1d(all_ind, index_where_photons_det_x)
-        no_ones_rows_all = np.concatenate((no_ones_rows_full, remaining_indices))
+        xp_indices_measured = np.concatenate((no_ones_rows_full, remaining_indices))
         #only keep those where alice sent X+
-        mask_x = basis[no_ones_rows_all] == 0
-        xp_indices = no_ones_rows_all[mask_x]
+        mask_x = basis[xp_indices_measured] == 0
+        xp_indices_checked = xp_indices_measured[mask_x]
+        #assume we only have a X+ detection when we detect anything in Z detector (bc probability is 5050 for Z states if I sent an X+)
+        xp_indices = np.intersect1d(xp_indices_checked, np.concatenate([Z0_indices_measured, Z1_indices_measured]))
 
-        # Z detection
-        #Find indices where there is exactly one 0 (Z0 detection)
-        Z0_indices_reduced = np.where(np.sum(detected_indices_z == 0, axis=1) == 1)[0]
-        #Find indices where there is exactly one 1 (Z1 detection)
-        Z1_indices_reduced = np.where(np.sum(detected_indices_z == 1, axis=1) == 1)[0]
-        #get indices in original indexing
-        Z0_indices_full = index_where_photons_det_z[Z0_indices_reduced]
-        Z1_indices_full = index_where_photons_det_z[Z1_indices_reduced]
+        # Error cases
+        #Initialize a boolean array to track wrong detections (same length as number of detections)
+        wrong_detection_mask_z = np.zeros(len(index_where_photons_det_z), dtype=bool)
+        wrong_detection_mask_x = np.zeros(len(index_where_photons_det_x), dtype=bool)
 
-        return 
+        #Step 1: Check for wrong detections in the Z basis (Z0 and Z1)
+        #Condition 1: Measure both bins in Z (both early and late detection)
+        wrong_detection_mask_z |= (detected_indices_z[:, 0] == 1) & (detected_indices_z[:, 1] == 1)
+        #Condition 2: Measure in late for Z0 (wrong detection)
+        wrong_detection_mask_z |= (detected_indices_z[:, 0] == 1) & (basis == 0)
+        #Condition 3: Measure in early for Z1 (wrong detection)
+        wrong_detection_mask_z |= (detected_indices_z[:, 1] == 0) & (basis == 1)
+        #Condition 4: Early detection in Z0 after Z1Z0
+        Z1_alice = np.where((basis == 1) & (value == 1))[0]  # Indices where Z1 was sent
+        Z0_alice = np.where((basis == 1) & (value == 0))[0]  # Indices where Z0 was sent
+        Z1_Z0_alice = Z0_alice[np.isin(Z0_alice - 1, Z1_alice)]  # Indices where Z1Z0 was sent
+        wrong_detection_mask_z = np.isin(index_where_photons_det_z, Z1_Z0_alice) & (detected_indices_z[:, 0] == 0)
+        #get wrong_detections thruough correct indexing
+        wrong_detections_z = index_where_photons_det_z[wrong_detection_mask_z]
+        
+        #Step 2: Check for wrong detections in the X+ basis
+        #Condition 5: Early detection in X+ after Z1X+
+        wrong_detection_mask_x |= (detected_indices_x[:, 0] == 0) & (basis == 0) & np.isin(index_where_photons_det_x, Z1_indices)
+        #Condition 6: Late detection in X+ after X+ sent
+        wrong_detection_mask_x |= (detected_indices_x[:, 1] == 1) & (basis == 0) 
+        #`wrong_detection_mask` is a boolean array where True indicates a wrong detection
+        wrong_detections_x = index_where_photons_det_x[wrong_detection_mask_x]
+        #Combine the wrong detections from both bases
+        wrong_detections = np.concatenate([wrong_detections_x, wrong_detections_z])         # not sorted!
+
+        total_amount_detections = len(Z0_indices_checked) + len(Z1_indices_checked) + len(xp_indices)
+        qber = len(wrong_detections) / total_amount_detections
+        raw_key_rate = total_amount_detections / (t[-1] * self.config.n_samples)
+
+        return wrong_detections, total_amount_detections, qber, raw_key_rate
     
     def initialize(self):
         plt.style.use(self.config.mlp)

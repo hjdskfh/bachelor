@@ -195,7 +195,7 @@ class SimulationManager:
                                                                                                                                 time_photons_z, nr_photons_z, 
                                                                                                                                 index_where_photons_z, 
                                                                                                                                 all_time_max_nr_photons_z)
-            print(f"print time photon: {time_photons_det_x[:10]}")	
+            #print(f"print time photon: {time_photons_det_x[:10]}")	
 
 
             calc_mean_photon_nr = make_data_plottable(calc_mean_photon_nr)
@@ -418,3 +418,49 @@ class SimulationManager:
         plt.tight_layout()
         plt.show()
         #Saver.save_plot('9_12_Z0dec_111aka1000d_voltage_and_transmission_for_4GHz_and_1e-11_jitter')
+
+
+    def run_simulation_classificator(self):
+        T1_dampening = self.simulation_engine.initialize()
+        optical_power, peak_wavelength = self.simulation_engine.random_laser_output('current_power', 'voltage_shift', 'current_wavelength')
+            
+        # Generate Alice's choices
+        basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=state["basis"], value=state["value"], decoy=state["decoy"])
+        
+        # Simulate signal and transmission
+
+        signals, t, jitter_shifts = self.simulation_engine.signal_bandwidth_jitter(basis, value, decoy)
+        Saver.memory_usage("before eam " + str(time.time()))
+        power_dampened, transmission, calc_mean_photon_nr, energy_per_pulse = self.simulation_engine.eam_transmission(signals, optical_power, T1_dampening, peak_wavelength, t)
+        Saver.memory_usage("before fiber " + str(time.time()))
+        power_dampened = self.simulation_engine.fiber_attenuation(power_dampened)
+        Saver.memory_usage("before basis " + str(time.time()))
+        power_dampened_x, power_dampened_z = self.simulation_engine.basis_selection_bob(power_dampened)
+        Saver.memory_usage("before DLI " + str(time.time()))
+
+        # path for X basis
+        power_dampened_x = self.simulation_engine.delay_line_interferometer(power_dampened_x, t, peak_wavelength)
+        Saver.memory_usage("before choose x " + str(time.time()))
+        wavelength_photons_x, time_photons_x, nr_photons_x, index_where_photons_x, all_time_max_nr_photons_x, sum_nr_photons_at_chosen_x = self.simulation_engine.choose_photons(power_dampened_x, 
+                                                                                                                                                                                                        transmission, t, 
+                                                                                                                                                                                                        peak_wavelength, 
+                                                                                                                                                                                                        calc_mean_photon_nr, 
+                                                                                                                                                                                                        energy_per_pulse, 
+                                                                                                                                                                                                        fixed_nr_photons=None)
+        time_photons_det_x, wavelength_photons_det_x, nr_photons_det_x, index_where_photons_det_x = self.simulation_engine.detector(t, wavelength_photons_x, 
+                                                                                                                            time_photons_x, nr_photons_x, 
+                                                                                                                            index_where_photons_x, 
+                                                                                                                            all_time_max_nr_photons_x)
+        # path fo Z basis
+        wavelength_photons_z, time_photons_z, nr_photons_z, index_where_photons_z, all_time_max_nr_photons_z, sum_nr_photons_at_chosen_z = self.simulation_engine.choose_photons(power_dampened_z, 
+                                                                                                                                                                                        transmission, t, 
+                                                                                                                                                                                        peak_wavelength, 
+                                                                                                                                                                                        calc_mean_photon_nr, 
+                                                                                                                                                                                        energy_per_pulse, 
+                                                                                                                                                                                        fixed_nr_photons=None)
+        time_photons_det_z, wavelength_photons_det_z, nr_photons_det_z, index_where_photons_det_z = self.simulation_engine.detector(t, wavelength_photons_z, 
+                                                                                                                            time_photons_z, nr_photons_z, 
+                                                                                                                            index_where_photons_z, 
+                                                                                                                            all_time_max_nr_photons_z)
+        #print(f"print time photon: {time_photons_det_x[:10]}")	
+
