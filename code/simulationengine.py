@@ -8,12 +8,14 @@ import time
 
 from saver import Saver
 from simulationsingle import SimulationSingle
+from simulationhelper import SimulationHelper
 
 
 class SimulationEngine:
     def __init__(self, config):
         self.config = config
         self.simulation_single = SimulationSingle(config)
+        self.simulation_helper = SimulationHelper(config)
 
     def get_interpolated_value(self, x_data, name):
         #calculate tck for which curve
@@ -399,13 +401,17 @@ class SimulationEngine:
         dark_count_times = [np.sort(self.config.rng.uniform(0, symbol_duration, count)) if count > 0 else np.empty(0) for count in num_dark_counts]
         return dark_count_times, num_dark_counts
     
-    def classificator(self, t, time_photons_det_x, index_where_photons_det_x, time_photons_det_z, index_where_photons_det_z, basis, value):
-        """Classify time bins."""
-        timebins = np.linspace(0, t[-1], self.config.n_pulses // 2)
-        detected_indices_x = np.array([np.digitize(time_photon, timebins) - 1 for time_photon in time_photons_det_x])  # 0 wenn early timebin, 1 wenn late timebin, -1 wenn nicht detektiert
-        detected_indices_z = np.array([np.digitize(time_photon, timebins) - 1 for time_photon in time_photons_det_z])
-        
-        # Z detection
+    def classificator_det_ind(self, timebins, decoy, time_photons_det, index_where_photons_det, is_decoy):
+        detected_indices = np.array([np.digitize(time_photon, timebins) - 1 for time_photon in time_photons_det])  # 0 wenn early timebin, 1 wenn late timebin, -1 wenn nicht detektiert
+        reduced_decoy = decoy[index_where_photons_det]
+        if is_decoy == False:
+            detected_indices = detected_indices[reduced_decoy == 0]
+        else:
+            detected_indices = detected_indices[reduced_decoy == 1]
+        return detected_indices
+
+    def classificator_z(self, basis, value, decoy, index_where_photons_det_z, detected_indices_z, is_decoy):
+        # Z basis
         #Find indices where there is exactly one 0 (Z0 detection)
         Z0_indices_measured_reduced = np.where(np.sum(detected_indices_z == 0, axis=1) == 1)[0]
         #Find indices where there is exactly one 1 (Z1 detection)
@@ -414,55 +420,93 @@ class SimulationEngine:
         Z0_indices_measured = index_where_photons_det_z[Z0_indices_measured_reduced]
         Z1_indices_measured = index_where_photons_det_z[Z1_indices_measured_reduced]
         #only keep those where alice sent Z: CHECK
-        mask_z0 = (basis[Z0_indices_measured] == 1) & (value[Z0_indices_measured] == 1)
-        Z0_indices_checked = Z0_indices_measured[mask_z0]
-        mask_z1 = (basis[Z1_indices_measured] == 1) & (value[Z1_indices_measured] == 0)
-        Z1_indices_checked = Z1_indices_measured[mask_z1]
-        #also check Z detection???
-
+        mask_Z0 = (basis[Z0_indices_measured] == 1) & (value[Z0_indices_measured] == 1)
+        Z0_indices_checked = Z0_indices_measured[mask_Z0]
+        mask_Z1 = (basis[Z1_indices_measured] == 1) & (value[Z1_indices_measured] == 0)
+        Z1_indices_checked = Z1_indices_measured[mask_Z1]
+        amount_Z_det = len(Z0_indices_checked) + len(Z1_indices_checked)
+        if is_decoy == False:
+            Z_sent = np.sum((basis == 1) & (decoy == 0))
+        else:
+            Z_sent = np.sum((basis == 1) & (decoy == 1))
+        gain_Z = amount_Z_det / Z_sent
+        return gain_Z, amount_Z_det
+    
+    def classificator_x(self, basis, value, decoy, index_where_photons_det_x, detected_indices_x, gain_Z, is_decoy):
         # X detection
         no_ones_rows_reduced = np.where(np.all((detected_indices_x != 1), axis=1))[0]
         no_ones_rows_full = index_where_photons_det_x[no_ones_rows_reduced]
         all_ind = np.arange(self.config.n_samples)
         remaining_indices = np.setdiff1d(all_ind, index_where_photons_det_x)
-        xp_indices_measured = np.concatenate((no_ones_rows_full, remaining_indices))
+        XP_indices_measured = np.concatenate((no_ones_rows_full, remaining_indices))
         #only keep those where alice sent X+
-        mask_x = basis[xp_indices_measured] == 0
-        xp_indices_checked = xp_indices_measured[mask_x]
-        #assume we only have a X+ detection when we detect anything in Z detector (bc probability is 5050 for Z states if I sent an X+)
-        xp_indices = np.intersect1d(xp_indices_checked, np.concatenate([Z0_indices_measured, Z1_indices_measured]))
+        mask_x = basis[XP_indices_measured] == 0
+        XP_indices_checked = XP_indices_measured[mask_x]
+        amount_XP_det = gain_Z * len(XP_indices_checked)
+        if is_decoy == False:
+            XP_sent = np.sum((basis == 0) & (decoy == 0))
+        else:
+            XP_sent = np.sum((basis == 0) & (decoy == 1))
+        gain_XP = amount_XP_det / XP_sent
+        return gain_XP, amount_XP_det
 
+
+    def classificator_error_cases(self, basis, value, index_where_photons_det_x, index_where_photons_det_z, total_detected_indices_x, total_detected_indices_z):
         # Error cases
         #Initialize a boolean array to track wrong detections (same length as number of detections)
         wrong_detection_mask_z = np.zeros(len(index_where_photons_det_z), dtype=bool)
         wrong_detection_mask_x = np.zeros(len(index_where_photons_det_x), dtype=bool)
-
         #Step 1: Check for wrong detections in the Z basis (Z0 and Z1)
         #Condition 1: Measure both bins in Z (both early and late detection)
-        wrong_detection_mask_z |= (detected_indices_z[:, 0] == 1) & (detected_indices_z[:, 1] == 1)
+        wrong_detection_mask_z |= (total_detected_indices_z[:, 0] == 1) & (total_detected_indices_z[:, 1] == 1)
         #Condition 2: Measure in late for Z0 (wrong detection)
-        wrong_detection_mask_z |= (detected_indices_z[:, 0] == 1) & (basis == 0)
+        wrong_detection_mask_z |= (total_detected_indices_z[:, 0] == 1) & (basis == 0)
         #Condition 3: Measure in early for Z1 (wrong detection)
-        wrong_detection_mask_z |= (detected_indices_z[:, 1] == 0) & (basis == 1)
-        #Condition 4: Early detection in Z0 after Z1Z0
-        Z1_alice = np.where((basis == 1) & (value == 1))[0]  # Indices where Z1 was sent
-        Z0_alice = np.where((basis == 1) & (value == 0))[0]  # Indices where Z0 was sent
-        Z1_Z0_alice = Z0_alice[np.isin(Z0_alice - 1, Z1_alice)]  # Indices where Z1Z0 was sent
-        wrong_detection_mask_z = np.isin(index_where_photons_det_z, Z1_Z0_alice) & (detected_indices_z[:, 0] == 0)
+        wrong_detection_mask_z |= (total_detected_indices_z[:, 1] == 0) & (basis == 1)
         #get wrong_detections thruough correct indexing
         wrong_detections_z = index_where_photons_det_z[wrong_detection_mask_z]
         
         #Step 2: Check for wrong detections in the X+ basis
+        #Condition 4: Early detection in X+ state after Z1Z0 !!!!!!!check still
+        Z1_alice = np.where((basis == 1) & (value == 1))[0]  # Indices where Z1 was sent
+        Z0_alice = np.where((basis == 1) & (value == 0))[0]  # Indices where Z0 was sent
+        Z1_Z0_alice = Z0_alice[np.isin(Z0_alice - 1, Z1_alice)]  # Indices where Z1Z0 was sent
+        wrong_detection_mask_x = np.isin(index_where_photons_det_z, Z1_Z0_alice) & (total_detected_indices_x[:, 0] == 0)
         #Condition 5: Early detection in X+ after Z1X+
-        wrong_detection_mask_x |= (detected_indices_x[:, 0] == 0) & (basis == 0) & np.isin(index_where_photons_det_x, Z1_indices)
+        XP_alice = np.where((basis == 0)) # Indices where X+ was sent
+        Z1_XP_alice = XP_alice[np.isin(XP_alice - 1, Z1_alice)]  # Indices where Z1Z0 was sent
+        wrong_detection_mask_x |= (total_detected_indices_x[:, 0] == 0) & np.isin(index_where_photons_det_x, Z1_XP_alice)
         #Condition 6: Late detection in X+ after X+ sent
-        wrong_detection_mask_x |= (detected_indices_x[:, 1] == 1) & (basis == 0) 
+        wrong_detection_mask_x |= (total_detected_indices_x[:, 1] == 1) & (basis == 0) 
         #`wrong_detection_mask` is a boolean array where True indicates a wrong detection
         wrong_detections_x = index_where_photons_det_x[wrong_detection_mask_x]
         #Combine the wrong detections from both bases
         wrong_detections = np.concatenate([wrong_detections_x, wrong_detections_z])         # not sorted!
+        wrong_detections = np.sort(wrong_detections)                                        # now sorted
+        return wrong_detections
 
-        total_amount_detections = len(Z0_indices_checked) + len(Z1_indices_checked) + len(xp_indices)
+
+    def classificator(self, t, time_photons_det_x, index_where_photons_det_x, time_photons_det_z, index_where_photons_det_z, basis, value, decoy):
+        """Classify time bins."""
+        timebins = np.linspace(0, t[-1], self.config.n_pulses // 2)
+        detected_indices_z_norm = self.classificator_det_ind(timebins, decoy, time_photons_det_z, index_where_photons_det_z, is_decoy = False)
+        gain_Z_norm, amount_Z_det_norm = self.classificator_z(basis, value, decoy, index_where_photons_det_z, detected_indices_z_norm, is_decoy = False)
+
+        detected_indices_z_dec = self.classificator_det_ind(timebins, decoy, time_photons_det_z, index_where_photons_det_z, is_decoy = True)
+        gain_Z_dec, amount_Z_det_dec = self.classificator_z(basis, value, decoy, index_where_photons_det_z, detected_indices_z_dec, is_decoy = True)
+
+        detected_indices_x_norm = self.classificator_det_ind(timebins, decoy, time_photons_det_x, index_where_photons_det_x, is_decoy = False)
+        gain_XP_norm, amount_XP_det_norm = self.classificator_x(basis, value, decoy, index_where_photons_det_x, detected_indices_x_norm, gain_Z_norm, is_decoy = False)
+
+        detected_indices_x_dec = self.classificator_det_ind(timebins, decoy, time_photons_det_x, index_where_photons_det_x, is_decoy = True)
+        gain_XP_dec, amount_XP_det_dec = self.classificator_x(basis, value, decoy, index_where_photons_det_x, detected_indices_x_dec, gain_Z_dec, is_decoy = True)
+
+        total_detected_indices_x = np.unique(np.concatenate(detected_indices_x_dec, detected_indices_x_norm))
+        total_detected_indices_z = np.unique(np.concatenate(detected_indices_z_dec, detected_indices_z_norm))
+
+        wrong_detections = self.classificator_error_cases(basis, value, index_where_photons_det_x, index_where_photons_det_z, total_detected_indices_x, total_detected_indices_z)
+
+        total_amount_detections = amount_Z_det_norm + amount_Z_det_dec + amount_XP_det_norm + amount_XP_det_dec
         qber = len(wrong_detections) / total_amount_detections
         raw_key_rate = total_amount_detections / (t[-1] * self.config.n_samples)
 
@@ -477,11 +521,11 @@ class SimulationEngine:
         if T1_dampening > (upper_limit_t1 - 10*tol_t1) or T1_dampening < (lower_limit_t1 + 10*tol_t1):
             raise ValueError(f"T1 dampening is very close to limit [{lower_limit_t1}, {upper_limit_t1}] with tolerance {tol_t1}")
         #print('T1_dampening at initialize end: ' +str(T1_dampening))
-        #T1_dampening_in_dB = 10* np.log(1/T1_dampening) 
-        #print('T1_dampening at initialize end in dB: ' + str(T1_dampening_in_dB))
 
         #with simulated decoy state: calculate decoy height
         self.simulation_single.find_voltage_decoy(T1_dampening, lower_limit=-1, upper_limit=1.5, tol=1e-7)
+        if self.voltage_decoy > (upper_limit_t1 - 10*tol_t1) or self.voltage_decoy < (lower_limit_t1 + 10*tol_t1):
+            raise ValueError(f"T1 dampening is very close to limit [{lower_limit_t1}, {upper_limit_t1}] with tolerance {tol_t1}")
         #print('voltage at initialize end: ' + str(self.config.voltage))
         #print('Voltage_decoy at initialize end: ' + str(self.config.voltage_decoy))
         #print('Voltage_decoy_sup at initialize end: ' + str(self.config.voltage_decoy_sup))
