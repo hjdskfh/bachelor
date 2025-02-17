@@ -1,16 +1,13 @@
 import numpy as np
 from scipy.fftpack import fft, ifft, fftfreq
-
-from simulationengine import SimulationEngine
-from simulationsingle import SimulationSingle
+from scipy.special import factorial
+from scipy import constants
 
 
 class SimulationHelper:
     def __init__(self, config):
         self.config = config 
-        self.simulation_engine = SimulationEngine(config)
-        self.simulation_single = SimulationSingle(config)
-    
+
     # ========== Main Helper Functions for signal generation ==========
 
     def get_pulse_height(self, basis, decoy):
@@ -88,8 +85,250 @@ class SimulationHelper:
                 signals[new_idx:old_idx] = signals[old_idx + 1]
 
         return signals
+
+    # ========== Detector Helper ==========
+    def choose_photons(self, transmission, t, power_dampened, peak_wavelength, fixed_nr_photons=None):
+        """Calculate and choose photons based on the transmission and jitter."""
+        # Calculate the mean photon number
+        energy_per_pulse = np.trapezoid(power_dampened, t, axis=1)
+        calc_mean_photon_nr_detector = energy_per_pulse / (constants.h * constants.c / peak_wavelength)
+        # Use Poisson distribution to get the number of photons
+        nr_photons = fixed_nr_photons if fixed_nr_photons is not None else self.poisson_distr(calc_mean_photon_nr_detector)
+        all_time_max_nr_photons = max(nr_photons)
+            
+        # Find the indices where the number of photons is greater than 0
+        non_zero_photons = nr_photons > 0
+        index_where_photons = np.where(non_zero_photons)[0]
+        nr_iterations_where_photons = len(index_where_photons)
+
+        # Pre-allocate arrays for the photon properties        
+        energy_per_photon = np.full((nr_iterations_where_photons, all_time_max_nr_photons), np.nan)
+        wavelength_photons = np.full_like(energy_per_photon, np.nan)
+        time_photons = np.full_like(energy_per_photon, np.nan)
+        nr_photons = nr_photons[non_zero_photons] #delete rows where number of photons is 0
+
+        # Calculate the normalized transmission
+        norm_transmission = transmission / transmission.sum(axis=1, keepdims=True)
+
+        # Generate the photon properties for each sample with non-zero photons
+        for i, idx in enumerate(index_where_photons):
+            photon_count = nr_photons[i]
+            energy_per_photon[i, :photon_count] = energy_per_pulse[idx] / photon_count
+            wavelength_photons[i, :photon_count] = (constants.h * constants.c) / energy_per_photon[i, :photon_count]
+            time_photons[i, :photon_count] = self.config.rng.choice(t, size=photon_count, p=norm_transmission[idx]) #t ist konstant
+
+        return wavelength_photons, time_photons, nr_photons, index_where_photons, all_time_max_nr_photons, calc_mean_photon_nr_detector
+
+    def filter_photons_detection_time(self, time_photons_det, wavelength_photons_det):
+        """
+            Filter photon detections that are too close in time across symbols by first
+            "unfolding" the 2D array. For each row (symbol), add an offset equal to
+            row_index * (n_pulses * pulse_length)
+            to each non-NaN detection time. This creates a continuous time axis across rows.
+            
+            Then, sort the valid (non-NaN) adjusted times and reject detections that are
+            closer than detection_time to the previous accepted detection.
+            
+            The detections that fail the test are marked as NaN in both time_photons_det
+            and wavelength_photons_det.
+            
+            Parameters:
+            time_photons_det       : 2D numpy array of detection times (rows = symbols)
+            wavelength_photons_det : 2D numpy array of corresponding wavelengths
+            pulse_length           : Duration of one pulse
+            
+            Returns:
+            Updated (filtered) time_photons_det and wavelength_photons_det arrays.
+            """
+        pulse_length = 1 / self.config.sampling_rate_FPGA
+
+        num_rows, num_cols = time_photons_det.shape
+
+        # Create an offset array for each row: shape (num_rows, 1)
+        row_offsets = np.arange(num_rows).reshape(num_rows, 1) * (self.config.n_pulses * pulse_length)
+        
+        # Create an adjusted time array: add the offset to each valid (non-NaN) time
+        adjusted_time = np.where(~np.isnan(time_photons_det), time_photons_det + row_offsets, np.nan)
+        
+        # Get indices of valid (non-NaN) detections
+        valid_mask = ~np.isnan(adjusted_time)
+        valid_times = adjusted_time[valid_mask]           # 1D array of valid, adjusted times
+        valid_indices = np.argwhere(valid_mask)             # Each row is [row, col] of a valid detection
+
+        # Sort the valid detections by adjusted time
+        sort_order = np.argsort(valid_times)
+        valid_times_sorted = valid_times[sort_order]
+        valid_indices_sorted = valid_indices[sort_order]    # Sorted list of [row, col] indices
+
+        # Mark which detections are accepted (initialize all as accepted)
+        accepted = np.ones(valid_times_sorted.shape, dtype=bool)
+        
+        # Process the sorted valid times: if the time difference from the last accepted
+        # detection is less than detection_time, mark this detection as rejected.
+        last_accepted_time = -np.inf
+        for idx, times in enumerate(valid_times_sorted):
+            if times - last_accepted_time < self.config.detection_time:
+                accepted[idx] = False
+            else:
+                last_accepted_time = times
+
+        # For detections that were not accepted, set the original arrays to NaN.
+        # valid_indices_sorted[~accepted] is a 2D array of [row, col] indices.
+        for row, col in valid_indices_sorted[~accepted]:
+            time_photons_det[row, col] = np.nan
+            wavelength_photons_det[row, col] = np.nan
+
+        return time_photons_det, wavelength_photons_det
+    
+    def add_detection_jitter(self, t, time_photons_det):
+        jitter_shifts = self.get_jitter('detector', size_jitter = time_photons_det.shape)
+
+        #Apply jitter to non-NaN values, keeping NaNs unchanged
+        time_photons_det[~np.isnan(time_photons_det)] += jitter_shifts[~np.isnan(time_photons_det)]
+        #Create a mask for valid (non-NaN) entries
+        valid_mask = ~np.isnan(time_photons_det)
+
+        #Apply jitter until all values are within bounds (0 <= time_photons_det <= t[-1])
+        while True:
+            #Create the mask for out-of-bounds values (non-NaN)
+            out_of_bounds_mask = (time_photons_det[valid_mask] < 0) | (time_photons_det[valid_mask] > t[-1])
+            #If no out-of-bounds values, exit the loop
+            if not np.any(out_of_bounds_mask):
+                break
+            #Remove the old jitter (subtract the previous jitter) for the out-of-bounds values
+            time_photons_det[valid_mask][out_of_bounds_mask] -= jitter_shifts[valid_mask][out_of_bounds_mask]
+            #Generate new jitter for the out-of-bounds values only
+            jitter_shifts[valid_mask][out_of_bounds_mask] = self.get_jitter('detector', size_jitter = np.sum(out_of_bounds_mask))
+            #Apply the new jitter to the out-of-bounds values
+            time_photons_det[valid_mask][out_of_bounds_mask] += jitter_shifts[valid_mask][out_of_bounds_mask]
+
+        return time_photons_det
+    
+    def darkcount(self):
+        """Calculate the number of dark count photons detected."""
+        pulse_duration = 1 / self.config.sampling_rate_FPGA
+        symbol_duration = pulse_duration * self.config.n_pulses
+        num_dark_counts = self.config.rng.poisson(self.config.dark_count_frequency * symbol_duration, size=self.config.n_samples)
+        dark_count_times = [np.sort(self.config.rng.uniform(0, symbol_duration, count)) if count > 0 else np.empty(0) for count in num_dark_counts]
+        return dark_count_times, num_dark_counts
+
+    # ========== Classificator Helper ==========
+
+    def classificator_det_ind(self, timebins, decoy, time_photons_det, index_where_photons_det, is_decoy):
+        # Apply np.digitize and shift indices
+        detected_indices = np.where(
+            np.isnan(time_photons_det),                                         # Check for NaN values
+            -1,                                                                 # Assign -1 for undetected photons
+            np.digitize(time_photons_det, timebins) - 1                         # Early = 0, Late = 1
+        )                                                                       # 0 wenn early timebin, 1 wenn late timebin, -1 wenn nicht detektiert
+        print(f" in function detected_indices: {detected_indices}")
+
+        reduced_decoy = decoy[index_where_photons_det]
+        if is_decoy == False:
+            detected_indices = detected_indices[reduced_decoy == 0]
+        else:
+            detected_indices = detected_indices[reduced_decoy == 1]
+        return detected_indices
+
+    def classificator_z(self, basis, value, decoy, index_where_photons_det_z, detected_indices_z, is_decoy):
+        # Z basis
+        if index_where_photons_det_z.size == 0:
+            return 0, 0
+        #Find indices where there is exactly one 0 (Z0 detection)
+        Z0_indices_measured_reduced = np.where(np.sum(detected_indices_z == 0, axis=1) == 1)[0]
+        #Find indices where there is exactly one 1 (Z1 detection)
+        Z1_indices_measured_reduced = np.where(np.sum(detected_indices_z == 1, axis=1) == 1)[0]
+        #get indices in original indexing
+        Z0_indices_measured = index_where_photons_det_z[Z0_indices_measured_reduced]
+        Z1_indices_measured = index_where_photons_det_z[Z1_indices_measured_reduced]
+        #only keep those where alice sent Z: CHECK
+        mask_Z0 = (basis[Z0_indices_measured] == 1) & (value[Z0_indices_measured] == 1)
+        Z0_indices_checked = Z0_indices_measured[mask_Z0]
+        mask_Z1 = (basis[Z1_indices_measured] == 1) & (value[Z1_indices_measured] == 0)
+        Z1_indices_checked = Z1_indices_measured[mask_Z1]
+        amount_Z_det = len(Z0_indices_checked) + len(Z1_indices_checked)
+        if is_decoy == False:
+            Z_sent = np.sum((basis == 1) & (decoy == 0))
+        else:
+            Z_sent = np.sum((basis == 1) & (decoy == 1))
+        if Z_sent != 0:
+            gain_Z = amount_Z_det / Z_sent
+        else:
+            gain_Z = 0
+        return gain_Z, amount_Z_det
+    
+    def classificator_x(self, basis, value, decoy, index_where_photons_det_x, detected_indices_x, gain_Z, is_decoy):
+        # X detection
+        # if no detect indices, return 0
+        if index_where_photons_det_x.size == 0:
+            return 0, 0
+        no_ones_rows_reduced = np.where(np.all((detected_indices_x != 1), axis=1))[0]
+        no_ones_rows_full = index_where_photons_det_x[no_ones_rows_reduced]
+        all_ind = np.arange(self.config.n_samples)
+        remaining_indices = np.setdiff1d(all_ind, index_where_photons_det_x)
+        XP_indices_measured = np.concatenate((no_ones_rows_full, remaining_indices))
+        #only keep those where alice sent X+
+        mask_x = basis[XP_indices_measured] == 0
+        XP_indices_checked = XP_indices_measured[mask_x]
+        amount_XP_det = gain_Z * len(XP_indices_checked)
+        if is_decoy == False:
+            XP_sent = np.sum((basis == 0) & (decoy == 0))
+        else:
+            XP_sent = np.sum((basis == 0) & (decoy == 1))
+        if XP_sent != 0:
+            gain_XP = amount_XP_det / XP_sent
+        else:
+            gain_XP = 0
+        return gain_XP, amount_XP_det
+
+
+    def classificator_error_cases(self, basis, value, index_where_photons_det_x, index_where_photons_det_z, total_detected_indices_x, total_detected_indices_z):
+        # Error cases
+        #Initialize a boolean array to track wrong detections (same length as number of detections)
+        wrong_detection_mask_z = np.zeros(len(index_where_photons_det_z), dtype=bool)
+        wrong_detection_mask_x = np.zeros(len(index_where_photons_det_x), dtype=bool)
+
+        #Step 1: Check for wrong detections in the Z basis (Z0 and Z1)
+        #check if wrong_detection_mask is empty
+        if wrong_detection_mask_z.size != 0:
+            #Condition 1: Measure both bins in Z (both early and late detection)
+            has_one_and_zero = (np.any(total_detected_indices_z == 1, axis=1)) & (np.any(total_detected_indices_z == 0, axis=1))
+            wrong_detection_mask_z |= np.where(has_one_and_zero)[0]
+            #Condition 2: Measure in late for Z0 (wrong detection)
+            has_one_and_z0 = np.any(total_detected_indices_z == 1, axis=1) & basis[index_where_photons_det_z] == 1        # detected indices has shape of time_photons_det
+            wrong_detection_mask_z |= np.where(has_one_and_z0)[0]
+            #Condition 3: Measure in early for Z1 (wrong detection)
+            has_0_and_z1 = np.any(total_detected_indices_z == 0, axis=1) & basis[index_where_photons_det_z] == 1
+            wrong_detection_mask_z |= np.where(has_0_and_z1)[0]
+            #get wrong_detections thruough correct indexing
+            wrong_detections_z = index_where_photons_det_z[wrong_detection_mask_z]
+        
+        #Step 2: Check for wrong detections in the X+ basis
+        if wrong_detection_mask_x.size != 0:
+            #Condition 4: Early detection in X+ state after Z1Z0 in when Z0 got sent
+            Z1_alice = np.where((basis == 1) & (value == 1))[0]  # Indices where Z1 was sent
+            Z0_alice = np.where((basis == 1) & (value == 0))[0]  # Indices where Z0 was sent
+            Z1_Z0_alice = Z0_alice[np.isin(Z0_alice - 1, Z1_alice)]  # Indices where Z1Z0 was sent (index of Z0 used aka the higher index at which time we measure the X+ state)
+            has_0_and_z0z1 = np.any(total_detected_indices_z == 0, axis=1) &  np.isin(index_where_photons_det_z, Z1_Z0_alice)
+            wrong_detection_mask_x |= np.where(has_0_and_z0z1)[0]
+            #Condition 5: Early detection in X+ after Z1X+
+            XP_alice = np.where((basis == 0))[0] # Indices where X+ was sent
+            Z1_XP_alice = XP_alice[np.isin(XP_alice - 1, Z1_alice)]  # Indices where Z1X+ was sent (index of X+ used aka the higher index at which time we measure the X+ state)
+            has_0_and_z1xp = np.any(total_detected_indices_z == 0, axis=1) &  np.isin(index_where_photons_det_z, Z1_XP_alice)
+            wrong_detection_mask_x |= np.where(has_0_and_z1xp)[0]
+            #Condition 6: Late detection in X+ after X+ sent
+            has_1_and_xp = np.any(total_detected_indices_x == 1, axis=1) & basis[index_where_photons_det_x] == 0
+            wrong_detection_mask_x |= np.where(has_1_and_xp)[0]
+            #`wrong_detection_mask` is a boolean array where True indicates a wrong detection
+            wrong_detections_x = index_where_photons_det_x[wrong_detection_mask_x]
+            
+        #Combine the wrong detections from both bases
+        wrong_detections = np.concatenate([wrong_detections_x, wrong_detections_z])         # not sorted!
+        wrong_detections = np.sort(wrong_detections)                                        # now sorted
+        return wrong_detections # all indices of wrong detections
     
     # ========== Data Processing Helper ==========
+
     def poisson_distr(self, calc_value):
         """Calculate the number of photons based on a Poisson distribution."""
         #print(f"np.any(array < 0): {np.isnan(calc_value < 0)}")
@@ -110,3 +349,5 @@ class SimulationHelper:
         # Step 4: Map indices to x values
         nr_photons = x[sampled_indices]
         return nr_photons
+    
+

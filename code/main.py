@@ -33,7 +33,7 @@ database.add_jitter(detector_jitter, 'detector')
 seed = 45
 
 #create simulation
-config = SimulationConfig(database, seed = seed, n_samples=100, n_pulses=4, batchsize = 50, mean_voltage=1.0, mean_current=0.08, current_amplitude=0.02,
+config = SimulationConfig(database, seed = seed, n_samples=200, n_pulses=4, batchsize = 10, mean_voltage=1.0, mean_current=0.08, current_amplitude=0.02,
                  p_z_alice=0.5, p_decoy=0.1, p_z_bob = 0.85, sampling_rate_FPGA=6.5e9, bandwidth = 4e9, jitter=jitter, 
                  non_signal_voltage = -1, voltage_decoy=0, voltage=0, voltage_decoy_sup=0, voltage_sup=0,
                  mean_photon_nr=0.7, mean_photon_decoy=0.1, 
@@ -56,7 +56,7 @@ execution_time = end_time_read - start_time  # Calculate execution time
 print(f"Execution time for readin: {execution_time:.9f} seconds for {config.n_samples} samples")
 
 #plot results
-simulation.run_simulation_histograms()
+simulation.run_simulation_classificator()
 
 '''# Disable profiler
 profiler.disable()
