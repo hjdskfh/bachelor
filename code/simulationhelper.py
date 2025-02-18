@@ -2,6 +2,10 @@ import numpy as np
 from scipy.fftpack import fft, ifft, fftfreq
 from scipy.special import factorial
 from scipy import constants
+import time
+
+from saver import Saver
+
 
 
 class SimulationHelper:
@@ -87,7 +91,7 @@ class SimulationHelper:
         return signals
 
     # ========== Detector Helper ==========
-    def choose_photons(self, transmission, t, power_dampened, peak_wavelength, fixed_nr_photons=None):
+    def choose_photons(self, transmission, t, power_dampened, peak_wavelength, start_time, fixed_nr_photons=None):
         """Calculate and choose photons based on the transmission and jitter."""
         # Calculate the mean photon number
         energy_per_pulse = np.trapezoid(power_dampened, t, axis=1)
@@ -109,6 +113,7 @@ class SimulationHelper:
 
         # Calculate the normalized transmission
         norm_transmission = transmission / transmission.sum(axis=1, keepdims=True)
+        Saver.memory_usage("before generate photon_prop: " + str(time.time() - start_time))
 
         # Generate the photon properties for each sample with non-zero photons
         for i, idx in enumerate(index_where_photons):
@@ -185,22 +190,8 @@ class SimulationHelper:
 
         #Apply jitter to non-NaN values, keeping NaNs unchanged
         time_photons_det[~np.isnan(time_photons_det)] += jitter_shifts[~np.isnan(time_photons_det)]
-        #Create a mask for valid (non-NaN) entries
-        valid_mask = ~np.isnan(time_photons_det)
-
-        #Apply jitter until all values are within bounds (0 <= time_photons_det <= t[-1])
-        while True:
-            #Create the mask for out-of-bounds values (non-NaN)
-            out_of_bounds_mask = (time_photons_det[valid_mask] < 0) | (time_photons_det[valid_mask] > t[-1])
-            #If no out-of-bounds values, exit the loop
-            if not np.any(out_of_bounds_mask):
-                break
-            #Remove the old jitter (subtract the previous jitter) for the out-of-bounds values
-            time_photons_det[valid_mask][out_of_bounds_mask] -= jitter_shifts[valid_mask][out_of_bounds_mask]
-            #Generate new jitter for the out-of-bounds values only
-            jitter_shifts[valid_mask][out_of_bounds_mask] = self.get_jitter('detector', size_jitter = np.sum(out_of_bounds_mask))
-            #Apply the new jitter to the out-of-bounds values
-            time_photons_det[valid_mask][out_of_bounds_mask] += jitter_shifts[valid_mask][out_of_bounds_mask]
+        #Clip the values to the time range so jitter doesn't put values out of bounds
+        time_photons_det = np.clip(time_photons_det, 0, t[-1])
 
         return time_photons_det
     
@@ -221,7 +212,6 @@ class SimulationHelper:
             -1,                                                                 # Assign -1 for undetected photons
             np.digitize(time_photons_det, timebins) - 1                         # Early = 0, Late = 1
         )                                                                       # 0 wenn early timebin, 1 wenn late timebin, -1 wenn nicht detektiert
-        print(f" in function detected_indices: {detected_indices}")
 
         reduced_decoy = decoy[index_where_photons_det]
         if is_decoy == False:
@@ -254,7 +244,7 @@ class SimulationHelper:
         if Z_sent != 0:
             gain_Z = amount_Z_det / Z_sent
         else:
-            gain_Z = 0
+            gain_Z = np.nan
         return gain_Z, amount_Z_det
     
     def classificator_x(self, basis, value, decoy, index_where_photons_det_x, detected_indices_x, gain_Z, is_decoy):
@@ -270,7 +260,7 @@ class SimulationHelper:
         #only keep those where alice sent X+
         mask_x = basis[XP_indices_measured] == 0
         XP_indices_checked = XP_indices_measured[mask_x]
-        amount_XP_det = gain_Z * len(XP_indices_checked)
+        amount_XP_det = round(gain_Z * len(XP_indices_checked))
         if is_decoy == False:
             XP_sent = np.sum((basis == 0) & (decoy == 0))
         else:
@@ -278,7 +268,7 @@ class SimulationHelper:
         if XP_sent != 0:
             gain_XP = amount_XP_det / XP_sent
         else:
-            gain_XP = 0
+            gain_XP = np.nan
         return gain_XP, amount_XP_det
 
 
@@ -293,13 +283,13 @@ class SimulationHelper:
         if wrong_detection_mask_z.size != 0:
             #Condition 1: Measure both bins in Z (both early and late detection)
             has_one_and_zero = (np.any(total_detected_indices_z == 1, axis=1)) & (np.any(total_detected_indices_z == 0, axis=1))
-            wrong_detection_mask_z |= np.where(has_one_and_zero)[0]
+            wrong_detection_mask_z[np.where(has_one_and_zero)[0]] = True
             #Condition 2: Measure in late for Z0 (wrong detection)
             has_one_and_z0 = np.any(total_detected_indices_z == 1, axis=1) & basis[index_where_photons_det_z] == 1        # detected indices has shape of time_photons_det
-            wrong_detection_mask_z |= np.where(has_one_and_z0)[0]
+            wrong_detection_mask_z[np.where(has_one_and_z0)[0]] = True
             #Condition 3: Measure in early for Z1 (wrong detection)
             has_0_and_z1 = np.any(total_detected_indices_z == 0, axis=1) & basis[index_where_photons_det_z] == 1
-            wrong_detection_mask_z |= np.where(has_0_and_z1)[0]
+            wrong_detection_mask_z[np.where(has_0_and_z1)[0]] = True
             #get wrong_detections thruough correct indexing
             wrong_detections_z = index_where_photons_det_z[wrong_detection_mask_z]
         
@@ -310,22 +300,22 @@ class SimulationHelper:
             Z0_alice = np.where((basis == 1) & (value == 0))[0]  # Indices where Z0 was sent
             Z1_Z0_alice = Z0_alice[np.isin(Z0_alice - 1, Z1_alice)]  # Indices where Z1Z0 was sent (index of Z0 used aka the higher index at which time we measure the X+ state)
             has_0_and_z0z1 = np.any(total_detected_indices_z == 0, axis=1) &  np.isin(index_where_photons_det_z, Z1_Z0_alice)
-            wrong_detection_mask_x |= np.where(has_0_and_z0z1)[0]
+            wrong_detection_mask_x[np.where(has_0_and_z0z1)[0]] = True
             #Condition 5: Early detection in X+ after Z1X+
             XP_alice = np.where((basis == 0))[0] # Indices where X+ was sent
             Z1_XP_alice = XP_alice[np.isin(XP_alice - 1, Z1_alice)]  # Indices where Z1X+ was sent (index of X+ used aka the higher index at which time we measure the X+ state)
             has_0_and_z1xp = np.any(total_detected_indices_z == 0, axis=1) &  np.isin(index_where_photons_det_z, Z1_XP_alice)
-            wrong_detection_mask_x |= np.where(has_0_and_z1xp)[0]
+            wrong_detection_mask_x[np.where(has_0_and_z1xp)[0]] = True
             #Condition 6: Late detection in X+ after X+ sent
             has_1_and_xp = np.any(total_detected_indices_x == 1, axis=1) & basis[index_where_photons_det_x] == 0
-            wrong_detection_mask_x |= np.where(has_1_and_xp)[0]
+            wrong_detection_mask_x[np.where(has_1_and_xp)[0]] = True
             #`wrong_detection_mask` is a boolean array where True indicates a wrong detection
             wrong_detections_x = index_where_photons_det_x[wrong_detection_mask_x]
             
         #Combine the wrong detections from both bases
         wrong_detections = np.concatenate([wrong_detections_x, wrong_detections_z])         # not sorted!
         wrong_detections = np.sort(wrong_detections)                                        # now sorted
-        return wrong_detections # all indices of wrong detections
+        return wrong_detections         # all indices of wrong detections
     
     # ========== Data Processing Helper ==========
 

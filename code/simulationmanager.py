@@ -4,6 +4,7 @@ from matplotlib.ticker import MaxNLocator
 from concurrent.futures import ThreadPoolExecutor
 from tqdm import tqdm
 import time
+import os
 
 from saver import Saver
 from simulationengine import SimulationEngine
@@ -395,6 +396,7 @@ class SimulationManager:
         print(f"T1 dampening: {T1_dampening}")
     
     def run_simulation_classificator(self):
+        start_time = time.time()  # Record start time
         T1_dampening = self.simulation_engine.initialize()
         optical_power, peak_wavelength = self.simulation_engine.random_laser_output('current_power', 'voltage_shift', 'current_wavelength')
             
@@ -402,26 +404,102 @@ class SimulationManager:
         basis, value, decoy = self.simulation_engine.generate_alice_choices()
         
         # Simulate signal and transmission
-
+        Saver.memory_usage("before simulating signal: " + str(time.time() - start_time))
         signals, t, _ = self.simulation_engine.signal_bandwidth_jitter(basis, value, decoy)
-        Saver.memory_usage("before eam: " + str(time.time()))
+        Saver.memory_usage("before eam: " + str(time.time() - start_time))
         power_dampened, transmission, _, _ = self.simulation_engine.eam_transmission(signals, optical_power, T1_dampening, peak_wavelength, t)
-        Saver.memory_usage("before fiber: " + str(time.time()))
+        Saver.memory_usage("before fiber: " + str(time.time() - start_time))
         power_dampened = self.simulation_engine.fiber_attenuation(power_dampened)
-        Saver.memory_usage("before basis: " + str(time.time()))
+        Saver.memory_usage("before basis: " + str(time.time() - start_time))
         power_dampened_x, power_dampened_z = self.simulation_engine.basis_selection_bob(power_dampened)
-        Saver.memory_usage("before DLI: " + str(time.time()))
+        Saver.memory_usage("before DLI: " + str(time.time() -   start_time))
 
         # path for X basis
         power_dampened_x = self.simulation_engine.delay_line_interferometer(power_dampened_x, t, peak_wavelength)
-        Saver.memory_usage("before detector x: " + str(time.time()))
-        time_photons_det_x, wavelength_photons_det_x, nr_photons_det_x, index_where_photons_det_x, calc_mean_photon_nr_detector_x, dark_count_times_z, num_dark_counts_z = self.simulation_engine.detector(t, transmission, peak_wavelength, power_dampened_x)
+        Saver.memory_usage("before detector x: " + str(time.time() - start_time))
+        time_photons_det_x, wavelength_photons_det_x, nr_photons_det_x, index_where_photons_det_x, calc_mean_photon_nr_detector_x, dark_count_times_z, num_dark_counts_z = self.simulation_engine.detector(t, transmission, peak_wavelength, power_dampened_x, start_time)
 
-        # path fo Z basis
-        Saver.memory_usage("before detector z: " + str(time.time()))
-        time_photons_det_z, wavelength_photons_det_z, nr_photons_det_z, index_where_photons_det_z, calc_mean_photon_nr_detector_z, dark_count_times_z, num_dark_counts_z = self.simulation_engine.detector(t, transmission, peak_wavelength, power_dampened_z)
-        Saver.memory_usage("before classificator: " + str(time.time()))
-        wrong_detections, total_amount_detections, qber, raw_key_rate = self.simulation_engine.classificator(t, time_photons_det_x, index_where_photons_det_x, 
+        # path for Z basis
+        Saver.memory_usage("before detector z: " + str(time.time() - start_time))
+        time_photons_det_z, wavelength_photons_det_z, nr_photons_det_z, index_where_photons_det_z, calc_mean_photon_nr_detector_z, dark_count_times_z, num_dark_counts_z = self.simulation_engine.detector(t, transmission, peak_wavelength, power_dampened_z, start_time)
+        Saver.memory_usage("before classificator: " + str(time.time() - start_time))
+
+        # get results for both detectors
+        wrong_detections, total_amount_detections, qber, raw_key_rate, gain_XP_norm, gain_XP_dec, gain_Z_norm, gain_Z_dec = self.simulation_engine.classificator(t, time_photons_det_x, index_where_photons_det_x, 
                                                                                                              time_photons_det_z, index_where_photons_det_z, 
                                                                                                              basis, value, decoy)
+        
+        print("wrong_detections: ", wrong_detections)
+        print("total_amount_detections: ", total_amount_detections)
+        print("qber: ", qber)
+        print("raw_key_rate: ", raw_key_rate)
+        print("gain_XP_norm: ", gain_XP_norm)
+        print("gain_XP_dec: ", gain_XP_dec)
+        print("gain_Z_norm: ", gain_Z_norm)
+        print("gain_Z_dec: ", gain_Z_dec)
 
+    def run_simulation_classificator_loop(self):
+        n_samples = np.arange(1000, 26000, 2000)
+        for i in range(len(n_samples)):
+            self.config.n_samples = n_samples[i]
+            start_time = time.time()  # Record start time
+            T1_dampening = self.simulation_engine.initialize()
+            optical_power, peak_wavelength = self.simulation_engine.random_laser_output('current_power', 'voltage_shift', 'current_wavelength')
+                
+            # Generate Alice's choices
+            basis, value, decoy = self.simulation_engine.generate_alice_choices()
+            
+            # Simulate signal and transmission
+
+            Saver.memory_usage("before simulating signal: " + str(time.time() - start_time))
+            signals, t, _ = self.simulation_engine.signal_bandwidth_jitter(basis, value, decoy)
+            time_simulating_signal = time.time() - start_time
+            Saver.memory_usage("before eam: " + str(time_simulating_signal))
+            power_dampened, transmission, _, _ = self.simulation_engine.eam_transmission(signals, optical_power, T1_dampening, peak_wavelength, t)
+            time_eam = time.time() - start_time
+            Saver.memory_usage("before fiber: " + str(time_eam))
+            power_dampened = self.simulation_engine.fiber_attenuation(power_dampened)
+            Saver.memory_usage("before basis: " + str(time.time() - start_time))
+            power_dampened_x, power_dampened_z = self.simulation_engine.basis_selection_bob(power_dampened)
+            Saver.memory_usage("before DLI: " + str(time.time() -   start_time))
+
+            # path for X basis
+            power_dampened_x = self.simulation_engine.delay_line_interferometer(power_dampened_x, t, peak_wavelength)
+            Saver.memory_usage("before detector x: " + str(time.time() - start_time))
+            time_photons_det_x, wavelength_photons_det_x, nr_photons_det_x, index_where_photons_det_x, calc_mean_photon_nr_detector_x, dark_count_times_z, num_dark_counts_z = self.simulation_engine.detector(t, transmission, peak_wavelength, power_dampened_x, start_time)
+
+            # path for Z basis
+            Saver.memory_usage("before detector z: " + str(time.time() - start_time))
+            time_photons_det_z, wavelength_photons_det_z, nr_photons_det_z, index_where_photons_det_z, calc_mean_photon_nr_detector_z, dark_count_times_z, num_dark_counts_z = self.simulation_engine.detector(t, transmission, peak_wavelength, power_dampened_z, start_time)
+            Saver.memory_usage("before classificator: " + str(time.time() - start_time))
+
+            # get results for both detectors
+            wrong_detections, total_amount_detections, qber, raw_key_rate, gain_XP_norm, gain_XP_dec, gain_Z_norm, gain_Z_dec = self.simulation_engine.classificator(t, time_photons_det_x, index_where_photons_det_x, 
+                                                                                                                time_photons_det_z, index_where_photons_det_z, 
+                                                                                                                basis, value, decoy)
+            #readin time
+            end_time_read = time.time()  # Record end time  
+            execution_time = end_time_read - start_time  # Calculate execution time
+
+            filepath = os.path.join( r"C:\Users\leavi\OneDrive\Dokumente\Uni\Semester 7\NeuMoQP\Programm\results" , "output_n_samples_" + str(n_samples[i]) + ".txt")
+
+            with open(filepath, "w") as f:
+                f.write(f"Total amount detections: {total_amount_detections}\n")
+                f.write(f"QBER: {qber}\n")
+                f.write(f"Raw key rate: {raw_key_rate}\n")
+                f.write(f"Gain XP norm: {gain_XP_norm}\n")
+                f.write(f"Gain XP dec: {gain_XP_dec}\n")
+                f.write(f"Gain Z norm: {gain_Z_norm}\n")
+                f.write(f"Gain Z dec: {gain_Z_dec}\n")
+                f.write(f"time after simulating the signal: {time_simulating_signal}\n")
+                f.write(f"time after eam: {time_eam}\n")
+                f.write(f"Execution time for all: {execution_time:.9f} seconds for {n_samples[i]} samples")
+
+            '''print("wrong_detections: ", wrong_detections)
+            print("total_amount_detections: ", total_amount_detections)
+            print("qber: ", qber)
+            print("raw_key_rate: ", raw_key_rate)
+            print("gain_XP_norm: ", gain_XP_norm)
+            print("gain_XP_dec: ", gain_XP_dec)
+            print("gain_Z_norm: ", gain_Z_norm)
+            print("gain_Z_dec: ", gain_Z_dec)'''

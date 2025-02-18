@@ -194,14 +194,15 @@ class SimulationEngine:
         
         return power_dampened_total
     
-    def detector(self, t, transmission, peak_wavelength, power_dampened):
+    def detector(self, t, transmission, peak_wavelength, power_dampened, start_time):
         """Simulate the detector process."""
         # choose photons
-        wavelength_photons, time_photons, nr_photons, index_where_photons, all_time_max_nr_photons, calc_mean_photon_nr_detector = self.simulation_helper.choose_photons(transmission, t, power_dampened, peak_wavelength, fixed_nr_photons=None)
+        wavelength_photons, time_photons, nr_photons, index_where_photons, all_time_max_nr_photons, calc_mean_photon_nr_detector = self.simulation_helper.choose_photons(transmission, t, power_dampened, peak_wavelength, start_time, fixed_nr_photons=None)
+        Saver.memory_usage("after choose: " + str(time.time() - start_time))
 
         # Will the photons pass the detection efficiency?
         pass_detection = self.config.rng.choice([False, True], size=(len(index_where_photons), all_time_max_nr_photons), p=[1 - self.config.detector_efficiency, self.config.detector_efficiency])
-
+        
         # Apply the detection efficiency to the photon properties
         wavelength_photons = np.where(pass_detection, wavelength_photons, np.nan)
         time_photons = np.where(pass_detection, time_photons, np.nan)
@@ -213,6 +214,7 @@ class SimulationEngine:
         wavelength_photons_det = wavelength_photons[valid_rows]
         time_photons_det = time_photons[valid_rows]
         
+        Saver.memory_usage("before detection time:" + str(time.time() - start_time))
         # Last photon detected --> can next photon be detected? --> sort stuff
         sorted_indices = np.array([np.argsort(time) for time in time_photons_det])
         wavelength_photons = np.array([wavelength_photon[indices] for wavelength_photon, indices in zip(wavelength_photons_det, sorted_indices)])
@@ -228,8 +230,12 @@ class SimulationEngine:
         wavelength_photons_det = wavelength_photons_det[valid_rows]
         time_photons_det = time_photons_det[valid_rows]
         
+        Saver.memory_usage("before jitter detector: " + str(time.time() - start_time))
+
         # jitter detector: timing jitter
         time_photons_det = self.simulation_helper.add_detection_jitter(t, time_photons_det)
+
+        Saver.memory_usage("before darkcount: " + str(time.time() - start_time))
 
         # calculate darkcount
         dark_count_times, num_dark_counts = self.simulation_helper.darkcount()
@@ -241,35 +247,41 @@ class SimulationEngine:
         num_segments = self.config.n_pulses // 2
         timebins = np.linspace(t[-1] / num_segments, t[-1], num_segments)        
         detected_indices_z_norm = self.simulation_helper.classificator_det_ind(timebins, decoy, time_photons_det_z, index_where_photons_det_z, is_decoy = False)
-        print(f"shape detected_indices_z_norm: {detected_indices_z_norm}")
+        # print(f"shape detected_indices_z_norm: {detected_indices_z_norm}")
         gain_Z_norm, amount_Z_det_norm = self.simulation_helper.classificator_z(basis, value, decoy, index_where_photons_det_z, detected_indices_z_norm, is_decoy = False)
 
         detected_indices_z_dec = self.simulation_helper.classificator_det_ind(timebins, decoy, time_photons_det_z, index_where_photons_det_z, is_decoy = True)
         gain_Z_dec, amount_Z_det_dec = self.simulation_helper.classificator_z(basis, value, decoy, index_where_photons_det_z, detected_indices_z_dec, is_decoy = True)
-        print(f"shape detected_indices_z_dec: {detected_indices_z_dec}")
+        # print(f"shape detected_indices_z_dec: {detected_indices_z_dec}")
 
 
         detected_indices_x_norm = self.simulation_helper.classificator_det_ind(timebins, decoy, time_photons_det_x, index_where_photons_det_x, is_decoy = False)
         gain_XP_norm, amount_XP_det_norm = self.simulation_helper.classificator_x(basis, value, decoy, index_where_photons_det_x, detected_indices_x_norm, gain_Z_norm, is_decoy = False)
-        print(f"shape detected_indices_x_norm: {detected_indices_x_norm}")
+        # print(f"shape detected_indices_x_norm: {detected_indices_x_norm}")
 
         detected_indices_x_dec = self.simulation_helper.classificator_det_ind(timebins, decoy, time_photons_det_x, index_where_photons_det_x, is_decoy = True)
         gain_XP_dec, amount_XP_det_dec = self.simulation_helper.classificator_x(basis, value, decoy, index_where_photons_det_x, detected_indices_x_dec, gain_Z_dec, is_decoy = True)
-        print(f"shape detected_indices_x_dec: {detected_indices_x_dec}")
+        # print(f"shape detected_indices_x_dec: {detected_indices_x_dec}")
 
         # Use np.hstack to concatenate, and it automatically handles empty arrays
         total_detected_indices_x = np.vstack((detected_indices_x_dec, detected_indices_x_norm)) if detected_indices_x_dec.size > 0 or detected_indices_x_norm.size > 0 else np.empty((0, 0))
         total_detected_indices_z = np.vstack((detected_indices_z_dec, detected_indices_z_norm)) if detected_indices_z_dec.size > 0 or detected_indices_z_norm.size > 0 else np.empty((0, 0))
-        print(f"total_detected_indices_x: {total_detected_indices_x.shape}")
-        print(f"total_detected_indices_z: {total_detected_indices_z.shape}")
+        # print(f"total_detected_indices_x: {total_detected_indices_x.shape}")
+        # print(f"total_detected_indices_z: {total_detected_indices_z.shape}")
 
         wrong_detections = self.simulation_helper.classificator_error_cases(basis, value, index_where_photons_det_x, index_where_photons_det_z, total_detected_indices_x, total_detected_indices_z)
+        print(f"len(wrong_detections): {len(wrong_detections)}")
 
         total_amount_detections = amount_Z_det_norm + amount_Z_det_dec + amount_XP_det_norm + amount_XP_det_dec
-        qber = len(wrong_detections) / total_amount_detections
+        print(f"total_amount_detections: {total_amount_detections}")
+        if total_amount_detections != 0:
+            qber = len(wrong_detections) / total_amount_detections
+        else:
+            qber = np.nan
+           
         raw_key_rate = total_amount_detections / (t[-1] * self.config.n_samples)
 
-        return wrong_detections, total_amount_detections, qber, raw_key_rate
+        return wrong_detections, total_amount_detections, qber, raw_key_rate, gain_XP_norm, gain_XP_dec, gain_Z_norm, gain_Z_dec
     
     def initialize(self):
         plt.style.use(self.config.mlp)
