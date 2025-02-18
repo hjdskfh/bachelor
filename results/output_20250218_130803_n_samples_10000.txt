@@ -1,0 +1,12 @@
+execution time: 84.68696165084839
+time after simulating the signal: 64.496502161026
+time after eam: 77.20696711540222
+n_samples: 10000
+seed: 60
+Total amount detections: 11
+QBER: 121.36363636363636
+Raw key rate: 1787790.6031539587
+Gain XP norm: 0.0013477088948787063
+Gain XP dec: 0.0
+Gain Z norm: 0.001112842198976185
+Gain Z dec: 0.0

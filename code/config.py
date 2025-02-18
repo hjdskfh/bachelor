@@ -100,8 +100,8 @@ class SimulationConfig:
             print("Error: jitter must be less than the inverse of the sampling rate.")
         if (self.non_signal_voltage - self.voltage) != -1:
             print("Error: The difference between non_signal_voltage and voltage is not 1")
-        if self.voltage == self.voltage_decoy or self.voltage == self.voltage_sup:
-            print("Error: The starting voltage values are the same") 
+        if self.voltage != self.voltage_decoy or self.voltage != self.voltage_sup:
+            print("Error: The starting voltage values are not the same") 
         if self.mean_photon_nr < 0 or self.mean_photon_decoy < 0 or self.mean_photon_nr < self.mean_photon_decoy or self.mean_photon_nr > 1:
             print("Error: mean_photon_nr and mean_photon_decoy must be between 0 and 1 and mean_photon_nr must be larger than mean_photon_decoy.")
         if not (0 <= self.fraction_long_arm <= 1):

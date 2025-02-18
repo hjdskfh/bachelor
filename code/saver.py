@@ -6,8 +6,8 @@ import psutil
 import os
 
 class Saver:
-    def __init__(self):
-        None
+    def __init__(self, config):
+        self.config = config
 
     @staticmethod
     def save_plot(filename, dpi=600):
@@ -81,3 +81,35 @@ class Saver:
         memory_used = memory_info.rss  # Memory used by the process in bytes
         memory_used_mb = memory_used / (1024 ** 2)  # Convert to MB
         print(f"[{description}] Memory used: {memory_used_mb:.2f} MB")
+
+    @staticmethod
+    def save_results_to_txt(n_samples = None, seed = None, **kwargs):
+        """
+        Saves key-value pairs to a timestamped text file.
+
+        Parameters:
+        - output_dir (str): Directory where the output file should be saved.
+        - kwargs: Any number of key-value pairs to be written to the file.
+
+        Returns:
+        - filepath (str): Path of the saved file.
+        """
+
+        # Generate timestamp for filename
+        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+
+        output_dir = r"C:\Users\leavi\OneDrive\Dokumente\Uni\Semester 7\NeuMoQP\Programm\results"
+
+        # Ensure the output directory exists
+        os.makedirs(output_dir, exist_ok=True)
+
+        # Define the file path
+        filepath = os.path.join(output_dir, f"output_{timestamp}_n_samples_{n_samples}.txt")
+
+        # Write the key-value pairs to the file
+        with open(filepath, "w") as f:
+            for key, value in kwargs.items():
+                f.write(f"{key}: {value}\n")
+        
+            f.write(f"n_samples: {n_samples}\n")
+            f.write(f"seed: {seed}\n")

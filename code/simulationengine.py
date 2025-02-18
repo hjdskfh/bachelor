@@ -277,7 +277,7 @@ class SimulationEngine:
         if total_amount_detections != 0:
             qber = len(wrong_detections) / total_amount_detections
         else:
-            qber = np.nan
+            qber = 0
            
         raw_key_rate = total_amount_detections / (t[-1] * self.config.n_samples)
 
