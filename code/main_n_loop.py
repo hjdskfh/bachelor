@@ -28,7 +28,7 @@ database.add_jitter(detector_jitter, 'detector')
 #seed = 45
 
 
-n_samples = np.arange(10000, 27000, 2000)
+n_samples = np.arange(24000, 27000, 2000, dtype=int)
 times_per_n = 10
 #seed_arr = np.arange(1, times_per_n + 1, 1)
 for n in n_samples:
@@ -38,7 +38,7 @@ for n in n_samples:
 
         #set seed
         seed = np.random.randint(0, 100)
-        
+
         #create simulation
         config = SimulationConfig(database, seed = int(seed), n_samples=n, n_pulses=4, batchsize = 1000, mean_voltage=1.0, mean_current=0.08, current_amplitude=0.02,
                         p_z_alice=0.5, p_decoy=0.1, p_z_bob = 0.85, sampling_rate_FPGA=6.5e9, bandwidth = 4e9, jitter=jitter, 
@@ -48,6 +48,7 @@ for n in n_samples:
                         mlp = 'C:/Users/leavi/OneDrive/Dokumente/Uni/Semester 7/NeuMoQP/Programm/code/Presentation_style_1_adjusted_no_grid.mplstyle'
                         )
         simulation = SimulationManager(config)
+        
 
         # Convert the config object to a dictionary
         config_params = config.to_dict()    
@@ -61,7 +62,7 @@ for n in n_samples:
         print(f"Execution time for readin: {execution_time:.9f} seconds for {config.n_samples} samples")
 
         #plot results
-        simulation.run_simulation_classificator_save_txt()
+        simulation.run_simulation_classificator()
 
         end_time = time.time()  # Record end time  
         execution_time = end_time - start_time  # Calculate execution time

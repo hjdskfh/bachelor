@@ -90,7 +90,7 @@ class SimulationConfig:
             print("Error: current_amplitude must be positive.")
         if not (0 <= self.p_z_alice <= 1):
             print("Error: p_z_alice must be between 0 and 1.")
-        if not (0 <= self.p_z_bob <= 1):
+        if not (0 < self.p_z_bob <= 1):
             print("Error: p_z_bob must be between 0 and 1.")
         if self.sampling_rate_FPGA <= 0:
             print("Error: sampling_rate_FPGA must be positive.")

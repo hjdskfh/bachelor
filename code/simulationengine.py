@@ -138,14 +138,9 @@ class SimulationEngine:
         attenuation_factor = 10 ** (self.config.fiber_attenuation / 10)
         power_dampened = power_dampened * attenuation_factor
         return power_dampened
-    
-    def basis_selection_bob(self, power_dampened):
-        """passive basis selection for Bob: in Beutel paper 85% without DLI"""
-        power_dampened_x = power_dampened * self.config.p_z_bob
-        power_dampened_z = power_dampened * (1 - self.config.p_z_bob)
-        return power_dampened_x, power_dampened_z
 
-    def delay_line_interferometer(self, power_dampened_x, t, peak_wavelength):
+    def delay_line_interferometer(self, power_dampened, t, peak_wavelength):
+        #make power_dampened take into account the passive basis selection
         assert self.config.fraction_long_arm <= 1
         eta_long = self.config.fraction_long_arm
         eta_short = 1 - eta_long
@@ -158,10 +153,10 @@ class SimulationEngine:
         # Time bin split point ( for late time bin start)
         split_point = len(t) // 2
 
-        late_bin_ex_last = power_dampened_x[:-1, split_point:]
-        early_bin_ex_first = power_dampened_x[1:, :split_point]
-        whole_early_bin = power_dampened_x[:, :split_point]
-        whole_late_bin = power_dampened_x[:, split_point:]
+        late_bin_ex_last = power_dampened[:-1, split_point:]
+        early_bin_ex_first = power_dampened[1:, :split_point]
+        whole_early_bin = power_dampened[:, :split_point]
+        whole_late_bin = power_dampened[:, split_point:]
 
         # Calculate the interference term nth symbol and n+1th symbol (early-time and late-time bins)
         interference_term1 = (
@@ -190,7 +185,7 @@ class SimulationEngine:
         )
 
         # for first row early bin
-        power_dampened_total[0, :split_point] = power_dampened_x[0, :split_point]
+        power_dampened_total[0, :split_point] = power_dampened[0, :split_point]
         
         return power_dampened_total
     

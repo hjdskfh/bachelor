@@ -1,0 +1,12 @@
+total_amount_detections: 0
+qber: 0
+raw_key_rate: 0.0
+gain_XP_norm: 0.0
+gain_XP_dec: 0.0
+gain_Z_norm: 0.0
+gain_Z_dec: 0.0
+execution_time_run: 22.141826629638672
+time_simulating_signal: 17.95371723175049
+time_eam: 20.710719108581543
+n_samples: 2000
+seed: 45
