@@ -26,10 +26,10 @@ database.add_jitter(jitter, 'laser')
 detector_jitter = 100e-12
 database.add_jitter(detector_jitter, 'detector')
 
-seed = 45
+seed = 30 #45
 
 #create simulation
-config = SimulationConfig(database, seed = seed, n_samples=2000, n_pulses=4, batchsize = 1000, mean_voltage=1.0, mean_current=0.08, current_amplitude=0.02,
+config = SimulationConfig(database, seed = seed, n_samples=25000, n_pulses=4, batchsize = 1000, mean_voltage=1.0, mean_current=0.08, current_amplitude=0.02,
                 p_z_alice=0.5, p_decoy=0.1, p_z_bob = 0.85, sampling_rate_FPGA=6.5e9, bandwidth = 4e9, jitter=jitter, 
                 non_signal_voltage = -1, voltage_decoy=0, voltage=0, voltage_decoy_sup=0, voltage_sup=0,
                 mean_photon_nr=0.7, mean_photon_decoy=0.1, 
@@ -49,14 +49,18 @@ end_time_read = time.time()  # Record end time
 execution_time = end_time_read - start_time  # Calculate execution time
 print(f"Execution time for readin: {execution_time:.9f} seconds for {config.n_samples} samples")
 
+peak_memory, memory_thread = Saver.track_peak_memory_usage(check_interval=0.1)
 #plot results
-simulation.run_simulation_classificator_save_txt()
+simulation.run_simulation_classificator()
 
 end_time = time.time()  # Record end time  
 execution_time = end_time - start_time  # Calculate execution time
 print(f"Execution time: {execution_time:.9f} seconds for {config.n_samples} samples")
 
-Saver.memory_usage("After whole simulation")  # Check memory usage after computation
+
+time.sleep(1)  # Wait for 1 second to ensure that the memory thread has finished
+print(f"Peak memory usage: {peak_memory / (1024 ** 2):.2f} MB")
+
 
 
 

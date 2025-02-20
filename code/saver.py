@@ -4,10 +4,36 @@ import datetime
 import json
 import psutil
 import os
+import time
+import threading
 
 class Saver:
     def __init__(self, config):
         self.config = config
+
+    '''# Function to monitor peak memory usage
+    def track_peak_memory(self):
+        # Get the current process
+        process = psutil.Process(os.getpid())
+
+        # Initial memory usage
+        peak_memory = process.memory_info().rss  # in bytes
+
+        start_time = time.time()
+        timeout = 200  # seconds
+
+        # Track memory usage
+        while time.time() - start_time < timeout:            
+            current_memory = process.memory_info().rss  # in bytes
+            peak_memory = max(peak_memory, current_memory)
+            time.sleep(1)  # check memory every second
+
+            # Optional: Stop monitoring after a certain condition is met
+            # For example, when the code finishes executing
+            # if some_condition:
+            #     break
+
+        return peak_memory'''
 
     @staticmethod
     def save_plot(filename, dpi=600):
@@ -81,7 +107,39 @@ class Saver:
         memory_used = memory_info.rss  # Memory used by the process in bytes
         memory_used_mb = memory_used / (1024 ** 2)  # Convert to MB
         print(f"[{description}] Memory used: {memory_used_mb:.2f} MB")
-
+        
+    # Function to track peak memory usage during the simulation
+    @staticmethod
+    def track_peak_memory_usage(check_interval=0.1):
+        """
+        Monitors and returns the peak memory usage of the current process.
+        
+        Args:
+            check_interval (int): The interval (in seconds) at which to check memory usage.
+            
+        Returns:
+            peak_memory (int): The peak memory usage in bytes.
+        """
+        # Get the current process
+        process = psutil.Process(os.getpid())
+        
+        # Variable to store the peak memory usage
+        peak_memory = 0
+        
+        # Function to monitor memory usage in a separate thread
+        def monitor_memory():
+            nonlocal peak_memory
+            while True:
+                current_memory = process.memory_info().rss  # in bytes
+                peak_memory = max(peak_memory, current_memory)
+                time.sleep(check_interval)  # Check memory every 'check_interval' seconds
+        
+        # Start memory monitoring in a separate daemon thread
+        memory_thread = threading.Thread(target=monitor_memory, daemon=True)
+        memory_thread.start()
+        
+        return peak_memory, memory_thread
+    
     @staticmethod
     def save_results_to_txt(n_samples = None, seed = None, **kwargs):
         """
@@ -108,8 +166,11 @@ class Saver:
 
         # Write the key-value pairs to the file
         with open(filepath, "w") as f:
+            f.write(f"n_samples: {n_samples}\n")
+            f.write(f"seed: {seed}\n")
             for key, value in kwargs.items():
                 f.write(f"{key}: {value}\n")
         
-            f.write(f"n_samples: {n_samples}\n")
-            f.write(f"seed: {seed}\n")
+            
+
+    

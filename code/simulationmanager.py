@@ -10,12 +10,15 @@ import datetime
 from saver import Saver
 from simulationengine import SimulationEngine
 from simulationsingle import SimulationSingle
+from simulationhelper import SimulationHelper
+
 
 class SimulationManager:
     def __init__(self, config):
         self.config = config 
         self.simulation_engine = SimulationEngine(config)
         self.simulation_single = SimulationSingle(config)
+        self.simulation_helper = SimulationHelper(config)
     
     def run_simulation_one_state(self):
         
@@ -401,25 +404,48 @@ class SimulationManager:
         start_time = time.time()  # Record start time
         T1_dampening = self.simulation_engine.initialize()
         optical_power, peak_wavelength = self.simulation_engine.random_laser_output('current_power', 'voltage_shift', 'current_wavelength')
-            
+    
         # Generate Alice's choices
         basis, value, decoy = self.simulation_engine.generate_alice_choices()
-        
-        # Simulate signal and transmission
+        Z1_sent_norm, Z1_sent_dec, Z0_sent_norm, Z0_sent_dec, XP_sent_norm, XP_sent_dec = self.simulation_helper.count_alice_choices(basis, value, decoy)
 
+
+        # Simulate signal and transmission
         Saver.memory_usage("before simulating signal: " + str(time.time() - start_time))
         signals, t, _ = self.simulation_engine.signal_bandwidth_jitter(basis, value, decoy)
+
+        signals_part = signals[:3]
+        flattened_signals = signals_part.reshape(-1)
+        plt.plot(flattened_signals, color='blue', label='0', linestyle='-', marker='o', markersize=1)
+        for i in range(0, len(flattened_signals), len(t) // 2):  
+            plt.axvline(x=i, color='r', linestyle='--', label=f'Line at x={flattened_signals[i]:.2f}' if i == 0 else "")
+        Saver.save_plot(f"signal")
+
         time_simulating_signal = time.time() - start_time
         Saver.memory_usage("before eam: " + str(time_simulating_signal))
-        power_dampened, transmission, _, _ = self.simulation_engine.eam_transmission(signals, optical_power, T1_dampening, peak_wavelength, t)
+        power_dampened, transmission,  calc_mean_photon_nr_eam, _ = self.simulation_engine.eam_transmission(signals, optical_power, T1_dampening, peak_wavelength, t)
+
+        power_part = power_dampened[:3]
+        flattened_power= power_part.reshape(-1)
+        plt.plot(flattened_power, color='blue', label='0', linestyle='-', marker='o', markersize=1)
+        for i in range(0, len(flattened_power), len(t)):
+            plt.axvline(x=i, color='r', linestyle='--', label=f'Line at x={flattened_power[i]:.2f}' if i == 0 else "")
+        Saver.save_plot(f"power_eam")
+
         time_eam = time.time() - start_time
         Saver.memory_usage("before fiber: " + str(time_eam))
         power_dampened = self.simulation_engine.fiber_attenuation(power_dampened)
         
+        power_part = power_dampened[:10]
+        flattened_power= power_part.reshape(-1)
+        plt.plot(flattened_power, color='blue', label='0', linestyle='-', marker='o', markersize=1)
+        Saver.save_plot(f"power_fiber")
+
         # first Z basis bc no interference
         Saver.memory_usage("before detector z: " + str(time.time() - start_time))
         power_dampened = power_dampened * self.config.p_z_bob
         time_photons_det_z, wavelength_photons_det_z, nr_photons_det_z, index_where_photons_det_z, calc_mean_photon_nr_detector_z, dark_count_times_z, num_dark_counts_z = self.simulation_engine.detector(t, transmission, peak_wavelength, power_dampened, start_time)
+        print(f"time_photons_det_z: {time_photons_det_z[:10]}")
         power_dampened = power_dampened / self.config.p_z_bob
         Saver.memory_usage("before classificator: " + str(time.time() - start_time))
 
@@ -431,10 +457,12 @@ class SimulationManager:
         time_photons_det_x, wavelength_photons_det_x, nr_photons_det_x, index_where_photons_det_x, calc_mean_photon_nr_detector_x, dark_count_times_x, num_dark_counts_x = self.simulation_engine.detector(t, transmission, peak_wavelength, power_dampened, start_time)        
 
         # get results for both detectors
-        wrong_detections, total_amount_detections, qber, raw_key_rate, gain_XP_norm, gain_XP_dec, gain_Z_norm, gain_Z_dec = self.simulation_engine.classificator(t, time_photons_det_x, index_where_photons_det_x, 
+        wrong_detections_z, wrong_detections_x, total_amount_detections, amount_Z_detections, amount_XP_detections, qber, phase_error_rate, raw_key_rate, gain_XP_norm, gain_XP_dec, gain_Z_norm, gain_Z_dec, detected_indices_x_dec, detected_indices_x_norm, detected_indices_z_dec, detected_indices_z_norm = self.simulation_engine.classificator(t, time_photons_det_x, index_where_photons_det_x, 
                                                                                                             time_photons_det_z, index_where_photons_det_z, 
                                                                                                             basis, value, decoy)
-        
+        len_wrong_detections_z = len(wrong_detections_z)
+        len_wrong_detections_x = len(wrong_detections_x)
+
         #readin time
         end_time_read = time.time()  # Record end time  
         execution_time_run = end_time_read - start_time  # Calculate execution time
@@ -442,15 +470,31 @@ class SimulationManager:
         Saver.save_results_to_txt(
             n_samples=self.config.n_samples,
             seed=self.config.seed,
+            len_wrong_detections_z=len_wrong_detections_z,
+            len_wrong_detections_x=len_wrong_detections_x,
             total_amount_detections=total_amount_detections,
+            amount_Z_detections=amount_Z_detections,
+            amount_XP_detections=amount_XP_detections,
             qber=qber,
+            phase_error_rate=phase_error_rate,
             raw_key_rate=raw_key_rate,
             gain_XP_norm=gain_XP_norm,
             gain_XP_dec=gain_XP_dec,
             gain_Z_norm=gain_Z_norm,
             gain_Z_dec=gain_Z_dec,
+            calc_mean_photon_nr_eam=calc_mean_photon_nr_eam,
+            calc_mean_photon_nr_detector_x=calc_mean_photon_nr_detector_x,
+            Z0_sent_norm=Z0_sent_norm,
+            Z0_sent_dec=Z0_sent_dec,
+            Z1_sent_norm=Z1_sent_norm,
+            Z1_sent_dec=Z1_sent_dec,
+            XP_sent_norm=XP_sent_norm,
+            XP_sent_dec=XP_sent_dec,
             execution_time_run=execution_time_run,
             time_simulating_signal=time_simulating_signal,
             time_eam=time_eam
         )
-
+        '''detected_indices_x_dec=detected_indices_x_dec,
+            detected_indices_x_norm=detected_indices_x_norm,
+            detected_indices_z_dec=detected_indices_z_dec,
+            detected_indices_z_norm=detected_indices_z_norm,'''

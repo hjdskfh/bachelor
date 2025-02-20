@@ -41,7 +41,7 @@ for n in n_samples:
 
         #create simulation
         config = SimulationConfig(database, seed = int(seed), n_samples=n, n_pulses=4, batchsize = 1000, mean_voltage=1.0, mean_current=0.08, current_amplitude=0.02,
-                        p_z_alice=0.5, p_decoy=0.1, p_z_bob = 0.85, sampling_rate_FPGA=6.5e9, bandwidth = 4e9, jitter=jitter, 
+                        p_z_alice=0.5, p_decoy=0.1, p_z_bob = 0.15, sampling_rate_FPGA=6.5e9, bandwidth = 4e9, jitter=jitter, 
                         non_signal_voltage = -1, voltage_decoy=0, voltage=0, voltage_decoy_sup=0, voltage_sup=0,
                         mean_photon_nr=0.7, mean_photon_decoy=0.1, 
                         fiber_attenuation=-3, fraction_long_arm = 0.6, detector_efficiency = 0.3, dark_count_frequency = 10, detection_time = 1e-10, detector_jitter = detector_jitter,

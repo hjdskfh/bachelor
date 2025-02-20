@@ -71,6 +71,8 @@ class SimulationEngine:
         if decoy.size == 1:
             decoy = np.full(self.config.n_samples, decoy, dtype=int)
 
+
+
         return basis, value, decoy
     
     def signal_bandwidth_jitter(self, basis, values, decoy):
@@ -82,30 +84,36 @@ class SimulationEngine:
         #plt.plot(signals[0], label = 'before everything')
         #plt.legend()
         indexshift = len(t) // self.config.n_pulses // 2
-        old_save_shift = np.zeros(indexshift)
         new_save_shift = np.empty(indexshift)
+        old_save_shift = np.ones(indexshift) * self.config.non_signal_voltage
+
         for i in range(0, len(values), self.config.batchsize):
             signals_batch = signals[i:i + self.config.batchsize, :]
             flattened_signals_batch = signals_batch.reshape(-1)
-            #plt.plot(flattened_signals_batch[:6*len(t)], label = 'before jitter')
 
             flattened_signals_batch = self.simulation_helper.apply_jitter_to_pulse(t, flattened_signals_batch, jitter_shifts[self.config.n_pulses * i:self.config.n_pulses *(i + self.config.batchsize)])
-            #plt.plot(flattened_signals_batch[:6*len(t)], label = 'after jitter')
 
+            flattened_signals_batch = np.roll(flattened_signals_batch, indexshift)
+            new_save_shift = flattened_signals_batch[:indexshift]
+            flattened_signals_batch[: indexshift] = old_save_shift
+            old_save_shift = new_save_shift
+            '''print(f"shape flattened_signals_batch: {flattened_signals_batch.shape}")
+            plt.plot(flattened_signals_batch[:len(t)*3], label = 'BW')
+            plt.show()
+            '''
             flattened_signals_batch = self.simulation_helper.apply_bandwidth_filter(flattened_signals_batch, sampling_rate_fft)
-            #roll array for better readability later at the detector
-            ''' filtered_signals = np.roll(filtered_signals, indexshift)
-            new_save_shift = filtered_signals[:indexshift]
-            filtered_signals[: indexshift] = old_save_shift
-            old_save_shift = new_save_shift'''
+            '''print(f"shape flattened_signals_batch: {flattened_signals_batch.shape}")
+            plt.plot(flattened_signals_batch[:len(t)*3], label = 'BW')
+            plt.show()'''
 
             flattened_signals_batch = flattened_signals_batch.reshape(self.config.batchsize, len(t))
             signals[i:i + self.config.batchsize, :] = flattened_signals_batch
-            #plt.plot(filtered_signals[:len(t)], label = 'BW')
+          
             '''plt.legend()
             Saver.save_plot('without_bandwidth')
             plt.plot(filtered_signals[:6*len(t)], label = 'ende')
             Saver.save_plot('with_bandwidth')'''
+            
         return signals, t, jitter_shifts
 
     def eam_transmission(self, voltage_signal, optical_power, T1_dampening, peak_wavelength, t):
@@ -243,19 +251,19 @@ class SimulationEngine:
         timebins = np.linspace(t[-1] / num_segments, t[-1], num_segments)        
         detected_indices_z_norm = self.simulation_helper.classificator_det_ind(timebins, decoy, time_photons_det_z, index_where_photons_det_z, is_decoy = False)
         # print(f"shape detected_indices_z_norm: {detected_indices_z_norm}")
-        gain_Z_norm, amount_Z_det_norm = self.simulation_helper.classificator_z(basis, value, decoy, index_where_photons_det_z, detected_indices_z_norm, is_decoy = False)
 
         detected_indices_z_dec = self.simulation_helper.classificator_det_ind(timebins, decoy, time_photons_det_z, index_where_photons_det_z, is_decoy = True)
-        gain_Z_dec, amount_Z_det_dec = self.simulation_helper.classificator_z(basis, value, decoy, index_where_photons_det_z, detected_indices_z_dec, is_decoy = True)
         # print(f"shape detected_indices_z_dec: {detected_indices_z_dec}")
 
-
         detected_indices_x_norm = self.simulation_helper.classificator_det_ind(timebins, decoy, time_photons_det_x, index_where_photons_det_x, is_decoy = False)
-        gain_XP_norm, amount_XP_det_norm = self.simulation_helper.classificator_x(basis, value, decoy, index_where_photons_det_x, detected_indices_x_norm, gain_Z_norm, is_decoy = False)
         # print(f"shape detected_indices_x_norm: {detected_indices_x_norm}")
 
         detected_indices_x_dec = self.simulation_helper.classificator_det_ind(timebins, decoy, time_photons_det_x, index_where_photons_det_x, is_decoy = True)
-        gain_XP_dec, amount_XP_det_dec = self.simulation_helper.classificator_x(basis, value, decoy, index_where_photons_det_x, detected_indices_x_dec, gain_Z_dec, is_decoy = True)
+        
+        gain_Z_norm, amount_Z_det_norm = self.simulation_helper.classificator_z(basis, value, decoy, index_where_photons_det_z, detected_indices_z_norm, detected_indices_x_norm, is_decoy = False)
+        gain_Z_dec, amount_Z_det_dec = self.simulation_helper.classificator_z(basis, value, decoy, index_where_photons_det_z, detected_indices_z_dec, detected_indices_x_dec, is_decoy = True)
+        gain_XP_norm, amount_XP_det_norm = self.simulation_helper.classificator_x(basis, value, decoy, index_where_photons_det_x, detected_indices_x_norm, detected_indices_z_norm, gain_Z_norm, is_decoy = False)
+        gain_XP_dec, amount_XP_det_dec = self.simulation_helper.classificator_x(basis, value, decoy, index_where_photons_det_x, detected_indices_x_dec, detected_indices_z_dec, gain_Z_dec, is_decoy = True)
         # print(f"shape detected_indices_x_dec: {detected_indices_x_dec}")
 
         # Use np.hstack to concatenate, and it automatically handles empty arrays
@@ -264,19 +272,22 @@ class SimulationEngine:
         # print(f"total_detected_indices_x: {total_detected_indices_x.shape}")
         # print(f"total_detected_indices_z: {total_detected_indices_z.shape}")
 
-        wrong_detections = self.simulation_helper.classificator_error_cases(basis, value, index_where_photons_det_x, index_where_photons_det_z, total_detected_indices_x, total_detected_indices_z)
-        print(f"len(wrong_detections): {len(wrong_detections)}")
-
+        wrong_detections_z, wrong_detections_x = self.simulation_helper.classificator_error_cases(basis, value, index_where_photons_det_x, index_where_photons_det_z, total_detected_indices_x, total_detected_indices_z)
+        amount_Z_detections = amount_Z_det_norm + amount_Z_det_dec
+        amount_XP_detections = amount_XP_det_norm + amount_XP_det_dec
         total_amount_detections = amount_Z_det_norm + amount_Z_det_dec + amount_XP_det_norm + amount_XP_det_dec
-        print(f"total_amount_detections: {total_amount_detections}")
-        if total_amount_detections != 0:
-            qber = len(wrong_detections) / total_amount_detections
+
+        if amount_Z_det_norm != 0:
+            qber = len(wrong_detections_z) / amount_Z_det_norm
         else:
             qber = 0
-           
+
+        if amount_XP_det_norm != 0:
+            phase_error_rate = len(wrong_detections_x) / amount_XP_det_norm
+
         raw_key_rate = total_amount_detections / (t[-1] * self.config.n_samples)
 
-        return wrong_detections, total_amount_detections, qber, raw_key_rate, gain_XP_norm, gain_XP_dec, gain_Z_norm, gain_Z_dec
+        return wrong_detections_z, wrong_detections_x, total_amount_detections, amount_Z_detections, amount_XP_detections, qber, phase_error_rate, raw_key_rate, gain_XP_norm, gain_XP_dec, gain_Z_norm, gain_Z_dec, detected_indices_x_dec, detected_indices_x_norm, detected_indices_z_dec, detected_indices_z_norm
     
     def initialize(self):
         plt.style.use(self.config.mlp)
@@ -293,10 +304,10 @@ class SimulationEngine:
         self.simulation_single.find_voltage_decoy(T1_dampening, lower_limit=-1, upper_limit=1.5, tol=1e-7)
         if self.config.voltage_decoy > (upper_limit - 10*tol) or self.config.voltage_decoy < (lower_limit + 10*tol):
             raise ValueError(f"voltage decoy is with {self.config.voltage_decoy} very close to limit [{lower_limit}, {upper_limit}] with tolerance {tol}")
-        #print('voltage at initialize end: ' + str(self.config.voltage))
-        #print('Voltage_decoy at initialize end: ' + str(self.config.voltage_decoy))
-        #print('Voltage_decoy_sup at initialize end: ' + str(self.config.voltage_decoy_sup))
-        #print('Voltage_sup at initialize end: ' + str(self.config.voltage_sup))
+        # print('voltage at initialize end: ' + str(self.config.voltage))
+        # print('Voltage_decoy at initialize end: ' + str(self.config.voltage_decoy))
+        # print('Voltage_decoy_sup at initialize end: ' + str(self.config.voltage_decoy_sup))
+        # print('Voltage_sup at initialize end: ' + str(self.config.voltage_sup))
         return T1_dampening
     
    
