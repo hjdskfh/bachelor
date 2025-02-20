@@ -6,34 +6,12 @@ import psutil
 import os
 import time
 import threading
+from matplotlib.ticker import MaxNLocator
+
 
 class Saver:
     def __init__(self, config):
         self.config = config
-
-    '''# Function to monitor peak memory usage
-    def track_peak_memory(self):
-        # Get the current process
-        process = psutil.Process(os.getpid())
-
-        # Initial memory usage
-        peak_memory = process.memory_info().rss  # in bytes
-
-        start_time = time.time()
-        timeout = 200  # seconds
-
-        # Track memory usage
-        while time.time() - start_time < timeout:            
-            current_memory = process.memory_info().rss  # in bytes
-            peak_memory = max(peak_memory, current_memory)
-            time.sleep(1)  # check memory every second
-
-            # Optional: Stop monitoring after a certain condition is met
-            # For example, when the code finishes executing
-            # if some_condition:
-            #     break
-
-        return peak_memory'''
 
     @staticmethod
     def save_plot(filename, dpi=600):
@@ -170,7 +148,8 @@ class Saver:
             f.write(f"seed: {seed}\n")
             for key, value in kwargs.items():
                 f.write(f"{key}: {value}\n")
-        
-            
+
+    
+                
 
     

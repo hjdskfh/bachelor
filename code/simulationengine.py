@@ -258,13 +258,13 @@ class SimulationEngine:
         detected_indices_x_norm = self.simulation_helper.classificator_det_ind(timebins, decoy, time_photons_det_x, index_where_photons_det_x, is_decoy = False)
         # print(f"shape detected_indices_x_norm: {detected_indices_x_norm}")
 
-        detected_indices_x_dec = self.simulation_helper.classificator_det_ind(timebins, decoy, time_photons_det_x, index_where_photons_det_x, is_decoy = True)
-        
-        gain_Z_norm, amount_Z_det_norm = self.simulation_helper.classificator_z(basis, value, decoy, index_where_photons_det_z, detected_indices_z_norm, detected_indices_x_norm, is_decoy = False)
-        gain_Z_dec, amount_Z_det_dec = self.simulation_helper.classificator_z(basis, value, decoy, index_where_photons_det_z, detected_indices_z_dec, detected_indices_x_dec, is_decoy = True)
-        gain_XP_norm, amount_XP_det_norm = self.simulation_helper.classificator_x(basis, value, decoy, index_where_photons_det_x, detected_indices_x_norm, detected_indices_z_norm, gain_Z_norm, is_decoy = False)
-        gain_XP_dec, amount_XP_det_dec = self.simulation_helper.classificator_x(basis, value, decoy, index_where_photons_det_x, detected_indices_x_dec, detected_indices_z_dec, gain_Z_dec, is_decoy = True)
-        # print(f"shape detected_indices_x_dec: {detected_indices_x_dec}")
+        detected_indices_x_dec = self.simulation_helper.classificator_det_ind(timebins, decoy, time_photons_det_x, index_where_photons_det_x, is_decoy=True)
+        # print(f"detected_indices_x_dec shape: {detected_indices_x_dec.shape}")
+
+        gain_Z_norm, amount_Z_det_norm = self.simulation_helper.classificator_z(basis, value, decoy, index_where_photons_det_z, detected_indices_z_norm, detected_indices_x_norm, is_decoy=False)
+        gain_Z_dec, amount_Z_det_dec = self.simulation_helper.classificator_z(basis, value, decoy, index_where_photons_det_z, detected_indices_z_dec, detected_indices_x_dec, is_decoy=True)
+        gain_XP_norm, amount_XP_det_norm = self.simulation_helper.classificator_x(basis, value, decoy, index_where_photons_det_x, detected_indices_x_norm, detected_indices_z_norm, gain_Z_norm, is_decoy=False)
+        gain_XP_dec, amount_XP_det_dec = self.simulation_helper.classificator_x(basis, value, decoy, index_where_photons_det_x, detected_indices_x_dec, detected_indices_z_dec, gain_Z_dec, is_decoy=True)
 
         # Use np.hstack to concatenate, and it automatically handles empty arrays
         total_detected_indices_x = np.vstack((detected_indices_x_dec, detected_indices_x_norm)) if detected_indices_x_dec.size > 0 or detected_indices_x_norm.size > 0 else np.empty((0, 0))

@@ -24,8 +24,6 @@ class SimulationHelper:
         XP_sent_dec = np.sum((basis == 0) & (decoy == 1))                # XP_sent_dec
 
         return Z1_sent_norm, Z1_sent_dec, Z0_sent_norm, Z0_sent_dec, XP_sent_norm, XP_sent_dec
-    
-
 
     # ========== Main Helper Functions for signal generation ==========
 

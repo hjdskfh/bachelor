@@ -11,6 +11,7 @@ from saver import Saver
 from simulationengine import SimulationEngine
 from simulationsingle import SimulationSingle
 from simulationhelper import SimulationHelper
+from plotter import Plotter
 
 
 class SimulationManager:
@@ -19,6 +20,7 @@ class SimulationManager:
         self.simulation_engine = SimulationEngine(config)
         self.simulation_single = SimulationSingle(config)
         self.simulation_helper = SimulationHelper(config)
+        self.plotter = Plotter(config)
     
     def run_simulation_one_state(self):
         
@@ -127,31 +129,6 @@ class SimulationManager:
                 {"title": "State: X+ decoy", "basis": 0, "value": -1, "decoy": 1},
                 ]
         
-        def make_data_plottable(data):
-            data = data[~np.isnan(data)]
-            if str(data).startswith("nr_photons"):
-                # Step 1: Calculate the number of zeros (no photons detected)
-                num_zeros = self.config.n_samples - len(data)
-
-                # Step 2: Create the full dataset by combining the nr_photons and the zeros
-                zeros = np.zeros(num_zeros)
-                data = np.concatenate((data, zeros))
-
-            # If data is empty after removing NaNs, return an empty array
-            if data.size == 0:
-                return np.array([])
-
-            # If data is a scalar or zero-dimensional array, return it as a 1D array
-            if np.isscalar(data) or data.ndim == 0:
-                return np.array([data])
-                
-            # If data contains a single array, return it directly
-            if len(data) == 1:
-                return np.array(data)  # No need for np.concatenate
-
-            # Flatten and concatenate all elements
-            return np.concatenate([arr.flatten() for arr in data])
-        
 
         for state in states:
             # 0tes Element ist baseline
@@ -203,13 +180,13 @@ class SimulationManager:
             #print(f"print time photon: {time_photons_det_x[:10]}")	
 
 
-            calc_mean_photon_nr = make_data_plottable(calc_mean_photon_nr)
-            nr_photons_det_z = make_data_plottable(nr_photons_det_z)
-            time_photons_det_z = make_data_plottable(time_photons_det_z)
-            wavelength_photons_det_z = make_data_plottable(wavelength_photons_det_z)
-            nr_photons_det_x = make_data_plottable(nr_photons_det_x)
-            time_photons_det_x = make_data_plottable(time_photons_det_x)
-            wavelength_photons_det_x = make_data_plottable(wavelength_photons_det_x)
+            calc_mean_photon_nr = self.make_data_plottable(calc_mean_photon_nr)
+            nr_photons_det_z = self.make_data_plottable(nr_photons_det_z)
+            time_photons_det_z = self.make_data_plottable(time_photons_det_z)
+            wavelength_photons_det_z = self.make_data_plottable(wavelength_photons_det_z)
+            nr_photons_det_x = self.make_data_plottable(nr_photons_det_x)
+            time_photons_det_x = self.make_data_plottable(time_photons_det_x)
+            wavelength_photons_det_x = self.make_data_plottable(wavelength_photons_det_x)
             
             plt.hist(calc_mean_photon_nr, color = 'green', bins=40, alpha=0.7, label="Mean Photon Number")
             plt.axvline(target_mean_photon_nr, color='darkred', linestyle='--', linewidth=2, label='target mean photon number')
@@ -416,43 +393,81 @@ class SimulationManager:
 
         signals_part = signals[:3]
         flattened_signals = signals_part.reshape(-1)
-        plt.plot(flattened_signals, color='blue', label='0', linestyle='-', marker='o', markersize=1)
+        plt.plot(flattened_signals)
         for i in range(0, len(flattened_signals), len(t) // 2):  
-            plt.axvline(x=i, color='r', linestyle='--', label=f'Line at x={flattened_signals[i]:.2f}' if i == 0 else "")
+            plt.axvline(x=i, linestyle='-', label=f'Line at x={flattened_signals[i]:.2f}')
         Saver.save_plot(f"signal")
 
         time_simulating_signal = time.time() - start_time
         Saver.memory_usage("before eam: " + str(time_simulating_signal))
         power_dampened, transmission,  calc_mean_photon_nr_eam, _ = self.simulation_engine.eam_transmission(signals, optical_power, T1_dampening, peak_wavelength, t)
 
+        pulse_duration = 1 / self.config.sampling_rate_FPGA
+        sampling_rate_fft = 100e11
+        samples_per_pulse = int(pulse_duration * sampling_rate_fft)
+        total_samples = self.config.n_pulses * samples_per_pulse
+        t_plot1 = np.linspace(0,  self.config.n_pulses * pulse_duration, 33* total_samples, endpoint=False)
+        print(f"t_plot1: {t_plot1.shape}")	    	
         power_part = power_dampened[:3]
         flattened_power= power_part.reshape(-1)
-        plt.plot(flattened_power, color='blue', label='0', linestyle='-', marker='o', markersize=1)
+        plt.plot(t_plot1 * 1e9, flattened_power *1e3)
         for i in range(0, len(flattened_power), len(t)):
-            plt.axvline(x=i, color='r', linestyle='--', label=f'Line at x={flattened_power[i]:.2f}' if i == 0 else "")
+            plt.axvline(x=i, color='r', linestyle='--', label=f'Line at x={flattened_power[i]:.2f}')
+        # Formatting title and labels
+        plt.title(f"power after EAM over {self.config.n_samples} Iterations")
+        plt.ylabel('power (mW)')
+        plt.xlabel('Time (ns)')
+        plt.gca().yaxis.set_major_locator(MaxNLocator(integer=True))
+        plt.legend()
+        plt.tight_layout()
         Saver.save_plot(f"power_eam")
 
         time_eam = time.time() - start_time
         Saver.memory_usage("before fiber: " + str(time_eam))
         power_dampened = self.simulation_engine.fiber_attenuation(power_dampened)
         
-        power_part = power_dampened[:10]
+        power_part = power_dampened[:3]
         flattened_power= power_part.reshape(-1)
-        plt.plot(flattened_power, color='blue', label='0', linestyle='-', marker='o', markersize=1)
+        plt.plot(t_plot1 * 1e9, flattened_power * 1e3)
         Saver.save_plot(f"power_fiber")
 
         # first Z basis bc no interference
         Saver.memory_usage("before detector z: " + str(time.time() - start_time))
         power_dampened = power_dampened * self.config.p_z_bob
         time_photons_det_z, wavelength_photons_det_z, nr_photons_det_z, index_where_photons_det_z, calc_mean_photon_nr_detector_z, dark_count_times_z, num_dark_counts_z = self.simulation_engine.detector(t, transmission, peak_wavelength, power_dampened, start_time)
-        print(f"time_photons_det_z: {time_photons_det_z[:10]}")
         power_dampened = power_dampened / self.config.p_z_bob
         Saver.memory_usage("before classificator: " + str(time.time() - start_time))
 
         # path for X basis
         Saver.memory_usage("before DLI: " + str(time.time() -   start_time))
         power_dampened = power_dampened * (1 - self.config.p_z_bob)
+
+        #plot
+        power_part = power_dampened[:3]
+        flattened_power= power_part.reshape(-1)
+        plt.plot(t_plot1 * 1e9, flattened_power * 1e3)
+        Saver.save_plot(f"power_fiber")
+        plt.title(f"power before DLI over {self.config.n_samples} Iterations")
+        plt.ylabel('power (mW)')
+        plt.xlabel('Time (ns)')
+        plt.gca().yaxis.set_major_locator(MaxNLocator(integer=True))
+        plt.legend()
+        plt.tight_layout()
+
         power_dampened = self.simulation_engine.delay_line_interferometer(power_dampened, t, peak_wavelength)
+
+        #plot
+        power_part = power_dampened[:3]
+        flattened_power= power_part.reshape(-1)
+        plt.plot(t_plot1 * 1e9, flattened_power * 1e3)
+        Saver.save_plot(f"power_fiber")
+        plt.title(f"power after DLI over {self.config.n_samples} Iterations")
+        plt.ylabel('power (mW)')
+        plt.xlabel('Time (ns)')
+        plt.gca().yaxis.set_major_locator(MaxNLocator(integer=True))
+        plt.legend()
+        plt.tight_layout()
+
         Saver.memory_usage("before detector x: " + str(time.time() - start_time))
         time_photons_det_x, wavelength_photons_det_x, nr_photons_det_x, index_where_photons_det_x, calc_mean_photon_nr_detector_x, dark_count_times_x, num_dark_counts_x = self.simulation_engine.detector(t, transmission, peak_wavelength, power_dampened, start_time)        
 
@@ -498,3 +513,23 @@ class SimulationManager:
             detected_indices_x_norm=detected_indices_x_norm,
             detected_indices_z_dec=detected_indices_z_dec,
             detected_indices_z_norm=detected_indices_z_norm,'''
+        
+        calc_mean_photon_nr_detector_x = self.plotter.make_data_plottable(calc_mean_photon_nr_detector_x)
+        calc_mean_photon_nr_detector_z = self.plotter.make_data_plottable(calc_mean_photon_nr_detector_z)
+        calc_mean_photon_nr_eam = self.plotter.make_data_plottable(calc_mean_photon_nr_eam)
+        time_photons_det_x = self.plotter.make_data_plottable(time_photons_det_x)
+        time_photons_det_z = self.plotter.make_data_plottable(time_photons_det_z)
+        wavelength_photons_det_x = self.plotter.make_data_plottable(wavelength_photons_det_x)
+        wavelength_photons_det_z = self.plotter.make_data_plottable(wavelength_photons_det_z)
+        nr_photons_det_x = self.plotter.make_data_plottable(nr_photons_det_x)
+        nr_photons_det_z = self.plotter.make_data_plottable(nr_photons_det_z)
+
+        
+        self.plotter.plot_mean_photon_histogram(calc_mean_photon_nr_eam, target_mean_photon_nr = np.array([self.config.mean_photon_nr, self.config.mean_photon_decoy]), 
+                                                type_photon_nr = "Mean Photon Number at EAM")
+        self.plotter.plot_mean_photon_histogram(calc_mean_photon_nr_detector_x, target_mean_photon_nr = None, type_photon_nr = "Mean Photon Number at Detector X")
+        self.plotter.plot_mean_photon_histogram(calc_mean_photon_nr_detector_z, target_mean_photon_nr = None, type_photon_nr = "Mean Photon Number at Detector Z")
+        self.plotter.plot_photon_time_histogram(time_photons_det_x, time_photons_det_z)
+        self.plotter.plot_photon_wavelength_histogram(wavelength_photons_det_x, wavelength_photons_det_z)
+
+
