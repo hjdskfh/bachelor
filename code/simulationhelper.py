@@ -3,6 +3,9 @@ from scipy.fftpack import fft, ifft, fftfreq
 from scipy.special import factorial
 from scipy import constants
 import time
+import gc
+import psutil
+import os
 
 from saver import Saver
 
@@ -104,12 +107,19 @@ class SimulationHelper:
         return signals
 
     # ========== Detector Helper ==========
-    def choose_photons(self, transmission, t, power_dampened, peak_wavelength, start_time, fixed_nr_photons=None):
+    def choose_photons(self, norm_transmission, t, power_dampened, peak_wavelength, start_time, fixed_nr_photons=None):
         """Calculate and choose photons based on the transmission and jitter."""
         # Calculate the mean photon number
+        Saver.memory_usage("in choose photon before anything")
         energy_per_pulse = np.trapezoid(power_dampened, t, axis=1)
+        Saver.memory_usage("in choose photon after energy_per_pulse")
+        # delete power_dampened
+        del power_dampened
+        gc.collect()
+        Saver.memory_usage("in choose photon after gc.collect")
         calc_mean_photon_nr_detector = energy_per_pulse / (constants.h * constants.c / peak_wavelength)
         # Use Poisson distribution to get the number of photons
+        Saver.memory_usage("in choose photon after calc_mean_photon_nr_detector")
         nr_photons = fixed_nr_photons if fixed_nr_photons is not None else self.poisson_distr(calc_mean_photon_nr_detector)
         all_time_max_nr_photons = max(nr_photons)
             
@@ -124,9 +134,7 @@ class SimulationHelper:
         time_photons = np.full_like(energy_per_photon, np.nan)
         nr_photons = nr_photons[non_zero_photons] #delete rows where number of photons is 0
 
-        # Calculate the normalized transmission
-        norm_transmission = transmission / transmission.sum(axis=1, keepdims=True)
-        Saver.memory_usage("before generate photon_prop: " + str(time.time() - start_time))
+        Saver.memory_usage("in choose photon after pre-allocate arrays")
 
         # Generate the photon properties for each sample with non-zero photons
         for i, idx in enumerate(index_where_photons):
@@ -374,4 +382,7 @@ class SimulationHelper:
         nr_photons = x[sampled_indices]
         return nr_photons
     
+
+  
+     
 

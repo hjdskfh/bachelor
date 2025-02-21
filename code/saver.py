@@ -77,46 +77,6 @@ class Saver:
         
         except Exception as e:
             print(f"Error saving to JSON: {e}")
-
-    @staticmethod
-    def memory_usage(description):
-        process = psutil.Process(os.getpid())  # Get the current process
-        memory_info = process.memory_info()
-        memory_used = memory_info.rss  # Memory used by the process in bytes
-        memory_used_mb = memory_used / (1024 ** 2)  # Convert to MB
-        print(f"[{description}] Memory used: {memory_used_mb:.2f} MB")
-        
-    # Function to track peak memory usage during the simulation
-    @staticmethod
-    def track_peak_memory_usage(check_interval=0.1):
-        """
-        Monitors and returns the peak memory usage of the current process.
-        
-        Args:
-            check_interval (int): The interval (in seconds) at which to check memory usage.
-            
-        Returns:
-            peak_memory (int): The peak memory usage in bytes.
-        """
-        # Get the current process
-        process = psutil.Process(os.getpid())
-        
-        # Variable to store the peak memory usage
-        peak_memory = 0
-        
-        # Function to monitor memory usage in a separate thread
-        def monitor_memory():
-            nonlocal peak_memory
-            while True:
-                current_memory = process.memory_info().rss  # in bytes
-                peak_memory = max(peak_memory, current_memory)
-                time.sleep(check_interval)  # Check memory every 'check_interval' seconds
-        
-        # Start memory monitoring in a separate daemon thread
-        memory_thread = threading.Thread(target=monitor_memory, daemon=True)
-        memory_thread.start()
-        
-        return peak_memory, memory_thread
     
     @staticmethod
     def save_results_to_txt(n_samples = None, seed = None, **kwargs):
@@ -149,7 +109,28 @@ class Saver:
             for key, value in kwargs.items():
                 f.write(f"{key}: {value}\n")
 
-    
-                
+    # ========== Memory Helper ==========
+
+    @staticmethod
+    def memory_usage(description):
+        process = psutil.Process(os.getpid())  # Get the current process
+        memory_info = process.memory_info()
+        memory_used = memory_info.rss  # Memory used by the process in bytes
+        memory_used_mb = memory_used / (1024 ** 2)  # Convert to MB
+        print(f"[{description}] Memory used: {memory_used_mb:.2f} MB")
+        
+
+    # monitor memory usage and terminate if it exceeds the limit
+    @staticmethod
+    def monitor_memory():
+        MEMORY_LIMIT_MB = 6000
+        """Check memory usage and terminate if it exceeds the limit."""
+        process = psutil.Process(os.getpid())
+        while True:
+            memory_usage = process.memory_info().rss / (1024 * 1024)  # Convert to MB
+            if memory_usage > MEMORY_LIMIT_MB:
+                print(f"⚠️ Memory limit exceeded! ({memory_usage:.2f} MB). Terminating process.")
+                os._exit(1)  # Forcefully kill the program
+            time.sleep(1)     # Check every second                
 
     

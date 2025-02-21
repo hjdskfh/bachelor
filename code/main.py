@@ -4,26 +4,14 @@ import time
 from datamanager import DataManager
 from config import SimulationConfig
 from simulationmanager import SimulationManager
+from simulationhelper import SimulationHelper
 from saver import Saver
 import numpy as np
 import psutil
 import threading
 import os
 
-# Memory limit in MB
-MEMORY_LIMIT_MB = 6000  
-
-def monitor_memory():
-    """Check memory usage and terminate if it exceeds the limit."""
-    process = psutil.Process(os.getpid())
-    while True:
-        memory_usage = process.memory_info().rss / (1024 * 1024)  # Convert to MB
-        if memory_usage > MEMORY_LIMIT_MB:
-            print(f"⚠️ Memory limit exceeded! ({memory_usage:.2f} MB). Terminating process.")
-            os._exit(1)  # Forcefully kill the program
-        time.sleep(1)  # Check every second
-
-threading.Thread(target=monitor_memory, daemon=True).start()
+threading.Thread(target=Saver.monitor_memory, daemon=True).start()
 
 Saver.memory_usage("Before everything")
 
@@ -44,10 +32,10 @@ database.add_jitter(jitter, 'laser')
 detector_jitter = 100e-12
 database.add_jitter(detector_jitter, 'detector')
 
-seed = 30 #45
+#seed = 30 #45
 
 #create simulation
-config = SimulationConfig(database, seed = seed, n_samples=2000, n_pulses=4, batchsize = 1000, mean_voltage=1.0, mean_current=0.08, current_amplitude=0.02,
+config = SimulationConfig(database, seed = None, n_samples=20000, n_pulses=4, batchsize = 1000, mean_voltage=1.0, mean_current=0.08, current_amplitude=0.02,
                 p_z_alice=0.5, p_decoy=0.1, p_z_bob = 0.85, sampling_rate_FPGA=6.5e9, bandwidth = 4e9, jitter=jitter, 
                 non_signal_voltage = -1, voltage_decoy=0, voltage=0, voltage_decoy_sup=0, voltage_sup=0,
                 mean_photon_nr=0.7, mean_photon_decoy=0.1, 
@@ -67,19 +55,9 @@ end_time_read = time.time()  # Record end time
 execution_time_read = end_time_read - start_time  # Calculate execution time for reading
 print(f"Execution time for reading: {execution_time_read:.9f} seconds for {config.n_samples} samples")
 
-peak_memory, memory_thread = Saver.track_peak_memory_usage(check_interval=0.1)
 #plot results
 simulation.run_simulation_classificator()
 
 end_time_simulation = time.time()  # Record end time for simulation
 execution_time_simulation = end_time_simulation - end_time_read  # Calculate execution time for simulation
 print(f"Execution time for simulation: {execution_time_simulation:.9f} seconds for {config.n_samples} samples")
-
-
-time.sleep(1)  # Wait for 1 second to ensure that the memory thread has finished
-print(f"Peak memory usage: {peak_memory / (1024 ** 2):.2f} MB")
-
-
-
-
-

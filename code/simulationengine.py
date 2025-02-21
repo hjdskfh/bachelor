@@ -5,6 +5,7 @@ from scipy.fftpack import fft, ifft, fftfreq
 from scipy import constants
 from scipy.special import factorial
 import time
+import gc
 
 from saver import Saver
 from simulationsingle import SimulationSingle
@@ -130,6 +131,10 @@ class SimulationEngine:
 
         # fill transmission array with signal_over_threshold
         transmission = np.full_like(voltage_signal, signal_over_threshold)
+
+        del voltage_signal
+        gc.collect()
+
         # fill transmission array with interpolated_values where mask is True
         transmission[mask] = interpolated_values
        
@@ -139,7 +144,10 @@ class SimulationEngine:
         energy_per_pulse = np.trapezoid(power_dampened, t, axis=1)
         calc_mean_photon_nr = energy_per_pulse / (constants.h * constants.c / peak_wavelength)
 
-        return power_dampened, transmission, calc_mean_photon_nr, energy_per_pulse # leave these and recalculate them in detector
+        # Normalize the transmission values
+        norm_transmission = np.divide(transmission, transmission.sum(axis=1, keepdims=True), out=transmission)
+
+        return power_dampened, norm_transmission, calc_mean_photon_nr, energy_per_pulse # leave these and recalculate them in detector
     
     def fiber_attenuation(self, power_dampened):
         """Apply fiber attenuation to the power."""
@@ -197,10 +205,10 @@ class SimulationEngine:
         
         return power_dampened_total
     
-    def detector(self, t, transmission, peak_wavelength, power_dampened, start_time):
+    def detector(self, t, norm_transmission, peak_wavelength, power_dampened, start_time):
         """Simulate the detector process."""
         # choose photons
-        wavelength_photons, time_photons, nr_photons, index_where_photons, all_time_max_nr_photons, calc_mean_photon_nr_detector = self.simulation_helper.choose_photons(transmission, t, power_dampened, peak_wavelength, start_time, fixed_nr_photons=None)
+        wavelength_photons, time_photons, nr_photons, index_where_photons, all_time_max_nr_photons, calc_mean_photon_nr_detector = self.simulation_helper.choose_photons(norm_transmission, t, power_dampened, peak_wavelength, start_time, fixed_nr_photons=None)
         Saver.memory_usage("after choose: " + str(time.time() - start_time))
 
         # Will the photons pass the detection efficiency?
@@ -273,6 +281,8 @@ class SimulationEngine:
         # print(f"total_detected_indices_z: {total_detected_indices_z.shape}")
 
         wrong_detections_z, wrong_detections_x = self.simulation_helper.classificator_error_cases(basis, value, index_where_photons_det_x, index_where_photons_det_z, total_detected_indices_x, total_detected_indices_z)
+        len_wrong_detections_z = len(wrong_detections_z)
+        len_wrong_detections_x = len(wrong_detections_x)
         amount_Z_detections = amount_Z_det_norm + amount_Z_det_dec
         amount_XP_detections = amount_XP_det_norm + amount_XP_det_dec
         total_amount_detections = amount_Z_det_norm + amount_Z_det_dec + amount_XP_det_norm + amount_XP_det_dec
@@ -287,7 +297,7 @@ class SimulationEngine:
 
         raw_key_rate = total_amount_detections / (t[-1] * self.config.n_samples)
 
-        return wrong_detections_z, wrong_detections_x, total_amount_detections, amount_Z_detections, amount_XP_detections, qber, phase_error_rate, raw_key_rate, gain_XP_norm, gain_XP_dec, gain_Z_norm, gain_Z_dec, detected_indices_x_dec, detected_indices_x_norm, detected_indices_z_dec, detected_indices_z_norm
+        return len_wrong_detections_z, len_wrong_detections_x, total_amount_detections, amount_Z_detections, amount_XP_detections, qber, phase_error_rate, raw_key_rate, gain_XP_norm, gain_XP_dec, gain_Z_norm, gain_Z_dec, detected_indices_x_dec, detected_indices_x_norm, detected_indices_z_dec, detected_indices_z_norm
     
     def initialize(self):
         plt.style.use(self.config.mlp)

@@ -27,8 +27,8 @@ database.add_jitter(detector_jitter, 'detector')
 
 #seed = 45
 
-
-n_samples = np.arange(24000, 27000, 2000, dtype=int)
+n_samples = np.array([22000])
+#n_samples = np.arange(22000, 27000, 2000, dtype=int)
 times_per_n = 10
 #seed_arr = np.arange(1, times_per_n + 1, 1)
 for n in n_samples:
@@ -37,15 +37,15 @@ for n in n_samples:
         start_time = time.time()  # Record start time
 
         #set seed
-        seed = np.random.randint(0, 100)
+        # seed = np.random.randint(0, 100)
 
         #create simulation
-        config = SimulationConfig(database, seed = int(seed), n_samples=n, n_pulses=4, batchsize = 1000, mean_voltage=1.0, mean_current=0.08, current_amplitude=0.02,
-                        p_z_alice=0.5, p_decoy=0.1, p_z_bob = 0.15, sampling_rate_FPGA=6.5e9, bandwidth = 4e9, jitter=jitter, 
-                        non_signal_voltage = -1, voltage_decoy=0, voltage=0, voltage_decoy_sup=0, voltage_sup=0,
+        config = SimulationConfig(database, seed=None, n_samples=n, n_pulses=4, batchsize=1000, mean_voltage=1.0, mean_current=0.08, current_amplitude=0.02,
+                        p_z_alice=0.5, p_decoy=0.1, p_z_bob=0.15, sampling_rate_FPGA=6.5e9, bandwidth=4e9, jitter=jitter, 
+                        non_signal_voltage=-1, voltage_decoy=0, voltage=0, voltage_decoy_sup=0, voltage_sup=0,
                         mean_photon_nr=0.7, mean_photon_decoy=0.1, 
-                        fiber_attenuation=-3, fraction_long_arm = 0.6, detector_efficiency = 0.3, dark_count_frequency = 10, detection_time = 1e-10, detector_jitter = detector_jitter,
-                        mlp = 'C:/Users/leavi/OneDrive/Dokumente/Uni/Semester 7/NeuMoQP/Programm/code/Presentation_style_1_adjusted_no_grid.mplstyle'
+                        fiber_attenuation=-3, fraction_long_arm=0.6, detector_efficiency=0.3, dark_count_frequency=10, detection_time=1e-10, detector_jitter=detector_jitter,
+                        mlp='C:/Users/leavi/OneDrive/Dokumente/Uni/Semester 7/NeuMoQP/Programm/code/Presentation_style_1_adjusted_no_grid.mplstyle'
                         )
         simulation = SimulationManager(config)
         
