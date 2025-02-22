@@ -32,7 +32,7 @@ database.add_jitter(jitter, 'laser')
 detector_jitter = 100e-12
 database.add_jitter(detector_jitter, 'detector')
 
-#seed = 30 #45
+#seed = 45 #45
 
 #create simulation
 config = SimulationConfig(database, seed = None, n_samples=20000, n_pulses=4, batchsize = 1000, mean_voltage=1.0, mean_current=0.08, current_amplitude=0.02,
@@ -56,7 +56,7 @@ execution_time_read = end_time_read - start_time  # Calculate execution time for
 print(f"Execution time for reading: {execution_time_read:.9f} seconds for {config.n_samples} samples")
 
 #plot results
-simulation.run_simulation_classificator()
+simulation.run_simulation_initialize()
 
 end_time_simulation = time.time()  # Record end time for simulation
 execution_time_simulation = end_time_simulation - end_time_read  # Calculate execution time for simulation

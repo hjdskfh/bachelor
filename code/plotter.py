@@ -99,14 +99,13 @@ class Plotter:
         gc.collect()
 
 
-    def plot_and_delete_photon_nr_histogram(self, nr_photons_det_x, nr_photons_det_z, type_photon_number = None):
+    def plot_and_delete_photon_nr_histogram(self, nr_photons_det_x, nr_photons_det_z):
         """
         Plots a histogram of detected photon numbers for X and Z bases and saves the plot.
 
         Parameters:
         - nr_photons_det_x: Array of detected photon numbers in the X basis.
         - nr_photons_det_z: Array of detected photon numbers in the Z basis.
-        - type_photon_number: A string describing the type of photon number being plotted.
         """
         nr_photons_det_x = self.make_data_plottable(nr_photons_det_x)
         nr_photons_det_z = self.make_data_plottable(nr_photons_det_z)
@@ -118,7 +117,7 @@ class Plotter:
         plt.hist(nr_photons_det_z, label='Z basis', bins=np.arange(0, 11) - 0.5, alpha = 0.7)
 
         # Formatting title and labels
-        plt.title(f"{type_photon_number} over {self.config.n_samples} Iterations")
+        plt.title(f"Photon Number over {self.config.n_samples} Iterations")
         plt.ylabel('Counts')
         plt.xlabel('Photon Number')
 

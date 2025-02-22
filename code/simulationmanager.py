@@ -389,7 +389,7 @@ class SimulationManager:
         Saver.memory_usage("before simulating signal: " + str(time.time() - start_time))
         signals, t, _ = self.simulation_engine.signal_bandwidth_jitter(basis, value, decoy)
 
-        amount_symbols_in_plot = 4
+        amount_symbols_in_plot = 3
         pulse_duration = 1 / self.config.sampling_rate_FPGA
         sampling_rate_fft = 100e11
         samples_per_pulse = int(pulse_duration * sampling_rate_fft)
@@ -398,10 +398,10 @@ class SimulationManager:
         signals_part = signals[:amount_symbols_in_plot]
         flattened_signals = signals_part.reshape(-1)
         plt.plot(t_plot1 * 1e9, flattened_signals)
-        plt.title(f"Signal for {amount_symbols_in_plot} symbols")
+        plt.title(f"Voltage Signal with Bandwidth and Jitter for {amount_symbols_in_plot} symbols")
         plt.ylabel('Volt (V)')
         plt.xlabel('Time (ns)')
-        Saver.save_plot(f"signal")
+        Saver.save_plot(f"signal_after_bandwidth")
 
         time_simulating_signal = time.time() - start_time
         Saver.memory_usage("before eam: " + str(time_simulating_signal))
@@ -432,7 +432,7 @@ class SimulationManager:
         power_dampened = power_dampened * (1 - self.config.p_z_bob)
 
         #plot
-        amount_symbols_in_first_part = 4
+        amount_symbols_in_first_part = 3
         first_power = power_dampened[:amount_symbols_in_first_part]
 
         # DLI
@@ -449,7 +449,6 @@ class SimulationManager:
         self.plotter.plot_and_delete_mean_photon_histogram(calc_mean_photon_nr_detector_z, target_mean_photon_nr=None, type_photon_nr="Mean Photon Number at Detector Z")
         self.plotter.plot_and_delete_photon_wavelength_histogram(wavelength_photons_det_x, wavelength_photons_det_z)
         self.plotter.plot_and_delete_photon_nr_histogram(nr_photons_det_x, nr_photons_det_z)
-
         
         # get results for both detectors
         len_wrong_detections_z, len_wrong_detections_x, total_amount_detections, amount_Z_detections, amount_XP_detections, qber, phase_error_rate, raw_key_rate, gain_XP_norm, gain_XP_dec, gain_Z_norm, gain_Z_dec, detected_indices_x_dec, detected_indices_x_norm, detected_indices_z_dec, detected_indices_z_norm = self.simulation_engine.classificator(t, time_photons_det_x, index_where_photons_det_x, 

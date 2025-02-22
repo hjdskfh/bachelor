@@ -94,14 +94,30 @@ class SimulationEngine:
 
             flattened_signals_batch = self.simulation_helper.apply_jitter_to_pulse(t, flattened_signals_batch, jitter_shifts[self.config.n_pulses * i:self.config.n_pulses *(i + self.config.batchsize)])
 
+            if i == 0:
+                amount_symbols_in_plot = 3
+                pulse_duration = 1 / self.config.sampling_rate_FPGA
+                sampling_rate_fft = 100e11
+                samples_per_pulse = int(pulse_duration * sampling_rate_fft)
+                total_samples = self.config.n_pulses * samples_per_pulse
+                t_plot1 = np.linspace(0, amount_symbols_in_plot * self.config.n_pulses * pulse_duration, amount_symbols_in_plot * total_samples, endpoint=False)
+                # print(f"shape flattened_signals_batch: {flattened_signals_batch.shape}")
+                plt.plot(t_plot1 * 1e9, flattened_signals_batch[:len(t) * amount_symbols_in_plot])
+                print(f"basis[:amount], value[:amount], decoy[:amount]: {basis[:amount_symbols_in_plot]}, {values[:amount_symbols_in_plot]}, {decoy[:amount_symbols_in_plot]}")
+                for k in range(amount_symbols_in_plot + 1):
+                    plt.axvline(t_plot1[-1] * 1e9 * (k) / (amount_symbols_in_plot), label=f'Target Mean Photon Number {i+1}', color = 'darkgreen')
+                plt.title(f"Square Signal with jitter for the first 3 symbols")
+                plt.xlabel('Time (ns)')
+                plt.ylabel('Volt (V)')
+                Saver.save_plot(f"square_signal")
+
             flattened_signals_batch = np.roll(flattened_signals_batch, indexshift)
             new_save_shift = flattened_signals_batch[:indexshift]
             flattened_signals_batch[: indexshift] = old_save_shift
             old_save_shift = new_save_shift
-            '''print(f"shape flattened_signals_batch: {flattened_signals_batch.shape}")
-            plt.plot(flattened_signals_batch[:len(t)*3], label = 'BW')
-            plt.show()
-            '''
+            
+            
+            
             flattened_signals_batch = self.simulation_helper.apply_bandwidth_filter(flattened_signals_batch, sampling_rate_fft)
             '''print(f"shape flattened_signals_batch: {flattened_signals_batch.shape}")
             plt.plot(flattened_signals_batch[:len(t)*3], label = 'BW')
@@ -302,22 +318,27 @@ class SimulationEngine:
     def initialize(self):
         plt.style.use(self.config.mlp)
         self.config.validate_parameters() #some checks if parameters are in valid ranges
+        print(f"seed: {self.config.seed}")
         #calculate T1 dampening 
         lower_limit_t1, upper_limit_t1, tol_t1 = 0, 100, 1e-3
         T1_dampening = self.simulation_single.find_T1(lower_limit_t1, upper_limit_t1, tol_t1)
         if T1_dampening > (upper_limit_t1 - 10*tol_t1) or T1_dampening < (lower_limit_t1 + 10*tol_t1):
             raise ValueError(f"T1 dampening is with {T1_dampening} very close to limit [{lower_limit_t1}, {upper_limit_t1}] with tolerance {tol_t1}")
-        #print('T1_dampening at initialize end: ' +str(T1_dampening))
+        print('T1_dampening at initialize end: ' +str(T1_dampening))
 
         #with simulated decoy state: calculate decoy height
         lower_limit, upper_limit, tol = -1, 1.5, 1e-7
         self.simulation_single.find_voltage_decoy(T1_dampening, lower_limit=-1, upper_limit=1.5, tol=1e-7)
         if self.config.voltage_decoy > (upper_limit - 10*tol) or self.config.voltage_decoy < (lower_limit + 10*tol):
             raise ValueError(f"voltage decoy is with {self.config.voltage_decoy} very close to limit [{lower_limit}, {upper_limit}] with tolerance {tol}")
-        # print('voltage at initialize end: ' + str(self.config.voltage))
-        # print('Voltage_decoy at initialize end: ' + str(self.config.voltage_decoy))
-        # print('Voltage_decoy_sup at initialize end: ' + str(self.config.voltage_decoy_sup))
-        # print('Voltage_sup at initialize end: ' + str(self.config.voltage_sup))
+        print('voltage at initialize end: ' + str(self.config.voltage))
+        print('Voltage_decoy at initialize end: ' + str(self.config.voltage_decoy))
+        print('Voltage_decoy_sup at initialize end: ' + str(self.config.voltage_decoy_sup))
+        print('Voltage_sup at initialize end: ' + str(self.config.voltage_sup))
+        if self.config.voltage_decoy > self.config.voltage:
+            raise ValueError(f"self.config.voltage_decoy > self.config.voltage is True")
+        if self.config.voltage_decoy_sup > self.config.voltage_decoy:
+            raise ValueError(f"self.config.voltage_decoy_sup > self.config.voltage_decoy is True")
         return T1_dampening
     
    

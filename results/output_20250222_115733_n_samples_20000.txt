@@ -1,0 +1,25 @@
+n_samples: 20000
+seed: 678572
+len_wrong_detections_z: 384
+len_wrong_detections_x: 513
+total_amount_detections: 406
+amount_Z_detections: 186
+amount_XP_detections: 220
+qber: 2.098360655737705
+phase_error_rate: 2.7
+raw_key_rate: 32992862.949113965
+gain_XP_norm: 0.021059632010640657
+gain_XP_dec: 0.029940119760479042
+gain_Z_norm: 0.020346897931954638
+gain_Z_dec: 0.003054989816700611
+calc_mean_photon_nr_eam: [0.90309724 1.02608634 0.94432536 ... 0.50733195 0.55083506 0.54154632]
+calc_mean_photon_nr_detector_x: [0.12364449 0.12565325 0.16349856 ... 0.06532965 0.1126165  0.04595523]
+Z0_sent_norm: 4501
+Z0_sent_dec: 500
+Z1_sent_norm: 4493
+Z1_sent_dec: 482
+XP_sent_norm: 9022
+XP_sent_dec: 1002
+execution_time_run: 97.76329350471497
+time_simulating_signal: 70.27925634384155
+time_eam: 85.05472040176392
