@@ -28,7 +28,7 @@ class SimulationManager:
         optical_power, peak_wavelength = self.simulation_single.random_laser_output_single('current_power','voltage_shift', 'current_wavelength')
         
         basis, value, decoy = self.simulation_single.generate_alice_choices_single(basis = 0, value = 0, decoy = 0)
-        signals, t, jitter_shifts = self.simulation_single.signal_bandwidth_jitter_single(basis, value, decoy)
+        signals, t, _ = self.simulation_single.signal_bandwidth_jitter_single(basis, value, decoy)
         _, transmission = self.simulation_single.eam_transmission_single(signals, optical_power, T1_dampening)
 
         fig, ax = plt.subplots(figsize=(8, 5))
@@ -45,7 +45,7 @@ class SimulationManager:
         ax2.tick_params(axis='y', labelcolor='red')
     
         # Titles and labels
-        ax.set_title(f"State: Z0 decoy")
+        ax.set_title(f"State: Z0")
         ax.set_xlabel('Time in ns')
         ax.grid(True)
 
@@ -373,8 +373,32 @@ class SimulationManager:
         Saver.save_plot(f"photons_in_fiber_vs_after detector")
 
     def run_simulation_initialize(self):
+        start_time = time.time()  # Record start time
+
         T1_dampening = self.simulation_engine.initialize()
         print(f"T1 dampening: {T1_dampening}")
+        optical_power, peak_wavelength = self.simulation_engine.random_laser_output('current_power', 'voltage_shift', 'current_wavelength')
+    
+        # Generate Alice's choices
+        basis, value, decoy = self.simulation_engine.generate_alice_choices()
+
+        # Simulate signal and transmission
+        Saver.memory_usage("before simulating signal: " + str(time.time() - start_time))
+        signals, t, _ = self.simulation_engine.signal_bandwidth_jitter(basis, value, decoy)
+
+        amount_symbols_in_plot = 3
+        pulse_duration = 1 / self.config.sampling_rate_FPGA
+        sampling_rate_fft = 100e11
+        samples_per_pulse = int(pulse_duration * sampling_rate_fft)
+        total_samples = self.config.n_pulses * samples_per_pulse
+        t_plot1 = np.linspace(0, amount_symbols_in_plot * self.config.n_pulses * pulse_duration, amount_symbols_in_plot * total_samples, endpoint=False)
+        signals_part = signals[:amount_symbols_in_plot]
+        flattened_signals = signals_part.reshape(-1)
+        plt.plot(t_plot1 * 1e9, flattened_signals)
+        plt.title(f"Voltage Signal with Bandwidth and Jitter for {amount_symbols_in_plot} symbols")
+        plt.ylabel('Volt (V)')
+        plt.xlabel('Time (ns)')
+        Saver.save_plot(f"signal_after_bandwidth")
     
     def run_simulation_classificator(self):
         
