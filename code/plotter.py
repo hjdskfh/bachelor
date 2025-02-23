@@ -113,7 +113,7 @@ class Plotter:
         plt.figure(figsize=(8, 6))
         
         # Plot histograms for X and Z bases with specific bin range and style
-        plt.hist(nr_photons_det_x, label='X basis', bins=np.arange(0, 11) - 0.5, alpha = 0.7)
+        # plt.hist(nr_photons_det_x, label='X basis', bins=np.arange(0, 11) - 0.5, alpha = 0.7)
         plt.hist(nr_photons_det_z, label='Z basis', bins=np.arange(0, 11) - 0.5, alpha = 0.7)
 
         # Formatting title and labels
@@ -150,7 +150,7 @@ class Plotter:
         plt.figure(figsize=(8, 6))
         
         # Convert times to ns and plot histograms
-        plt.hist(time_photons_det_x * 1e9, label='X basis', bins=40, zorder=2, alpha=0.7)
+        # plt.hist(time_photons_det_x * 1e9, label='X basis', bins=40, zorder=2, alpha=0.7)
         plt.hist(time_photons_det_z * 1e9, label='Z basis', bins=40, zorder=1, alpha=0.7)
 
         # Formatting title and labels
@@ -186,7 +186,7 @@ class Plotter:
         print("max wavelength x", max(wavelength_photons_det_x))
         print("max wavelength z", max(wavelength_photons_det_z))
         # Convert wavelengths to nanometers and plot histograms for X and Z bases
-        plt.hist(wavelength_photons_det_x * 1e9, label='X basis', bins=40, alpha=0.7, zorder=2)
+        # plt.hist(wavelength_photons_det_x * 1e9, label='X basis', bins=40, alpha=0.7, zorder=2)
         plt.hist(wavelength_photons_det_z * 1e9, label='Z basis', bins=40, alpha=0.7, zorder=1)
 
         # Formatting title and labels

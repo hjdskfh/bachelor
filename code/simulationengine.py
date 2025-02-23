@@ -333,14 +333,19 @@ class SimulationEngine:
         var_voltage_decoy_sup = self.config.voltage_decoy_sup
         var_mean_photon_nr = self.config.mean_photon_nr
         var_mean_photon_decoy = self.config. mean_photon_decoy
-        var_voltage_sup, var_voltage_decoy, var_voltage_decoy_sup = self.simulation_single.find_voltage_decoy(T1_dampening, var_voltage_decoy, var_voltage_sup, var_voltage_decoy_sup, var_mean_photon_nr, var_mean_photon_decoy, lower_limit=-1, upper_limit=1.5, tol=1e-7)
 
+        var_voltage_sup, var_voltage_decoy, var_voltage_decoy_sup = self.simulation_single.find_voltage_decoy(T1_dampening, var_voltage_decoy, var_voltage_sup, var_voltage_decoy_sup, lower_limit=-1, upper_limit=1.5, tol=1e-7)
+        
+        self.config.voltage_sup = var_voltage_sup
+        self.config.voltage_decoy = var_voltage_decoy
+        self.config.voltage_decoy_sup = var_voltage_decoy_sup
+        print('voltage at initialize end: ' + str(self.config.voltage))
+        print('Voltage_decoy at initialize end: ' + str(self.config.voltage_decoy))
+        print('Voltage_decoy_sup at initialize end: ' + str(self.config.voltage_decoy_sup))
+        print('Voltage_sup at initialize end: ' + str(self.config.voltage_sup))
         if self.config.voltage_decoy > (upper_limit - 10*tol) or self.config.voltage_decoy < (lower_limit + 10*tol):
             raise ValueError(f"voltage decoy is with {self.config.voltage_decoy} very close to limit [{lower_limit}, {upper_limit}] with tolerance {tol}")
-        print('voltage at initialize end: ' + str(self.config.voltage))
-        print('Voltage_decoy at initialize end: ' + str(var_voltage_decoy))
-        print('Voltage_decoy_sup at initialize end: ' + str(var_voltage_decoy_sup))
-        print('Voltage_sup at initialize end: ' + str(var_voltage_sup))
+        self.config.voltage_decoy = var_voltage_decoy
         if self.config.voltage_decoy > self.config.voltage:
             raise ValueError(f"self.config.voltage_decoy > self.config.voltage is True")
         if self.config.voltage_decoy_sup > self.config.voltage_sup:

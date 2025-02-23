@@ -64,7 +64,7 @@ class DataManager:
             print(f"x_data shape: {x_data.shape}")
         if np.isscalar(x_data):
             if x_data < x_min or x_data > x_max:
-                raise ValueError(x_data, " x data isn't in table for ", name)
+                raise ValueError(x_data, " x data isn't in table for ", name, " and x_min: ", x_min, " and x_max: ", x_max)
         elif isinstance(x_data, np.ndarray):
             if x_data.ndim == 1:
                 if (x_data < x_min).any() or (x_data > x_max).any():
