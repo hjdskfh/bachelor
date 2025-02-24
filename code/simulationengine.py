@@ -303,13 +303,15 @@ class SimulationEngine:
         amount_XP_detections = amount_XP_det_norm + amount_XP_det_dec
         total_amount_detections = amount_Z_det_norm + amount_Z_det_dec + amount_XP_det_norm + amount_XP_det_dec
 
+        mask_z_symbols = basis == 1
         if amount_Z_det_norm != 0:
-            qber = len(wrong_detections_z) / amount_Z_det_norm
+            qber = len(wrong_detections_z) / len(mask_z_symbols)
         else:
             qber = 0
 
+        mask_x_symbols = basis == 0
         if amount_XP_det_norm != 0:
-            phase_error_rate = len(wrong_detections_x) / amount_XP_det_norm
+            phase_error_rate = len(wrong_detections_x) / len(mask_x_symbols)
 
         raw_key_rate = total_amount_detections / (t[-1] * self.config.n_samples)
 
@@ -350,6 +352,28 @@ class SimulationEngine:
             raise ValueError(f"self.config.voltage_decoy > self.config.voltage is True")
         if self.config.voltage_decoy_sup > self.config.voltage_sup:
             raise ValueError(f"self.config.voltage_decoy_sup > self.config.voltage_decoy is True")
+        
+        # basis = 0, value = 0, decoy = 0:  1010 non-decoy state
+        basis_fix, value_fix, decoy_fix = self.simulation_single.generate_alice_choices_single(basis = 0, value = 0, decoy = 0)
+        print(f"end of init: {basis_fix} {value_fix} {decoy_fix}")
+        signals, t, _ = self.simulation_single.signal_bandwidth_single(basis_fix, value_fix, decoy_fix)
+
+        plt.plot(t * 1e9, signals, label = '1010 non-decoy')
+
+        plt.title(f"Voltage Signal with Bandwidth and Jitter for one symbol")
+        plt.ylabel('Volt (V)')
+        plt.xlabel('Time (ns)')
+        plt.legend()
+        Saver.save_plot(f"signal_after_init_1010_voltage")
+        
+        optical_power, peak_wavelength = self.simulation_single.random_laser_output_single('current_power', 'voltage_shift', 'current_wavelength')
+        power_dampened, _ = self.simulation_single.eam_transmission_single(signals, optical_power, T1_dampening)
+        plt.plot(t * 1e9, power_dampened * 1e3)
+        plt.title(f"Power for one symbol")
+        plt.ylabel('Power (mW)')
+        plt.xlabel('Time (ns)')
+        Saver.save_plot(f"signal_after_init_1010_power")
+
         return T1_dampening
     
    

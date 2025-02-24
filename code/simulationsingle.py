@@ -98,20 +98,23 @@ class SimulationSingle:
         filtered_signal = self.apply_bandwidth_filter_single(signal, sampling_rate_fft)
         return filtered_signal, t, signal
     
-    def eam_transmission_single(self, voltage_signal, optical_power, T1_dampening):
+    def eam_transmission_single(self, voltage_signal, optical_power, T1_dampening, max_voltage_signal = None):
         #include the eam_voltage and multiply with calculated optical power from laser
         power = np.empty(len(voltage_signal))
         transmission = np.empty(len(voltage_signal))
 
+        if max_voltage_signal is None:
+            max_voltage_signal = np.max(voltage_signal)  # Finds the maxim
+
         for i in range(len(voltage_signal)):
-            if voltage_signal[i] < 0:
-                transmission[i] = self.get_interpolated_value_single(voltage_signal[i], 'eam_transmission')
+            if voltage_signal[i] - max_voltage_signal < 0:
+                transmission[i] = self.get_interpolated_value_single(voltage_signal[i] - max_voltage_signal, 'eam_transmission')
             else:
                 transmission[i] = self.get_interpolated_value_single(0, 'eam_transmission')
             power[i] = transmission[i] * optical_power        
 
         power_dampened = power / T1_dampening
-        return power_dampened, transmission
+        return power_dampened, transmission, max_voltage_signal
     
     def fiber_attenuation_single(self, power_dampened):
         """Apply fiber attenuation to the power."""
@@ -127,7 +130,7 @@ class SimulationSingle:
         while upper_limit - lower_limit > tol:
             T1_dampening = (lower_limit + upper_limit) / 2
             voltage_signal, t, _ = self.signal_bandwidth_single(basis, value, decoy, voltage_height=None)
-            power_dampened, _ = self.eam_transmission_single(voltage_signal, optical_power, T1_dampening)
+            power_dampened, _, max_voltage_signal = self.eam_transmission_single(voltage_signal, optical_power, T1_dampening, max_voltage_signal = None)
             energy_pp = np.trapezoid(power_dampened, t)
             calc_mean_photon_nr = energy_pp / (constants.h * constants.c / peak_wavelength)
 
@@ -137,9 +140,9 @@ class SimulationSingle:
                 lower_limit = T1_dampening
 
         T1_dampening = (lower_limit + upper_limit) / 2
-        return T1_dampening
+        return T1_dampening, max_voltage_signal
     
-    def _set_voltage(self, optical_power, peak_wavelength, lower_limit, upper_limit, tol, target_mean, voltage_height, T1_dampening, basis, value, decoy, voltage_name = ""):
+    def _set_voltage(self, optical_power, peak_wavelength, lower_limit, upper_limit, tol, target_mean, voltage_height, T1_dampening, basis, value, decoy, max_voltage_signal = None, voltage_name = ""):
         """Helper method to perform binary search and set the voltage."""
         basis_fix, value_fix, decoy_fix = self.generate_alice_choices_single(basis = basis, value = value, decoy = decoy)
         while upper_limit - lower_limit > tol:
@@ -150,14 +153,14 @@ class SimulationSingle:
 
             voltage_signals, t, _ = self.signal_bandwidth_single(basis_fix, value_fix, decoy_fix, voltage_height)
 
-            power_dampened, _ = self.eam_transmission_single(voltage_signals, optical_power, T1_dampening)
-            plt.plot(power_dampened)
-            plt.show()
+            power_dampened, _, _ = self.eam_transmission_single(voltage_signals, optical_power, T1_dampening, max_voltage_signal=max_voltage_signal)
+            # plt.plot(power_dampened)
+            # plt.show()
             energy_pp = np.trapezoid(power_dampened, t)
             calc_mean_photon_nr = energy_pp / (constants.h * constants.c / peak_wavelength)
-            print(f"target mean {target_mean}")
-            print(f"calc mean photon nr {calc_mean_photon_nr} at {voltage_name} with voltage_height being {voltage_height}")
-            print(f"basis_fix, value_fix, decoy_fix: {basis_fix} {value_fix} {decoy_fix}")
+            # print(f"target mean {target_mean}")
+            # print(f"calc mean photon nr {calc_mean_photon_nr} at {voltage_name} with voltage_height being {voltage_height}")
+            # print(f"basis_fix, value_fix, decoy_fix: {basis_fix} {value_fix} {decoy_fix}")
 
             #if voltage_name == "voltage_decoy":
             '''plt.plot(voltage_signals)
