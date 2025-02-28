@@ -133,14 +133,14 @@ class SimulationEngine:
             
         return signals, t, jitter_shifts
 
-    def eam_transmission(self, voltage_signal, optical_power, T1_dampening, peak_wavelength, t):
+    def eam_transmission(self, voltage_signal, optical_power, T1_dampening, peak_wavelength, t, max_voltage_signal):
         """fastest? prob not: Calculate the transmission and power for all elements in the arrays."""
         # Create a mask where voltage_signal is less than 7.023775e-05 = x_max
         _, x_max = self.config.data.get_data_x_min_x_max('eam_transmission')            
-        mask = voltage_signal < x_max
+        mask = voltage_signal - max_voltage_signal < x_max
 
         # Compute interpolated values only for the values that meet the condition (<x_max)
-        interpolated_values = self.get_interpolated_value(voltage_signal[mask], 'eam_transmission')
+        interpolated_values = self.get_interpolated_value(voltage_signal[mask] - max_voltage_signal, 'eam_transmission')
 
         # rest if the values: should be value at x_max (here 1.0)
         signal_over_threshold = self.get_interpolated_value(x_max, 'eam_transmission')
@@ -323,7 +323,7 @@ class SimulationEngine:
         print(f"seed: {self.config.seed}")
         #calculate T1 dampening 
         lower_limit_t1, upper_limit_t1, tol_t1 = 0, 100, 1e-3
-        T1_dampening = self.simulation_single.find_T1(lower_limit_t1, upper_limit_t1, tol_t1)
+        T1_dampening, max_voltage_signal = self.simulation_single.find_T1(lower_limit_t1, upper_limit_t1, tol_t1)
         if T1_dampening > (upper_limit_t1 - 10*tol_t1) or T1_dampening < (lower_limit_t1 + 10*tol_t1):
             raise ValueError(f"T1 dampening is with {T1_dampening} very close to limit [{lower_limit_t1}, {upper_limit_t1}] with tolerance {tol_t1}")
         print('T1_dampening at initialize end: ' +str(T1_dampening))
@@ -333,10 +333,8 @@ class SimulationEngine:
         var_voltage_decoy = self.config.voltage_decoy
         var_voltage_sup = self.config.voltage_sup
         var_voltage_decoy_sup = self.config.voltage_decoy_sup
-        var_mean_photon_nr = self.config.mean_photon_nr
-        var_mean_photon_decoy = self.config. mean_photon_decoy
 
-        var_voltage_sup, var_voltage_decoy, var_voltage_decoy_sup = self.simulation_single.find_voltage_decoy(T1_dampening, var_voltage_decoy, var_voltage_sup, var_voltage_decoy_sup, lower_limit=-1, upper_limit=1.5, tol=1e-7)
+        var_voltage_sup, var_voltage_decoy, var_voltage_decoy_sup = self.simulation_single.find_voltage_decoy(T1_dampening, var_voltage_decoy, var_voltage_sup, var_voltage_decoy_sup, max_voltage_signal = max_voltage_signal, lower_limit=-1, upper_limit=1.5, tol=1e-7)
         
         self.config.voltage_sup = var_voltage_sup
         self.config.voltage_decoy = var_voltage_decoy
@@ -367,13 +365,13 @@ class SimulationEngine:
         Saver.save_plot(f"signal_after_init_1010_voltage")
         
         optical_power, peak_wavelength = self.simulation_single.random_laser_output_single('current_power', 'voltage_shift', 'current_wavelength')
-        power_dampened, _ = self.simulation_single.eam_transmission_single(signals, optical_power, T1_dampening)
+        power_dampened, _, _ = self.simulation_single.eam_transmission_single(signals, optical_power, T1_dampening, max_voltage_signal=max_voltage_signal)
         plt.plot(t * 1e9, power_dampened * 1e3)
         plt.title(f"Power for one symbol")
         plt.ylabel('Power (mW)')
         plt.xlabel('Time (ns)')
         Saver.save_plot(f"signal_after_init_1010_power")
 
-        return T1_dampening
+        return T1_dampening, max_voltage_signal
     
    

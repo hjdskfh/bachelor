@@ -403,7 +403,7 @@ class SimulationManager:
     def run_simulation_classificator(self):
         
         start_time = time.time()  # Record start time
-        T1_dampening = self.simulation_engine.initialize()
+        T1_dampening, max_voltage_signal = self.simulation_engine.initialize()
         optical_power, peak_wavelength = self.simulation_engine.random_laser_output('current_power', 'voltage_shift', 'current_wavelength')
     
         # Generate Alice's choices
@@ -429,7 +429,7 @@ class SimulationManager:
 
         time_simulating_signal = time.time() - start_time
         Saver.memory_usage("before eam: " + str(time_simulating_signal))
-        power_dampened, norm_transmission,  calc_mean_photon_nr_eam, _ = self.simulation_engine.eam_transmission(signals, optical_power, T1_dampening, peak_wavelength, t)
+        power_dampened, norm_transmission,  calc_mean_photon_nr_eam, _ = self.simulation_engine.eam_transmission(signals, optical_power, T1_dampening, peak_wavelength, t, max_voltage_signal)
 
         # plot so I can delete
         self.plotter.plot_and_delete_mean_photon_histogram(calc_mean_photon_nr_eam, target_mean_photon_nr = np.array([self.config.mean_photon_nr, self.config.mean_photon_decoy]), 

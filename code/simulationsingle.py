@@ -4,6 +4,8 @@ from scipy.interpolate import splev
 from scipy.fftpack import fft, ifft, fftfreq
 from scipy import constants
 from scipy.special import factorial
+from saver import Saver
+
 
 
 
@@ -105,6 +107,9 @@ class SimulationSingle:
 
         if max_voltage_signal is None:
             max_voltage_signal = np.max(voltage_signal)  # Finds the maxim
+            min_voltage_signal = np.min(voltage_signal)
+            print(f"max_voltage: {max_voltage_signal}")
+            print(f"min_voltage_signal: {min_voltage_signal}")
 
         for i in range(len(voltage_signal)):
             if voltage_signal[i] - max_voltage_signal < 0:
@@ -127,10 +132,18 @@ class SimulationSingle:
         optical_power, peak_wavelength = self.random_laser_output_single('current_power', 'voltage_shift', 'current_wavelength')
         basis, value, decoy = self.generate_alice_choices_single(basis = 1, value = 1, decoy = 0)
 
+        '''# find out max_voltage_signal von X+ state
+        basis_x, value_x, decoy_x = self.generate_alice_choices_single(basis = 0, value = 0, decoy = 0)'''
+        max_voltage_signal = None
+
         while upper_limit - lower_limit > tol:
             T1_dampening = (lower_limit + upper_limit) / 2
             voltage_signal, t, _ = self.signal_bandwidth_single(basis, value, decoy, voltage_height=None)
-            power_dampened, _, max_voltage_signal = self.eam_transmission_single(voltage_signal, optical_power, T1_dampening, max_voltage_signal = None)
+
+            # get right max_voltage
+            basis_x, value_x, decoy_x = self.generate_alice_choices_single(basis = 0, value = 0, decoy = 0)
+
+            power_dampened, _, max_voltage_signal = self.eam_transmission_single(voltage_signal, optical_power, T1_dampening, max_voltage_signal = max_voltage_signal)
             energy_pp = np.trapezoid(power_dampened, t)
             calc_mean_photon_nr = energy_pp / (constants.h * constants.c / peak_wavelength)
 
@@ -140,6 +153,8 @@ class SimulationSingle:
                 lower_limit = T1_dampening
 
         T1_dampening = (lower_limit + upper_limit) / 2
+        voltage_signal, t, _ = self.signal_bandwidth_single(basis, value, decoy, voltage_height=None)
+        power_dampened, _, max_voltage_signal = self.eam_transmission_single(voltage_signal, optical_power, T1_dampening, max_voltage_signal = None)
         return T1_dampening, max_voltage_signal
     
     def _set_voltage(self, optical_power, peak_wavelength, lower_limit, upper_limit, tol, target_mean, voltage_height, T1_dampening, basis, value, decoy, max_voltage_signal = None, voltage_name = ""):
@@ -176,7 +191,7 @@ class SimulationSingle:
         voltage_height = final_voltage
         return voltage_height
     
-    def find_voltage_decoy(self, T1_dampening, var_voltage_decoy, var_voltage_sup, var_voltage_decoy_sup, lower_limit=-1, upper_limit=1.5, tol=1e-7):
+    def find_voltage_decoy(self, T1_dampening, var_voltage_decoy, var_voltage_sup, var_voltage_decoy_sup, max_voltage_signal = None, lower_limit=-1, upper_limit=1.5, tol=1e-7):
         """Find the appropriate voltage values for decoy and non-decoy states using binary search."""
         # Store original limits to reset later
         store_lower_limit = lower_limit
@@ -188,7 +203,7 @@ class SimulationSingle:
         # Find voltage for 000 -> 1010 non-decoy state
         var_voltage_sup = self._set_voltage(optical_power, peak_wavelength, lower_limit, upper_limit, tol, 
                                              self.config.mean_photon_nr, var_voltage_sup, T1_dampening,
-                                             basis = 0, value = 0, decoy = 0, voltage_name="voltage_sup")
+                                             basis = 0, value = 0, decoy = 0, max_voltage_signal = max_voltage_signal,voltage_name="voltage_sup")
         # Check if voltage_sup is within the limits and tolerances
         if var_voltage_sup > (upper_limit - 10 * tol):
             raise ValueError(f"Voltage for non-decoy state superpostition state (voltage_sup) is very close to limit [{store_lower_limit}, {store_upper_limit}] with tolerance {tol}")
@@ -199,7 +214,7 @@ class SimulationSingle:
         # Find voltage for 111 -> 1000 decoy state
         var_voltage_decoy = self._set_voltage(optical_power, peak_wavelength, lower_limit, upper_limit, tol, 
                                                self.config.mean_photon_decoy, var_voltage_decoy, T1_dampening, 
-                                               basis = 1, value = 1, decoy = 1, voltage_name="voltage_decoy")
+                                               basis = 1, value = 1, decoy = 1, max_voltage_signal = max_voltage_signal, voltage_name="voltage_decoy")
         # Check if voltage_sup is within the limits and tolerances
         if var_voltage_decoy > (upper_limit - 10 * tol):
             raise ValueError(f"Voltage for  normal decoy state (voltage_decoy) is very close to limit [{store_lower_limit}, {store_upper_limit}] with tolerance {tol}")
@@ -211,7 +226,7 @@ class SimulationSingle:
         # Find voltage for 001 -> 1010 decoy state
         var_voltage_decoy_sup = self._set_voltage(optical_power, peak_wavelength, lower_limit, upper_limit, tol, 
                                                    self.config.mean_photon_decoy, var_voltage_decoy_sup, T1_dampening, 
-                                                   basis = 0, value = 0, decoy = 1, voltage_name="voltage_decoy_sup")
+                                                   basis = 0, value = 0, decoy = 1, max_voltage_signal = max_voltage_signal, voltage_name="voltage_decoy_sup")
         # Check if voltage_sup is within the limits and tolerances
         if var_voltage_decoy > (upper_limit - 10 * tol) or self.config.voltage_sup < (lower_limit + 10 * tol):
             raise ValueError(f"Voltage for decoy superposition state (voltage_decoy_sup) is very close to limit [{store_lower_limit}, {store_upper_limit}] with tolerance {tol}")
