@@ -2,6 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.interpolate import splrep
 import pandas as pd 
+from saver import Saver
+
 
 class DataManager:
     def __init__(self):
@@ -32,6 +34,16 @@ class DataManager:
             'x_min': x_min,  # Store minimum x-value
             'x_max': x_max   # Store maximum x-value
             }
+        
+        '''# Plot the data
+        plt.figure(figsize=(10, 6))
+        plt.plot(df[column1], df[column2], label=name, marker='o', linestyle='-', color='b')
+        plt.xlabel(column1)
+        plt.ylabel(column2)
+        plt.title(f'{name} Data Plot')
+        plt.grid(True)
+        plt.legend()
+        Saver.save_plot(f'{name}_data_plot.png')'''
     
     def add_jitter(self, jitter, name): #Gaussian
         # Calculate standard deviation based on FWHM

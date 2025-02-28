@@ -72,8 +72,6 @@ class SimulationEngine:
         if decoy.size == 1:
             decoy = np.full(self.config.n_samples, decoy, dtype=int)
 
-
-
         return basis, value, decoy
     
     def signal_bandwidth_jitter(self, basis, values, decoy):
@@ -133,14 +131,14 @@ class SimulationEngine:
             
         return signals, t, jitter_shifts
 
-    def eam_transmission(self, voltage_signal, optical_power, T1_dampening, peak_wavelength, t, max_voltage_signal):
+    def eam_transmission(self, voltage_signal, optical_power, T1_dampening, peak_wavelength, t):
         """fastest? prob not: Calculate the transmission and power for all elements in the arrays."""
         # Create a mask where voltage_signal is less than 7.023775e-05 = x_max
         _, x_max = self.config.data.get_data_x_min_x_max('eam_transmission')            
-        mask = voltage_signal - max_voltage_signal < x_max
+        mask = voltage_signal < x_max
 
         # Compute interpolated values only for the values that meet the condition (<x_max)
-        interpolated_values = self.get_interpolated_value(voltage_signal[mask] - max_voltage_signal, 'eam_transmission')
+        interpolated_values = self.get_interpolated_value(voltage_signal[mask], 'eam_transmission')
 
         # rest if the values: should be value at x_max (here 1.0)
         signal_over_threshold = self.get_interpolated_value(x_max, 'eam_transmission')
@@ -165,7 +163,7 @@ class SimulationEngine:
 
         return power_dampened, norm_transmission, calc_mean_photon_nr, energy_per_pulse # leave these and recalculate them in detector
     
-    def fiber_attenuation(self, power_dampened):
+    def fiber_attenuation(self, power_dampened):    
         """Apply fiber attenuation to the power."""
         attenuation_factor = 10 ** (self.config.fiber_attenuation / 10)
         power_dampened = power_dampened * attenuation_factor
@@ -193,13 +191,13 @@ class SimulationEngine:
         # Calculate the interference term nth symbol and n+1th symbol (early-time and late-time bins)
         interference_term1 = (
             2 * np.sqrt(eta_long * eta_short) *
-            np.multiply(np.sqrt(np.multiply(late_bin_ex_last, early_bin_ex_first)),np.cos(delta_phi[:-1]).reshape(-1,1)) #letzter Wert von delta_phi wird nicht verwendet weil zwischen 0 und n-1
+            np.multiply(np.sqrt(np.multiply(late_bin_ex_last, early_bin_ex_first)), ((np.cos(delta_phi[:-1]))**2).reshape(-1,1)) #letzter Wert von delta_phi wird nicht verwendet weil zwischen 0 und n-1
         )
         
         # Interference term within the (n+1)th symbol (early-time and late-time bins)
         interference_term2 = (
             2 * np.sqrt(eta_short * eta_long) *
-            np.multiply(np.sqrt(np.multiply(whole_early_bin, whole_late_bin)), np.cos(delta_phi).reshape(-1,1)) # alle n Werte für phi
+            np.multiply(np.sqrt(np.multiply(whole_early_bin, whole_late_bin)), ((np.cos(delta_phi))**2).reshape(-1,1)) # alle n Werte für phi
         )
 
         # Pre-allocate arrays for the total power
@@ -303,15 +301,15 @@ class SimulationEngine:
         amount_XP_detections = amount_XP_det_norm + amount_XP_det_dec
         total_amount_detections = amount_Z_det_norm + amount_Z_det_dec + amount_XP_det_norm + amount_XP_det_dec
 
-        mask_z_symbols = basis == 1
         if amount_Z_det_norm != 0:
-            qber = len(wrong_detections_z) / len(mask_z_symbols)
+            qber = len(wrong_detections_z) / amount_Z_det_norm
         else:
             qber = 0
 
-        mask_x_symbols = basis == 0
         if amount_XP_det_norm != 0:
-            phase_error_rate = len(wrong_detections_x) / len(mask_x_symbols)
+            phase_error_rate = len(wrong_detections_x) / amount_XP_det_norm
+        else:
+            phase_error_rate = 0
 
         raw_key_rate = total_amount_detections / (t[-1] * self.config.n_samples)
 
@@ -321,28 +319,34 @@ class SimulationEngine:
         plt.style.use(self.config.mlp)
         self.config.validate_parameters() #some checks if parameters are in valid ranges
         print(f"seed: {self.config.seed}")
-        #calculate T1 dampening 
+
+        # calculate T1 dampening 
         lower_limit_t1, upper_limit_t1, tol_t1 = 0, 100, 1e-3
-        T1_dampening, max_voltage_signal = self.simulation_single.find_T1(lower_limit_t1, upper_limit_t1, tol_t1)
+        T1_dampening = self.simulation_single.find_T1(lower_limit_t1, upper_limit_t1, tol_t1)
+
+        # test
         if T1_dampening > (upper_limit_t1 - 10*tol_t1) or T1_dampening < (lower_limit_t1 + 10*tol_t1):
             raise ValueError(f"T1 dampening is with {T1_dampening} very close to limit [{lower_limit_t1}, {upper_limit_t1}] with tolerance {tol_t1}")
         print('T1_dampening at initialize end: ' +str(T1_dampening))
 
-        #with simulated decoy state: calculate decoy height
-        lower_limit, upper_limit, tol = -1, 1.5, 1e-7
+        # with simulated decoy state: calculate decoy height
+        lower_limit, upper_limit, tol = -1.2, 1, 1e-7
         var_voltage_decoy = self.config.voltage_decoy
         var_voltage_sup = self.config.voltage_sup
         var_voltage_decoy_sup = self.config.voltage_decoy_sup
 
-        var_voltage_sup, var_voltage_decoy, var_voltage_decoy_sup = self.simulation_single.find_voltage_decoy(T1_dampening, var_voltage_decoy, var_voltage_sup, var_voltage_decoy_sup, max_voltage_signal = max_voltage_signal, lower_limit=-1, upper_limit=1.5, tol=1e-7)
+        var_voltage_sup, var_voltage_decoy, var_voltage_decoy_sup = self.simulation_single.find_voltage_decoy(T1_dampening, var_voltage_decoy, var_voltage_sup, var_voltage_decoy_sup, lower_limit=lower_limit, upper_limit=upper_limit, tol=tol)
         
         self.config.voltage_sup = var_voltage_sup
         self.config.voltage_decoy = var_voltage_decoy
         self.config.voltage_decoy_sup = var_voltage_decoy_sup
+
         print('voltage at initialize end: ' + str(self.config.voltage))
         print('Voltage_decoy at initialize end: ' + str(self.config.voltage_decoy))
         print('Voltage_decoy_sup at initialize end: ' + str(self.config.voltage_decoy_sup))
         print('Voltage_sup at initialize end: ' + str(self.config.voltage_sup))
+
+        # test if voltage values make sense
         if self.config.voltage_decoy > (upper_limit - 10*tol) or self.config.voltage_decoy < (lower_limit + 10*tol):
             raise ValueError(f"voltage decoy is with {self.config.voltage_decoy} very close to limit [{lower_limit}, {upper_limit}] with tolerance {tol}")
         self.config.voltage_decoy = var_voltage_decoy
@@ -364,14 +368,14 @@ class SimulationEngine:
         plt.legend()
         Saver.save_plot(f"signal_after_init_1010_voltage")
         
-        optical_power, peak_wavelength = self.simulation_single.random_laser_output_single('current_power', 'voltage_shift', 'current_wavelength')
-        power_dampened, _, _ = self.simulation_single.eam_transmission_single(signals, optical_power, T1_dampening, max_voltage_signal=max_voltage_signal)
+        optical_power, _ = self.simulation_single.random_laser_output_single('current_power', 'voltage_shift', 'current_wavelength')
+        power_dampened, _ = self.simulation_single.eam_transmission_single(signals, optical_power, T1_dampening)
         plt.plot(t * 1e9, power_dampened * 1e3)
         plt.title(f"Power for one symbol")
         plt.ylabel('Power (mW)')
         plt.xlabel('Time (ns)')
         Saver.save_plot(f"signal_after_init_1010_power")
 
-        return T1_dampening, max_voltage_signal
+        return T1_dampening
     
    

@@ -341,7 +341,6 @@ class SimulationHelper:
             Z0_alice = np.where((basis == 1) & (value == 0))[0]  # Indices where Z0 was sent
             Z1_Z0_alice = Z0_alice[np.isin(Z0_alice - 1, Z1_alice)]  # Indices where Z1Z0 was sent (index of Z0 used aka the higher index at which time we measure the X+ state)
             has_0_and_z0z1 = np.any(total_detected_indices_x == 0, axis=1) &  np.isin(index_where_photons_det_x, Z1_Z0_alice)
-            indices = np.where(has_0_and_z0z1)[0]
             wrong_detection_mask_x[np.where(has_0_and_z0z1)[0]] = True
             #Condition 5: Early detection in X+ after Z1X+
             XP_alice = np.where((basis == 0))[0] # Indices where X+ was sent
@@ -349,7 +348,7 @@ class SimulationHelper:
             has_0_and_z1xp = np.any(total_detected_indices_x == 0, axis=1) &  np.isin(index_where_photons_det_x, Z1_XP_alice)
             wrong_detection_mask_x[np.where(has_0_and_z1xp)[0]] = True
             #Condition 6: Late detection in X+ after X+ sent
-            has_1_and_xp = np.any(total_detected_indices_x == 1, axis=1) & basis[index_where_photons_det_x] == 0
+            has_1_and_xp = np.any(total_detected_indices_x == 1, axis=1) & (basis[index_where_photons_det_x] == 0)
             wrong_detection_mask_x[np.where(has_1_and_xp)[0]] = True
             #`wrong_detection_mask` is a boolean array where True indicates a wrong detection
             wrong_detections_x = index_where_photons_det_x[wrong_detection_mask_x]
