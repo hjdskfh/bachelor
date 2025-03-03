@@ -170,54 +170,16 @@ class SimulationEngine:
         return power_dampened
 
     def delay_line_interferometer(self, power_dampened, t, peak_wavelength):
-        #make power_dampened take into account the passive basis selection
-        assert self.config.fraction_long_arm <= 1
-        eta_long = self.config.fraction_long_arm
-        eta_short = 1 - eta_long
-
+    
         # phase difference between the two arms: w*delta T_bin, w = 2pi*f = 2pic/lambda
         delta_t_bin = t[-1] / 2                             # Time bin duration (float64)
-        frequency_symbol = constants.c / peak_wavelength     # Frequency of the symbol (float64)
-        delta_phi = (2* np.pi * frequency_symbol) * delta_t_bin # Phase difference (radians) ALT:* constants.c / peak_wavelength
+        k_wave = 2 * constants.pi / peak_wavelength     # Frequency of the symbol (float64)
+        effective_length_difference = constants.c * delta_t_bin / self.config.n_eff_in_fiber
+        attenuation_factor = 10 ** (self.config.insertion_loss_dli / 10)
 
-        # Time bin split point ( for late time bin start)
-        split_point = len(t) // 2
+        power_dampened = power_dampened * attenuation_factor / 2 * (1 + np.cos((k_wave).reshape(-1,1) * effective_length_difference))
 
-        late_bin_ex_last = power_dampened[:-1, split_point:]
-        early_bin_ex_first = power_dampened[1:, :split_point]
-        whole_early_bin = power_dampened[:, :split_point]
-        whole_late_bin = power_dampened[:, split_point:]
-
-        # Calculate the interference term nth symbol and n+1th symbol (early-time and late-time bins)
-        interference_term1 = (
-            2 * np.sqrt(eta_long * eta_short) *
-            np.multiply(np.sqrt(np.multiply(late_bin_ex_last, early_bin_ex_first)), ((np.cos(delta_phi[:-1]))**2).reshape(-1,1)) #letzter Wert von delta_phi wird nicht verwendet weil zwischen 0 und n-1
-        )
-        
-        # Interference term within the (n+1)th symbol (early-time and late-time bins)
-        interference_term2 = (
-            2 * np.sqrt(eta_short * eta_long) *
-            np.multiply(np.sqrt(np.multiply(whole_early_bin, whole_late_bin)), ((np.cos(delta_phi))**2).reshape(-1,1)) # alle n Werte für phi
-        )
-
-        # Pre-allocate arrays for the total power
-        power_dampened_total = np.zeros((self.config.n_samples, len(t)))
-
-        # Sum the contributions for total power (including interference)
-        # For the nth and (n+1)th symbol:
-        power_dampened_total[1:, :split_point] = (
-            late_bin_ex_last + early_bin_ex_first + interference_term1  # nth and (n+1)th interference
-        )
-
-        # For the (n+1)th symbol:
-        power_dampened_total[:, split_point:] = (
-            whole_early_bin + whole_late_bin + interference_term2  # (n+1)th symbol interference
-        )
-
-        # for first row early bin
-        power_dampened_total[0, :split_point] = power_dampened[0, :split_point]
-        
-        return power_dampened_total
+        return power_dampened
     
     def detector(self, t, norm_transmission, peak_wavelength, power_dampened, start_time):
         """Simulate the detector process."""

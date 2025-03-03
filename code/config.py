@@ -5,7 +5,7 @@ class SimulationConfig:
                  p_z_alice=0.5, p_decoy=0.1, p_z_bob = 0.85, sampling_rate_FPGA=6.75e9, bandwidth = 4e9, jitter=1e-11, non_signal_voltage = -1, voltage_decoy=0,
                  voltage=0, voltage_decoy_sup=0, voltage_sup=0, 
                  mean_photon_nr=0.7, mean_photon_decoy=0.1, 
-                 fiber_attenuation = -3, fraction_long_arm = 0.6, detector_efficiency = 0.3, dark_count_frequency = 100, detection_time = 1e-9, detector_jitter = 100e-12, 
+                 fiber_attenuation = -3, insertion_loss_dli = -1, n_eff_in_fiber = 1.558, detector_efficiency = 0.3, dark_count_frequency = 100, detection_time = 1e-9, detector_jitter = 100e-12, 
                  mlp = None
                  ):
         # Input data
@@ -52,7 +52,8 @@ class SimulationConfig:
         self.fiber_attenuation = fiber_attenuation
 
         # DLI
-        self.fraction_long_arm = fraction_long_arm
+        self.insertion_loss_dli = insertion_loss_dli # in dB
+        self.n_eff_in_fiber = n_eff_in_fiber # effective refractive index in fiber
 
         # detector
         self.detector_efficiency = detector_efficiency
@@ -104,8 +105,14 @@ class SimulationConfig:
             print("Error: The starting voltage values are not the same") 
         if self.mean_photon_nr < 0 or self.mean_photon_decoy < 0 or self.mean_photon_nr < self.mean_photon_decoy or self.mean_photon_nr > 1:
             print("Error: mean_photon_nr and mean_photon_decoy must be between 0 and 1 and mean_photon_nr must be larger than mean_photon_decoy.")
-        if not (0 <= self.fraction_long_arm <= 1):
-            print("Error: fraction_long_arm must be between 0 and 1.")
+        '''if not (0 <= self.fraction_long_arm <= 1):
+            print("Error: fraction_long_arm must be between 0 and 1.")'''
+        if self.fiber_attenuation > 0:
+            print("Error: fiber_attenuation cannot be positive.")
+        if self.insertion_loss_dli > 0:
+            print("Error: insertion_loss_dli cannot be positive.")
+        if self.n_eff_in_fiber < 1:
+            print("Error: n_eff_in_fiber must be greater than 1.")
         if self.detector_efficiency < 0 or self.detector_efficiency > 1:
             print("Error: detector_efficiency must be between 0 and 1.")
         if self.dark_count_frequency < 0:

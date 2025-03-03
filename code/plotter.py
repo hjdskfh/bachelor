@@ -2,6 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator
 import gc
+from cycler import cycler
+
 
 from saver import Saver
 
@@ -77,7 +79,21 @@ class Plotter:
         calc_mean_photon_nr = self.make_data_plottable(calc_mean_photon_nr)
 
         plt.figure(figsize=(8, 6))
-        plt.hist(calc_mean_photon_nr, bins=40, alpha=0.7, label="Mean Photon Number")
+
+        if type_photon_nr == "Mean Photon Number at Detector X":
+            # Save the original color cycle
+            original_cycle = plt.rcParams['axes.prop_cycle']
+
+            # Create a modified cycle that skips the first color
+            default_colors = original_cycle.by_key()['color']
+            new_cycle = cycler('color', default_colors[1:])
+
+            # Use the modified cycle only for this histogram plot
+            with plt.rc_context({'axes.prop_cycle': new_cycle}):
+                plt.hist(calc_mean_photon_nr, bins=40, alpha=0.7, label="Mean Photon Number")
+        else:
+            plt.hist(calc_mean_photon_nr, bins=40, alpha=0.7, label="Mean Photon Number")
+
         if target_mean_photon_nr is not None:
             for i in range(len(target_mean_photon_nr)):
                 plt.axvline(target_mean_photon_nr[i], label=f'Target Mean Photon Number {i+1}')
@@ -113,8 +129,8 @@ class Plotter:
         plt.figure(figsize=(8, 6))
         
         # Plot histograms for X and Z bases with specific bin range and style
-        plt.hist(nr_photons_det_x, label='X basis', bins=np.arange(0, 11) - 0.5, alpha = 0.7)
         plt.hist(nr_photons_det_z, label='Z basis', bins=np.arange(0, 11) - 0.5, alpha = 0.7)
+        plt.hist(nr_photons_det_x, label='X basis', bins=np.arange(0, 11) - 0.5, alpha = 0.7)
 
         # Formatting title and labels
         plt.title(f"Photon Number over {self.config.n_samples} Iterations")
@@ -150,8 +166,8 @@ class Plotter:
         plt.figure(figsize=(8, 6))
         
         # Convert times to ns and plot histograms
-        plt.hist(time_photons_det_x * 1e9, label='X basis', bins=40, zorder=2, alpha=0.7)
         plt.hist(time_photons_det_z * 1e9, label='Z basis', bins=40, zorder=1, alpha=0.7)
+        plt.hist(time_photons_det_x * 1e9, label='X basis', bins=40, zorder=2, alpha=0.7)
 
         # Formatting title and labels
         plt.title(f"Photon Time Distribution over {self.config.n_samples} Iterations")
@@ -186,11 +202,11 @@ class Plotter:
         print("max wavelength x", max(wavelength_photons_det_x))
         print("max wavelength z", max(wavelength_photons_det_z))
         # Convert wavelengths to nanometers and plot histograms for X and Z bases
-        plt.hist(wavelength_photons_det_x * 1e9, label='X basis', bins=40, alpha=0.7, zorder=2)
         plt.hist(wavelength_photons_det_z * 1e9, label='Z basis', bins=40, alpha=0.7, zorder=1)
+        plt.hist(wavelength_photons_det_x * 1e9, label='X basis', bins=40, alpha=0.7, zorder=2)
 
         # Formatting title and labels
-        plt.title(f"photon wavelength over {self.config.n_samples} Iterations")
+        plt.title(f"Photon Wavelength over {self.config.n_samples} Iterations")
         plt.ylabel('Counts')
         plt.xlabel('Photon Wavelength (nm)')
 

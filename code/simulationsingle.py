@@ -171,7 +171,7 @@ class SimulationSingle:
             energy_pp = np.trapezoid(power_dampened, t)
             calc_mean_photon_nr = energy_pp / (constants.h * constants.c / peak_wavelength)
 
-            print(f"calc mean photon nr {calc_mean_photon_nr} at {voltage_name} with voltage_height being {voltage_height} at maximum power {max(power_dampened)} with {basis_fix} {value_fix} {decoy_fix}")
+            # print(f"calc mean photon nr {calc_mean_photon_nr} at {voltage_name} with voltage_height being {voltage_height} at maximum power {max(power_dampened)} with {basis_fix} {value_fix} {decoy_fix}")
             # print(f"basis_fix, value_fix, decoy_fix: {basis_fix} {value_fix} {decoy_fix}")
 
             if calc_mean_photon_nr > target_mean:
