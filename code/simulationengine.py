@@ -10,6 +10,7 @@ import gc
 from saver import Saver
 from simulationsingle import SimulationSingle
 from simulationhelper import SimulationHelper
+from plotter import Plotter
 
 
 class SimulationEngine:
@@ -17,6 +18,8 @@ class SimulationEngine:
         self.config = config
         self.simulation_single = SimulationSingle(config)
         self.simulation_helper = SimulationHelper(config)
+        self.plotter = Plotter(config)
+
 
     def get_interpolated_value(self, x_data, name):
         #calculate tck for which curve
@@ -28,10 +31,11 @@ class SimulationEngine:
         # Generate a random time within the desired range
         times = self.config.rng.uniform(0, 10, self.config.n_samples // self.config.batchsize)
         # Use sinusoidal modulation for the entire array
-        chosen_voltage = self.config.mean_voltage + 0.050 * np.sin(2 * np.pi * 1 * times)
+        chosen_voltage = self.config.mean_voltage  + 0.050 * np.sin(2 * np.pi * 1 * times)
         chosen_current = (self.config.mean_current + self.config.current_amplitude * np.sin(2 * np.pi * 1 * times)) * 1e3
         optical_power_short = self.get_interpolated_value(chosen_current, current_power)
         peak_wavelength_short = self.get_interpolated_value(chosen_current, current_wavelength) + self.get_interpolated_value(chosen_voltage, voltage_shift)
+        print(f"peak_wavelength_short: {peak_wavelength_short}")
         optical_power = np.repeat(optical_power_short, self.config.batchsize)
         peak_wavelength = np.repeat(peak_wavelength_short, self.config.batchsize)
         return optical_power * 1e-3, peak_wavelength * 1e-9  # in W and m
@@ -174,12 +178,105 @@ class SimulationEngine:
         # phase difference between the two arms: w*delta T_bin, w = 2pi*f = 2pic/lambda
         delta_t_bin = t[-1] / 2                             # Time bin duration (float64)
         k_wave = 2 * constants.pi / peak_wavelength     # Frequency of the symbol (float64)
+        print(f"peak_wavelength: {peak_wavelength[:10]}")
         effective_length_difference = constants.c * delta_t_bin / self.config.n_eff_in_fiber
+        var_inside_cos = (effective_length_difference * (k_wave).reshape(-1, 1))
+        var_inside_cos_mod = (var_inside_cos) % (2 * np.pi) / (2 * np.pi)
+        print(f"delta_L * k mod 2pi: {var_inside_cos[:10], var_inside_cos[1000:1010], var_inside_cos[2000:2010]}")
+        '''plt.plot(var_inside_cos)
+        plt.show()
+        plt.plot(var_inside_cos_mod)
+        plt.show()'''
         attenuation_factor = 10 ** (self.config.insertion_loss_dli / 10)
+        print(f"attenuation_factor in DLI: {attenuation_factor}")
 
-        power_dampened = power_dampened * attenuation_factor / 2 * (1 + np.cos((k_wave).reshape(-1,1) * effective_length_difference))
+        # power_dampened = power_dampened * attenuation_factor / 2 * (1 - np.cos((k_wave).reshape(-1, 1) * effective_length_difference))
+        # self.plotter.plot_power(power_dampened, amount_symbols_in_plot=4, where_plot_1='+ after DLI')
+        '''copy_power_dampened = copy_power_dampened * attenuation_factor / 2 * (1 + 2 * np.cos((k_wave).reshape(-1,1) * effective_length_difference))
+        self.plotter.plot_power(copy_power_dampened, amount_symbols_in_plot=4, where_plot_1='- after DLI')'''
 
-        return power_dampened
+        sweep_wavelength = np.linspace(1552 * 1e-9, 1552.2 * 1e-9, 500)
+        k_wave = 2 * constants.pi / sweep_wavelength     # Frequency of the symbol (float64)
+        cos_term = np.cos((k_wave) * effective_length_difference)
+        print(f"shape of cos_term in plot: {cos_term.shape}")
+        
+        plt.plot(sweep_wavelength *1e9, cos_term)
+        plt.title(f"Cosine Term over wavelength")
+        plt.ylabel('Amplitude')
+        plt.xlabel('wavelength in nm')
+        Saver.save_plot(f"cosine_term_plot")
+
+        # phase difference between the two arms: w*delta T_bin, w = 2pi*f = 2pic/lambda
+        delta_t_bin = t[-1] / 2                             # Time bin duration (float64)
+        omega = 2 * constants.pi * constants.c / peak_wavelength     # Frequency of the symbol (float64)
+        omega = (omega).reshape(-1, 1)
+        omega_without_first = omega[1:]
+
+        # get amplitude
+        power_dampened = np.sqrt(power_dampened) # ignore phase bc is global phase
+        amplitude = power_dampened
+
+        # Time bin split point ( for late time bin start)
+        split_point = len(t) // 2
+
+        late_bin_ex_last = amplitude[:-1, split_point:]
+        early_bin_ex_first = amplitude[1:, :split_point]
+        whole_early_bin = amplitude[:, :split_point]
+        whole_late_bin = amplitude[:, split_point:]
+        plt.plot(early_bin_ex_first[2:6].flatten())
+        plt.title("Early Bin Ex First (2-6th row)")
+        plt.xlabel("Time Bins")
+        plt.ylabel("Amplitude")
+        plt.grid()
+        plt.show()
+
+        # Calculate the interference term nth symbol and n+1th symbol (early-time and late-time bins)
+
+        # Pre-allocate arrays for the total power
+        power_dampened_total = np.zeros((self.config.n_samples, len(t)))
+
+        # Sum the contributions for total power (including interference)
+        # For the nth and (n+1)th symbol:
+        # power_over_symbols_n_np1 = np.abs(1 / 2 * (early_bin_ex_first - late_bin_ex_last * np.exp(1j * omega_without_first * delta_t_bin)))**2
+        # power_over_symbols_n_np1 = np.abs(1 / 2 * (1j * early_bin_ex_first + 1j * late_bin_ex_last * np.exp(1j * omega_without_first * delta_t_bin)))**2
+        # power_over_symbols_n_np1 = np.abs(1 / 2 * (early_bin_ex_first + late_bin_ex_last * np.exp(1j * omega_without_first * delta_t_bin)))**2
+        power_over_symbols_n_np1 = np.abs(1 / 2 * (1j * early_bin_ex_first - 1j * late_bin_ex_last * np.exp(1j * omega_without_first * delta_t_bin)))**2
+
+
+        plt.plot(power_over_symbols_n_np1[2:6].flatten())
+        plt.title("Power Over Symbols N and N+1 (2-6th row)")
+        plt.xlabel("Time Bins")
+        plt.ylabel("Power Over Symbols")
+        plt.grid()
+        plt.show()
+
+        power_dampened_total[1:, :split_point] = (
+            power_over_symbols_n_np1  # nth and (n+1)th interference
+        )
+
+        # For the (n+1)th symbol:
+        # power_over_symbols_np1 = np.abs(1 / 2 * (whole_late_bin - whole_early_bin * np.exp(1j * omega * delta_t_bin)))**2
+        # power_over_symbols_np1 = np.abs(1 / 2 * (1j * whole_late_bin + 1j * whole_early_bin * np.exp(1j * omega * delta_t_bin)))**2
+        # power_over_symbols_np1 = np.abs(1 / 2 * (whole_late_bin + whole_early_bin * np.exp(1j * omega * delta_t_bin)))**2
+        power_over_symbols_np1 = np.abs(1 / 2 * (1j * whole_late_bin - 1j * whole_early_bin * np.exp(1j * omega * delta_t_bin)))**2
+
+        power_dampened_total[:, split_point:] = (
+            power_over_symbols_np1 # (n+1)th symbol interference
+        )
+
+        # for first row early bin
+        #power_dampened_total[0, :split_point] = power_dampened[0, :split_point]
+
+        part_power = power_dampened_total[2:6].flatten()
+        plt.plot(part_power)
+        plt.title("Power Dampened Total (3-6th row) - mit i")
+        plt.xlabel("Time Bins")
+        plt.ylabel("Power Dampened")
+        plt.grid()
+        Saver.save_plot("power_dampened_total")
+
+        return power_dampened_total
+    
     
     def detector(self, t, norm_transmission, peak_wavelength, power_dampened, start_time):
         """Simulate the detector process."""
@@ -317,9 +414,8 @@ class SimulationEngine:
         if self.config.voltage_decoy_sup > self.config.voltage_sup:
             raise ValueError(f"self.config.voltage_decoy_sup > self.config.voltage_decoy is True")
         
-        # basis = 0, value = 0, decoy = 0:  1010 non-decoy state
+        '''# basis = 0, value = 0, decoy = 0:  1010 non-decoy state
         basis_fix, value_fix, decoy_fix = self.simulation_single.generate_alice_choices_single(basis = 0, value = 0, decoy = 0)
-        print(f"end of init: {basis_fix} {value_fix} {decoy_fix}")
         signals, t, _ = self.simulation_single.signal_bandwidth_single(basis_fix, value_fix, decoy_fix)
 
         plt.plot(t * 1e9, signals, label = '1010 non-decoy')
@@ -336,7 +432,7 @@ class SimulationEngine:
         plt.title(f"Power for one symbol")
         plt.ylabel('Power (mW)')
         plt.xlabel('Time (ns)')
-        Saver.save_plot(f"signal_after_init_1010_power")
+        Saver.save_plot(f"signal_after_init_1010_power")'''
 
         return T1_dampening
     

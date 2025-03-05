@@ -1,0 +1,30 @@
+n_samples: 20000
+seed: 163656
+non_signal_voltage: {non_signal_voltage}
+voltage_decoy: {voltage_decoy}
+voltage: {voltage}
+voltage_decoy_sup: {voltage_decoy_sup}
+voltage_sup: {voltage_sup}
+len_wrong_detections_z: 416
+len_wrong_detections_x: 19
+total_amount_detections: 439
+amount_Z_detections: 194
+amount_XP_detections: 245
+qber: 2.201058201058201
+phase_error_rate: 0.09844559585492228
+raw_key_rate: 35674548.8538449
+gain_XP_norm: 0.021532968872029455
+gain_XP_dec: 0.04957102001906578
+gain_Z_norm: 0.020927914959583658
+gain_Z_dec: 0.00522466039707419
+calc_mean_photon_nr_eam: [1.0702727  1.13214002 1.03686824 ... 0.31404401 0.25197563 0.04644857]
+calc_mean_photon_nr_detector_x: [0.05817614 0.06153902 0.05636039 ... 0.01477748 0.01185682 0.00218566]
+Z0_sent_norm: 4552
+Z0_sent_dec: 479
+Z1_sent_norm: 4479
+Z1_sent_dec: 478
+XP_sent_norm: 8963
+XP_sent_dec: 1049
+execution_time_run: 196.2611117362976
+time_simulating_signal: 137.7403964996338
+time_eam: 169.78784084320068

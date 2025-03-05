@@ -198,15 +198,65 @@ class Plotter:
         wavelength_photons_det_z = self.make_data_plottable(wavelength_photons_det_z)
 
         plt.figure(figsize=(8, 6))
-        
-        print("max wavelength x", max(wavelength_photons_det_x))
-        print("max wavelength z", max(wavelength_photons_det_z))
+        # print("max wavelength x", max(wavelength_photons_det_x))
+        # print("max wavelength z", max(wavelength_photons_det_z))
         # Convert wavelengths to nanometers and plot histograms for X and Z bases
         plt.hist(wavelength_photons_det_z * 1e9, label='Z basis', bins=40, alpha=0.7, zorder=1)
         plt.hist(wavelength_photons_det_x * 1e9, label='X basis', bins=40, alpha=0.7, zorder=2)
 
         # Formatting title and labels
         plt.title(f"Photon Wavelength over {self.config.n_samples} Iterations")
+        plt.ylabel('Counts')
+        plt.xlabel('Photon Wavelength (nm)')
+
+        # Ensure y-axis is integer-labeled
+        plt.gca().yaxis.set_major_locator(MaxNLocator(integer=True))
+        plt.legend()
+        plt.tight_layout()
+
+        # Save the plot
+        filename = f"hist_wavelength_{self.config.n_samples}"
+        Saver.save_plot(filename)
+        del wavelength_photons_det_x
+        del wavelength_photons_det_z
+        gc.collect()
+
+    def plot_and_delete_photon_wavelength_histogram_two_diagrams(self, wavelength_photons_det_x, wavelength_photons_det_z):
+        """
+        Plots a histogram of detected photon wavelengths for X and Z bases and saves the plot.
+
+        Parameters:
+        - wavelength_photons_det_x: Array of detected photon wavelengths in the X basis (in meters).
+        - wavelength_photons_det_z: Array of detected photon wavelengths in the Z basis (in meters).
+        """
+        wavelength_photons_det_x = self.make_data_plottable(wavelength_photons_det_x)
+        wavelength_photons_det_z = self.make_data_plottable(wavelength_photons_det_z)
+
+        plt.figure(figsize=(8, 6))
+        
+        # print("max wavelength x", max(wavelength_photons_det_x))
+        # print("max wavelength z", max(wavelength_photons_det_z))
+        # Convert wavelengths to nanometers and plot histograms for X and Z bases
+        plt.hist(wavelength_photons_det_z * 1e9, label='Z basis', bins=40, alpha=0.7, zorder=1)
+
+        # Formatting title and labels
+        plt.title(f"Photon Wavelength over {self.config.n_samples} Iterations for Z basis")
+        plt.ylabel('Counts')
+        plt.xlabel('Photon Wavelength (nm)')
+
+        # Ensure y-axis is integer-labeled
+        plt.gca().yaxis.set_major_locator(MaxNLocator(integer=True))
+        plt.legend()
+        plt.tight_layout()
+
+        # Save the plot
+        filename = f"hist_wavelength_{self.config.n_samples}"
+        Saver.save_plot(filename)
+
+        plt.hist(wavelength_photons_det_x * 1e9, label='X basis', bins=40, alpha=0.7, zorder=2)
+
+        # Formatting title and labels
+        plt.title(f"Photon Wavelength over {self.config.n_samples} Iterations for X basis")
         plt.ylabel('Counts')
         plt.xlabel('Photon Wavelength (nm)')
 

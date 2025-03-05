@@ -142,6 +142,11 @@ class SimulationHelper:
             energy_per_photon[i, :photon_count] = energy_per_pulse[idx] / photon_count
             wavelength_photons[i, :photon_count] = (constants.h * constants.c) / energy_per_photon[i, :photon_count]
             time_photons[i, :photon_count] = self.config.rng.choice(t, size=photon_count, p=norm_transmission[idx]) #t ist konstant
+            '''if np.any(wavelength_photons[i] > 1.6e-6):
+                print(f"wavelength_photons: {wavelength_photons[i]}")
+                print(f"energy_per_photon: {energy_per_photon[i]}")
+                print(f"energy_per_pulse: {energy_per_pulse[idx]}")'''
+                
 
         return wavelength_photons, time_photons, nr_photons, index_where_photons, all_time_max_nr_photons, calc_mean_photon_nr_detector
 
