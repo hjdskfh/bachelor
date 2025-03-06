@@ -31,8 +31,10 @@ class SimulationEngine:
         # Generate a random time within the desired range
         times = self.config.rng.uniform(0, 10, self.config.n_samples // self.config.batchsize)
         # Use sinusoidal modulation for the entire array
-        chosen_voltage = self.config.mean_voltage  + 0.050 * np.sin(2 * np.pi * 1 * times)
-        chosen_current = (self.config.mean_current + self.config.current_amplitude * np.sin(2 * np.pi * 1 * times)) * 1e3
+        # chosen_voltage = self.config.mean_voltage + 0.050 * np.sin(2 * np.pi * 1 * times)
+        # chosen_current = (self.config.mean_current) + self.config.current_amplitude * np.sin(2 * np.pi * 1 * times)) * 1e3
+        chosen_voltage = np.ones(self.config.n_samples // self.config.batchsize) * self.config.mean_voltage
+        chosen_current = np.ones(self.config.n_samples // self.config.batchsize) * (self.config.mean_current) * 1e3
         optical_power_short = self.get_interpolated_value(chosen_current, current_power)
         peak_wavelength_short = self.get_interpolated_value(chosen_current, current_wavelength) + self.get_interpolated_value(chosen_voltage, voltage_shift)
         print(f"peak_wavelength_short: {peak_wavelength_short}")
@@ -223,19 +225,36 @@ class SimulationEngine:
         early_bin_ex_first = amplitude[1:, :split_point]
         whole_early_bin = amplitude[:, :split_point]
         whole_late_bin = amplitude[:, split_point:]
-        plt.plot(early_bin_ex_first[2:6].flatten())
+        '''plt.plot(early_bin_ex_first[2:6].flatten())
         plt.title("Early Bin Ex First (2-6th row)")
         plt.xlabel("Time Bins")
         plt.ylabel("Amplitude")
         plt.grid()
-        plt.show()
+        plt.show()'''
+
+        sampling_rate_fft = 100e11
+        amplitude_fft = fft(amplitude)
+        frequencies = fftfreq(len(amplitude), d=1 / sampling_rate_fft)
+        omega = 2 * np.pi * frequencies  # Convert to angular frequency
+        t_shift = t[-1] / 2
+        phase_shift = np.exp(1j * omega * t_shift)
+        amplitude_fft = amplitude_fft * phase_shift
+
+        # Compute the inverse FFT to get the time-shifted signal, Take real part (since the IFFT might introduce small imaginary noise)
+        amplitude = np.real(ifft(amplitude_fft))
+
+
+        #???np.multiply(S_fourier, np.interp(np.abs(frequencies), freq_x, freq_y), out=S_fourier)
+
+        #???return np.real(ifft(S_fourier))
+
 
         # Calculate the interference term nth symbol and n+1th symbol (early-time and late-time bins)
 
         # Pre-allocate arrays for the total power
         power_dampened_total = np.zeros((self.config.n_samples, len(t)))
 
-        # Sum the contributions for total power (including interference)
+        '''# Sum the contributions for total power (including interference)
         # For the nth and (n+1)th symbol:
         power_over_symbols_n_np1 = np.abs(1 / 2 * (early_bin_ex_first - late_bin_ex_last * np.exp(1j * omega_without_first * delta_t_bin)))**2
         # power_over_symbols_n_np1 = np.abs(1 / 2 * (1j * early_bin_ex_first + 1j * late_bin_ex_last * np.exp(1j * omega_without_first * delta_t_bin)))**2
@@ -273,7 +292,7 @@ class SimulationEngine:
         plt.xlabel("Time Bins")
         plt.ylabel("Power Dampened")
         plt.grid()
-        Saver.save_plot("power_dampened_total")
+        Saver.save_plot("power_dampened_total")'''
 
         return power_dampened_total
     
