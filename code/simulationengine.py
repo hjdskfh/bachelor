@@ -237,10 +237,10 @@ class SimulationEngine:
 
         # Sum the contributions for total power (including interference)
         # For the nth and (n+1)th symbol:
-        # power_over_symbols_n_np1 = np.abs(1 / 2 * (early_bin_ex_first - late_bin_ex_last * np.exp(1j * omega_without_first * delta_t_bin)))**2
+        power_over_symbols_n_np1 = np.abs(1 / 2 * (early_bin_ex_first - late_bin_ex_last * np.exp(1j * omega_without_first * delta_t_bin)))**2
         # power_over_symbols_n_np1 = np.abs(1 / 2 * (1j * early_bin_ex_first + 1j * late_bin_ex_last * np.exp(1j * omega_without_first * delta_t_bin)))**2
         # power_over_symbols_n_np1 = np.abs(1 / 2 * (early_bin_ex_first + late_bin_ex_last * np.exp(1j * omega_without_first * delta_t_bin)))**2
-        power_over_symbols_n_np1 = np.abs(1 / 2 * (1j * early_bin_ex_first - 1j * late_bin_ex_last * np.exp(1j * omega_without_first * delta_t_bin)))**2
+        # power_over_symbols_n_np1 = np.abs(1 / 2 * (1j * early_bin_ex_first - 1j * late_bin_ex_last * np.exp(1j * omega_without_first * delta_t_bin)))**2
 
 
         plt.plot(power_over_symbols_n_np1[2:6].flatten())
@@ -255,10 +255,10 @@ class SimulationEngine:
         )
 
         # For the (n+1)th symbol:
-        # power_over_symbols_np1 = np.abs(1 / 2 * (whole_late_bin - whole_early_bin * np.exp(1j * omega * delta_t_bin)))**2
+        power_over_symbols_np1 = np.abs(1 / 2 * (whole_late_bin - whole_early_bin * np.exp(1j * omega * delta_t_bin)))**2
         # power_over_symbols_np1 = np.abs(1 / 2 * (1j * whole_late_bin + 1j * whole_early_bin * np.exp(1j * omega * delta_t_bin)))**2
         # power_over_symbols_np1 = np.abs(1 / 2 * (whole_late_bin + whole_early_bin * np.exp(1j * omega * delta_t_bin)))**2
-        power_over_symbols_np1 = np.abs(1 / 2 * (1j * whole_late_bin - 1j * whole_early_bin * np.exp(1j * omega * delta_t_bin)))**2
+        # power_over_symbols_np1 = np.abs(1 / 2 * (1j * whole_late_bin - 1j * whole_early_bin * np.exp(1j * omega * delta_t_bin)))**2
 
         power_dampened_total[:, split_point:] = (
             power_over_symbols_np1 # (n+1)th symbol interference

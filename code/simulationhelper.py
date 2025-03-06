@@ -117,7 +117,8 @@ class SimulationHelper:
         del power_dampened
         gc.collect()
         Saver.memory_usage("in choose photon after gc.collect")
-        calc_mean_photon_nr_detector = energy_per_pulse / (constants.h * constants.c / peak_wavelength)
+        energy_one_photon = constants.h * constants.c / peak_wavelength
+        calc_mean_photon_nr_detector = energy_per_pulse / energy_one_photon
         # Use Poisson distribution to get the number of photons
         Saver.memory_usage("in choose photon after calc_mean_photon_nr_detector")
         nr_photons = fixed_nr_photons if fixed_nr_photons is not None else self.poisson_distr(calc_mean_photon_nr_detector)
@@ -139,8 +140,8 @@ class SimulationHelper:
         # Generate the photon properties for each sample with non-zero photons
         for i, idx in enumerate(index_where_photons):
             photon_count = nr_photons[i]
-            energy_per_photon[i, :photon_count] = energy_per_pulse[idx] / photon_count
-            wavelength_photons[i, :photon_count] = (constants.h * constants.c) / energy_per_photon[i, :photon_count]
+            energy_per_photon[i, :photon_count] = energy_one_photon[idx]
+            wavelength_photons[i, :photon_count] = peak_wavelength[idx]
             time_photons[i, :photon_count] = self.config.rng.choice(t, size=photon_count, p=norm_transmission[idx]) #t ist konstant
             '''if np.any(wavelength_photons[i] > 1.6e-6):
                 print(f"wavelength_photons: {wavelength_photons[i]}")
@@ -238,7 +239,6 @@ class SimulationHelper:
             -1,                                                                 # Assign -1 for undetected photons
             np.digitize(time_photons_det, timebins) - 1                         # Early = 0, Late = 1
         )                                                                       # 0 wenn early timebin, 1 wenn late timebin, -1 wenn nicht detektiert
-
         reduced_decoy = decoy[index_where_photons_det]
         if is_decoy == False:
             detected_indices = detected_indices[reduced_decoy == 0]
@@ -263,7 +263,7 @@ class SimulationHelper:
         mask_Z1 = (basis[Z1_indices_measured] == 1) & (value[Z1_indices_measured] == 0)
         Z1_indices_checked_with_send = Z1_indices_measured[mask_Z1]
 
-        # find indices where there is no detection in late_bin Z basis
+        # find indices where there is no detection in late_bin X basis
         one_in_x = np.where(np.any(detected_indices_x == 1, axis=1))[0]
         all_ind = np.arange(self.config.n_samples)
         no_one_in_x = np.setdiff1d(all_ind, one_in_x)
@@ -299,7 +299,7 @@ class SimulationHelper:
         mask_x = basis[XP_indices_measured] == 0
         XP_indices_checked_with_send = XP_indices_measured[mask_x]
 
-        # find indices where there is no detection in Z basis ! that has to be fulfilled aswell
+        # find indices where there is no detection in Z basis ! that has to be fulfilled aswell SIFTEN
         zero_or_one_in_z = np.where(np.any(detected_indices_z == 1, axis=1) | np.any(detected_indices_z == 0))[0]
         no_zero_or_one_in_z = np.setdiff1d(all_ind, zero_or_one_in_z)
 
@@ -327,9 +327,9 @@ class SimulationHelper:
         #Step 1: Check for wrong detections in the Z basis (Z0 and Z1)
         #check if wrong_detection_mask is empty
         if wrong_detection_mask_z.size != 0:
-            #Condition 1: Measure both bins in Z (both early and late detection)
+            '''#Condition 1: Measure both bins in Z (both early and late detection)
             has_one_and_zero = (np.any(total_detected_indices_z == 1, axis=1)) & (np.any(total_detected_indices_z == 0, axis=1))
-            wrong_detection_mask_z[np.where(has_one_and_zero)[0]] = True
+            wrong_detection_mask_z[np.where(has_one_and_zero)[0]] = True'''
             #Condition 2: Measure in late for Z0 (wrong detection)
             has_one_and_z0 = np.any(total_detected_indices_z == 1, axis=1) & basis[index_where_photons_det_z] == 1        # detected indices has shape of time_photons_det
             wrong_detection_mask_z[np.where(has_one_and_z0)[0]] = True
