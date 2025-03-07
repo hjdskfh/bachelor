@@ -474,7 +474,7 @@ class SimulationManager:
         power_dampened = self.simulation_engine.delay_line_interferometer(power_dampened, t, peak_wavelength)
 
         # plot
-        self.plotter.plot_power(power_dampened, amount_symbols_in_plot=amount_symbols_in_first_part, where_plot_1='before DLI',  shortened_first_power=first_power, where_plot_2='after DLI minus mit i')
+        self.plotter.plot_power(power_dampened, amount_symbols_in_plot=amount_symbols_in_first_part, where_plot_1='before DLI',  shortened_first_power=first_power, where_plot_2='after DLI minus ohne i')
 
         Saver.memory_usage("before detector x: " + str(time.time() - start_time))
         time_photons_det_x, wavelength_photons_det_x, nr_photons_det_x, index_where_photons_det_x, calc_mean_photon_nr_detector_x, dark_count_times_x, num_dark_counts_x = self.simulation_engine.detector(t, norm_transmission, peak_wavelength, power_dampened, start_time)        

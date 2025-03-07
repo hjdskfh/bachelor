@@ -120,8 +120,6 @@ class SimulationEngine:
             flattened_signals_batch[: indexshift] = old_save_shift
             old_save_shift = new_save_shift
             
-            
-            
             flattened_signals_batch = self.simulation_helper.apply_bandwidth_filter(flattened_signals_batch, sampling_rate_fft)
             '''print(f"shape flattened_signals_batch: {flattened_signals_batch.shape}")
             plt.plot(flattened_signals_batch[:len(t)*3], label = 'BW')
@@ -177,7 +175,7 @@ class SimulationEngine:
 
     def delay_line_interferometer(self, power_dampened, t, peak_wavelength):
     
-        # phase difference between the two arms: w*delta T_bin, w = 2pi*f = 2pic/lambda
+        '''# phase difference between the two arms: w*delta T_bin, w = 2pi*f = 2pic/lambda
         delta_t_bin = t[-1] / 2                             # Time bin duration (float64)
         k_wave = 2 * constants.pi / peak_wavelength     # Frequency of the symbol (float64)
         print(f"peak_wavelength: {peak_wavelength[:10]}")
@@ -185,19 +183,19 @@ class SimulationEngine:
         var_inside_cos = (effective_length_difference * (k_wave).reshape(-1, 1))
         var_inside_cos_mod = (var_inside_cos) % (2 * np.pi) / (2 * np.pi)
         print(f"delta_L * k mod 2pi: {var_inside_cos[:10], var_inside_cos[1000:1010], var_inside_cos[2000:2010]}")
-        '''plt.plot(var_inside_cos)
+        plt.plot(var_inside_cos)
         plt.show()
         plt.plot(var_inside_cos_mod)
-        plt.show()'''
+        plt.show()
         attenuation_factor = 10 ** (self.config.insertion_loss_dli / 10)
         print(f"attenuation_factor in DLI: {attenuation_factor}")
-
+        
         # power_dampened = power_dampened * attenuation_factor / 2 * (1 - np.cos((k_wave).reshape(-1, 1) * effective_length_difference))
         # self.plotter.plot_power(power_dampened, amount_symbols_in_plot=4, where_plot_1='+ after DLI')
-        '''copy_power_dampened = copy_power_dampened * attenuation_factor / 2 * (1 + 2 * np.cos((k_wave).reshape(-1,1) * effective_length_difference))
+        copy_power_dampened = copy_power_dampened * attenuation_factor / 2 * (1 + 2 * np.cos((k_wave).reshape(-1,1) * effective_length_difference))
         self.plotter.plot_power(copy_power_dampened, amount_symbols_in_plot=4, where_plot_1='- after DLI')'''
 
-        sweep_wavelength = np.linspace(1552 * 1e-9, 1552.2 * 1e-9, 500)
+        '''sweep_wavelength = np.linspace(1552 * 1e-9, 1552.2 * 1e-9, 500)
         k_wave = 2 * constants.pi / sweep_wavelength     # Frequency of the symbol (float64)
         cos_term = np.cos((k_wave) * effective_length_difference)
         print(f"shape of cos_term in plot: {cos_term.shape}")
@@ -214,9 +212,7 @@ class SimulationEngine:
         omega = (omega).reshape(-1, 1)
         omega_without_first = omega[1:]
 
-        # get amplitude
-        power_dampened = np.sqrt(power_dampened) # ignore phase bc is global phase
-        amplitude = power_dampened
+        
 
         # Time bin split point ( for late time bin start)
         split_point = len(t) // 2
@@ -224,7 +220,7 @@ class SimulationEngine:
         late_bin_ex_last = amplitude[:-1, split_point:]
         early_bin_ex_first = amplitude[1:, :split_point]
         whole_early_bin = amplitude[:, :split_point]
-        whole_late_bin = amplitude[:, split_point:]
+        whole_late_bin = amplitude[:, split_point:]'''
         '''plt.plot(early_bin_ex_first[2:6].flatten())
         plt.title("Early Bin Ex First (2-6th row)")
         plt.xlabel("Time Bins")
@@ -232,27 +228,63 @@ class SimulationEngine:
         plt.grid()
         plt.show()'''
 
+        # get amplitude
+        power_dampened = np.sqrt(power_dampened) # ignore phase bc is global phase
+        amplitude = power_dampened
+
         sampling_rate_fft = 100e11
-        amplitude_fft = fft(amplitude)
-        frequencies = fftfreq(len(amplitude), d=1 / sampling_rate_fft)
-        omega = 2 * np.pi * frequencies  # Convert to angular frequency
+        frequencies = fftfreq(len(t) * self.config.batchsize, d=1 / sampling_rate_fft)        
         t_shift = t[-1] / 2
-        phase_shift = np.exp(1j * omega * t_shift)
-        amplitude_fft = amplitude_fft * phase_shift
+        omega_0 = 2 * constants.pi * constants.c / peak_wavelength     # Frequency of the symbol (float64)
+        omega_0_expanded = np.repeat(omega_0, len(t))
+        shifted_frequencies_for_w_0 = frequencies - omega_0_expanded
+        # print(f"omega: {omega_0[:3]}")
+        # print(f"shape omega: {omega_0.shape}")
+        phase_shift = np.exp(1j * 2 * np.pi * shifted_frequencies_for_w_0 * t_shift)
 
-        # Compute the inverse FFT to get the time-shifted signal, Take real part (since the IFFT might introduce small imaginary noise)
-        amplitude = np.real(ifft(amplitude_fft))
+        # Apply time shift in the frequency domain
+        '''amplitude_shifted = np.copy(amplitude)  # Copy to avoid modifying original
 
+        for i in range(self.config.n_samples):
+            amp_fft = np.fft.fft(amplitude[i])  # FFT of row i
+            amp_fft_shifted = amp_fft * phase_shift  # Apply phase shift
+            amplitude_shifted[i] = np.real(np.fft.ifft(amp_fft_shifted))  # Convert back to time domain'''
 
-        #???np.multiply(S_fourier, np.interp(np.abs(frequencies), freq_x, freq_y), out=S_fourier)
+        for i in range(0, self.config.n_samples, self.config.batchsize):
+            amplitude_batch = amplitude[i:i + self.config.batchsize, :]
+            flattened_amplitude_batch = amplitude_batch.reshape(-1)
+            
+            amp_fft = np.fft.fft(flattened_amplitude_batch)  # FFT of row i
+            # print(f"amp_fft[:3]: {amp_fft[:3]}")
+            # print(f"shape amp_fft: {amp_fft.shape}")
+            # print(f"shape frequencies: {frequencies.shape}")
+            # print(f"frequencies[:3]: {frequencies[:3]}")
+            # print(f"shape phase_shift: {phase_shift.shape}")
+            # print(f"shifted_frequencies_for_w_0[:3]: {shifted_frequencies_for_w_0[:3]}")
+            amp_fft_shifted = amp_fft * phase_shift  # Apply phase shift
+            amplitude_shifted = np.real(np.fft.ifft(amp_fft_shifted))  # Convert back to time domain
+            total_amplitude = 1 / 2 * (flattened_amplitude_batch - amplitude_shifted)
 
-        #???return np.real(ifft(S_fourier))
+            total_amplitude = total_amplitude.reshape(self.config.batchsize, len(t))
+            amplitude[i:i + self.config.batchsize, :] = total_amplitude
+            plt.plot(total_amplitude[0], label = 'after DLI')
+            plt.title(f"Amplitude Shifted (2-6th row) after DLI")
+            plt.title("Amplitude Shifted (2-6th row)")
+            plt.xlabel("Time Bins")
+            plt.ylabel("Amplitude")
+            plt.grid()
+            plt.show()
 
+        '''plt.plot(amplitude_shifted[2:6].flatten())
+        plt.title("Amplitude Shifted (2-6th row)")
+        plt.xlabel("Time Bins")
+        plt.ylabel("Amplitude")
+        plt.grid()
+        plt.show()
+        '''
+        amplitude = np.abs(amplitude)**2
 
-        # Calculate the interference term nth symbol and n+1th symbol (early-time and late-time bins)
-
-        # Pre-allocate arrays for the total power
-        power_dampened_total = np.zeros((self.config.n_samples, len(t)))
+        # power_dampened_total = np.zeros((self.config.n_samples, len(t)))
 
         '''# Sum the contributions for total power (including interference)
         # For the nth and (n+1)th symbol:
@@ -294,7 +326,7 @@ class SimulationEngine:
         plt.grid()
         Saver.save_plot("power_dampened_total")'''
 
-        return power_dampened_total
+        return amplitude_shifted
     
     
     def detector(self, t, norm_transmission, peak_wavelength, power_dampened, start_time):

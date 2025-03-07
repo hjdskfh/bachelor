@@ -1,21 +1,23 @@
-import matplotlib.pyplot as plt
 import numpy as np
-from cycler import cycler
+import matplotlib.pyplot as plt
 
-# Define the color cycle using the viridis colormap
-colors = plt.cm.viridis(np.linspace(0, 1, 7))  # Get 10 colors from viridis colormap
+# Define original parameters
+num_samples = 6150
+dt_original = 0.1e-9  # 0.1 ns
+fs_original = 1 / dt_original
+frequencies_original = np.fft.fftfreq(num_samples, d=dt_original)
 
-print(colors)
+# Define new dt (increased)
+dt_new = 0.2e-9  # 0.2 ns
+fs_new = 1 / dt_new
+frequencies_new = np.fft.fftfreq(num_samples, d=dt_new)
 
-# Set the prop_cycle in the rcParams
-plt.rcParams['axes.prop_cycle'] = cycler('color', colors)
-
-# Create multiple plots and they will cycle through the colors automatically
-for i in range(5):  # You can adjust this range to the number of plots you want
-    x = np.linspace(0, 10, 100)
-    y = np.sin(x + i)  # Just an example, modifying the sine curve
-    plt.plot(x, y, label=f"Plot {i+1}")  # The color will automatically cycle
-
-plt.legend()  # Show the legend
-plt.title('Example with Viridis Color Cycle')
+# Plot frequency resolutions
+plt.figure(figsize=(8, 4))
+plt.plot(frequencies_original[:num_samples//2] / 1e12, label="Original dt=0.1 ns")
+plt.plot(frequencies_new[:num_samples//2] / 1e12, label="Modified dt=0.2 ns", linestyle="dashed")
+plt.xlabel("Frequency (THz)")
+plt.ylabel("FFT Frequency Bins")
+plt.title("Effect of Increasing dt on Frequency Resolution")
+plt.legend()
 plt.show()
