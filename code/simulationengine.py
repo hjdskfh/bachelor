@@ -106,14 +106,14 @@ class SimulationEngine:
                 total_samples = self.config.n_pulses * samples_per_pulse
                 t_plot1 = np.linspace(0, amount_symbols_in_plot * self.config.n_pulses * pulse_duration, amount_symbols_in_plot * total_samples, endpoint=False)
                 # print(f"shape flattened_signals_batch: {flattened_signals_batch.shape}")
-                plt.plot(t_plot1 * 1e9, flattened_signals_batch[:len(t) * amount_symbols_in_plot])
+                '''plt.plot(t_plot1 * 1e9, flattened_signals_batch[:len(t) * amount_symbols_in_plot])
                 print(f"basis[:amount], value[:amount], decoy[:amount]: {basis[:amount_symbols_in_plot]}, {values[:amount_symbols_in_plot]}, {decoy[:amount_symbols_in_plot]}")
                 for k in range(amount_symbols_in_plot + 1):
                     plt.axvline(t_plot1[-1] * 1e9 * (k) / (amount_symbols_in_plot), label=f'Target Mean Photon Number {i+1}', color = 'darkgreen')
                 plt.title(f"Square Signal with jitter for the first 3 symbols")
                 plt.xlabel('Time (ns)')
                 plt.ylabel('Volt (V)')
-                Saver.save_plot(f"square_signal")
+                Saver.save_plot(f"square_signal")'''
 
             flattened_signals_batch = np.roll(flattened_signals_batch, indexshift)
             new_save_shift = flattened_signals_batch[:indexshift]
@@ -236,8 +236,8 @@ class SimulationEngine:
         frequencies = fftfreq(len(t) * self.config.batchsize, d=1 / sampling_rate_fft)        
         t_shift = t[-1] / 2
         omega_0 = 2 * constants.pi * constants.c / peak_wavelength     # Frequency of the symbol (float64)
-        omega_0_expanded = np.repeat(omega_0, len(t))
-        shifted_frequencies_for_w_0 = frequencies - omega_0_expanded
+        omega_0_expand = np.repeat(omega_0, len(frequencies) // self.config.n_samples)
+        shifted_frequencies_for_w_0 = frequencies - omega_0_expand
         # print(f"omega: {omega_0[:3]}")
         # print(f"shape omega: {omega_0.shape}")
         phase_shift = np.exp(1j * 2 * np.pi * shifted_frequencies_for_w_0 * t_shift)
@@ -255,25 +255,21 @@ class SimulationEngine:
             flattened_amplitude_batch = amplitude_batch.reshape(-1)
             
             amp_fft = np.fft.fft(flattened_amplitude_batch)  # FFT of row i
-            # print(f"amp_fft[:3]: {amp_fft[:3]}")
-            # print(f"shape amp_fft: {amp_fft.shape}")
-            # print(f"shape frequencies: {frequencies.shape}")
-            # print(f"frequencies[:3]: {frequencies[:3]}")
-            # print(f"shape phase_shift: {phase_shift.shape}")
-            # print(f"shifted_frequencies_for_w_0[:3]: {shifted_frequencies_for_w_0[:3]}")
-            amp_fft_shifted = amp_fft * phase_shift  # Apply phase shift
-            amplitude_shifted = np.real(np.fft.ifft(amp_fft_shifted))  # Convert back to time domain
-            total_amplitude = 1 / 2 * (flattened_amplitude_batch - amplitude_shifted)
+            del flattened_amplitude_batch
+            gc.collect()
+
+            # total_amplitude = np.real(np.fft.ifft(1 / 2 * (amp_fft - amp_fft * phase_shift)))  # Convert back to time domain
+            total_amplitude = np.real(np.fft.ifft(1 / 2 * (1j * amp_fft + 1j * amp_fft * phase_shift)))
 
             total_amplitude = total_amplitude.reshape(self.config.batchsize, len(t))
             amplitude[i:i + self.config.batchsize, :] = total_amplitude
-            plt.plot(total_amplitude[0], label = 'after DLI')
+            '''plt.plot(total_amplitude[0], label = 'after DLI')
             plt.title(f"Amplitude Shifted (2-6th row) after DLI")
             plt.title("Amplitude Shifted (2-6th row)")
             plt.xlabel("Time Bins")
             plt.ylabel("Amplitude")
             plt.grid()
-            plt.show()
+            plt.show()'''
 
         '''plt.plot(amplitude_shifted[2:6].flatten())
         plt.title("Amplitude Shifted (2-6th row)")
@@ -326,7 +322,7 @@ class SimulationEngine:
         plt.grid()
         Saver.save_plot("power_dampened_total")'''
 
-        return amplitude_shifted
+        return amplitude, phase_shift[0]
     
     
     def detector(self, t, norm_transmission, peak_wavelength, power_dampened, start_time):

@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator
 import gc
 from cycler import cycler
+import re
 
 
 from saver import Saver
@@ -36,7 +37,8 @@ class Plotter:
             # Flatten and concatenate all elements
             return np.concatenate([arr.flatten() for arr in data])
     
-    def plot_power(self, second_power, amount_symbols_in_plot=4, where_plot_1=None, shortened_first_power=None, where_plot_2=None):
+    def plot_power(self, second_power, amount_symbols_in_plot=4, where_plot_1=None, shortened_first_power=None, where_plot_2=None, title_rest=None):	
+        print(f"len(second_power): {len(second_power)}")
         pulse_duration = 1 / self.config.sampling_rate_FPGA
         sampling_rate_fft = 100e11
         samples_per_pulse = int(pulse_duration * sampling_rate_fft)
@@ -44,6 +46,7 @@ class Plotter:
         t_plot1 = np.linspace(0, amount_symbols_in_plot * self.config.n_pulses * pulse_duration, amount_symbols_in_plot * total_samples, endpoint=False)
         second_part = second_power[:amount_symbols_in_plot]
         second_part = second_part.reshape(-1)
+        print(f"len(second_part): {len(second_part)}")
         plt.figure(figsize=(8, 6))
        
         if shortened_first_power is None:
@@ -53,7 +56,7 @@ class Plotter:
             shortened_first_power = shortened_first_power.reshape(-1)
             plt.plot(t_plot1 * 1e9, shortened_first_power * 1e3, label=where_plot_1)
             plt.plot(t_plot1 * 1e9, second_part * 1e3, label=where_plot_2)
-            plt.title(f"Power {where_plot_1} and {where_plot_2} over {amount_symbols_in_plot} Symbols")
+            plt.title(f"Power {where_plot_1} and {where_plot_2} {title_rest} over {amount_symbols_in_plot} Symbols")
         
         plt.ylabel('Power (mW)')
         plt.xlabel('Time (ns)')
@@ -63,7 +66,7 @@ class Plotter:
         if shortened_first_power is None:
             Saver.save_plot(f"power_{where_plot_1.replace(' ', '_').lower()}_for_{amount_symbols_in_plot}_symbols")
         else:
-            Saver.save_plot(f"power_{where_plot_1.replace(' ', '_').lower()}_{where_plot_2.replace(' ', '_').lower()}_for_{amount_symbols_in_plot}_symbols")
+            Saver.save_plot(f"power_two_power_plots_for_{amount_symbols_in_plot}_{where_plot_2.replace(' ', '_').lower()}_symbols")
         del second_power
         gc.collect()
     
@@ -271,3 +274,7 @@ class Plotter:
         del wavelength_photons_det_x
         del wavelength_photons_det_z
         gc.collect()
+
+    def sanitize_filename(self, s):
+        # Remove anything not alphanumeric, dot, underscore, or dash
+        return re.sub(r'[^\w\-_\. ]', '_', s).replace(' ', '_')
