@@ -549,8 +549,82 @@ class SimulationManager:
        
         return peak_wavelength, amount_detection_x_late_bin
         
-    def run_test(self):
-        pass
+    def run_simulation_parameter_sweep_amplitude(self):
+        #initialize
+        T1_dampening = self.simulation_engine.initialize()
+        
+        # Define the states and their corresponding arguments
+        states = [
+            {"title": "State: Z0", "basis": 1, "value": 1, "decoy": 0},
+            {"title": "State: Z1", "basis": 1, "value": 0, "decoy": 0},
+            {"title": "State: X+", "basis": 0, "value": -1, "decoy": 0},
+            {"title": "State: Z0 decoy", "basis": 1, "value": 1, "decoy": 1},
+            {"title": "State: Z1 decoy", "basis": 1, "value": 0, "decoy": 1},
+            {"title": "State: X+ decoy", "basis": 0, "value": -1, "decoy": 1},
+        ]
+    
+        def laser_till_eam(state):
+            optical_power, peak_wavelength = self.simulation_engine.random_laser_output_var('current_power', 'voltage_shift', 'current_wavelength')
+            basis, value, decoy = self.simulation_engine.generate_alice_choices(basis = 0, value = -1, decoy = 0)
+
+            signals, t, _ = self.simulation_engine.signal_bandwidth_jitter(basis, value, decoy)
+            power_dampened, norm_transmission,  calc_mean_photon_nr_eam, _ = self.simulation_engine.eam_transmission(signals, optical_power, T1_dampening, peak_wavelength, t)
+            
+            return state, power_dampened
+
+        parameters_amplitude =  np.linspace(0.0005, 0.005, 20)
+        differences_mean_photon_nr = np.empty((len(states), len(parameters_amplitude)))
+        
+        for index, state in tqdm(enumerate(states), desc= "running simulation for different states", unit=" states", position=0):
+            transmission_min = 1000
+            transmission_max = 0
+           
+            for idx_param, param in tqdm(enumerate(parameters_amplitude), desc="parameters", unit="parameters", leave = False, position=1):
+                self.config.current_amplitude = param
+            
+                mean_of_mean_photon = np.empty(self.config.n_samples)
+
+                for i in range(self.config.n_samples):
+                    optical_power, peak_wavelength = self.simulation_engine.random_laser_output('current_power', 'voltage_shift', 'current_wavelength')
+                    
+                    # Generate Alice's choices
+                    basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=state["basis"], value=state["value"], decoy=state["decoy"], fixed = True)
+                    
+                    # Simulate signal and transmission
+                    signals, t, jitter_shifts = self.simulation_engine.signal_bandwidth_jitter(basis, value, decoy)
+                    power_dampened, transmission = self.simulation_engine.eam_transmission(signals, optical_power, T1_dampening)
+                    power_dampened = self.simulation_engine.fiber_attenuation(power_dampened)
+
+                    calc_mean_photon_nr, wavelength_photons, time_photons, nr_photons, index_where_photons, all_time_max_nr_photons, sum_nr_photons_at_chosen = self.simulation_engine.choose_photons(power_dampened, transmission, 
+                                                                                                                                                                                t_jitter, peak_wavelength)
+            
+                    mean_of_mean_photon[i] = calc_mean_photon_nr
+
+                    if mean_photon_nr_min > calc_mean_photon_nr:
+                        mean_photon_nr_min = calc_mean_photon_nr
+                    if mean_photon_nr_max < calc_mean_photon_nr:
+                        mean_photon_nr_max = calc_mean_photon_nr
+
+                differences_mean_photon_nr[index][idx_param] = (mean_photon_nr_max-mean_photon_nr_min) / np.mean(mean_of_mean_photon)
+
+            plt.plot(parameters_amplitude*1e3, differences_mean_photon_nr[index], label= 'for ' + str(state['title'].replace(':', '').lower()))
+            '''
+            plt.title(f" spread of mean photon number for {state['title'].replace(':', '').lower()} over {self.config.n_samples} iterations")                    
+            plt.xlabel(r'$\Delta I \, (\mathrm{mA})$')  # ΔI (mA)
+            plt.ylabel(r'$\frac{\Delta \langle \mu \rangle}{\langle \mu \rangle}$')  # Δ⟨μ⟩
+            plt.tight_layout()
+            plt.legend()
+            all_titles = state['title'].replace(' ', '_').replace(':', '').lower()
+            save_plot(f"spread_photon_nr_{all_titles}")'''
+
+        plt.title(f" spread of mean photon number over {self.config.n_samples} iterations")
+        plt.xlabel(r'$\Delta I \, (\mathrm{mA})$')  # ΔI (mA)
+        plt.ylabel(r'$\frac{\Delta \langle \mu \rangle}{\langle \mu \rangle}$')  # Δ⟨μ⟩ / ⟨μ⟩
+        plt.tight_layout()
+        plt.legend()    
+        all_titles = "_".join([state['title'].replace(' ', '_').replace(':', '').lower() for state in states])
+        Saver.save_plot(f"spread_photon_nr_{all_titles}_for_4GHz_and_1e-11_jitter")
+    
         
         
         

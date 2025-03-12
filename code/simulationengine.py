@@ -40,6 +40,19 @@ class SimulationEngine:
         optical_power = np.repeat(optical_power_short, self.config.batchsize)
         peak_wavelength = np.repeat(peak_wavelength_short, self.config.batchsize)
         return optical_power * 1e-3, peak_wavelength * 1e-9  # in W and m
+    
+    def random_laser_output_var(self, current_power, voltage_shift, current_wavelength):
+        'every batchsize values we get a new chosen value'
+        # Generate a random time within the desired range
+        times = self.config.rng.uniform(0, 10, self.config.n_samples // self.config.batchsize)
+        # Use sinusoidal modulation for the entire array
+        chosen_voltage = self.config.mean_voltage + 0.050 * np.sin(2 * np.pi * 1 * times)
+        chosen_current = ((self.config.mean_current) + self.config.current_amplitude * np.sin(2 * np.pi * 1 * times)) * 1e3
+        optical_power_short = self.get_interpolated_value(chosen_current, current_power)
+        peak_wavelength_short = self.get_interpolated_value(chosen_current, current_wavelength) + self.get_interpolated_value(chosen_voltage, voltage_shift)
+        optical_power = np.repeat(optical_power_short, self.config.batchsize)
+        peak_wavelength = np.repeat(peak_wavelength_short, self.config.batchsize)
+        return optical_power * 1e-3, peak_wavelength * 1e-9  # in W and m
 
     def generate_alice_choices(self, basis=None, value=None, decoy=None):
         """Generates Alice's choices for a quantum communication protocol."""
@@ -187,25 +200,30 @@ class SimulationEngine:
         sampling_rate_fft = 100e11
         frequencies = fftfreq(len(t) * self.config.batchsize, d=1 / sampling_rate_fft)
         f_0 = constants.c / peak_wavelength     # Frequency of the symbol (float64)
-        print(f"shape f0: {f_0.shape}")
 
         for i in range(0, self.config.n_samples, self.config.batchsize):
-            f_0_part = f_0[:i:i + self.config.batchsize]
+            f_0_part = f_0[i:i + self.config.batchsize]
             f_0_part = np.repeat(f_0_part, len(t))
-            shifted_frequencies_for_w_0 = frequencies - f_0  
+            shifted_frequencies_for_w_0 = frequencies - f_0_part  
             t_shift = t[-1] / 2
-            print(f" shape shifted {shifted_frequencies_for_w_0}")  
-            print(f"shape t:shift {t_shift.shape}")
             phi_shift = np.exp(1j * 2 * np.pi * shifted_frequencies_for_w_0 * t_shift)
-            print(f"shape f0: {f_0.shape}")
 
             amplitude_batch = amplitude[i:i + self.config.batchsize, :]
             flattened_amplitude_batch = amplitude_batch.reshape(-1)
             
+
             amp_fft = np.fft.fft(flattened_amplitude_batch)  # FFT of row i
-            plt.plot()
             del flattened_amplitude_batch
             gc.collect()
+
+            print(f"amp_fft: {amp_fft}")
+            plt.plot(frequencies, np.abs(amp_fft), label = 'in DLI')
+            plt.title(f"Amplitude FFT in DLI")
+            plt.xlabel("Frequency (Hz)")
+            plt.ylabel("Amplitude")
+            plt.ylim(0, 0.05)
+            plt.grid()
+            Saver.save_plot(f"amplitude_fft_in_DLI")
 
             total_amplitude = np.real(np.fft.ifft(1 / 2 * amp_fft * (1 - phi_shift)))  # Convert back to time domain
             # total_amplitude = np.real(np.fft.ifft(1 / 2 * (1j * amp_fft + 1j * amp_fft * phase_shift)))

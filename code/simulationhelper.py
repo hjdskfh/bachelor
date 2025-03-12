@@ -338,6 +338,8 @@ class SimulationHelper:
             wrong_detection_mask_z[np.where(has_0_and_z1)[0]] = True
             #get wrong_detections thruough correct indexing
             wrong_detections_z = index_where_photons_det_z[wrong_detection_mask_z]
+        else:
+            wrong_detections_z = np.array([])
         
         #Step 2: Check for wrong detections in the X+ basis
         if wrong_detection_mask_x.size != 0:
@@ -357,6 +359,8 @@ class SimulationHelper:
             wrong_detection_mask_x[np.where(has_1_and_xp)[0]] = True
             #`wrong_detection_mask` is a boolean array where True indicates a wrong detection
             wrong_detections_x = index_where_photons_det_x[wrong_detection_mask_x]
+        else:
+            wrong_detections_x = np.array([])
             
         #Combine the wrong detections from both bases
         wrong_detections_z = np.sort(wrong_detections_z)
