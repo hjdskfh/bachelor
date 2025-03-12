@@ -416,7 +416,7 @@ class SimulationManager:
         Saver.save_plot(f"hist_peak_wavelength")'''
     
         # Generate Alice's choices
-        basis, value, decoy = self.simulation_engine.generate_alice_choices()
+        basis, value, decoy = self.simulation_engine.generate_alice_choices(basis = 0, value = -1, decoy = 0)
 
         # Simulate signal and transmission
         Saver.memory_usage("before simulating signal: " + str("{:.3f}".format(time.time() - start_time)))
@@ -474,9 +474,9 @@ class SimulationManager:
         print(f"shape of power_dampened after DLI: {power_dampened.shape}")
         # plot
         string_plot_2 = str(f" for current {self.config.mean_current} mA")
-        self.plotter.plot_power(power_dampened, amount_symbols_in_plot=amount_symbols_in_first_part, where_plot_1='before DLI',  shortened_first_power=first_power, where_plot_2='after DLI plus mit i', title_rest='for current ' + str(self.config.mean_current) + ' mA')
+        self.plotter.plot_power(power_dampened, amount_symbols_in_plot=amount_symbols_in_first_part, where_plot_1='before DLI',  shortened_first_power=first_power, where_plot_2='after DLI erster port,', title_rest='+ omega 0 for current ' + str(self.config.mean_current) + ' mA')
 
-        '''Saver.memory_usage("before detector x: " + str(time.time() - start_time))
+        Saver.memory_usage("before detector x: " + str(time.time() - start_time))
         time_photons_det_x, wavelength_photons_det_x, nr_photons_det_x, index_where_photons_det_x, calc_mean_photon_nr_detector_x, dark_count_times_x, num_dark_counts_x = self.simulation_engine.detector(t, norm_transmission, peak_wavelength, power_dampened, start_time)        
 
         # plot so I can delete
@@ -492,7 +492,21 @@ class SimulationManager:
         
         # plot so I can delete
         # self.plotter.plot_and_delete_photon_time_histogram(time_photons_det_x, time_photons_det_z)
-        
+        # late det in x
+        if detected_indices_x_norm.size > 0: 
+            condition_norm = np.sum(detected_indices_x_norm == 0, axis=1) == 1
+        else:
+            # Handle empty case
+            condition_norm = np.array([], dtype=bool)  # or handle as needed
+        if detected_indices_x_dec.size > 0:
+            condition_dec = np.sum(detected_indices_x_dec == 0, axis=1) == 1
+        else:
+            # Handle empty case
+            condition_norm = np.array([], dtype=bool)  # or handle as needed
+
+
+        # Combine conditions and count how many rows satisfy at least one
+        amount_detection_x_late_bin = np.sum(condition_norm | condition_dec)
 
         Z1_sent_norm, Z1_sent_dec, Z0_sent_norm, Z0_sent_dec, XP_sent_norm, XP_sent_dec = self.simulation_helper.count_alice_choices(basis, value, decoy)
 
@@ -532,10 +546,8 @@ class SimulationManager:
             time_simulating_signal=time_simulating_signal,
             time_eam=time_eam
         )
-        detected_indices_x_dec=detected_indices_x_dec,
-        detected_indices_x_norm=detected_indices_x_norm,
-        detected_indices_z_dec=detected_indices_z_dec,
-        detected_indices_z_norm=detected_indices_z_norm,'''
+       
+        return peak_wavelength, amount_detection_x_late_bin
         
     def run_test(self):
         pass

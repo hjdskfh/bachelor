@@ -6,6 +6,8 @@ from config import SimulationConfig
 from simulationmanager import SimulationManager
 from saver import Saver
 import numpy as np
+import matplotlib.pyplot as plt
+
 
 Saver.memory_usage("Before everything")
 
@@ -31,14 +33,17 @@ database.add_jitter(detector_jitter, 'detector')
 times_per_n = 1
 #seed_arr = np.arange(1, times_per_n + 1, 1)
 #for n in n_samples:
+arr_current = np.arange(0.08205, 0.08215, 0.00001)
+peak_wavelength = np.empty(len(arr_current) * times_per_n)
+amount_detection_x_late_bin = np.empty(len(arr_current) * times_per_n)
 
-for var_current in np.arange(0.082, 0.0822, 0.00001):
+for idx, var_current in enumerate(arr_current):
     for i in range(times_per_n):
         #measure execution time
         start_time = time.time()  # Record start time
 
         #create simulation
-        config = SimulationConfig(database, seed=624537, n_samples=200, n_pulses=4, batchsize=100, mean_voltage=1.0, mean_current=var_current, current_amplitude=0.02,
+        config = SimulationConfig(database, seed=624537, n_samples=20000, n_pulses=4, batchsize=1000, mean_voltage=1.0, mean_current=var_current, current_amplitude=0.02,
                         p_z_alice=0.5, p_decoy=0.1, p_z_bob=0.15, sampling_rate_FPGA=6.5e9, bandwidth=4e9, jitter=jitter, 
                         non_signal_voltage=-1.2, voltage_decoy=-0.2, voltage=-0.2, voltage_decoy_sup=-0.2, voltage_sup=-0.2,
                         mean_photon_nr=0.7, mean_photon_decoy=0.1, 
@@ -60,11 +65,20 @@ for var_current in np.arange(0.082, 0.0822, 0.00001):
         print(f"Execution time for readin: {execution_time:.9f} seconds for {config.n_samples} samples")
 
         #plot results
-        simulation.run_simulation_classificator()
+        # simulation.run_simulation_classificator()
+        peak_wavelength[idx * times_per_n + i], amount_detection_x_late_bin[idx * times_per_n + i] = simulation.run_simulation_classificator()
+
 
         end_time = time.time()  # Record end time  
         execution_time = end_time - start_time  # Calculate execution time
         print(f"Execution time: {execution_time:.9f} seconds for {config.n_samples} samples")
+
+plt.bar(peak_wavelength, amount_detection_x_late_bin, width=0.8)  # adjust width for nicer display if needed
+plt.xlabel('Peak Wavelength')
+plt.ylabel('Number of Detections (Late Bin, X-basis)')
+plt.title('Number of Detections per Peak Wavelength')
+plt.show()
+
 
 
 
