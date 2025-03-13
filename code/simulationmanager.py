@@ -473,7 +473,6 @@ class SimulationManager:
         print(f"PHASESHIFT in Grad: {np.angle(phase_shift) / (2 * np.pi) * 360}")
         print(f"shape of power_dampened after DLI: {power_dampened.shape}")
         # plot
-        string_plot_2 = str(f" for current {self.config.mean_current} mA")
         self.plotter.plot_power(power_dampened, amount_symbols_in_plot=amount_symbols_in_first_part, where_plot_1='before DLI',  shortened_first_power=first_power, where_plot_2='after DLI erster port,', title_rest='+ omega 0 for current ' + str(self.config.mean_current) + ' mA')
 
         Saver.memory_usage("before detector x: " + str(time.time() - start_time))
@@ -492,6 +491,7 @@ class SimulationManager:
         
         # plot so I can delete
         # self.plotter.plot_and_delete_photon_time_histogram(time_photons_det_x, time_photons_det_z)
+        
         # late det in x
         if detected_indices_x_norm.size > 0: 
             condition_norm = np.sum(detected_indices_x_norm == 0, axis=1) == 1

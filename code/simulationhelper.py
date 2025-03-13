@@ -231,6 +231,23 @@ class SimulationHelper:
         return dark_count_times, num_dark_counts
 
     # ========== Classificator Helper ==========
+    def classificator_sift_basis(self, timebins, basis, time_photons_det, index_where_photons_det, which_basis_filter = None):        
+        detected_indices = np.where(
+            np.isnan(time_photons_det),                                         # Check for NaN values
+            -1,                                                                 # Assign -1 for undetected photons
+            np.digitize(time_photons_det, timebins) - 1                         # Early = 0, Late = 1
+            )                                                                   # 0 wenn early timebin, 1 wenn late timebin, -1 wenn nicht detektiert
+        
+        if which_basis_filter is not None:
+            if which_basis_filter == 'Z':
+                detected_indices = detected_indices[basis[index_where_photons_det] == 1]
+            elif which_basis_filter == 'X':
+                detected_indices = detected_indices[basis[index_where_photons_det] == 0]
+        return detected_indices, index_where_photons_det
+    
+    def classificator_exclude_vacuums(self):
+        pass
+
 
     def classificator_det_ind(self, timebins, decoy, time_photons_det, index_where_photons_det, is_decoy):
         # Apply np.digitize and shift indices
@@ -288,7 +305,6 @@ class SimulationHelper:
         if index_where_photons_det_x.size == 0:
             return 0, 0
         
-
         # Find indices where there are no detection in late timebins
         no_ones_rows_reduced = np.where(np.all((detected_indices_x != 1), axis=1))[0]
         no_ones_rows_full = index_where_photons_det_x[no_ones_rows_reduced]
