@@ -210,20 +210,19 @@ class SimulationEngine:
 
             amplitude_batch = amplitude[i:i + self.config.batchsize, :]
             flattened_amplitude_batch = amplitude_batch.reshape(-1)
-            
 
             amp_fft = np.fft.fft(flattened_amplitude_batch)  # FFT of row i
             del flattened_amplitude_batch
             gc.collect()
 
-            print(f"amp_fft: {amp_fft}")
-            plt.plot(frequencies, np.abs(amp_fft), label = 'in DLI')
-            plt.title(f"Amplitude FFT in DLI")
-            plt.xlabel("Frequency (Hz)")
-            plt.ylabel("Amplitude")
-            plt.ylim(0, 0.05)
-            plt.grid()
-            Saver.save_plot(f"amplitude_fft_in_DLI")
+            if i == 0:
+                plt.plot(frequencies, np.abs(amp_fft), label = 'in DLI')
+                plt.title(f"Amplitude FFT in DLI")
+                plt.xlabel("Frequency (Hz)")
+                plt.ylabel("Amplitude")
+                plt.ylim(0, 0.05)
+                plt.grid()
+                Saver.save_plot(f"amplitude_fft_in_DLI")
 
             total_amplitude = np.real(np.fft.ifft(1 / 2 * amp_fft * (1 - phi_shift)))  # Convert back to time domain
             # total_amplitude = np.real(np.fft.ifft(1 / 2 * (1j * amp_fft + 1j * amp_fft * phase_shift)))
@@ -251,7 +250,6 @@ class SimulationEngine:
         # power_dampened_total = np.zeros((self.config.n_samples, len(t)))
 
         return power_dampened, phi_shift[0]
-    
     
     def detector(self, t, norm_transmission, peak_wavelength, power_dampened, start_time):
         """Simulate the detector process."""
@@ -316,10 +314,10 @@ class SimulationEngine:
 
         detected_indices_x_dec = self.simulation_helper.classificator_det_ind(timebins, decoy, time_photons_det_x, index_where_photons_det_x, is_decoy=True)
         # print(f"detected_indices_x_dec shape: {detected_indices_x_dec.shape}")
-        gain_Z_norm, amount_Z_det_norm = self.simulation_helper.classificator_z(basis, value, decoy, index_where_photons_det_z, detected_indices_z_norm, detected_indices_x_norm, is_decoy=False)
-        gain_Z_dec, amount_Z_det_dec = self.simulation_helper.classificator_z(basis, value, decoy, index_where_photons_det_z, detected_indices_z_dec, detected_indices_x_dec, is_decoy=True)
-        gain_XP_norm, amount_XP_det_norm = self.simulation_helper.classificator_x(basis, value, decoy, index_where_photons_det_x, detected_indices_x_norm, detected_indices_z_norm, gain_Z_norm, is_decoy=False)
-        gain_XP_dec, amount_XP_det_dec = self.simulation_helper.classificator_x(basis, value, decoy, index_where_photons_det_x, detected_indices_x_dec, detected_indices_z_dec, gain_Z_dec, is_decoy=True)
+        gain_Z_norm, amount_Z_det_norm = self.simulation_helper.classificator_z(basis, value, decoy, index_where_photons_det_z, index_where_photons_det_x, detected_indices_z_norm, detected_indices_x_norm, is_decoy=False)
+        gain_Z_dec, amount_Z_det_dec = self.simulation_helper.classificator_z(basis, value, decoy, index_where_photons_det_z,  index_where_photons_det_x, detected_indices_z_dec, detected_indices_x_dec, is_decoy=True)
+        gain_XP_norm, amount_XP_det_norm = self.simulation_helper.classificator_x(basis, value, decoy, index_where_photons_det_x, index_where_photons_det_z, detected_indices_x_norm, detected_indices_z_norm, gain_Z_norm, is_decoy=False)
+        gain_XP_dec, amount_XP_det_dec = self.simulation_helper.classificator_x(basis, value, decoy, index_where_photons_det_x, index_where_photons_det_z, detected_indices_x_dec, detected_indices_z_dec, gain_Z_dec, is_decoy=True)
 
         # Use np.hstack to concatenate, and it automatically handles empty arrays
         total_detected_indices_x = np.vstack((detected_indices_x_dec, detected_indices_x_norm)) if detected_indices_x_dec.size > 0 or detected_indices_x_norm.size > 0 else np.empty((0, 0))
@@ -347,6 +345,30 @@ class SimulationEngine:
         raw_key_rate = total_amount_detections / (t[-1] * self.config.n_samples)
 
         return len_wrong_detections_z, len_wrong_detections_x, total_amount_detections, amount_Z_detections, amount_XP_detections, qber, phase_error_rate, raw_key_rate, gain_XP_norm, gain_XP_dec, gain_Z_norm, gain_Z_dec, detected_indices_x_dec, detected_indices_x_norm, detected_indices_z_dec, detected_indices_z_norm
+    
+    def classificator_new(self, t, time_photons_det_x, index_where_photons_det_x, time_photons_det_z, index_where_photons_det_z, basis, value, decoy):
+        """Classify time bins."""
+        num_segments = self.config.n_pulses // 2
+        timebins = np.linspace(t[-1] / num_segments, t[-1], num_segments)        
+        
+        detected_indices_z = np.where(
+            np.isnan(time_photons_det_z),                                         # Check for NaN values
+            -1,                                                                 # Assign -1 for undetected photons
+            np.digitize(time_photons_det_z, timebins) - 1                         # Early = 0, Late = 1
+            )
+        
+        detected_indices_x = np.where(
+            np.isnan(time_photons_det_x),                                         # Check for NaN values
+            -1,                                                                 # Assign -1 for undetected photons
+            np.digitize(time_photons_det_x, timebins) - 1                         # Early = 0, Late = 1
+            )
+        
+        detected_indices_z, p_vacuum_z, total_sift_z, indices_z = self.simulation_helper.classificator_sift_z_vacuum(basis, detected_indices_z, index_where_photons_det_z)
+        detected_indices_x, total_sift_x, vacuum_indices_x, indices_x = self.simulation_helper.classificator_sift_x_vacuum(basis, detected_indices_x, index_where_photons_det_x)
+        ind_Z0_checked, ind_Z1_checked = self.simulation_helper.classificator_identify_z(value, total_sift_z, detected_indices_z, detected_indices_x, index_where_photons_det_z, decoy, indices_z)
+        X_P_calc, p_indep_x_states = self.simulation_helper.classificator_identify_x(total_sift_x, detected_indices_x, detected_indices_z, index_where_photons_det_x, basis, value, decoy, indices_x)
+        
+        return p_vacuum_z, total_sift_z, total_sift_x, vacuum_indices_x, ind_Z0_checked, ind_Z1_checked, X_P_calc, p_indep_x_states
     
     def initialize(self):
         plt.style.use(self.config.mlp)

@@ -32,18 +32,18 @@ database.add_jitter(detector_jitter, 'detector')
 #n_samples = np.arange(22000, 27000, 2000, dtype=int)
 times_per_n = 1
 #seed_arr = np.arange(1, times_per_n + 1, 1)
-#for n in n_samples:
 arr_current = np.arange(0.08205, 0.08215, 0.00001)
 peak_wavelength = np.empty(len(arr_current) * times_per_n)
 amount_detection_x_late_bin = np.empty(len(arr_current) * times_per_n)
 
+#for n in n_samples:
 for idx, var_current in enumerate(arr_current):
     for i in range(times_per_n):
         #measure execution time
         start_time = time.time()  # Record start time
 
         #create simulation
-        config = SimulationConfig(database, seed=624537, n_samples=20000, n_pulses=4, batchsize=1000, mean_voltage=1.0, mean_current=var_current, current_amplitude=0.02,
+        config = SimulationConfig(database, seed=624537, n_samples=10000, n_pulses=4, batchsize=1000, mean_voltage=1.0, mean_current=var_current, current_amplitude=0.02,
                         p_z_alice=0.5, p_decoy=0.1, p_z_bob=0.15, sampling_rate_FPGA=6.5e9, bandwidth=4e9, jitter=jitter, 
                         non_signal_voltage=-1.2, voltage_decoy=-0.2, voltage=-0.2, voltage_decoy_sup=-0.2, voltage_sup=-0.2,
                         mean_photon_nr=0.7, mean_photon_decoy=0.1, 
@@ -51,7 +51,6 @@ for idx, var_current in enumerate(arr_current):
                         mlp='C:/Users/leavi/OneDrive/Dokumente/Uni/Semester 7/NeuMoQP/Programm/code/Presentation_style_1_adjusted_no_grid.mplstyle'
                         )
         simulation = SimulationManager(config)
-        
 
         # Convert the config object to a dictionary
         config_params = config.to_dict()    
@@ -77,10 +76,4 @@ plt.bar(peak_wavelength, amount_detection_x_late_bin, width=0.8)  # adjust width
 plt.xlabel('Peak Wavelength')
 plt.ylabel('Number of Detections (Late Bin, X-basis)')
 plt.title('Number of Detections per Peak Wavelength')
-plt.show()
-
-
-
-
-
-
+Saver.save_plot('nr_det_late_x_over_peak_wavelength')

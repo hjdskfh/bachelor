@@ -1,0 +1,24 @@
+n_samples: 10000
+seed: 624537
+non_signal_voltage: {non_signal_voltage}
+voltage_decoy: {voltage_decoy}
+voltage: {voltage}
+voltage_decoy_sup: {voltage_decoy_sup}
+voltage_sup: {voltage_sup}
+len_wrong_detections_z: 0
+len_wrong_detections_x: 0
+total_amount_detections: 0
+amount_Z_detections: 0
+amount_XP_detections: 0
+qber: 0
+phase_error_rate: 0
+raw_key_rate: 0.0
+gain_XP_norm: 0
+gain_XP_dec: 0
+gain_Z_norm: nan
+gain_Z_dec: nan
+calc_mean_photon_nr_eam: [0.67237278 0.70979901 0.68792952 ... 0.707049   0.67533772 0.71690608]
+calc_mean_photon_nr_detector_x: [0.00809832 0.00965381 0.00868873 ... 0.00921949 0.0073851  0.00839623]
+execution_time_run: 177.63145399093628
+time_simulating_signal: 65.69392347335815
+time_eam: 78.95464515686035

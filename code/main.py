@@ -34,7 +34,7 @@ database.add_jitter(detector_jitter, 'detector')
 
 
 #create simulation mean currrent 0.08
-config = SimulationConfig(database, seed=None, n_samples=20000, n_pulses=4, batchsize=1000, mean_voltage=1.0, mean_current=0.0821, current_amplitude=0.02,
+config = SimulationConfig(database, seed=624537, n_samples=10000, n_pulses=4, batchsize=1000, mean_voltage=1.0, mean_current=0.08214, current_amplitude=0.02,
                 p_z_alice=0.5, p_decoy=0.1, p_z_bob=0.85, sampling_rate_FPGA=6.5e9, bandwidth=4e9, jitter=jitter, 
                 non_signal_voltage=-1.2, voltage_decoy=-0.2, voltage=-0.2, voltage_decoy_sup=-0.2, voltage_sup=-0.2,
                 mean_photon_nr=0.7, mean_photon_decoy=0.1, 
