@@ -278,3 +278,36 @@ class Plotter:
     def sanitize_filename(self, s):
         # Remove anything not alphanumeric, dot, underscore, or dash
         return re.sub(r'[^\w\-_\. ]', '_', s).replace(' ', '_')
+
+
+    def prepare_data_for_histogram(self, time_photons_det_x, time_photons_det_z, last_histogram_matrix=None):
+        # Example parameters
+        num_symbols = 65
+        bins_per_symbol = 30
+        symbol_window = 100  # Example time window for one symbol (adjust as needed)
+
+        # Placeholder example time matrix (replace this with real data!)
+        # Let's say we expect up to 10 detections per symbol repetition
+        # NaN = no detection
+
+        # Prepare histogram matrix
+        if last_histogram_matrix is None:
+            histogram_matrix = np.zeros((num_symbols, bins_per_symbol), dtype=int)
+        else:
+            histogram_matrix = last_histogram_matrix
+
+        # Create bins
+        bins = np.linspace(0, symbol_window, bins_per_symbol + 1)  # 30 bins
+
+        # Loop over symbols
+        for i in range(num_symbols):
+            # Extract non-NaN times for this symbol
+            times = time_photons_det_x[i, ~np.isnan(time_photons_det_x[i])]
+            
+            # Histogram
+            counts, _ = np.histogram(times, bins=bins)
+            
+            # Store counts
+            histogram_matrix[i, :] = counts
+
+        print("Histogram matrix shape:", histogram_matrix.shape)  # (65, 30)

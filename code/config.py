@@ -1,7 +1,7 @@
 import numpy as np
 
 class SimulationConfig:
-    def __init__(self, data, seed = None, n_samples=10000, n_pulses=4, batchsize = 1000, mean_voltage=1.0, mean_current=0.08, current_amplitude = 0.02,
+    def __init__(self, data, seed = None, n_samples=10000, n_pulses=4, batchsize = 1000, mean_voltage=1.0, mean_current=0.08, voltage_amplitude=0.050, current_amplitude = 0.02,
                  p_z_alice=0.5, p_decoy=0.1, p_z_bob = 0.85, sampling_rate_FPGA=6.75e9, bandwidth = 4e9, jitter=1e-11, non_signal_voltage = -1, voltage_decoy=0,
                  voltage=0, voltage_decoy_sup=0, voltage_sup=0, 
                  mean_photon_nr=0.7, mean_photon_decoy=0.1, 
@@ -23,6 +23,7 @@ class SimulationConfig:
         # Voltage and amplitude settings
         self.mean_voltage = mean_voltage  # Voltage (in V)
         self.mean_current = mean_current  # current (in A)
+        self.voltage_amplitude = voltage_amplitude # in V
         self.current_amplitude = current_amplitude  # in A
 
         # Probability parameters

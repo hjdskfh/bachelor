@@ -20,7 +20,6 @@ class SimulationEngine:
         self.simulation_helper = SimulationHelper(config)
         self.plotter = Plotter(config)
 
-
     def get_interpolated_value(self, x_data, name):
         #calculate tck for which curve
         tck = self.config.data.get_data(x_data, name)
@@ -31,25 +30,12 @@ class SimulationEngine:
         # Generate a random time within the desired range
         times = self.config.rng.uniform(0, 10, self.config.n_samples // self.config.batchsize)
         # Use sinusoidal modulation for the entire array
-        # chosen_voltage = self.config.mean_voltage + 0.050 * np.sin(2 * np.pi * 1 * times)
-        # chosen_current = (self.config.mean_current) + self.config.current_amplitude * np.sin(2 * np.pi * 1 * times)) * 1e3
-        chosen_voltage = np.ones(self.config.n_samples // self.config.batchsize) * self.config.mean_voltage
-        chosen_current = np.ones(self.config.n_samples // self.config.batchsize) * (self.config.mean_current) * 1e3
-        optical_power_short = self.get_interpolated_value(chosen_current, current_power)
-        peak_wavelength_short = self.get_interpolated_value(chosen_current, current_wavelength) + self.get_interpolated_value(chosen_voltage, voltage_shift)
-        optical_power = np.repeat(optical_power_short, self.config.batchsize)
-        peak_wavelength = np.repeat(peak_wavelength_short, self.config.batchsize)
-        return optical_power * 1e-3, peak_wavelength * 1e-9  # in W and m
-    
-    def random_laser_output_var(self, current_power, voltage_shift, current_wavelength):
-        'every batchsize values we get a new chosen value'
-        # Generate a random time within the desired range
-        times = self.config.rng.uniform(0, 10, self.config.n_samples // self.config.batchsize)
-        # Use sinusoidal modulation for the entire array
-        chosen_voltage = self.config.mean_voltage + 0.050 * np.sin(2 * np.pi * 1 * times)
+        chosen_voltage = self.config.mean_voltage + self.config.voltage_amplitude * np.sin(2 * np.pi * 1 * times)  # 50 mV passt
         chosen_current = ((self.config.mean_current) + self.config.current_amplitude * np.sin(2 * np.pi * 1 * times)) * 1e3
+        # chosen_voltage = np.ones(self.config.n_samples // self.config.batchsize) * self.config.mean_voltage
+        # chosen_current = np.ones(self.config.n_samples // self.config.batchsize) * (self.config.mean_current) * 1e3
         optical_power_short = self.get_interpolated_value(chosen_current, current_power)
-        peak_wavelength_short = self.get_interpolated_value(chosen_current, current_wavelength) + self.get_interpolated_value(chosen_voltage, voltage_shift)
+        peak_wavelength_short =  1550 + self.get_interpolated_value(chosen_voltage, voltage_shift)  # self.get_interpolated_value(chosen_current, current_wavelength) +
         optical_power = np.repeat(optical_power_short, self.config.batchsize)
         peak_wavelength = np.repeat(peak_wavelength_short, self.config.batchsize)
         return optical_power * 1e-3, peak_wavelength * 1e-9  # in W and m
@@ -90,11 +76,12 @@ class SimulationEngine:
             decoy = np.full(self.config.n_samples, decoy, dtype=int)
 
         if basis.size > 1: # array-case
-            np.tile(basis, (self.config.n_samples // len(basis)) + 1)[:self.config.n_samples]
+            print(f"n_sample in generate_alice_choices: {self.config.n_samples}")
+            basis = np.tile(basis, (self.config.n_samples // len(basis)) + 1)[:self.config.n_samples]
         if value.size > 1:
-            np.tile(value, (self.config.n_samples // len(value)) + 1)[:self.config.n_samples]
+            value = np.tile(value, (self.config.n_samples // len(value)) + 1)[:self.config.n_samples]
         if decoy.size > 1:
-            np.tile(decoy, (self.config.n_samples // len(decoy)) + 1)[:self.config.n_samples]
+            decoy = np.tile(decoy, (self.config.n_samples // len(decoy)) + 1)[:self.config.n_samples]
 
         return basis, value, decoy
     
@@ -191,6 +178,66 @@ class SimulationEngine:
         power_dampened = power_dampened * attenuation_factor
         return power_dampened
 
+    def delay_line_interferometer_wo_FFT(self, power_dampened, t, peak_wavelength):
+
+        # get amplitude
+        power_dampened = np.sqrt(power_dampened) # ignore phase bc is global phase
+        amplitude = power_dampened
+
+        sampling_rate_fft = 100e11
+        frequencies = fftfreq(len(t) * self.config.batchsize, d=1 / sampling_rate_fft)
+        f_0 = constants.c / peak_wavelength     # Frequency of the symbol (float64)
+
+        for i in range(0, self.config.n_samples, self.config.batchsize):
+            f_0_part = f_0[i:i + self.config.batchsize]
+            f_0_part = np.repeat(f_0_part, len(t))
+            shifted_frequencies_for_w_0 = frequencies - f_0_part  
+            t_shift = t[-1] / 2
+            phi_shift = np.exp(1j * 2 * np.pi * shifted_frequencies_for_w_0 * t_shift)
+
+            amplitude_batch = amplitude[i:i + self.config.batchsize, :]
+            flattened_amplitude_batch = amplitude_batch.reshape(-1)
+
+            amp_fft = np.fft.fft(flattened_amplitude_batch)  # FFT of row i
+            del flattened_amplitude_batch
+            gc.collect()
+
+            '''if i == 0:
+                plt.plot(frequencies, np.abs(amp_fft), label = 'in DLI')
+                plt.title(f"Amplitude FFT in DLI")
+                plt.xlabel("Frequency (Hz)")
+                plt.ylabel("Amplitude")
+                plt.ylim(0, 0.05)
+                plt.grid()
+                Saver.save_plot(f"amplitude_fft_in_DLI")'''
+
+            total_amplitude = np.real(np.fft.ifft(1 / 2 * amp_fft * (1 - phi_shift)))  # Convert back to time domain
+            # total_amplitude = np.real(np.fft.ifft(1 / 2 * (1j * amp_fft + 1j * amp_fft * phase_shift)))
+
+            total_amplitude = total_amplitude.reshape(self.config.batchsize, len(t))
+            amplitude[i:i + self.config.batchsize, :] = total_amplitude
+            '''plt.plot(total_amplitude[0], label = 'after DLI')
+            plt.title(f"Amplitude Shifted (2-6th row) after DLI")
+            plt.title("Amplitude Shifted (2-6th row)")
+            plt.xlabel("Time Bins")
+            plt.ylabel("Amplitude")
+            plt.grid()
+            plt.show()'''
+
+        '''plt.plot(amplitude_shifted[2:6].flatten())
+        plt.title("Amplitude Shifted (2-6th row)")
+        plt.xlabel("Time Bins")
+        plt.ylabel("Amplitude")
+        plt.grid()
+        plt.show()
+        '''
+        amplitude = np.abs(amplitude)**2
+        power_dampened = amplitude
+
+        # power_dampened_total = np.zeros((self.config.n_samples, len(t)))
+
+        return power_dampened, phi_shift[0]
+
     def delay_line_interferometer(self, power_dampened, t, peak_wavelength):
 
         # get amplitude
@@ -220,7 +267,8 @@ class SimulationEngine:
                 plt.title(f"Amplitude FFT in DLI")
                 plt.xlabel("Frequency (Hz)")
                 plt.ylabel("Amplitude")
-                plt.ylim(0, 0.05)
+                plt.ylim(0, 0.5)
+                plt.xlim(-5e10, 5e10)
                 plt.grid()
                 Saver.save_plot(f"amplitude_fft_in_DLI")
 
@@ -229,15 +277,17 @@ class SimulationEngine:
 
             total_amplitude = total_amplitude.reshape(self.config.batchsize, len(t))
             amplitude[i:i + self.config.batchsize, :] = total_amplitude
-            '''plt.plot(total_amplitude[0], label = 'after DLI')
-            plt.title(f"Amplitude Shifted (2-6th row) after DLI")
-            plt.title("Amplitude Shifted (2-6th row)")
-            plt.xlabel("Time Bins")
-            plt.ylabel("Amplitude")
-            plt.grid()
-            plt.show()'''
-
-        '''plt.plot(amplitude_shifted[2:6].flatten())
+            '''if i == 0:
+                plt.plot(total_amplitude[0], label = 'after DLI')
+                plt.title(f"Amplitude Shifted (2-6th row) after DLI")
+                plt.title("Amplitude Shifted (2-6th row)")
+                plt.xlabel("Time Bins")
+                plt.ylabel("Amplitude")
+                plt.xlim(-100, 100)
+                plt.grid()
+                plt.show()'''
+        '''
+        plt.plot(amplitude_shifted[2:6].flatten())
         plt.title("Amplitude Shifted (2-6th row)")
         plt.xlabel("Time Bins")
         plt.ylabel("Amplitude")
@@ -248,10 +298,10 @@ class SimulationEngine:
         power_dampened = amplitude
 
         # power_dampened_total = np.zeros((self.config.n_samples, len(t)))
-
         return power_dampened, phi_shift[0]
+
     
-    def detector(self, t, norm_transmission, peak_wavelength, power_dampened, start_time):
+    def detector(self, t, norm_transmission, peak_wavelength, power_dampened, start_time=0):
         """Simulate the detector process."""
         # choose photons
         wavelength_photons, time_photons, nr_photons, index_where_photons, all_time_max_nr_photons, calc_mean_photon_nr_detector = self.simulation_helper.choose_photons(norm_transmission, t, power_dampened, peak_wavelength, start_time, fixed_nr_photons=None)
@@ -346,7 +396,7 @@ class SimulationEngine:
 
         return len_wrong_detections_z, len_wrong_detections_x, total_amount_detections, amount_Z_detections, amount_XP_detections, qber, phase_error_rate, raw_key_rate, gain_XP_norm, gain_XP_dec, gain_Z_norm, gain_Z_dec, detected_indices_x_dec, detected_indices_x_norm, detected_indices_z_dec, detected_indices_z_norm
     
-    def classificator_new(self, t, time_photons_det_x, index_where_photons_det_x, time_photons_det_z, index_where_photons_det_z, basis, value, decoy):
+    def classificator_new(self, t, time_photons_det_x, index_where_photons_det_x, time_photons_det_z, index_where_photons_det_z, p_indep_x_states_non_dec, p_indep_x_states_dec, basis, value, decoy):
         """Classify time bins."""
         num_segments = self.config.n_pulses // 2
         timebins = np.linspace(t[-1] / num_segments, t[-1], num_segments)        
@@ -363,12 +413,17 @@ class SimulationEngine:
             np.digitize(time_photons_det_x, timebins) - 1                         # Early = 0, Late = 1
             )
         
-        detected_indices_z, p_vacuum_z, total_sift_z, indices_z = self.simulation_helper.classificator_sift_z_vacuum(basis, detected_indices_z, index_where_photons_det_z)
-        detected_indices_x, total_sift_x, vacuum_indices_x, indices_x = self.simulation_helper.classificator_sift_x_vacuum(basis, detected_indices_x, index_where_photons_det_x)
-        ind_Z0_checked, ind_Z1_checked = self.simulation_helper.classificator_identify_z(value, total_sift_z, detected_indices_z, detected_indices_x, index_where_photons_det_z, decoy, indices_z)
-        X_P_calc, p_indep_x_states = self.simulation_helper.classificator_identify_x(total_sift_x, detected_indices_x, detected_indices_z, index_where_photons_det_x, basis, value, decoy, indices_x)
-        
-        return p_vacuum_z, total_sift_z, total_sift_x, vacuum_indices_x, ind_Z0_checked, ind_Z1_checked, X_P_calc, p_indep_x_states
+        detected_indices_z_det_z_basis, p_vacuum_z, total_sift_z_basis_short, indices_z_long = self.simulation_helper.classificator_sift_z_vacuum(basis, detected_indices_z, index_where_photons_det_z)
+
+        detected_indices_x_det_x_basis, total_sift_x_basis_long, vacuum_indices_x_long, indices_x_long = self.simulation_helper.classificator_sift_x_vacuum(basis, detected_indices_x, index_where_photons_det_x)
+
+        gain_Z_non_dec, gain_Z_dec, len_Z_checked_dec, len_Z_checked_non_dec = self.simulation_helper.classificator_identify_z(value, total_sift_z_basis_short, detected_indices_x_det_x_basis, index_where_photons_det_z, index_where_photons_det_x, decoy, indices_z_long)
+
+        X_P_calc_non_dec, X_P_calc_dec, gain_X_non_dec, gain_X_dec = self.simulation_helper.classificator_identify_x(p_indep_x_states_non_dec, p_indep_x_states_dec, detected_indices_x_det_x_basis, detected_indices_z_det_z_basis, index_where_photons_det_x, index_where_photons_det_z, decoy, indices_x_long)
+
+        wrong_detections_z = self.simulation_helper.classificator_errors(index_where_photons_det_x, index_where_photons_det_z, detected_indices_z, detected_indices_x, basis)
+
+        return p_vacuum_z, total_sift_x_basis_long, total_sift_z_basis_short, vacuum_indices_x_long, len_Z_checked_dec, len_Z_checked_non_dec, gain_Z_non_dec, gain_Z_dec, gain_X_non_dec, gain_X_dec, X_P_calc_non_dec, X_P_calc_dec, wrong_detections_z
     
     def initialize(self):
         plt.style.use(self.config.mlp)
@@ -432,4 +487,61 @@ class SimulationEngine:
 
         return T1_dampening
     
+    def find_p_indep_states_x_for_classifier(self, T1_dampening, simulation_length_factor=1000, is_decoy=False):
+        # create signal Z0X+ and then X+Z1
+        # Generate the repeating pattern for basis: [1, 0, 0, 1]
+        basis_pattern = [1, 0, 0, 1]
+        copy_old_n_samples = self.config.n_samples
+        self.config.n_samples = len(basis_pattern) * simulation_length_factor
+
+        # Generate the repeating pattern for value: [1, -1, -1, 0]
+        value_pattern = [1, -1, -1, 0]
+
+        # Set decoy array to all zeros
+        if is_decoy:
+            decoy_pattern = 1
+        else:
+            decoy_pattern = 0
+
+        optical_power, peak_wavelength = self.random_laser_output('current_power', 'voltage_shift', 'current_wavelength')
+        basis, value, decoy = self.generate_alice_choices(basis=basis_pattern, value=value_pattern, decoy=decoy_pattern)
+        signals, t, _ = self.signal_bandwidth_jitter(basis, value, decoy)
+        power_dampened, norm_transmission, _, _ = self.eam_transmission(signals, optical_power, T1_dampening, peak_wavelength, t)
+        power_dampened = self.fiber_attenuation(power_dampened)
+
+        # Z basis
+        power_dampened = power_dampened * self.config.p_z_bob
+        time_photons_det_z, _,_, index_where_photons_det_z,_,_, _ = self.detector(t, norm_transmission, peak_wavelength, power_dampened)
+        power_dampened = power_dampened / self.config.p_z_bob
+
+        # X basis
+        power_dampened = power_dampened * (1 - self.config.p_z_bob)
+        power_dampened, phase_shift = self.delay_line_interferometer(power_dampened, t, peak_wavelength)
+        time_photons_det_x, _, _, index_where_photons_det_x, _,_, _ = self.detector(t, norm_transmission, peak_wavelength, power_dampened)        
+
+        # classificator
+        num_segments = self.config.n_pulses // 2
+        timebins = np.linspace(t[-1] / num_segments, t[-1], num_segments)        
+        
+        detected_indices_z = np.where(
+            np.isnan(time_photons_det_z),                                         # Check for NaN values
+            -1,                                                                 # Assign -1 for undetected photons
+            np.digitize(time_photons_det_z, timebins) - 1                         # Early = 0, Late = 1
+            )
+        
+        detected_indices_x = np.where(
+            np.isnan(time_photons_det_x),                                         # Check for NaN values
+            -1,                                                                 # Assign -1 for undetected photons
+            np.digitize(time_photons_det_x, timebins) - 1                         # Early = 0, Late = 1
+            )
+        detected_indices_z_det_z_basis, p_vacuum_z, total_sift_z_basis_short, indices_z_long = self.simulation_helper.classificator_sift_z_vacuum(basis, detected_indices_z, index_where_photons_det_z)
+        detected_indices_x_det_x_basis, total_sift_x_basis_long, vacuum_indices_x_long, indices_x_long = self.simulation_helper.classificator_sift_x_vacuum(basis, detected_indices_x, index_where_photons_det_x)
+        gain_Z_non_dec, gain_Z_dec, len_Z_checked_dec, len_Z_checked_non_dec = self.simulation_helper.classificator_identify_z(value, total_sift_z_basis_short, detected_indices_x_det_x_basis, 
+                                                                                                                               index_where_photons_det_z, index_where_photons_det_x, decoy, indices_z_long)
+        p_indep_x_states = self.simulation_helper.classificator_identify_x_calc_p_indep_states_x(detected_indices_x_det_x_basis, index_where_photons_det_x)
+
+
+        # set n_samples to normal
+        self.config.n_samples = copy_old_n_samples
+        return p_indep_x_states
    

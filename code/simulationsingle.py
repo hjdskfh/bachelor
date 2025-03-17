@@ -25,8 +25,8 @@ class SimulationSingle:
         chosen_voltage = self.config.mean_voltage 
         chosen_current = self.config.mean_current * 1e3  # damit in mA für Tabelle
         optical_power = self.get_interpolated_value_single(chosen_current, current_power)
-        peak_wavelength = self.get_interpolated_value_single(chosen_current, current_wavelength) + self.get_interpolated_value_single(chosen_voltage, voltage_shift)
-        return optical_power * 1e-3, peak_wavelength * 1e-9  # in W and m
+        peak_wavelength = 1550 + self.get_interpolated_value_single(chosen_voltage, voltage_shift) 
+        return optical_power * 1e-3, peak_wavelength * 1e-9  # in W and ms
         
     def generate_alice_choices_single(self, basis=None, value=None, decoy=None):
          # Generate single values only if they are None

@@ -7,6 +7,7 @@ import os
 import time
 import threading
 from matplotlib.ticker import MaxNLocator
+import numpy as np
 
 
 class Saver:
@@ -137,6 +138,33 @@ class Saver:
             if memory_usage > MEMORY_LIMIT_MB:
                 print(f"⚠️ Memory limit exceeded! ({memory_usage:.2f} MB). Terminating process.")
                 os._exit(1)  # Forcefully kill the program
-            time.sleep(1)     # Check every second                
+            time.sleep(1)     # Check every second        
+
+    def prepare_data_for_histogram(time_photons_det_x, time_photons_det_z, bins_per_symbol, histogram_matrix_bins_x, histogram_matrix_bins_z):
+        """Prepare the data for the histogram by binning the photon arrival times."""
+        # Example parameters
+        num_symbols = 65
+        bins_per_symbol = 30
+        symbol_window = 100  # Example time window for one symbol (adjust as needed)
+
+        # Create bins
+        bins = np.linspace(0, symbol_window, bins_per_symbol + 1)  # 30 bins
+
+        # Loop over symbols
+        for i in range(num_symbols):
+            # Extract non-NaN times for this symbol
+            times_x = time_photons_det_x[i, ~np.isnan(time_photons_det_x[i])]
+            times_z = time_photons_det_z[i, ~np.isnan(time_photons_det_z[i])]
+
+            # Histogram for X basis
+            counts_x, _ = np.histogram(times_x, bins=bins)
+            histogram_matrix_bins_x[i, :] = counts_x
+            
+            # Histogram for Z basis
+            counts_z, _ = np.histogram(times_z, bins=bins)
+            histogram_matrix_bins_z[i, :] = counts_z
+            
+        return histogram_matrix_bins_x, histogram_matrix_bins_z
+        
 
     
