@@ -27,7 +27,7 @@ class SimulationManager:
     def run_simulation_one_state(self):
         
         T1_dampening = self.simulation_engine.initialize()
-        optical_power, peak_wavelength = self.simulation_single.random_laser_output_single('current_power','voltage_shift', 'current_wavelength')
+        optical_power, peak_wavelength, chosen_voltage, chosen_current = self.simulation_single.random_laser_output_single('current_power','voltage_shift')
         
         basis, value, decoy = self.simulation_single.generate_alice_choices_single(basis = 0, value = 0, decoy = 0)
         signals, t, _ = self.simulation_single.signal_bandwidth_single(basis, value, decoy)
@@ -57,7 +57,7 @@ class SimulationManager:
 
     def run_simulation_states(self):
         T1_dampening = self.simulation_engine.initialize()
-        optical_power, peak_wavelength = self.simulation_single.random_laser_output_single('current_power', 'voltage_shift', 'current_wavelength')
+        optical_power, peak_wavelength, chosen_voltage, chosen_current = self.simulation_single.random_laser_output_single('current_power', 'voltage_shift')
         
         # Define the states and their corresponding arguments
         states = [
@@ -139,7 +139,7 @@ class SimulationManager:
             else:
                 target_mean_photon_nr = self.config.mean_photon_decoy
 
-            optical_power, peak_wavelength = self.simulation_engine.random_laser_output('current_power', 'voltage_shift', 'current_wavelength')
+            optical_power, peak_wavelength, chosen_voltage, chosen_current = self.simulation_engine.random_laser_output('current_power', 'voltage_shift')
             
             # Generate Alice's choices
             basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=state["basis"], value=state["value"], decoy=state["decoy"])
@@ -256,7 +256,7 @@ class SimulationManager:
                 mean_of_mean_photon = np.empty(self.config.n_samples)
 
                 for i in range(self.config.n_samples):
-                    optical_power, peak_wavelength = self.simulation_engine.random_laser_output('current_power', 'voltage_shift', 'current_wavelength')
+                    optical_power, peak_wavelength, chosen_voltage, chosen_current = self.simulation_engine.random_laser_output('current_power', 'voltage_shift')
                     
                     # Generate Alice's choices
                     basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=state["basis"], value=state["value"], decoy=state["decoy"], fixed = True)
@@ -300,7 +300,7 @@ class SimulationManager:
         T1_dampening = self.simulation_engine.initialize()
         time_in_simulation = 0 
   
-        optical_power, peak_wavelength = self.simulation_engine.random_laser_output('current_power', 'voltage_shift', 'current_wavelength')
+        optical_power, peak_wavelength, chosen_voltage, chosen_current = self.simulation_engine.random_laser_output('current_power', 'voltage_shift')
         
         # Generate Alice's choices
         basis, value, decoy = self.simulation_engine.generate_alice_choices()
@@ -379,7 +379,7 @@ class SimulationManager:
 
         T1_dampening = self.simulation_engine.initialize()
         print(f"T1 dampening: {T1_dampening}")
-        optical_power, peak_wavelength = self.simulation_engine.random_laser_output('current_power', 'voltage_shift', 'current_wavelength')
+        optical_power, peak_wavelength, chosen_voltage, chosen_current = self.simulation_engine.random_laser_output('current_power', 'voltage_shift')
     
         # Generate Alice's choices
         basis, value, decoy = self.simulation_engine.generate_alice_choices()
@@ -406,12 +406,12 @@ class SimulationManager:
         
         start_time = time.time()  # Record start time
         T1_dampening = self.simulation_engine.initialize()
-        p_indep_x_states_non_dec = self.simulation_engine.find_p_indep_states_x_for_classifier(T1_dampening, simulation_length_factor=1000, is_decoy=False)
-        p_indep_x_states_dec = self.simulation_engine.find_p_indep_states_x_for_classifier(T1_dampening, simulation_length_factor=1000, is_decoy=True)
+        p_indep_x_states_non_dec = self.simulation_engine.find_p_indep_states_x_for_classifier(T1_dampening, simulation_length_factor=5000, is_decoy=False)
+        p_indep_x_states_dec = self.simulation_engine.find_p_indep_states_x_for_classifier(T1_dampening, simulation_length_factor=5000, is_decoy=True)
         print(f"p_indep_x_states_non_dec: {p_indep_x_states_non_dec}")
         print(f"p_indep_x_states_dec: {p_indep_x_states_dec}")
 
-        optical_power, peak_wavelength = self.simulation_engine.random_laser_output('current_power', 'voltage_shift', 'current_wavelength')
+        optical_power, peak_wavelength, chosen_voltage, chosen_current = self.simulation_engine.random_laser_output('current_power', 'voltage_shift')
 
         # Create a histogram
         '''plt.hist(peak_wavelength *1e9, bins=10)  # bins=10 is just an example; adjust as needed
@@ -505,7 +505,17 @@ class SimulationManager:
         end_time_read = time.time()  # Record end time  
         execution_time_run = end_time_read - start_time  # Calculate execution time
 
-        Saver.save_results_to_txt(  # Save the results to a text file
+         
+        Saver.save_arrays_to_csv('results', 
+                                 time_photons_det_x=time_photons_det_x, 
+                                 time_photons_det_z=time_photons_det_z, 
+                                 wavelength_photons_det_x=wavelength_photons_det_x, 
+                                 wavelength_photons_det_z=wavelength_photons_det_z, 
+                                 nr_photons_det_x=nr_photons_det_x,
+                                 nr_photons_det_z=nr_photons_det_z)
+        
+
+        ''''Saver.save_results_to_txt(  # Save the results to a text file
             n_samples=self.config.n_samples,
             seed=self.config.seed,
             non_signal_voltage=self.config.non_signal_voltage,
@@ -533,13 +543,12 @@ class SimulationManager:
             time_simulating_signal=time_simulating_signal,
             time_eam=time_eam
         )
-        '''Z0_sent_norm=Z0_sent_norm,
+        Z0_sent_norm=Z0_sent_norm,
         Z0_sent_dec=Z0_sent_dec,
         Z1_sent_norm=Z1_sent_norm,
         Z1_sent_dec=Z1_sent_dec,
         XP_sent_norm=XP_sent_norm,
         XP_sent_dec=XP_sent_dec,'''
-        return None
         
     def run_simulation_till_DLI(self):
         start_time = time.time()  # Record start time
@@ -549,15 +558,17 @@ class SimulationManager:
         # print(f"p_indep_x_states_non_dec: {p_indep_x_states_non_dec}")
         # print(f"p_indep_x_states_dec: {p_indep_x_states_dec}")
 
-        optical_power, peak_wavelength = self.simulation_engine.random_laser_output('current_power', 'voltage_shift', 'current_wavelength')
+        optical_power, peak_wavelength, chosen_voltage, chosen_current = self.simulation_engine.random_laser_output('current_power', 'voltage_shift', fixed = True)
 
         # Generate Alice's choices
-        basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=0, value=-1, decoy=0)
+        basis_array, value_array, decoy_array, lookup_array = self.simulation_helper.create_all_symbol_combinations_for_hist()
+
+        basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=basis_array, value=value_array, decoy=decoy_array)
 
         # Simulate signal and transmission
         signals, t, _ = self.simulation_engine.signal_bandwidth_jitter(basis, value, decoy)
 
-        amount_symbols_in_plot = 4
+        '''amount_symbols_in_plot = 4
         pulse_duration = 1 / self.config.sampling_rate_FPGA
         sampling_rate_fft = 100e11
         samples_per_pulse = int(pulse_duration * sampling_rate_fft)
@@ -569,11 +580,10 @@ class SimulationManager:
         plt.title(f"Voltage Signal with Bandwidth and Jitter for {amount_symbols_in_plot} symbols")
         plt.ylabel('Volt (V)')
         plt.xlabel('Time (ns)')
-        Saver.save_plot(f"signal_after_bandwidth")
+        Saver.save_plot(f"signal_after_bandwidth")'''
 
         power_dampened, norm_transmission,  calc_mean_photon_nr_eam, _ = self.simulation_engine.eam_transmission(signals, optical_power, T1_dampening, peak_wavelength, t)
-        self.plotter.plot_power(power_dampened, amount_symbols_in_plot=10, where_plot_1='after EAM')
-
+        # self.plotter.plot_power(power_dampened, amount_symbols_in_plot=10, where_plot_1='after EAM')
 
         power_dampened = self.simulation_engine.fiber_attenuation(power_dampened)
 
@@ -581,19 +591,21 @@ class SimulationManager:
         power_dampened = power_dampened * (1 - self.config.p_z_bob)
 
         #plot
-        amount_symbols_in_first_part = 15
-        first_power = power_dampened[:amount_symbols_in_first_part]
+        amount_symbols_in_first_part = 20
+        shift_DLI = 30
+        first_power = power_dampened[shift_DLI:shift_DLI + amount_symbols_in_first_part]
 
         # DLI
         power_dampened, phase_shift = self.simulation_engine.delay_line_interferometer(power_dampened, t, peak_wavelength)
-        print(f"PHASESHIFT in Grad: {np.angle(phase_shift) / (2 * np.pi) * 360}")
-        print(f"shape of power_dampened after DLI: {power_dampened.shape}")
+        # print(f"PHASESHIFT in Grad: {np.angle(phase_shift) / (2 * np.pi) * 360}")
+        # print(f"shape of power_dampened after DLI: {power_dampened.shape}")
+
         # plot
-        self.plotter.plot_power(power_dampened, amount_symbols_in_plot=amount_symbols_in_first_part, where_plot_1='before DLI',  shortened_first_power=first_power, where_plot_2='after DLI erster port,', title_rest='+ omega 0 for current ' + str(self.config.mean_current) + ' mA')
+        self.plotter.plot_power(power_dampened, amount_symbols_in_plot=amount_symbols_in_first_part, where_plot_1='before DLI',  shortened_first_power=first_power, where_plot_2='after DLI ', title_rest='- in fft, mean_volt: ' + str("{:.3f}".format(self.config.mean_voltage)) + ' voltage: ' + str("{:.3f}".format(chosen_voltage[0])) + ' V and ' + str("{:.3f}".format(peak_wavelength[0])), shift=shift_DLI)
 
         Saver.memory_usage("after everything: " + str("{:.3f}".format(time.time() - start_time)))
-        print(f"first 10 symbols of basis, value, decoy: {basis[:10]}, {value[:10]}, {decoy[:10]}")
-
+        # print(f"first 10 symbols of basis, value, decoy: {basis[:10]}, {value[:10]}, {decoy[:10]}")
+       
 
     def run_simulation_parameter_sweep_heater_transmission(self):
         #initialize
@@ -610,7 +622,7 @@ class SimulationManager:
         ]
     
         def laser_till_eam(state):
-            optical_power, peak_wavelength = self.simulation_engine.random_laser_output('current_power', 'voltage_shift', 'current_wavelength')
+            optical_power, peak_wavelength, chosen_voltage, chosen_current = self.simulation_engine.random_laser_output('current_power', 'voltage_shift')
             basis, value, decoy = self.simulation_engine.generate_alice_choices(basis = 0, value = -1, decoy = 0)
 
             signals, t, _ = self.simulation_engine.signal_bandwidth_jitter(basis, value, decoy)
@@ -631,7 +643,7 @@ class SimulationManager:
                 mean_of_mean_photon = np.empty(self.config.n_samples)
 
                 for i in range(self.config.n_samples):
-                    optical_power, peak_wavelength = self.simulation_engine.random_laser_output('current_power', 'voltage_shift', 'current_wavelength')
+                    optical_power, peak_wavelength, chosen_voltage, chosen_current = self.simulation_engine.random_laser_output('current_power', 'voltage_shift')
                     
                     # Generate Alice's choices
                     basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=state["basis"], value=state["value"], decoy=state["decoy"], fixed = True)
@@ -675,8 +687,7 @@ class SimulationManager:
         
         start_time = time.time()  # Record start time
         T1_dampening = self.simulation_engine.initialize()
-        optical_power, peak_wavelength = self.simulation_engine.random_laser_output('current_power', 'voltage_shift', 'current_wavelength')
-    
+        optical_power, peak_wavelength, chosen_voltage, chosen_current = self.simulation_engine.random_laser_output('current_power', 'voltage_shift')
         # Generate Alice's choices
         basis, value, decoy = self.simulation_engine.generate_alice_choices(basis = 0, value = -1, decoy = 0)
 
@@ -789,10 +800,10 @@ class SimulationManager:
         start_time = time.time()  # Record start time
         T1_dampening = self.simulation_engine.initialize()
 
-        optical_power, peak_wavelength = self.simulation_engine.random_laser_output('current_power', 'voltage_shift', 'current_wavelength')
+        optical_power, peak_wavelength, chosen_voltage, chosen_current = self.simulation_engine.random_laser_output('current_power', 'voltage_shift')
     
         # Generate Alice's choices
-        basis, value, decoy = self.simulation_engine.generate_alice_choices(basis = 0, value = -1, decoy = 0)
+        basis, value, decoy = self.simulation_engine.generate_alice_choices()
 
         # Simulate signal and transmission
         Saver.memory_usage("before simulating signal: " + str("{:.3f}".format(time.time() - start_time)))
@@ -846,4 +857,13 @@ class SimulationManager:
         # self.plotter.plot_and_delete_photon_wavelength_histogram_two_diagrams(wavelength_photons_det_x, wavelength_photons_det_z)
         # self.plotter.plot_and_delete_photon_nr_histogram(nr_photons_det_x, nr_photons_det_z)
         
+        # get results for both detectors
+        '''Saver.save_arrays_to_csv('results', 
+                                 time_photons_det_x=time_photons_det_x, 
+                                 time_photons_det_z=time_photons_det_z, 
+                                 wavelength_photons_det_x=wavelength_photons_det_x, 
+                                 wavelength_photons_det_z=wavelength_photons_det_z, 
+                                 nr_photons_det_x=nr_photons_det_x,
+                                 nr_photons_det_z=nr_photons_det_z)
+        '''
         return time_photons_det_x, time_photons_det_z

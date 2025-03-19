@@ -25,20 +25,22 @@ class SimulationEngine:
         tck = self.config.data.get_data(x_data, name)
         return splev(x_data, tck)
 
-    def random_laser_output(self, current_power, voltage_shift, current_wavelength):
+    def random_laser_output(self, current_power, voltage_shift, fixed=None):
         'every batchsize values we get a new chosen value'
         # Generate a random time within the desired range
         times = self.config.rng.uniform(0, 10, self.config.n_samples // self.config.batchsize)
         # Use sinusoidal modulation for the entire array
-        chosen_voltage = self.config.mean_voltage + self.config.voltage_amplitude * np.sin(2 * np.pi * 1 * times)  # 50 mV passt
-        chosen_current = ((self.config.mean_current) + self.config.current_amplitude * np.sin(2 * np.pi * 1 * times)) * 1e3
-        # chosen_voltage = np.ones(self.config.n_samples // self.config.batchsize) * self.config.mean_voltage
-        # chosen_current = np.ones(self.config.n_samples // self.config.batchsize) * (self.config.mean_current) * 1e3
+        if fixed is None:
+            chosen_voltage = self.config.mean_voltage + self.config.voltage_amplitude * np.sin(2 * np.pi * 1 * times)  # 50 mV passt
+            chosen_current = ((self.config.mean_current) + self.config.current_amplitude * np.sin(2 * np.pi * 1 * times)) * 1e3
+        else:
+            chosen_voltage = np.ones(self.config.n_samples // self.config.batchsize) * self.config.mean_voltage
+            chosen_current = np.ones(self.config.n_samples // self.config.batchsize) * (self.config.mean_current) * 1e3
         optical_power_short = self.get_interpolated_value(chosen_current, current_power)
         peak_wavelength_short =  1550 + self.get_interpolated_value(chosen_voltage, voltage_shift)  # self.get_interpolated_value(chosen_current, current_wavelength) +
         optical_power = np.repeat(optical_power_short, self.config.batchsize)
         peak_wavelength = np.repeat(peak_wavelength_short, self.config.batchsize)
-        return optical_power * 1e-3, peak_wavelength * 1e-9  # in W and m
+        return optical_power * 1e-3, peak_wavelength * 1e-9, chosen_voltage, chosen_current  # in W and m
 
     def generate_alice_choices(self, basis=None, value=None, decoy=None):
         """Generates Alice's choices for a quantum communication protocol."""
@@ -178,66 +180,6 @@ class SimulationEngine:
         power_dampened = power_dampened * attenuation_factor
         return power_dampened
 
-    def delay_line_interferometer_wo_FFT(self, power_dampened, t, peak_wavelength):
-
-        # get amplitude
-        power_dampened = np.sqrt(power_dampened) # ignore phase bc is global phase
-        amplitude = power_dampened
-
-        sampling_rate_fft = 100e11
-        frequencies = fftfreq(len(t) * self.config.batchsize, d=1 / sampling_rate_fft)
-        f_0 = constants.c / peak_wavelength     # Frequency of the symbol (float64)
-
-        for i in range(0, self.config.n_samples, self.config.batchsize):
-            f_0_part = f_0[i:i + self.config.batchsize]
-            f_0_part = np.repeat(f_0_part, len(t))
-            shifted_frequencies_for_w_0 = frequencies - f_0_part  
-            t_shift = t[-1] / 2
-            phi_shift = np.exp(1j * 2 * np.pi * shifted_frequencies_for_w_0 * t_shift)
-
-            amplitude_batch = amplitude[i:i + self.config.batchsize, :]
-            flattened_amplitude_batch = amplitude_batch.reshape(-1)
-
-            amp_fft = np.fft.fft(flattened_amplitude_batch)  # FFT of row i
-            del flattened_amplitude_batch
-            gc.collect()
-
-            '''if i == 0:
-                plt.plot(frequencies, np.abs(amp_fft), label = 'in DLI')
-                plt.title(f"Amplitude FFT in DLI")
-                plt.xlabel("Frequency (Hz)")
-                plt.ylabel("Amplitude")
-                plt.ylim(0, 0.05)
-                plt.grid()
-                Saver.save_plot(f"amplitude_fft_in_DLI")'''
-
-            total_amplitude = np.real(np.fft.ifft(1 / 2 * amp_fft * (1 - phi_shift)))  # Convert back to time domain
-            # total_amplitude = np.real(np.fft.ifft(1 / 2 * (1j * amp_fft + 1j * amp_fft * phase_shift)))
-
-            total_amplitude = total_amplitude.reshape(self.config.batchsize, len(t))
-            amplitude[i:i + self.config.batchsize, :] = total_amplitude
-            '''plt.plot(total_amplitude[0], label = 'after DLI')
-            plt.title(f"Amplitude Shifted (2-6th row) after DLI")
-            plt.title("Amplitude Shifted (2-6th row)")
-            plt.xlabel("Time Bins")
-            plt.ylabel("Amplitude")
-            plt.grid()
-            plt.show()'''
-
-        '''plt.plot(amplitude_shifted[2:6].flatten())
-        plt.title("Amplitude Shifted (2-6th row)")
-        plt.xlabel("Time Bins")
-        plt.ylabel("Amplitude")
-        plt.grid()
-        plt.show()
-        '''
-        amplitude = np.abs(amplitude)**2
-        power_dampened = amplitude
-
-        # power_dampened_total = np.zeros((self.config.n_samples, len(t)))
-
-        return power_dampened, phi_shift[0]
-
     def delay_line_interferometer(self, power_dampened, t, peak_wavelength):
 
         # get amplitude
@@ -256,26 +198,32 @@ class SimulationEngine:
             phi_shift = np.exp(1j * 2 * np.pi * shifted_frequencies_for_w_0 * t_shift)
 
             amplitude_batch = amplitude[i:i + self.config.batchsize, :]
+            # reverse amplitude in batch
+            amplitude_batch[:] = amplitude_batch[::-1]
             flattened_amplitude_batch = amplitude_batch.reshape(-1)
 
             amp_fft = np.fft.fft(flattened_amplitude_batch)  # FFT of row i
             del flattened_amplitude_batch
             gc.collect()
 
-            if i == 0:
-                plt.plot(frequencies, np.abs(amp_fft), label = 'in DLI')
-                plt.title(f"Amplitude FFT in DLI")
-                plt.xlabel("Frequency (Hz)")
-                plt.ylabel("Amplitude")
-                plt.ylim(0, 0.5)
-                plt.xlim(-5e10, 5e10)
-                plt.grid()
-                Saver.save_plot(f"amplitude_fft_in_DLI")
+            # if i == 0:
+            #     plt.plot(frequencies, np.abs(amp_fft), label = 'in DLI')
+            #     plt.title(f"Amplitude FFT in DLI")
+            #     plt.xlabel("Frequency (Hz)")
+            #     plt.ylabel("Amplitude")
+            #     plt.ylim(0, 0.5)
+            #     plt.xlim(-5e10, 5e10)
+            #     plt.grid()
+            #     Saver.save_plot(f"amplitude_fft_in_DLI_blub")
 
             total_amplitude = np.real(np.fft.ifft(1 / 2 * amp_fft * (1 - phi_shift)))  # Convert back to time domain
-            # total_amplitude = np.real(np.fft.ifft(1 / 2 * (1j * amp_fft + 1j * amp_fft * phase_shift)))
+            # total_amplitude = np.real(np.fft.ifft(1 / 2 * (1j * amp_fft + 1j * amp_fft * phi_shift)))
+            
+            # reverse total amplitude again
+            total_amplitude[:] = total_amplitude[::-1]
 
             total_amplitude = total_amplitude.reshape(self.config.batchsize, len(t))
+
             amplitude[i:i + self.config.batchsize, :] = total_amplitude
             '''if i == 0:
                 plt.plot(total_amplitude[0], label = 'after DLI')
@@ -503,7 +451,7 @@ class SimulationEngine:
         else:
             decoy_pattern = 0
 
-        optical_power, peak_wavelength = self.random_laser_output('current_power', 'voltage_shift', 'current_wavelength')
+        optical_power, peak_wavelength, chosen_voltage, chosen_current = self.random_laser_output('current_power', 'voltage_shift', 'current_wavelength')
         basis, value, decoy = self.generate_alice_choices(basis=basis_pattern, value=value_pattern, decoy=decoy_pattern)
         signals, t, _ = self.signal_bandwidth_jitter(basis, value, decoy)
         power_dampened, norm_transmission, _, _ = self.eam_transmission(signals, optical_power, T1_dampening, peak_wavelength, t)

@@ -37,14 +37,14 @@ class Plotter:
             # Flatten and concatenate all elements
             return np.concatenate([arr.flatten() for arr in data])
     
-    def plot_power(self, second_power, amount_symbols_in_plot=4, where_plot_1=None, shortened_first_power=None, where_plot_2=None, title_rest=None):	
+    def plot_power(self, second_power, amount_symbols_in_plot=4, where_plot_1=None, shortened_first_power=None, where_plot_2=None, title_rest=None, shift=0):	
         print(f"len(second_power): {len(second_power)}")
         pulse_duration = 1 / self.config.sampling_rate_FPGA
         sampling_rate_fft = 100e11
         samples_per_pulse = int(pulse_duration * sampling_rate_fft)
         total_samples = self.config.n_pulses * samples_per_pulse
         t_plot1 = np.linspace(0, amount_symbols_in_plot * self.config.n_pulses * pulse_duration, amount_symbols_in_plot * total_samples, endpoint=False)
-        second_part = second_power[:amount_symbols_in_plot]
+        second_part = second_power[shift:shift + amount_symbols_in_plot]
         second_part = second_part.reshape(-1)
         print(f"len(second_part): {len(second_part)}")
         plt.figure(figsize=(8, 6))

@@ -8,6 +8,8 @@ import time
 import threading
 from matplotlib.ticker import MaxNLocator
 import numpy as np
+import pandas as pd
+import inspect
 
 
 class Saver:
@@ -138,7 +140,46 @@ class Saver:
             if memory_usage > MEMORY_LIMIT_MB:
                 print(f"⚠️ Memory limit exceeded! ({memory_usage:.2f} MB). Terminating process.")
                 os._exit(1)  # Forcefully kill the program
-            time.sleep(1)     # Check every second        
+            time.sleep(1)     # Check every second   
+
+    @staticmethod
+    def save_arrays_to_csv(filename, **arrays):
+        """
+        Save multiple arrays to a CSV file with column names based on variable names.
+
+        Args:
+            filename (str): Name of the CSV file (e.g., "output.csv").
+            **arrays: Any number of named arrays to save.
+
+        Example:
+            save_arrays_to_csv("output.csv", basis=basis_array, decoy=decoy_array)
+        """
+        # Generate timestamp for filename
+        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+
+        output_dir = r"C:\Users\leavi\OneDrive\Dokumente\Uni\Semester 7\NeuMoQP\Programm\results"
+
+        # Ensure the output directory exists
+        os.makedirs(output_dir, exist_ok=True)
+
+        # Define the file path
+        filepath = os.path.join(output_dir, f"output_{timestamp}_{filename}.csv")
+
+        # Convert arrays to dictionary with variable names as column headers
+        data_dict = {name: np.array(values) for name, values in arrays.items()}
+
+        # Ensure all arrays have the same length
+        max_length = max(len(arr) for arr in data_dict.values())
+        for key in data_dict:
+            if len(data_dict[key]) < max_length:
+                data_dict[key] = np.pad(data_dict[key], (0, max_length - len(data_dict[key])), constant_values=np.nan)
+
+        # Convert to DataFrame and save
+        df = pd.DataFrame(data_dict)
+        df.to_csv(filepath, index=False)
+
+        print(f"✅ Saved to {filename} with columns: {list(data_dict.keys())}")    
+     
 
     def prepare_data_for_histogram(time_photons_det_x, time_photons_det_z, bins_per_symbol, histogram_matrix_bins_x, histogram_matrix_bins_z):
         """Prepare the data for the histogram by binning the photon arrival times."""
@@ -163,8 +204,6 @@ class Saver:
             # Histogram for Z basis
             counts_z, _ = np.histogram(times_z, bins=bins)
             histogram_matrix_bins_z[i, :] = counts_z
-            
-        return histogram_matrix_bins_x, histogram_matrix_bins_z
-        
 
+        return histogram_matrix_bins_x, histogram_matrix_bins_z
     
