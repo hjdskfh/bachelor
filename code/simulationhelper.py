@@ -368,12 +368,15 @@ class SimulationHelper:
 
         # gain  
         ind_Z_sent_non_dec = np.intersect1d(indices_z_long, ind_sent_non_dec)
+        print(f"indices_z_long: {indices_z_long}")
+        print(f"ind_sent_non_dec: {ind_sent_non_dec}")
+        print(f"ind_Z_sent_non_dec: {ind_Z_sent_non_dec}")
         len_Z_checked_non_dec = len(ind_Z0_checked_non_dec) + len(ind_Z1_checked_non_dec)
 
         if len(ind_Z_sent_non_dec) != 0:
             gain_Z_non_dec = len_Z_checked_non_dec / len(ind_Z_sent_non_dec)	
         else:
-            raise ValueError("No Z sent detected")
+            -999 #raise ValueError("No Z sent detected")
         
         # gain Z dec
         ind_Z_sent_dec = np.intersect1d(indices_z_long, ind_sent_dec)
@@ -382,11 +385,11 @@ class SimulationHelper:
         if len(ind_Z_sent_dec) != 0:
             gain_Z_dec = len_Z_checked_dec / len(ind_Z_sent_dec)	
         else:
-            raise ValueError("No Z decoy sent detected")
+            -999 #raise ValueError("No Z decoy sent detected")
         
         return gain_Z_non_dec, gain_Z_dec, len_Z_checked_dec, len_Z_checked_non_dec
 
-    def classificator_identify_x(self, p_indep_x_states_non_dec, p_indep_x_states_dec, detected_indices_x_det_x_basis, detected_indices_z_det_z_basis, index_where_photons_det_x, index_where_photons_det_z, decoy, indices_x_long):
+    def classificator_identify_x(self, detected_indices_x_det_x_basis, detected_indices_z_det_z_basis, index_where_photons_det_x, index_where_photons_det_z, decoy, indices_x_long):
         if index_where_photons_det_x.size == 0 or index_where_photons_det_z.size == 0:
             return 0, 0, 0, 0
         # X basis
@@ -408,8 +411,8 @@ class SimulationHelper:
         ind_XP_prime_checked_dec = np.intersect1d(X_P_prime_checked_long, ind_sent_dec_long)
 
         # X_P_calc
-        X_P_calc_dec = len(ind_XP_prime_checked_dec) * p_indep_x_states_dec
-        X_P_calc_non_dec = len(ind_XP_prime_checked_non_dec) * p_indep_x_states_non_dec
+        X_P_calc_dec = len(ind_XP_prime_checked_dec) * self.config.p_indep_x_states_dec
+        X_P_calc_non_dec = len(ind_XP_prime_checked_non_dec) * self.config.p_indep_x_states_non_dec
 
         # gain non dec 
         ind_sent_non_dec_long = np.where((decoy == 0))[0]
@@ -418,7 +421,7 @@ class SimulationHelper:
         if len(ind_x_sent_non_dec_long) != 0:
             gain_X_non_dec = X_P_calc_non_dec / len(ind_x_sent_non_dec_long)
         else:
-            raise ValueError("No Z sent detected")
+            -999 #raise ValueError("No Z sent detected")
         
         # gain X dec
         ind_sent_dec_long = np.where((decoy == 1))[0]
@@ -427,7 +430,7 @@ class SimulationHelper:
         if len(ind_x_sent_dec_long) != 0:
             gain_X_dec = X_P_calc_dec / len(ind_x_sent_dec_long)
         else:
-            raise ValueError("No Z decoy sent detected")
+            -999 #raise ValueError("No Z decoy sent detected")
 
         return X_P_calc_non_dec, X_P_calc_dec, gain_X_non_dec, gain_X_dec
     
@@ -469,23 +472,41 @@ class SimulationHelper:
             Z1_alice = np.where((basis == 1) & (value == 1))[0]  # Indices where Z1 was sent
             Z0_alice = np.where((basis == 1) & (value == 0))[0]  # Indices where Z0 was sent
             Z1_Z0_alice = Z0_alice[np.isin(Z0_alice - 1, Z1_alice)]  # Indices where Z1Z0 was sent (index of Z0 used aka the higher index at which time we measure the X+ state)
-            has_0_and_z0z1 = np.any(detected_indices_x_det_x_basis == 0, axis=1) & np.isin(index_where_photons_det_x, Z1_Z0_alice)
+            has_0_long = index_where_photons_det_x[np.any(detected_indices_x_det_x_basis == 0, axis=1)]
+            has_z0z1_long = np.isin(index_where_photons_det_x, Z1_Z0_alice)
+            has_0_and_z0z1 = np.intersect1d(has_0_long, has_z0z1_long) 
             wrong_detection_mask_x[np.where(has_0_and_z0z1)[0]] = True
             #Condition 5: Early detection in X+ after Z1X+
             XP_alice = np.where((basis == 0))[0] # Indices where X+ was sent
             Z1_XP_alice = XP_alice[np.isin(XP_alice - 1, Z1_alice)]  # Indices where Z1X+ was sent (index of X+ used aka the higher index at which time we measure the X+ state)
-            has_0_and_z1xp = np.any(detected_indices_x_det_x_basis == 0, axis=1) &  np.isin(index_where_photons_det_x, Z1_XP_alice)
+            has_0_long = index_where_photons_det_x[np.any(detected_indices_x_det_x_basis == 0, axis=1)]
+            has_z1xp_long = np.isin(index_where_photons_det_x, Z1_XP_alice)
+            has_0_and_z1xp = np.intersect1d(has_0_long, has_z1xp_long)
             wrong_detection_mask_x[np.where(has_0_and_z1xp)[0]] = True
             #Condition 6: Late detection in X+ after X+ sent
-            has_1_and_xp = np.any(detected_indices_x_det_x_basis == 1, axis=1) & (basis[index_where_photons_det_x] == 0)
+            has_1_long = index_where_photons_det_x[np.any(detected_indices_x_det_x_basis == 1, axis=1)]
+            has_xp_long = index_where_photons_det_x[basis[index_where_photons_det_x] == 0]
+            has_1_and_xp = np.intersect1d(has_1_long, has_xp_long)
             wrong_detection_mask_x[np.where(has_1_and_xp)[0]] = True
             #`wrong_detection_mask` is a boolean array where True indicates a wrong detection
-            wrong_detections_x = index_where_photons_det_x[wrong_detection_mask_x]
         else:
             wrong_detections_x = np.array([])
         wrong_detections_z = np.sort(wrong_detections_z)
         wrong_detections_x = np.sort(wrong_detections_x)                                        # now sorted
         return wrong_detections_z, wrong_detections_x  
+    
+    def classificator_calc_qber_pherr(self, len_Z_checked_dec, len_Z_checked_non_dec):
+        if len_Z_checked_dec != 0:
+            qber_dec = len(wrong_detections_z) / amount_Z_det_norm
+        else:
+            qber = 0
+
+        if amount_XP_det_norm != 0:
+            phase_error_rate = len(wrong_detections_x) / amount_XP_det_norm
+        else:
+            phase_error_rate = 0
+
+        raw_key_rate = total_amount_detections / (t[-1] * self.config.n_samples)
     
     # ========== Data Processing Helper ==========
 

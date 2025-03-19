@@ -146,14 +146,13 @@ class Saver:
     def save_arrays_to_csv(filename, **arrays):
         """
         Save multiple arrays to a CSV file with column names based on variable names.
+        Handles cases where single numbers (int, float) are passed instead of arrays.
 
         Args:
             filename (str): Name of the CSV file (e.g., "output.csv").
             **arrays: Any number of named arrays to save.
-
-        Example:
-            save_arrays_to_csv("output.csv", basis=basis_array, decoy=decoy_array)
         """
+
         # Generate timestamp for filename
         timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
 
@@ -165,21 +164,28 @@ class Saver:
         # Define the file path
         filepath = os.path.join(output_dir, f"output_{timestamp}_{filename}.csv")
 
-        # Convert arrays to dictionary with variable names as column headers
-        data_dict = {name: np.array(values) for name, values in arrays.items()}
+        # ✅ Convert all values to NumPy arrays safely
+        data_dict = {name: np.atleast_1d(values) for name, values in arrays.items()}  # Ensures all values are at least 1D
 
-        # Ensure all arrays have the same length
+        # ✅ Convert integer arrays to float before padding
+        for key in data_dict:
+            if data_dict[key].dtype == np.int64:  # If it's an integer array
+                data_dict[key] = data_dict[key].astype(float)  # Convert to float
+
+        # ✅ Ensure all arrays have the same length
         max_length = max(len(arr) for arr in data_dict.values())
+
+        # ✅ Pad arrays so they all have the same length
         for key in data_dict:
             if len(data_dict[key]) < max_length:
                 data_dict[key] = np.pad(data_dict[key], (0, max_length - len(data_dict[key])), constant_values=np.nan)
 
-        # Convert to DataFrame and save
+        # ✅ Convert to DataFrame and save
         df = pd.DataFrame(data_dict)
         df.to_csv(filepath, index=False)
 
-        print(f"✅ Saved to {filename} with columns: {list(data_dict.keys())}")    
-     
+        print(f"✅ Saved to {filename} with columns: {list(data_dict.keys())}")
+
 
     def prepare_data_for_histogram(time_photons_det_x, time_photons_det_z, bins_per_symbol, histogram_matrix_bins_x, histogram_matrix_bins_z):
         """Prepare the data for the histogram by binning the photon arrival times."""

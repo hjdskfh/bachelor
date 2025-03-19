@@ -344,7 +344,7 @@ class SimulationEngine:
 
         return len_wrong_detections_z, len_wrong_detections_x, total_amount_detections, amount_Z_detections, amount_XP_detections, qber, phase_error_rate, raw_key_rate, gain_XP_norm, gain_XP_dec, gain_Z_norm, gain_Z_dec, detected_indices_x_dec, detected_indices_x_norm, detected_indices_z_dec, detected_indices_z_norm
     
-    def classificator_new(self, t, time_photons_det_x, index_where_photons_det_x, time_photons_det_z, index_where_photons_det_z, p_indep_x_states_non_dec, p_indep_x_states_dec, basis, value, decoy):
+    def classificator_new(self, t, time_photons_det_x, index_where_photons_det_x, time_photons_det_z, index_where_photons_det_z, basis, value, decoy):
         """Classify time bins."""
         num_segments = self.config.n_pulses // 2
         timebins = np.linspace(t[-1] / num_segments, t[-1], num_segments)        
@@ -367,11 +367,11 @@ class SimulationEngine:
 
         gain_Z_non_dec, gain_Z_dec, len_Z_checked_dec, len_Z_checked_non_dec = self.simulation_helper.classificator_identify_z(value, total_sift_z_basis_short, detected_indices_x_det_x_basis, index_where_photons_det_z, index_where_photons_det_x, decoy, indices_z_long)
 
-        X_P_calc_non_dec, X_P_calc_dec, gain_X_non_dec, gain_X_dec = self.simulation_helper.classificator_identify_x(p_indep_x_states_non_dec, p_indep_x_states_dec, detected_indices_x_det_x_basis, detected_indices_z_det_z_basis, index_where_photons_det_x, index_where_photons_det_z, decoy, indices_x_long)
+        X_P_calc_non_dec, X_P_calc_dec, gain_X_non_dec, gain_X_dec = self.simulation_helper.classificator_identify_x(detected_indices_x_det_x_basis, detected_indices_z_det_z_basis, index_where_photons_det_x, index_where_photons_det_z, decoy, indices_x_long)
 
-        wrong_detections_z = self.simulation_helper.classificator_errors(index_where_photons_det_x, index_where_photons_det_z, detected_indices_z, detected_indices_x, basis)
+        wrong_detections_z, wrong_detections_x = self.simulation_helper.classificator_errors(index_where_photons_det_x, index_where_photons_det_z, detected_indices_z_det_z_basis, detected_indices_x_det_x_basis, basis, value)
 
-        return p_vacuum_z, total_sift_x_basis_long, total_sift_z_basis_short, vacuum_indices_x_long, len_Z_checked_dec, len_Z_checked_non_dec, gain_Z_non_dec, gain_Z_dec, gain_X_non_dec, gain_X_dec, X_P_calc_non_dec, X_P_calc_dec, wrong_detections_z
+        return p_vacuum_z, vacuum_indices_x_long, len_Z_checked_dec, len_Z_checked_non_dec, gain_Z_non_dec, gain_Z_dec, gain_X_non_dec, gain_X_dec, X_P_calc_non_dec, X_P_calc_dec, wrong_detections_z, wrong_detections_x   
     
     def initialize(self):
         plt.style.use(self.config.mlp)
@@ -451,7 +451,7 @@ class SimulationEngine:
         else:
             decoy_pattern = 0
 
-        optical_power, peak_wavelength, chosen_voltage, chosen_current = self.random_laser_output('current_power', 'voltage_shift', 'current_wavelength')
+        optical_power, peak_wavelength, _, _ = self.random_laser_output('current_power', 'voltage_shift', 'current_wavelength')
         basis, value, decoy = self.generate_alice_choices(basis=basis_pattern, value=value_pattern, decoy=decoy_pattern)
         signals, t, _ = self.signal_bandwidth_jitter(basis, value, decoy)
         power_dampened, norm_transmission, _, _ = self.eam_transmission(signals, optical_power, T1_dampening, peak_wavelength, t)
@@ -464,8 +464,8 @@ class SimulationEngine:
 
         # X basis
         power_dampened = power_dampened * (1 - self.config.p_z_bob)
-        power_dampened, phase_shift = self.delay_line_interferometer(power_dampened, t, peak_wavelength)
-        time_photons_det_x, _, _, index_where_photons_det_x, _,_, _ = self.detector(t, norm_transmission, peak_wavelength, power_dampened)        
+        power_dampened, _ = self.delay_line_interferometer(power_dampened, t, peak_wavelength)
+        time_photons_det_x, _, _, index_where_photons_det_x, _, _, _ = self.detector(t, norm_transmission, peak_wavelength, power_dampened)        
 
         # classificator
         num_segments = self.config.n_pulses // 2
@@ -482,10 +482,8 @@ class SimulationEngine:
             -1,                                                                 # Assign -1 for undetected photons
             np.digitize(time_photons_det_x, timebins) - 1                         # Early = 0, Late = 1
             )
-        detected_indices_z_det_z_basis, p_vacuum_z, total_sift_z_basis_short, indices_z_long = self.simulation_helper.classificator_sift_z_vacuum(basis, detected_indices_z, index_where_photons_det_z)
+        
         detected_indices_x_det_x_basis, total_sift_x_basis_long, vacuum_indices_x_long, indices_x_long = self.simulation_helper.classificator_sift_x_vacuum(basis, detected_indices_x, index_where_photons_det_x)
-        gain_Z_non_dec, gain_Z_dec, len_Z_checked_dec, len_Z_checked_non_dec = self.simulation_helper.classificator_identify_z(value, total_sift_z_basis_short, detected_indices_x_det_x_basis, 
-                                                                                                                               index_where_photons_det_z, index_where_photons_det_x, decoy, indices_z_long)
         p_indep_x_states = self.simulation_helper.classificator_identify_x_calc_p_indep_states_x(detected_indices_x_det_x_basis, index_where_photons_det_x)
 
 

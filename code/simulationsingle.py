@@ -19,7 +19,7 @@ class SimulationSingle:
         tck = self.config.data.get_data(x_data, name)
         return splev(x_data, tck)
     
-    def random_laser_output_single(self, current_power, voltage_shift, current_wavelength):
+    def random_laser_output_single(self, current_power, voltage_shift):
         # Use fixed values for a single instance
         time = self.config.rng.uniform(0, 10)
         chosen_voltage = self.config.mean_voltage 
@@ -129,7 +129,8 @@ class SimulationSingle:
     
     def find_T1(self, lower_limit, upper_limit, tol):
         # Generate a single instance for T1 dampening calculation
-        optical_power, peak_wavelength = self.random_laser_output_single('current_power', 'voltage_shift', 'current_wavelength')
+        optical_power, peak_wavelength = self.random_laser_output_single('current_power', 'voltage_shift')
+        # Z0 non decoy state
         basis, value, decoy = self.generate_alice_choices_single(basis = 1, value = 1, decoy = 0)
 
         while upper_limit - lower_limit > tol:
@@ -190,7 +191,7 @@ class SimulationSingle:
         store_upper_limit = upper_limit
 
         # Set the optical power and peak wavelength for the simulation
-        optical_power, peak_wavelength = self.random_laser_output_single('current_power', 'voltage_shift', 'current_wavelength')
+        optical_power, peak_wavelength = self.random_laser_output_single('current_power', 'voltage_shift')
 
         # Find voltage for 000 -> 1010 non-decoy state
         var_voltage_sup = self._set_voltage(optical_power, peak_wavelength, lower_limit, upper_limit, tol, 

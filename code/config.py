@@ -1,15 +1,17 @@
 import numpy as np
 
 class SimulationConfig:
-    def __init__(self, data, seed = None, n_samples=10000, n_pulses=4, batchsize = 1000, mean_voltage=1.0, mean_current=0.08, voltage_amplitude=0.050, current_amplitude = 0.02,
+    def __init__(self, data, round = 1, seed = None, n_samples=10000, n_pulses=4, batchsize = 1000, mean_voltage=1.0, mean_current=0.08, voltage_amplitude=0.050, current_amplitude = 0.02,
                  p_z_alice=0.5, p_decoy=0.1, p_z_bob = 0.85, sampling_rate_FPGA=6.75e9, bandwidth = 4e9, jitter=1e-11, non_signal_voltage = -1, voltage_decoy=0,
                  voltage=0, voltage_decoy_sup=0, voltage_sup=0, 
                  mean_photon_nr=0.7, mean_photon_decoy=0.1, 
                  fiber_attenuation = -3, insertion_loss_dli = -1, n_eff_in_fiber = 1.558, detector_efficiency = 0.3, dark_count_frequency = 100, detection_time = 1e-9, detector_jitter = 100e-12, 
+                 p_indep_x_states_non_dec=None, p_indep_x_states_dec=None,
                  mlp = None
                  ):
         # Input data
         self.data = data
+        self.round = round # count rounds where all setting are the same and eg p_indep_x is not needed
 
         # random generator / seed
         self.seed = int(seed) if seed is not None else int(np.random.default_rng().integers(1, 1e6))
@@ -61,6 +63,10 @@ class SimulationConfig:
         self.dark_count_frequency = dark_count_frequency #Hz
         self.detection_time = detection_time #s
         self.detector_jitter = detector_jitter #s
+
+        # p_indep_x_states_dec aus vorherigen runs
+        self.p_indep_x_states_non_dec=p_indep_x_states_non_dec
+        self.p_indep_x_states_dec=p_indep_x_states_dec
 
         # mlp-style
         self.mlp = mlp

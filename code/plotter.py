@@ -56,7 +56,7 @@ class Plotter:
             shortened_first_power = shortened_first_power.reshape(-1)
             plt.plot(t_plot1 * 1e9, shortened_first_power * 1e3, label=where_plot_1)
             plt.plot(t_plot1 * 1e9, second_part * 1e3, label=where_plot_2)
-            plt.title(f"Power {where_plot_1} and {where_plot_2} {title_rest} over {amount_symbols_in_plot} Symbols")
+            plt.title(f"Power {title_rest} over {amount_symbols_in_plot} Symbols")
         
         plt.ylabel('Power (mW)')
         plt.xlabel('Time (ns)')
@@ -66,7 +66,7 @@ class Plotter:
         if shortened_first_power is None:
             Saver.save_plot(f"power_{where_plot_1.replace(' ', '_').lower()}_for_{amount_symbols_in_plot}_symbols")
         else:
-            Saver.save_plot(f"power_two_power_plots_for_{amount_symbols_in_plot}_{where_plot_2.replace(' ', '_').lower()}_symbols")
+            Saver.save_plot(f"power_{amount_symbols_in_plot}_{where_plot_2.replace(' ', '_').lower()}_symbols")
         del second_power
         gc.collect()
     

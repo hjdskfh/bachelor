@@ -21,8 +21,6 @@ class SimulationManager:
         self.simulation_single = SimulationSingle(config)
         self.simulation_helper = SimulationHelper(config)
         self.plotter = Plotter(config)
-
-
     
     def run_simulation_one_state(self):
         
@@ -406,10 +404,11 @@ class SimulationManager:
         
         start_time = time.time()  # Record start time
         T1_dampening = self.simulation_engine.initialize()
-        p_indep_x_states_non_dec = self.simulation_engine.find_p_indep_states_x_for_classifier(T1_dampening, simulation_length_factor=5000, is_decoy=False)
-        p_indep_x_states_dec = self.simulation_engine.find_p_indep_states_x_for_classifier(T1_dampening, simulation_length_factor=5000, is_decoy=True)
-        print(f"p_indep_x_states_non_dec: {p_indep_x_states_non_dec}")
-        print(f"p_indep_x_states_dec: {p_indep_x_states_dec}")
+        if  self.config.p_indep_x_states_non_dec is None or self.config.p_indep_x_states_dec is None:
+            self.config.p_indep_x_states_non_dec = self.simulation_engine.find_p_indep_states_x_for_classifier(T1_dampening, simulation_length_factor=5000, is_decoy=False)
+            self.config.p_indep_x_states_dec = self.simulation_engine.find_p_indep_states_x_for_classifier(T1_dampening, simulation_length_factor=5000, is_decoy=True)
+        print(f"p_indep_x_states_non_dec: {self.config.p_indep_x_states_non_dec}")
+        print(f"p_indep_x_states_dec: {self.config.p_indep_x_states_dec}")
 
         optical_power, peak_wavelength, chosen_voltage, chosen_current = self.simulation_engine.random_laser_output('current_power', 'voltage_shift')
 
@@ -421,7 +420,7 @@ class SimulationManager:
         Saver.save_plot(f"hist_peak_wavelength")'''
     
         # Generate Alice's choices
-        basis, value, decoy = self.simulation_engine.generate_alice_choices(basis = 0, value = -1, decoy = 0)
+        basis, value, decoy = self.simulation_engine.generate_alice_choices()
 
         # Simulate signal and transmission
         Saver.memory_usage("before simulating signal: " + str("{:.3f}".format(time.time() - start_time)))
@@ -478,7 +477,7 @@ class SimulationManager:
         print(f"PHASESHIFT in Grad: {np.angle(phase_shift) / (2 * np.pi) * 360}")
         print(f"shape of power_dampened after DLI: {power_dampened.shape}")
         # plot
-        self.plotter.plot_power(power_dampened, amount_symbols_in_plot=amount_symbols_in_first_part, where_plot_1='before DLI',  shortened_first_power=first_power, where_plot_2='after DLI erster port,', title_rest='+ omega 0 for current ' + str(self.config.mean_current) + ' mA')
+        self.plotter.plot_power(power_dampened, amount_symbols_in_plot=amount_symbols_in_first_part, where_plot_1='before DLI',  shortened_first_power=first_power, where_plot_2='after DLI,', title_rest='- in fft, mean_volt: ' + str("{:.3f}".format(self.config.mean_voltage)) + ' voltage: ' + str("{:.3f}".format(chosen_voltage[0])) + ' V and ' + str("{:.3f}".format(peak_wavelength[0])))
 
         Saver.memory_usage("before detector x: " + str(time.time() - start_time))
         time_photons_det_x, wavelength_photons_det_x, nr_photons_det_x, index_where_photons_det_x, calc_mean_photon_nr_detector_x, dark_count_times_x, num_dark_counts_x = self.simulation_engine.detector(t, norm_transmission, peak_wavelength, power_dampened, start_time)        
@@ -494,7 +493,7 @@ class SimulationManager:
                                                                                                             time_photons_det_z, index_where_photons_det_z, 
                                                                                                             basis, value, decoy)
         '''
-        p_vacuum_z, total_sift_x_basis_long, total_sift_z_basis_short, vacuum_indices_x_long, len_Z_checked_dec, len_Z_checked_non_dec, gain_Z_non_dec, gain_Z_dec, gain_X_non_dec, gain_X_dec, X_P_calc_non_dec, X_P_calc_dec, wrong_detections_z = self.simulation_engine.classificator_new(t, time_photons_det_x, index_where_photons_det_x, time_photons_det_z, index_where_photons_det_z, p_indep_x_states_non_dec, p_indep_x_states_dec, basis, value, decoy)
+        p_vacuum_z, vacuum_indices_x_long, len_Z_checked_dec, len_Z_checked_non_dec, gain_Z_non_dec, gain_Z_dec, gain_X_non_dec, gain_X_dec, X_P_calc_non_dec, X_P_calc_dec, wrong_detections_z, wrong_detections_x = self.simulation_engine.classificator_new(t, time_photons_det_x, index_where_photons_det_x, time_photons_det_z, index_where_photons_det_z, basis, value, decoy)
 
         # plot so I can delete
         # self.plotter.plot_and_delete_photon_time_histogram(time_photons_det_x, time_photons_det_z)
@@ -505,14 +504,40 @@ class SimulationManager:
         end_time_read = time.time()  # Record end time  
         execution_time_run = end_time_read - start_time  # Calculate execution time
 
-         
+        variables = {
+            "p_vacuum_z": p_vacuum_z,
+            "len_vacuum_indices_x": len(vacuum_indices_x_long),
+            "len_Z_checked_dec": len_Z_checked_dec,
+            "len_Z_checked_non_dec": len_Z_checked_non_dec,
+            "gain_Z_non_dec": gain_Z_non_dec,
+            "gain_Z_dec": gain_Z_dec,
+            "gain_X_non_dec": gain_X_non_dec,
+            "gain_X_dec": gain_X_dec,
+            "XP_calc_non_dec": X_P_calc_non_dec,
+            "XP_calc_dec": X_P_calc_dec,
+            "wrong_detections_z": wrong_detections_z,
+            "wrong_detections_x": wrong_detections_x,
+        }
+
+        # Print each variable's type
+        for key, value in variables.items():
+            print(f"{key}: Type = {type(value)}")
+
         Saver.save_arrays_to_csv('results', 
-                                 time_photons_det_x=time_photons_det_x, 
-                                 time_photons_det_z=time_photons_det_z, 
-                                 wavelength_photons_det_x=wavelength_photons_det_x, 
-                                 wavelength_photons_det_z=wavelength_photons_det_z, 
-                                 nr_photons_det_x=nr_photons_det_x,
-                                 nr_photons_det_z=nr_photons_det_z)
+                                p_vacuum_z=p_vacuum_z,
+                                len_vacuum_indices_x_long=len(vacuum_indices_x_long),
+                                len_Z_checked_dec=len_Z_checked_dec,
+                                len_Z_checked_non_dec=len_Z_checked_non_dec,
+                                gain_Z_non_dec=gain_Z_non_dec,
+                                gain_Z_dec=gain_Z_dec,
+                                gain_X_non_dec=gain_X_non_dec,
+                                gain_X_dec=gain_X_dec,
+                                XP_calc_non_dec=X_P_calc_non_dec,
+                                XP_calc_dec=X_P_calc_dec,
+                                len_wrong_detections_z=len(wrong_detections_z),
+                                len_wrong_detections_x=len(wrong_detections_x),
+                                )
+
         
 
         ''''Saver.save_results_to_txt(  # Save the results to a text file
@@ -549,6 +574,8 @@ class SimulationManager:
         Z1_sent_dec=Z1_sent_dec,
         XP_sent_norm=XP_sent_norm,
         XP_sent_dec=XP_sent_dec,'''
+        
+        return self.config.p_indep_x_states_non_dec, self.config.p_indep_x_states_dec
         
     def run_simulation_till_DLI(self):
         start_time = time.time()  # Record start time
@@ -605,7 +632,6 @@ class SimulationManager:
 
         Saver.memory_usage("after everything: " + str("{:.3f}".format(time.time() - start_time)))
         # print(f"first 10 symbols of basis, value, decoy: {basis[:10]}, {value[:10]}, {decoy[:10]}")
-       
 
     def run_simulation_parameter_sweep_heater_transmission(self):
         #initialize

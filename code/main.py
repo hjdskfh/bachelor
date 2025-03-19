@@ -33,11 +33,12 @@ database.add_jitter(detector_jitter, 'detector')
 
 
 #create simulation mean current 0.08
-config = SimulationConfig(database, seed=None, n_samples=200, n_pulses=4, batchsize=100, mean_voltage=1.0, mean_current=0.082111, voltage_amplitude=0.050, current_amplitude=0.0005,
+config = SimulationConfig(database, seed=None, n_samples=18000, n_pulses=4, batchsize=1000, mean_voltage=1.0, mean_current=0.082111, voltage_amplitude=0.050, current_amplitude=0.0005,
                 p_z_alice=0.5, p_decoy=0.1, p_z_bob=0.85, sampling_rate_FPGA=6.5e9, bandwidth=4e9, jitter=jitter, 
                 non_signal_voltage=-1.2, voltage_decoy=-0.2, voltage=-0.2, voltage_decoy_sup=-0.2, voltage_sup=-0.2,
                 mean_photon_nr=0.7, mean_photon_decoy=0.1, 
                 fiber_attenuation=-3, insertion_loss_dli=-1, n_eff_in_fiber=1.558, detector_efficiency=0.3, dark_count_frequency=10, detection_time=1e-10, detector_jitter=detector_jitter,
+                p_indep_x_states_non_dec=None, p_indep_x_states_dec=None,
                 mlp='C:/Users/leavi/OneDrive/Dokumente/Uni/Semester 7/NeuMoQP/Programm/code/Presentation_style_1_adjusted_no_grid.mplstyle'
                 )
 simulation = SimulationManager(config)
