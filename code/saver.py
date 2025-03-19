@@ -82,7 +82,7 @@ class Saver:
             print(f"Error saving to JSON: {e}")
     
     @staticmethod
-    def save_results_to_txt(n_samples = None, seed = None, non_signal_voltage=None, voltage_decoy=None, voltage=None, voltage_decoy_sup=None, voltage_sup=None, **kwargs):
+    def save_results_to_txt(n_samples = None, seed = None, non_signal_voltage=None, voltage_decoy=None, voltage=None, voltage_decoy_sup=None, voltage_sup=None, p_indep_x_states_non_dec=None, p_indep_x_states_dec=None, **kwargs):
         """
         Saves key-value pairs to a timestamped text file.
 
@@ -114,6 +114,8 @@ class Saver:
             f.write("voltage: {voltage}\n")
             f.write("voltage_decoy_sup: {voltage_decoy_sup}\n")
             f.write("voltage_sup: {voltage_sup}\n")
+            f.write(f"p_indep_x_states_non_dec: {p_indep_x_states_non_dec}\n")
+            f.write(f"p_indep_x_states_dec: {p_indep_x_states_dec}\n")
         
             for key, value in kwargs.items():
                 f.write(f"{key}: {value}\n")

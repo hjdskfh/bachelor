@@ -405,8 +405,8 @@ class SimulationManager:
         start_time = time.time()  # Record start time
         T1_dampening = self.simulation_engine.initialize()
         if  self.config.p_indep_x_states_non_dec is None or self.config.p_indep_x_states_dec is None:
-            self.config.p_indep_x_states_non_dec = self.simulation_engine.find_p_indep_states_x_for_classifier(T1_dampening, simulation_length_factor=5000, is_decoy=False)
-            self.config.p_indep_x_states_dec = self.simulation_engine.find_p_indep_states_x_for_classifier(T1_dampening, simulation_length_factor=5000, is_decoy=True)
+            self.config.p_indep_x_states_non_dec, len_ind_has_one_0_and_every_second_symbol_non_dec, len_ind_every_second_symbol_dec = self.simulation_engine.find_p_indep_states_x_for_classifier(T1_dampening, simulation_length_factor=5000, is_decoy=False)
+            self.config.p_indep_x_states_dec, len_ind_has_one_0_and_every_second_symbol_dec, len_ind_every_second_symbol_dec = self.simulation_engine.find_p_indep_states_x_for_classifier(T1_dampening, simulation_length_factor=5000, is_decoy=True)
         print(f"p_indep_x_states_non_dec: {self.config.p_indep_x_states_non_dec}")
         print(f"p_indep_x_states_dec: {self.config.p_indep_x_states_dec}")
 
@@ -493,54 +493,38 @@ class SimulationManager:
                                                                                                             time_photons_det_z, index_where_photons_det_z, 
                                                                                                             basis, value, decoy)
         '''
-        p_vacuum_z, vacuum_indices_x_long, len_Z_checked_dec, len_Z_checked_non_dec, gain_Z_non_dec, gain_Z_dec, gain_X_non_dec, gain_X_dec, X_P_calc_non_dec, X_P_calc_dec, wrong_detections_z, wrong_detections_x = self.simulation_engine.classificator_new(t, time_photons_det_x, index_where_photons_det_x, time_photons_det_z, index_where_photons_det_z, basis, value, decoy)
+        p_vacuum_z, vacuum_indices_x_long, len_Z_checked_dec, len_Z_checked_non_dec, gain_Z_non_dec, gain_Z_dec, gain_X_non_dec, gain_X_dec, X_P_calc_non_dec, X_P_calc_dec, wrong_detections_z_dec, wrong_detections_z_non_dec, wrong_detections_x_dec, wrong_detections_x_non_dec = self.simulation_engine.classificator_new(t, time_photons_det_x, index_where_photons_det_x, time_photons_det_z, index_where_photons_det_z, basis, value, decoy)
 
         # plot so I can delete
         # self.plotter.plot_and_delete_photon_time_histogram(time_photons_det_x, time_photons_det_z)
 
-        #Z1_sent_norm, Z1_sent_dec, Z0_sent_norm, Z0_sent_dec, XP_sent_norm, XP_sent_dec = self.simulation_helper.count_alice_choices(basis, value, decoy)
+        # Z1_sent_norm, Z1_sent_dec, Z0_sent_norm, Z0_sent_dec, XP_sent_norm, XP_sent_dec = self.simulation_helper.count_alice_choices(basis, value, decoy)
 
         #readin time
         end_time_read = time.time()  # Record end time  
         execution_time_run = end_time_read - start_time  # Calculate execution time
 
-        variables = {
-            "p_vacuum_z": p_vacuum_z,
-            "len_vacuum_indices_x": len(vacuum_indices_x_long),
-            "len_Z_checked_dec": len_Z_checked_dec,
-            "len_Z_checked_non_dec": len_Z_checked_non_dec,
-            "gain_Z_non_dec": gain_Z_non_dec,
-            "gain_Z_dec": gain_Z_dec,
-            "gain_X_non_dec": gain_X_non_dec,
-            "gain_X_dec": gain_X_dec,
-            "XP_calc_non_dec": X_P_calc_non_dec,
-            "XP_calc_dec": X_P_calc_dec,
-            "wrong_detections_z": wrong_detections_z,
-            "wrong_detections_x": wrong_detections_x,
-        }
 
-        # Print each variable's type
-        for key, value in variables.items():
-            print(f"{key}: Type = {type(value)}")
-
-        Saver.save_arrays_to_csv('results', 
+        '''Saver.save_arrays_to_csv('results', 
                                 p_vacuum_z=p_vacuum_z,
                                 len_vacuum_indices_x_long=len(vacuum_indices_x_long),
                                 len_Z_checked_dec=len_Z_checked_dec,
                                 len_Z_checked_non_dec=len_Z_checked_non_dec,
+                                XP_calc_non_dec=X_P_calc_non_dec,
+                                XP_calc_dec=X_P_calc_dec,
                                 gain_Z_non_dec=gain_Z_non_dec,
                                 gain_Z_dec=gain_Z_dec,
                                 gain_X_non_dec=gain_X_non_dec,
                                 gain_X_dec=gain_X_dec,
-                                XP_calc_non_dec=X_P_calc_non_dec,
-                                XP_calc_dec=X_P_calc_dec,
-                                len_wrong_detections_z=len(wrong_detections_z),
-                                len_wrong_detections_x=len(wrong_detections_x),
-                                )
+                                wrong_detections_z_dec=wrong_detections_z_dec,
+                                wrong_detections_z_non_dec=wrong_detections_z_non_dec,
+                                wrong_detections_x_dec=wrong_detections_x_dec,
+                                wrong_detections_x_non_dec=wrong_detections_x_non_dec,
+                                )'''
 
         
 
-        ''''Saver.save_results_to_txt(  # Save the results to a text file
+        Saver.save_results_to_txt(  # Save the results to a text file
             n_samples=self.config.n_samples,
             seed=self.config.seed,
             non_signal_voltage=self.config.non_signal_voltage,
@@ -548,32 +532,27 @@ class SimulationManager:
             voltage=self.config.voltage, 
             voltage_decoy_sup=self.config.voltage_decoy_sup, 
             voltage_sup=self.config.voltage_sup,
+            p_indep_x_states_non_dec=self.config.p_indep_x_states_non_dec,
+            p_indep_x_states_dec=self.config.p_indep_x_states_dec,
             p_vacuum_z=p_vacuum_z,
-            len_sift_x_basis_long=len(total_sift_x_basis_long),
-            len_sift_z_basis_short=len(total_sift_z_basis_short),
-            len_wrong_detections_z=len(wrong_detections_z),
-            #len_wrong_detections_x=len_wrong_detections_x,
-            len_Z_checked_non_dec=len_Z_checked_non_dec,
+            len_vacuum_indices_x_long=len(vacuum_indices_x_long),
             len_Z_checked_dec=len_Z_checked_dec,
-            gain_Z_non_dec=gain_Z_non_dec,
-            gain_Z_dec=gain_Z_dec,
+            len_Z_checked_non_dec=len_Z_checked_non_dec,
             XP_calc_non_dec=X_P_calc_non_dec,
             XP_calc_dec=X_P_calc_dec,
+            gain_Z_non_dec=gain_Z_non_dec,
+            gain_Z_dec=gain_Z_dec,
             gain_X_non_dec=gain_X_non_dec,
             gain_X_dec=gain_X_dec,
-            len_vacuum_indices_x=len(vacuum_indices_x_long),
-            calc_mean_photon_nr_eam=calc_mean_photon_nr_eam,
-            calc_mean_photon_nr_detector_x=calc_mean_photon_nr_detector_x,
-            execution_time_run=execution_time_run,
-            time_simulating_signal=time_simulating_signal,
-            time_eam=time_eam
+            wrong_detections_z_dec=wrong_detections_z_dec,
+            wrong_detections_z_non_dec=wrong_detections_z_non_dec,
+            wrong_detections_x_dec=wrong_detections_x_dec,
+            wrong_detections_x_non_dec=wrong_detections_x_non_dec,
+            len_ind_has_one_0_and_every_second_symbol_non_dec=len_ind_has_one_0_and_every_second_symbol_non_dec, 
+            len_ind_every_second_symbol_dec=len_ind_every_second_symbol_dec,
+            len_ind_has_one_0_and_every_second_symbol_dec=len_ind_has_one_0_and_every_second_symbol_dec,
+            len_ind_every_second_symbol_dec=len_ind_every_second_symbol_dec
         )
-        Z0_sent_norm=Z0_sent_norm,
-        Z0_sent_dec=Z0_sent_dec,
-        Z1_sent_norm=Z1_sent_norm,
-        Z1_sent_dec=Z1_sent_dec,
-        XP_sent_norm=XP_sent_norm,
-        XP_sent_dec=XP_sent_dec,'''
         
         return self.config.p_indep_x_states_non_dec, self.config.p_indep_x_states_dec
         

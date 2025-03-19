@@ -298,7 +298,7 @@ class SimulationEngine:
         return time_photons_det, wavelength_photons_det, nr_photons_det, index_where_photons_det, calc_mean_photon_nr_detector, dark_count_times, num_dark_counts
     
     def classificator(self, t, time_photons_det_x, index_where_photons_det_x, time_photons_det_z, index_where_photons_det_z, basis, value, decoy):
-        """Classify time bins."""
+        '''"""Classify time bins."""
         num_segments = self.config.n_pulses // 2
         timebins = np.linspace(t[-1] / num_segments, t[-1], num_segments)        
         detected_indices_z_norm = self.simulation_helper.classificator_det_ind(timebins, decoy, time_photons_det_z, index_where_photons_det_z, is_decoy = False)
@@ -342,7 +342,7 @@ class SimulationEngine:
 
         raw_key_rate = total_amount_detections / (t[-1] * self.config.n_samples)
 
-        return len_wrong_detections_z, len_wrong_detections_x, total_amount_detections, amount_Z_detections, amount_XP_detections, qber, phase_error_rate, raw_key_rate, gain_XP_norm, gain_XP_dec, gain_Z_norm, gain_Z_dec, detected_indices_x_dec, detected_indices_x_norm, detected_indices_z_dec, detected_indices_z_norm
+        return len_wrong_detections_z, len_wrong_detections_x, total_amount_detections, amount_Z_detections, amount_XP_detections, qber, phase_error_rate, raw_key_rate, gain_XP_norm, gain_XP_dec, gain_Z_norm, gain_Z_dec, detected_indices_x_dec, detected_indices_x_norm, detected_indices_z_dec, detected_indices_z_norm'''
     
     def classificator_new(self, t, time_photons_det_x, index_where_photons_det_x, time_photons_det_z, index_where_photons_det_z, basis, value, decoy):
         """Classify time bins."""
@@ -369,9 +369,9 @@ class SimulationEngine:
 
         X_P_calc_non_dec, X_P_calc_dec, gain_X_non_dec, gain_X_dec = self.simulation_helper.classificator_identify_x(detected_indices_x_det_x_basis, detected_indices_z_det_z_basis, index_where_photons_det_x, index_where_photons_det_z, decoy, indices_x_long)
 
-        wrong_detections_z, wrong_detections_x = self.simulation_helper.classificator_errors(index_where_photons_det_x, index_where_photons_det_z, detected_indices_z_det_z_basis, detected_indices_x_det_x_basis, basis, value)
+        wrong_detections_z_dec, wrong_detections_z_non_dec, wrong_detections_x_dec, wrong_detections_x_non_dec = self.simulation_helper.classificator_errors(index_where_photons_det_x, index_where_photons_det_z, detected_indices_z_det_z_basis, detected_indices_x_det_x_basis, basis, value)
 
-        return p_vacuum_z, vacuum_indices_x_long, len_Z_checked_dec, len_Z_checked_non_dec, gain_Z_non_dec, gain_Z_dec, gain_X_non_dec, gain_X_dec, X_P_calc_non_dec, X_P_calc_dec, wrong_detections_z, wrong_detections_x   
+        return p_vacuum_z, vacuum_indices_x_long, len_Z_checked_dec, len_Z_checked_non_dec, gain_Z_non_dec, gain_Z_dec, gain_X_non_dec, gain_X_dec, X_P_calc_non_dec, X_P_calc_dec, wrong_detections_z_dec, wrong_detections_z_non_dec, wrong_detections_x_dec, wrong_detections_x_non_dec   
     
     def initialize(self):
         plt.style.use(self.config.mlp)
@@ -484,10 +484,10 @@ class SimulationEngine:
             )
         
         detected_indices_x_det_x_basis, total_sift_x_basis_long, vacuum_indices_x_long, indices_x_long = self.simulation_helper.classificator_sift_x_vacuum(basis, detected_indices_x, index_where_photons_det_x)
-        p_indep_x_states = self.simulation_helper.classificator_identify_x_calc_p_indep_states_x(detected_indices_x_det_x_basis, index_where_photons_det_x)
+        p_indep_x_states, len_ind_has_one_0_and_every_second_symbol, len_ind_every_second_symbol = self.simulation_helper.classificator_identify_x_calc_p_indep_states_x(detected_indices_x_det_x_basis, index_where_photons_det_x)
 
 
         # set n_samples to normal
         self.config.n_samples = copy_old_n_samples
-        return p_indep_x_states
+        return p_indep_x_states, len_ind_has_one_0_and_every_second_symbol, len_ind_every_second_symbol
    
