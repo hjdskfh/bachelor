@@ -109,11 +109,11 @@ class Saver:
         with open(filepath, "w") as f:
             f.write(f"n_samples: {n_samples}\n")
             f.write(f"seed: {seed}\n")
-            f.write("non_signal_voltage: {non_signal_voltage}\n")
-            f.write("voltage_decoy: {voltage_decoy}\n")
-            f.write("voltage: {voltage}\n")
-            f.write("voltage_decoy_sup: {voltage_decoy_sup}\n")
-            f.write("voltage_sup: {voltage_sup}\n")
+            f.write(f"non_signal_voltage: {non_signal_voltage}\n")
+            f.write(f"voltage_decoy: {voltage_decoy}\n")
+            f.write(f"voltage: {voltage}\n")
+            f.write(f"voltage_decoy_sup: {voltage_decoy_sup}\n")
+            f.write(f"voltage_sup: {voltage_sup}\n")
             f.write(f"p_indep_x_states_non_dec: {p_indep_x_states_non_dec}\n")
             f.write(f"p_indep_x_states_dec: {p_indep_x_states_dec}\n")
         

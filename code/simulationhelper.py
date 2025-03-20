@@ -180,7 +180,7 @@ class SimulationHelper:
         """Calculate and choose photons based on the transmission and jitter."""
         # Calculate the mean photon number
         Saver.memory_usage("in choose photon before anything")
-        energy_per_pulse = np.trapezoid(power_dampened, t, axis=1)
+        energy_per_pulse = np.trapz(power_dampened, t, axis=1)
         Saver.memory_usage("in choose photon after energy_per_pulse")
         # delete power_dampened
         del power_dampened
@@ -376,7 +376,7 @@ class SimulationHelper:
         if len(ind_Z_sent_non_dec) != 0:
             gain_Z_non_dec = len_Z_checked_non_dec / len(ind_Z_sent_non_dec)	
         else:
-            -999 #raise ValueError("No Z sent detected")
+            gain_Z_non_dec =-999 #raise ValueError("No Z sent detected")
         
         # gain Z dec
         ind_Z_sent_dec = np.intersect1d(indices_z_long, ind_sent_dec)
@@ -385,7 +385,7 @@ class SimulationHelper:
         if len(ind_Z_sent_dec) != 0:
             gain_Z_dec = len_Z_checked_dec / len(ind_Z_sent_dec)	
         else:
-            -999 #raise ValueError("No Z decoy sent detected")
+            gain_Z_dec = -999 #raise ValueError("No Z decoy sent detected")
         
         return gain_Z_non_dec, gain_Z_dec, len_Z_checked_dec, len_Z_checked_non_dec
 
@@ -421,7 +421,7 @@ class SimulationHelper:
         if len(ind_x_sent_non_dec_long) != 0:
             gain_X_non_dec = X_P_calc_non_dec / len(ind_x_sent_non_dec_long)
         else:
-            -999 #raise ValueError("No Z sent detected")
+            gain_X_non_dec = -999 #raise ValueError("No Z sent detected")
         
         # gain X dec
         ind_sent_dec_long = np.where((decoy == 1))[0]
@@ -430,7 +430,7 @@ class SimulationHelper:
         if len(ind_x_sent_dec_long) != 0:
             gain_X_dec = X_P_calc_dec / len(ind_x_sent_dec_long)
         else:
-            -999 #raise ValueError("No Z decoy sent detected")
+            gain_X_dec = -999 #raise ValueError("No Z decoy sent detected")
 
         return X_P_calc_non_dec, X_P_calc_dec, gain_X_non_dec, gain_X_dec
     
@@ -484,7 +484,7 @@ class SimulationHelper:
 
     def classificator_identify_x_calc_p_indep_states_x(self, detected_indices_x_det_x_basis, index_where_photons_det_x):
         if index_where_photons_det_x.size == 0:
-            return 0
+            return 0, 0, 0
         
         # early bin gemessen jedes 2. symbol
         ind_every_second_symbol = np.arange(1, 1 + 2 * self.config.n_samples, 2)
@@ -500,22 +500,28 @@ class SimulationHelper:
 
         return p_indep_x_states, len_ind_has_one_0_and_every_second_symbol, len_ind_every_second_symbol
     
-    def classificator_errors(self, index_where_photons_det_x, index_where_photons_det_z, detected_indices_z_det_z_basis, detected_indices_x_det_x_basis, basis, decoy):
-        wrong_detection_mask_z = np.zeros(len(index_where_photons_det_z), dtype=bool)
-        wrong_detection_mask_x = np.zeros(len(index_where_photons_det_x), dtype=bool)
+    def classificator_errors(self, indices_z_long, indices_x_long, value, index_where_photons_det_x, index_where_photons_det_z, detected_indices_z_det_z_basis, detected_indices_x_det_x_basis, basis, decoy):
+        wrong_detection_mask_z = np.zeros(len(basis), dtype=bool)
+        wrong_detection_mask_x = np.zeros(len(basis), dtype=bool)
 
         #Step 1: Check for wrong detections in the Z basis (Z0 and Z1)
         #check if wrong_detection_mask is empty
         if wrong_detection_mask_z.size != 0:
-            # measure in late for Z0 (wrong detection)
-            has_one_and_z0 = np.any(detected_indices_z_det_z_basis == 1, axis=1)        # detected indices has shape of time_photons_det
-            wrong_detection_mask_z[np.where(has_one_and_z0)[0]] = True
-            #Condition 3: Measure in early for Z1 (wrong detection)
-            has_0_and_z1 = np.any(detected_indices_z_det_z_basis == 0, axis=1)       # detected indices has shape of time_photons_det
-            wrong_detection_mask_z[np.where(has_0_and_z1)[0]] = True
-            #get wrong_detections thruough correct indexing
-            wrong_detections_z = index_where_photons_det_z[wrong_detection_mask_z]
+            # measure in late for Z0 (wrong detection): value 1 für Z0
+            has_1_short = np.where(np.any(detected_indices_z_det_z_basis == 1, axis=1))[0]
+            has_1_long = index_where_photons_det_z[has_1_short]       # detected indices has shape of time_photons_det
+            has_sent_Z0_long = np.intersect1d(indices_z_long, np.where(value == 1)[0])
+
+            has_1_and_z0_long = np.intersect1d(has_1_long, has_sent_Z0_long)
+            wrong_detection_mask_z[np.where(has_1_and_z0_long)[0]] = True
+            #Condition 3: Measure in early for Z1 (wrong detection), value 0 for Z1
+            has_0_short = np.where(np.any(detected_indices_z_det_z_basis == 0, axis=1))[0]
+            has_0_long = index_where_photons_det_z[has_0_short]
+            has_sent_Z1_long = np.intersect1d(indices_z_long, np.where(value == 0)[0])
+            has_0_and_z1_long = np.intersect1d(has_0_long, has_sent_Z1_long)
+            wrong_detection_mask_z[np.where(has_0_and_z1_long)[0]] = True
             #decoy
+            wrong_detections_z = np.where(wrong_detection_mask_z)[0]
             ind_sent_dec_long = np.where((decoy == 1))[0]
             wrong_detections_z_dec = np.intersect1d(wrong_detections_z, ind_sent_dec_long)
             ind_sent_non_dec_long = np.where((decoy == 0))[0]
@@ -528,10 +534,10 @@ class SimulationHelper:
             #Condition 6: Late detection in X+ after X+ sent
             has_1_short = np.any(detected_indices_x_det_x_basis == 1, axis=1)
             has_1_long = index_where_photons_det_x[np.where(has_1_short)[0]]
-            has_xp_long = index_where_photons_det_x[basis[index_where_photons_det_x] == 0]
-            has_1_and_xp = np.intersect1d(has_1_long, has_xp_long)
-            wrong_detection_mask_x[np.where(has_1_and_xp)[0]] = True
-            wrong_detections_x = index_where_photons_det_x[wrong_detection_mask_x]
+            has_sent_xp_long = indices_x_long
+            has_1_and_xp_long = np.intersect1d(has_1_long, has_sent_xp_long)
+            wrong_detection_mask_x[np.where(has_1_and_xp_long)[0]] = True
+            wrong_detections_x = np.where(wrong_detection_mask_x)[0]
 
             # decoy and non-decoy
             wrong_detections_x_dec = np.intersect1d(wrong_detections_x, ind_sent_dec_long)
@@ -548,7 +554,32 @@ class SimulationHelper:
 
         return wrong_detections_z_dec, wrong_detections_z_non_dec, wrong_detections_x_dec, wrong_detections_x_non_dec
     
+    def classificator_qber_rkr(self, t, wrong_detections_z_dec, wrong_detections_z_non_dec, wrong_detections_x_dec, wrong_detections_x_non_dec, len_Z_checked_dec, len_Z_checked_non_dec, X_P_calc_non_dec, X_P_calc_dec):
+        if len_Z_checked_dec != 0:
+            qber_z_dec = len(wrong_detections_z_dec) / len_Z_checked_dec
+        else:
+            qber_z_dec = -999
 
+        if len_Z_checked_non_dec != 0:
+            qber_z_non_dec = len(wrong_detections_z_non_dec) / len_Z_checked_non_dec
+        else:
+            qber_z_non_dec = -999
+
+        if X_P_calc_dec != 0:
+            qber_x_dec = len(wrong_detections_x_dec) / X_P_calc_dec
+        else:
+            qber_x_dec = -999
+
+        if X_P_calc_non_dec != 0:
+            qber_x_non_dec = len(wrong_detections_x_non_dec) / X_P_calc_non_dec
+        else:
+            qber_x_non_dec = -999
+
+        total_amount_detections = len_Z_checked_dec + len_Z_checked_non_dec + X_P_calc_dec + X_P_calc_non_dec   
+
+        raw_key_rate = total_amount_detections / (t[-1] * self.config.n_samples)
+
+        return qber_z_dec, qber_z_non_dec, qber_x_dec, qber_x_non_dec, raw_key_rate, total_amount_detections
     
     # ========== Data Processing Helper ==========
 

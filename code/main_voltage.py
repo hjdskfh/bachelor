@@ -7,6 +7,7 @@ from simulationmanager import SimulationManager
 from saver import Saver
 import numpy as np
 import matplotlib.pyplot as plt
+import os 
 
 
 Saver.memory_usage("Before everything")
@@ -32,6 +33,16 @@ times_per_n = 3
 arr_voltage = np.arange(0.975, 1.015, 0.005)
 peak_wavelength = np.empty(len(arr_voltage) * times_per_n)
 amount_detection_x_late_bin = np.empty(len(arr_voltage) * times_per_n)
+round_counter = 0
+
+# Define file name
+style_file = "Presentation_style_1_adjusted_no_grid.mplstyle"
+
+# Check if running on Windows or Linux (Cluster)
+if os.name == "nt":  # Windows (Your PC)
+    base_path = "C:/Users/leavi/OneDrive/Dokumente/Uni/Semester 7/NeuMoQP/Programm/code/"
+else:  # Linux (Cluster)
+    base_path = "/wang/users/leavic98/cluster_home/NeuMoQP/Programm/code/"
 
 #for n in n_samples:
 for idx, var_voltage in enumerate(arr_voltage):
@@ -42,15 +53,15 @@ for idx, var_voltage in enumerate(arr_voltage):
         #measure execution time
         start_time = time.time()  # Record start time
 
-        round += 1
+        round_counter += 1
 
         #create simulation
-        config = SimulationConfig(database, round = round, seed=None, n_samples=200, n_pulses=4, batchsize=100, mean_voltage=var_voltage, mean_current=0.080, voltage_amplitude=0.050, current_amplitude=0.0005,                        p_z_alice=0.5, p_decoy=0.1, p_z_bob=0.15, sampling_rate_FPGA=6.5e9, bandwidth=4e9, jitter=jitter, 
+        config = SimulationConfig(database, round=round_counter, seed=None, n_samples=200, n_pulses=4, batchsize=100, mean_voltage=var_voltage, mean_current=0.080, voltage_amplitude=0.050, current_amplitude=0.0005,                        p_z_alice=0.5, p_decoy=0.1, p_z_bob=0.15, sampling_rate_FPGA=6.5e9, bandwidth=4e9, jitter=jitter, 
                         non_signal_voltage=-1.2, voltage_decoy=-0.2, voltage=-0.2, voltage_decoy_sup=-0.2, voltage_sup=-0.2,
                         mean_photon_nr=0.7, mean_photon_decoy=0.1, 
                         fiber_attenuation=-3, insertion_loss_dli=-1, n_eff_in_fiber=1.558, detector_efficiency=0.3, dark_count_frequency=10, detection_time=1e-10, detector_jitter=detector_jitter,
                         p_indep_x_states_non_dec=p_indep_x_states_non_dec_var, p_indep_x_states_dec=p_indep_x_states_dec_var,
-                        mlp='C:/Users/leavi/OneDrive/Dokumente/Uni/Semester 7/NeuMoQP/Programm/code/Presentation_style_1_adjusted_no_grid.mplstyle'
+                        mlp=os.path.join(base_path, style_file)
                         )
         simulation = SimulationManager(config)
 

@@ -139,7 +139,7 @@ class SimulationSingle:
           
             power_dampened, _ = self.eam_transmission_single(voltage_signal, optical_power, T1_dampening)
 
-            energy_pp = np.trapezoid(power_dampened, t)
+            energy_pp = np.trapz(power_dampened, t)
             calc_mean_photon_nr = energy_pp / (constants.h * constants.c / peak_wavelength)
             # print(f"calc mean photon nr {calc_mean_photon_nr} at T1_dampening {T1_dampening}")
 
@@ -169,7 +169,7 @@ class SimulationSingle:
             # plt.plot(power_dampened)
             # plt.show()
 
-            energy_pp = np.trapezoid(power_dampened, t)
+            energy_pp = np.trapz(power_dampened, t)
             calc_mean_photon_nr = energy_pp / (constants.h * constants.c / peak_wavelength)
 
             # print(f"calc mean photon nr {calc_mean_photon_nr} at {voltage_name} with voltage_height being {voltage_height} at maximum power {max(power_dampened)} with {basis_fix} {value_fix} {decoy_fix}")

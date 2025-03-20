@@ -166,7 +166,7 @@ class SimulationEngine:
         power_dampened = transmission * optical_power[:, None] / T1_dampening
 
         # Calculate the mean photon number
-        energy_per_pulse = np.trapezoid(power_dampened, t, axis=1)
+        energy_per_pulse = np.trapz(power_dampened, t, axis=1)
         calc_mean_photon_nr = energy_per_pulse / (constants.h * constants.c / peak_wavelength)
 
         # Normalize the transmission values
@@ -369,9 +369,14 @@ class SimulationEngine:
 
         X_P_calc_non_dec, X_P_calc_dec, gain_X_non_dec, gain_X_dec = self.simulation_helper.classificator_identify_x(detected_indices_x_det_x_basis, detected_indices_z_det_z_basis, index_where_photons_det_x, index_where_photons_det_z, decoy, indices_x_long)
 
-        wrong_detections_z_dec, wrong_detections_z_non_dec, wrong_detections_x_dec, wrong_detections_x_non_dec = self.simulation_helper.classificator_errors(index_where_photons_det_x, index_where_photons_det_z, detected_indices_z_det_z_basis, detected_indices_x_det_x_basis, basis, value)
+        wrong_detections_z_dec, wrong_detections_z_non_dec, wrong_detections_x_dec, wrong_detections_x_non_dec = self.simulation_helper.classificator_errors(indices_z_long, indices_x_long, value, index_where_photons_det_x, index_where_photons_det_z, detected_indices_z_det_z_basis, detected_indices_x_det_x_basis, basis, decoy)
 
-        return p_vacuum_z, vacuum_indices_x_long, len_Z_checked_dec, len_Z_checked_non_dec, gain_Z_non_dec, gain_Z_dec, gain_X_non_dec, gain_X_dec, X_P_calc_non_dec, X_P_calc_dec, wrong_detections_z_dec, wrong_detections_z_non_dec, wrong_detections_x_dec, wrong_detections_x_non_dec   
+
+        qber_z_dec, qber_z_non_dec, qber_x_dec, qber_x_non_dec, raw_key_rate, total_amount_detections = self.simulation_helper.classificator_qber_rkr(t, wrong_detections_z_dec, wrong_detections_z_non_dec, wrong_detections_x_dec, wrong_detections_x_non_dec, len_Z_checked_dec, len_Z_checked_non_dec, X_P_calc_non_dec, X_P_calc_dec)
+
+    
+
+        return p_vacuum_z, vacuum_indices_x_long, len_Z_checked_dec, len_Z_checked_non_dec, gain_Z_non_dec, gain_Z_dec, gain_X_non_dec, gain_X_dec, X_P_calc_non_dec, X_P_calc_dec, wrong_detections_z_dec, wrong_detections_z_non_dec, wrong_detections_x_dec, wrong_detections_x_non_dec, qber_z_dec, qber_z_non_dec, qber_x_dec, qber_x_non_dec, raw_key_rate, total_amount_detections
     
     def initialize(self):
         plt.style.use(self.config.mlp)
@@ -451,7 +456,7 @@ class SimulationEngine:
         else:
             decoy_pattern = 0
 
-        optical_power, peak_wavelength, _, _ = self.random_laser_output('current_power', 'voltage_shift', 'current_wavelength')
+        optical_power, peak_wavelength, chosen_voltage, chosen_current = self.random_laser_output('current_power', 'voltage_shift', 'current_wavelength')
         basis, value, decoy = self.generate_alice_choices(basis=basis_pattern, value=value_pattern, decoy=decoy_pattern)
         signals, t, _ = self.signal_bandwidth_jitter(basis, value, decoy)
         power_dampened, norm_transmission, _, _ = self.eam_transmission(signals, optical_power, T1_dampening, peak_wavelength, t)
@@ -464,8 +469,17 @@ class SimulationEngine:
 
         # X basis
         power_dampened = power_dampened * (1 - self.config.p_z_bob)
+
+        amount_symbols_in_first_part = 20
+        first_power = power_dampened[:amount_symbols_in_first_part]
+
         power_dampened, _ = self.delay_line_interferometer(power_dampened, t, peak_wavelength)
+
+        self.plotter.plot_power(power_dampened, amount_symbols_in_plot=amount_symbols_in_first_part, where_plot_1='before DLI',  shortened_first_power=first_power, where_plot_2='after DLI,', title_rest='- in fft, mean_volt: ' + str("{:.3f}".format(self.config.mean_voltage)) + ' voltage: ' + str("{:.3f}".format(chosen_voltage[0])) + ' V and ' + str("{:.3f}".format(peak_wavelength[0])))
+
+
         time_photons_det_x, _, _, index_where_photons_det_x, _, _, _ = self.detector(t, norm_transmission, peak_wavelength, power_dampened)        
+
 
         # classificator
         num_segments = self.config.n_pulses // 2
