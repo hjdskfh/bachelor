@@ -47,7 +47,7 @@ config = SimulationConfig(database, seed=None, n_samples=20000, n_pulses=4, batc
                 mean_photon_nr=0.7, mean_photon_decoy=0.1, 
                 fiber_attenuation=-3, insertion_loss_dli=-1, n_eff_in_fiber=1.558, detector_efficiency=0.3, dark_count_frequency=10, detection_time=1e-10, detector_jitter=detector_jitter,
                 p_indep_x_states_non_dec=None, p_indep_x_states_dec=None,
-                mlp=os.path.join(base_path, style_file), script_name = os.path.basename(__file__)
+                mlp=os.path.join(base_path, style_file)
                 )
 simulation = SimulationManager(config)
 

@@ -52,13 +52,13 @@ for i in range(times_per_n):#create simulation mean current 0.08, int(length_of_
 
     round_counter += 1
 
-    config = SimulationConfig(database, round=round_counter, seed=None, n_samples=int(length_of_chain*n_rep), n_pulses=4, batchsize=best_batchsize, mean_voltage=1.0, mean_current=0.080, voltage_amplitude=0.050, current_amplitude=0.0005,
+    config = SimulationConfig(database, round = round_counter, seed=None, n_samples=int(length_of_chain*n_rep), n_pulses=4, batchsize=best_batchsize, mean_voltage=1.0, mean_current=0.080, voltage_amplitude=0.050, current_amplitude=0.0005,
                     p_z_alice=0.5, p_decoy=0.1, p_z_bob=0.85, sampling_rate_FPGA=6.5e9, bandwidth=4e9, jitter=jitter, 
                     non_signal_voltage=-1.1, voltage_decoy=-0.1, voltage=-0.1, voltage_decoy_sup=-0.1, voltage_sup=-0.1,
                     mean_photon_nr=0.7, mean_photon_decoy=0.1, 
                     fiber_attenuation=-3, insertion_loss_dli=-1, n_eff_in_fiber=1.558, detector_efficiency=0.3, dark_count_frequency=10, detection_time=1e-10, detector_jitter=detector_jitter,
                     p_indep_x_states_non_dec=None, p_indep_x_states_dec=None,
-                    mlp=os.path.join(base_path, style_file), script_name = os.path.basename(__file__)
+                    mlp=os.path.join(base_path, style_file)
                     )
     simulation = SimulationManager(config)
 

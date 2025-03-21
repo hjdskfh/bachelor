@@ -6,7 +6,6 @@ from tqdm import tqdm
 import time
 import os
 import datetime
-import inspect
 
 from saver import Saver
 from simulationengine import SimulationEngine
@@ -549,7 +548,6 @@ class SimulationManager:
         
 
         Saver.save_results_to_txt(  # Save the results to a text file
-            function_used = inspect.currentframe().f_code.co_name
             n_samples=self.config.n_samples,
             seed=self.config.seed,
             non_signal_voltage=self.config.non_signal_voltage,
