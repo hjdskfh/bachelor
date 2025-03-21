@@ -30,8 +30,6 @@ class SimulationHelper:
         return Z1_sent_norm, Z1_sent_dec, Z0_sent_norm, Z0_sent_dec, XP_sent_norm, XP_sent_dec
     
     def create_all_symbol_combinations_for_hist(self):
-        import numpy as np
-
         def de_bruijn(k, n):
             """
             Generate a de Bruijn sequence for alphabet size k and subsequences of length n.
@@ -604,18 +602,7 @@ class SimulationHelper:
         nr_photons = x[sampled_indices]
         return nr_photons
     
-    # ========== Batchsize Calculator Helper for Histogramm ==========
-
-    def find_best_batchsize(length_of_chain, n_rep, target=1000):
-        n_samples = length_of_chain * n_rep  # Compute total number of samples
-
-        # Find divisors of n_samples close to the target batchsize
-        best_batchsize = min(
-            (b for b in range(1, n_samples + 1) if n_samples % b == 0), 
-            key=lambda x: abs(x - target)
-        )
-        
-        return best_batchsize
+    
 
     
 

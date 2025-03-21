@@ -547,9 +547,9 @@ class SimulationManager:
                                 )'''
 
         
-
+        function_name = inspect.currentframe().f_code.co_name
         Saver.save_results_to_txt(  # Save the results to a text file
-            function_used = inspect.currentframe().f_code.co_name
+            function_used = function_name,
             n_samples=self.config.n_samples,
             seed=self.config.seed,
             non_signal_voltage=self.config.non_signal_voltage,
@@ -778,7 +778,7 @@ class SimulationManager:
                                                                                                             basis, value, decoy)
         
         # plot so I can delete
-        # self.plotter.plot_and_delete_photon_time_histogram(time_photons_det_x, time_photons_det_z)
+        self.plotter.plot_and_delete_photon_time_histogram(time_photons_det_x, time_photons_det_z)
         
         # late det in x
         if detected_indices_x_norm.size > 0: 
@@ -844,7 +844,9 @@ class SimulationManager:
         optical_power, peak_wavelength, chosen_voltage, chosen_current = self.simulation_engine.random_laser_output('current_power', 'voltage_shift')
     
         # Generate Alice's choices
-        basis, value, decoy = self.simulation_engine.generate_alice_choices()
+        basis_arr, value_arr, decoy_arr, _ = self.simulation_helper.create_all_symbol_combinations_for_hist()
+
+        basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=basis_arr, value=value_arr, decoy=decoy_arr)
 
         # Simulate signal and transmission
         Saver.memory_usage("before simulating signal: " + str("{:.3f}".format(time.time() - start_time)))
@@ -892,6 +894,8 @@ class SimulationManager:
         Saver.memory_usage("before detector x: " + str(time.time() - start_time))
         time_photons_det_x, wavelength_photons_det_x, nr_photons_det_x, index_where_photons_det_x, calc_mean_photon_nr_detector_x, dark_count_times_x, num_dark_counts_x = self.simulation_engine.detector(t, norm_transmission, peak_wavelength, power_dampened, start_time)        
 
+        self.plotter.plot_and_delete_photon_time_histogram(time_photons_det_x, time_photons_det_z)   
+
         # plot so I can delete
         # self.plotter.plot_and_delete_mean_photon_histogram(calc_mean_photon_nr_detector_x, target_mean_photon_nr=None, type_photon_nr="Mean Photon Number at Detector X")
         # self.plotter.plot_and_delete_mean_photon_histogram(calc_mean_photon_nr_detector_z, target_mean_photon_nr=None, type_photon_nr="Mean Photon Number at Detector Z")
@@ -899,7 +903,7 @@ class SimulationManager:
         # self.plotter.plot_and_delete_photon_nr_histogram(nr_photons_det_x, nr_photons_det_z)
         
         # get results for both detectors
-        '''Saver.save_arrays_to_csv('results', 
+        '''Saver.save_arrays_to_csv('results',  
                                  time_photons_det_x=time_photons_det_x, 
                                  time_photons_det_z=time_photons_det_z, 
                                  wavelength_photons_det_x=wavelength_photons_det_x, 
@@ -907,4 +911,4 @@ class SimulationManager:
                                  nr_photons_det_x=nr_photons_det_x,
                                  nr_photons_det_z=nr_photons_det_z)
         '''
-        return time_photons_det_x, time_photons_det_z
+        return time_photons_det_x, time_photons_det_z, t[-1]

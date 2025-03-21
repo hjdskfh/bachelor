@@ -3,14 +3,14 @@ import time
 from datamanager import DataManager
 from config import SimulationConfig
 from simulationmanager import SimulationManager
-from simulationhelper import SimulationHelper
 from saver import Saver
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import os
+import math
 
-Saver.memory_usage("Before everything")
+Saver.memory_usage("START of Simulation: Before everything")
 
 #measure execution time
 start_time = time.time()  # Record start time
@@ -30,10 +30,7 @@ database.add_jitter(detector_jitter, 'detector')
 
 times_per_n = 2
 length_of_chain = 8*8 +1
-n_rep = 150
-bins_per_symbol = 30
-histogram_matrix_bins_x = np.zeros((length_of_chain, bins_per_symbol))
-histogram_matrix_bins_z = np.zeros((length_of_chain, bins_per_symbol))
+n_rep = 50
 round_counter = 0
 
 # Define file name
@@ -45,42 +42,71 @@ if os.name == "nt":  # Windows (Your PC)
 else:  # Linux (Cluster)
     base_path = "/wang/users/leavic98/cluster_home/NeuMoQP/Programm/code/"
 
-simulation_helper = SimulationHelper()
-best_batchsize = simulation_helper.find_best_batchsize(length_of_chain, n_rep)
+best_batchsize = Saver.find_best_batchsize(length_of_chain, n_rep)
+
+config = SimulationConfig(database, seed=None, n_samples=int(length_of_chain*n_rep), n_pulses=4, batchsize=best_batchsize, mean_voltage=1.0, mean_current=0.080, voltage_amplitude=0.050, current_amplitude=0.0005,
+                p_z_alice=0.5, p_decoy=0.1, p_z_bob=0.85, sampling_rate_FPGA=6.5e9, bandwidth=4e9, jitter=jitter, 
+                non_signal_voltage=-1.1, voltage_decoy=-0.1, voltage=-0.1, voltage_decoy_sup=-0.1, voltage_sup=-0.1,
+                mean_photon_nr=0.7, mean_photon_decoy=0.1, 
+                fiber_attenuation=-3, insertion_loss_dli=-1, n_eff_in_fiber=1.558, detector_efficiency=0.3, dark_count_frequency=10, detection_time=1e-10, detector_jitter=detector_jitter,
+                p_indep_x_states_non_dec=None, p_indep_x_states_dec=None,
+                mlp=os.path.join(base_path, style_file), script_name = os.path.basename(__file__)
+                )
+simulation = SimulationManager(config)
+
+# Convert the config object to a dictionary
+config_params = config.to_dict()
+
+# Save the config parameters to a JSON file
+Saver.save_to_json(config_params)
+
+# Read in time
+end_time_read = time.time()  # Record end time
+execution_time_read = end_time_read - start_time  # Calculate execution time for reading
+print(f"Execution time for reading: {execution_time_read:.9f} seconds for {config.n_samples} samples")
+
+batch_size_hist = 10
+bins_per_symbol_hist = 30
+num_batches = math.ceil(length_of_chain / batch_size_hist)  # ceil(65 / 10) = 7
+full_batch_bins = batch_size_hist * bins_per_symbol_hist  # 10 * 30 = 300
+histogram_batches_x = np.zeros((num_batches, full_batch_bins), dtype=int)
+histogram_batches_z = np.zeros((num_batches, full_batch_bins), dtype=int)
 
 for i in range(times_per_n):#create simulation mean current 0.08, int(length_of_chain*n_rep)
-
-    round_counter += 1
-
-    config = SimulationConfig(database, round=round_counter, seed=None, n_samples=int(length_of_chain*n_rep), n_pulses=4, batchsize=best_batchsize, mean_voltage=1.0, mean_current=0.080, voltage_amplitude=0.050, current_amplitude=0.0005,
-                    p_z_alice=0.5, p_decoy=0.1, p_z_bob=0.85, sampling_rate_FPGA=6.5e9, bandwidth=4e9, jitter=jitter, 
-                    non_signal_voltage=-1.1, voltage_decoy=-0.1, voltage=-0.1, voltage_decoy_sup=-0.1, voltage_sup=-0.1,
-                    mean_photon_nr=0.7, mean_photon_decoy=0.1, 
-                    fiber_attenuation=-3, insertion_loss_dli=-1, n_eff_in_fiber=1.558, detector_efficiency=0.3, dark_count_frequency=10, detection_time=1e-10, detector_jitter=detector_jitter,
-                    p_indep_x_states_non_dec=None, p_indep_x_states_dec=None,
-                    mlp=os.path.join(base_path, style_file), script_name = os.path.basename(__file__)
-                    )
-    simulation = SimulationManager(config)
-
-    # Convert the config object to a dictionary
-    config_params = config.to_dict()
-
-    # Save the config parameters to a JSON file
-    Saver.save_to_json(config_params)
-
-    # Read in time
-    end_time_read = time.time()  # Record end time
-    execution_time_read = end_time_read - start_time  # Calculate execution time for reading
-    print(f"Execution time for reading: {execution_time_read:.9f} seconds for {config.n_samples} samples")
-
     # Run the simulation
-    time_photons_det_x, time_photons_det_z = simulation.run_simulation_hist_final()
-    histogram_matrix_bins_x, histogram_matrix_bins_z = Saver.prepare_data_for_histogram(time_photons_det_x, time_photons_det_z, bins_per_symbol, histogram_matrix_bins_x, histogram_matrix_bins_z)
+    time_photons_det_x, time_photons_det_z, time_one_symbol = simulation.run_simulation_hist_final()
+    print(f"time_photons_det_x[:10]: {time_photons_det_x[:10]}")
+    print(f"time_photons_det_z[:10]: {time_photons_det_z[:10]}")
+    print(f"time_one_symbol: {time_one_symbol}")
 
-pd.DataFrame(histogram_matrix_bins_x).to_csv("hist_x.csv", index=False, header=False)
-pd.DataFrame(histogram_matrix_bins_z).to_csv("hist_z.csv", index=False, header=False)
+    # Check X basis
+    has_photons_x = np.any(~np.isnan(time_photons_det_x[:10]))
+    print(f"Are there any detected photons in the first 10 symbols (X basis)? {has_photons_x}")
+    has_photons_z = np.any(~np.isnan(time_photons_det_z[:10]))
+    print(f"Are there any detected photons in the first 10 symbols (Z basis)? {has_photons_z}")
 
-plt.hist(histogram_matrix_bins_z.flatten(), bins=10)
+    histogram_batches_x, histogram_batches_z = Saver.update_histogram_batches(length_of_chain, time_photons_det_x, time_photons_det_z,
+                                                                              histogram_batches_x, histogram_batches_z,
+                                                                              batch_size = batch_size_hist, bins_per_symbol = bins_per_symbol_hist, symbol_window = time_one_symbol)
+                                                                    
+    print(f"histogram_batches_x: {histogram_batches_x.shape}")
+    print(f"histogram_batches_z: {histogram_batches_z.shape}")
+    
+Saver.plot_histogram_batch(
+    length_of_chain,         # total symbols in one cycle (65)
+    batch_index=0,           # first batch (symbols 0 to 9)
+    batch_size=batch_size_hist,   # batch size (10 symbols)
+    bins_per_symbol=bins_per_symbol_hist,
+    symbol_window=time_one_symbol,
+    hist_counts_x=histogram_batches_x[0],  # row corresponding to batch 0
+    hist_counts_z=histogram_batches_z[0]   # row corresponding to batch 0
+)
+
+
+'''pd.DataFrame(histogram_matrix_bins_x).to_csv("hist_x.csv", index=False, header=False)
+pd.DataFrame(histogram_matrix_bins_z).to_csv("hist_z.csv", index=False, header=False)'''
+
+'''plt.hist(histogram_matrix_bins_z.flatten(), bins=10)
 plt.xlabel('Histogram Bins Z')
 plt.ylabel('Frequency')
 plt.title('Histogram of Histogram Bins Z')
@@ -90,7 +116,7 @@ plt.hist(histogram_matrix_bins_x.flatten(), bins=10)
 plt.xlabel('Histogram Bins X')
 plt.ylabel('Frequency')
 plt.title('Histogram of Histogram Bins X')
-Saver.save_plot(f"hist_bins_x")
+Saver.save_plot(f"hist_bins_x")'''
 
 end_time_simulation = time.time()  # Record end time for simulation
 execution_time_simulation = end_time_simulation - end_time_read  # Calculate execution time for simulation
