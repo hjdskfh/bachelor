@@ -204,182 +204,57 @@ class Saver:
         return best_batchsize
 
     # ========== Prepare Data for Histogram ==========
-
-    def prepare_data_for_histogram(time_photons_det_x, time_photons_det_z, bins_per_symbol, histogram_matrix_bins_x, histogram_matrix_bins_z):
-        """Prepare the data for the histogram by binning the photon arrival times."""
-        # Example parameters
-        num_symbols = length_of_chain
-        bins_per_symbol = 30
-        symbol_window = 100  # Example time window for one symbol (adjust as needed)
-
-        # Create bins
-        bins = np.linspace(0, symbol_window, bins_per_symbol + 1)  # 30 bins
-
-        # Loop over symbols
-        for i in range(min(num_symbols, time_photons_det_x.shape[0])):
-            # Extract non-NaN times for this symbol
-            times_x = time_photons_det_x[i, ~np.isnan(time_photons_det_x[i])]
-            times_z = time_photons_det_z[i, ~np.isnan(time_photons_det_z[i])]
-
-            # Histogram for X basis
-            counts_x, _ = np.histogram(times_x, bins=bins)
-            histogram_matrix_bins_x[i, :] = counts_x
-            
-            # Histogram for Z basis
-            counts_z, _ = np.histogram(times_z, bins=bins)
-            histogram_matrix_bins_z[i, :] = counts_z
-
-        return histogram_matrix_bins_x, histogram_matrix_bins_z
-    
-    def prepare_data_for_histogram(
-        time_photons_det_x,
-        time_photons_det_z,
-        bins_per_symbol,
-        histogram_matrix_bins_x,
-        histogram_matrix_bins_z,
-        symbol_window=100  # Time window per symbol in ns or ps
-    ):
-        """
-        Bins photon arrival times into a fixed number of bins per symbol and accumulates counts.
-
-        Parameters:
-        - time_photons_det_x (np.ndarray): 2D array of photon times for X basis, shape (symbols, detections)
-        - time_photons_det_z (np.ndarray): 2D array of photon times for Z basis, shape (symbols, detections)
-        - bins_per_symbol (int): number of bins per symbol
-        - histogram_matrix_bins_x (np.ndarray): running bin count matrix for X, shape (symbols, bins)
-        - histogram_matrix_bins_z (np.ndarray): running bin count matrix for Z, shape (symbols, bins)
-        - symbol_window (float): max time window per symbol (e.g., 100 ns)
-
-        Returns:
-        - histogram_matrix_bins_x, histogram_matrix_bins_z: updated bin matrices
-        """
-
-        # Define time bin edges
-        bins = np.linspace(0, symbol_window, bins_per_symbol + 1)
-
-        # Ensure we don't go out of bounds
-        num_symbols = min(time_photons_det_x.shape[0], histogram_matrix_bins_x.shape[0])
-
-        for i in range(num_symbols):
-            # Clean and bin X basis times
-            valid_times_x = time_photons_det_x[i][~np.isnan(time_photons_det_x[i])]
-            counts_x, _ = np.histogram(valid_times_x, bins=bins)
-            histogram_matrix_bins_x[i] += counts_x
-
-            # Clean and bin Z basis times
-            valid_times_z = time_photons_det_z[i][~np.isnan(time_photons_det_z[i])]
-            counts_z, _ = np.histogram(valid_times_z, bins=bins)
-            histogram_matrix_bins_z[i] += counts_z
-
-        return histogram_matrix_bins_x, histogram_matrix_bins_z
-
     def update_histogram_batches(
         length_of_chain,
         time_photons_det_x, 
         time_photons_det_z,
-        histogram_batches_x, histogram_batches_z,
-        batch_size = 10, bins_per_symbol = 30, symbol_window = 100    
+        time_one_symbol,
+        index_where_photons_det_x, index_where_photons_det_z,
+        histogram_counts_x, histogram_counts_z,
+        bins_per_symbol = 30 
     ):
-        """
-        Update cumulative histograms for batches of in-cycle symbols.
         
-        Parameters:
-        - time_photons_det_x, time_photons_det_z: 2D arrays of shape (length_of_chain*n_rep, detections_per_symbol).
-        - batch_size: number of in-cycle symbols to group in one batch (e.g., 10).
-        - bins_per_symbol: number of histogram bins per symbol.
-        - symbol_window: the time interval allocated for each symbol.
-        - histogram_batches_x, histogram_batches_z: cumulative histogram arrays to update.
-        
-        Returns:
-        Updated histogram_batches_x and histogram_batches_z.
-        """
         total_symbols = time_photons_det_x.shape[0]  # Should equal length_of_chain * n_rep
         n_rep = total_symbols // length_of_chain
         
-        num_batches = math.ceil(length_of_chain / batch_size)
-        
-        # Process each batch
-        for batch in range(num_batches):
-            # Determine the in-cycle symbol indices for this batch.
-            in_cycle_start = batch * batch_size
-            in_cycle_end = min(length_of_chain, in_cycle_start + batch_size)
-            num_symbols_in_batch = in_cycle_end - in_cycle_start
-            # Total bins for this batch
-            batch_bins = bins_per_symbol * num_symbols_in_batch
-            print(f"batchbins: {batch_bins} in batch {batch}")
-            # Define bins spanning the time interval for this batch.
-            bins = np.linspace(0, symbol_window, bins_per_symbol + 1)    
-            print(f"Bins range: {bins.min()} to {bins.max()}")
-            print(f"First 10 X photon times: {time_photons_det_x[:10]}")
-            print(f"First 10 Z photon times: {time_photons_det_z[:10]}")
-            print(f"Histogram bins: {bins}")
-            # Temporary count arrays for this batch.
-            counts_x_batch = np.zeros(batch_bins, dtype=int)
-            counts_z_batch = np.zeros(batch_bins, dtype=int)
-            
-            # Loop over each cycle (repetition)
-            for rep in range(n_rep):
-                # For each symbol in the in-cycle indices of this batch:
-                for s in range(in_cycle_start, in_cycle_end):
-                    row_idx = rep * length_of_chain + s
-                    # Get valid times (remove NaN)
-                    valid_x = time_photons_det_x[row_idx][~np.isnan(time_photons_det_x[row_idx])]
-                    valid_z = time_photons_det_z[row_idx][~np.isnan(time_photons_det_z[row_idx])]
-                    
-                    # Compute histogram for this symbol
-                    counts_x, _ = np.histogram(valid_x, bins=bins)
-                    counts_z, _ = np.histogram(valid_z, bins=bins)
-                    
-                     # Store histogram in the correct batch index range
-                    start_idx = (s - in_cycle_start) * bins_per_symbol
-                    end_idx = start_idx + bins_per_symbol
-                    counts_x_batch[start_idx:end_idx] += counts_x
-                    counts_z_batch[start_idx:end_idx] += counts_z
+        # Define bins spanning the time interval for this batch.
+        bins_arr_per_symbol = np.linspace(0, time_one_symbol, bins_per_symbol + 1)        
+        # Loop over each cycle (repetition)
+        for rep in range(n_rep):
+            for s in range(length_of_chain):
+                row_idx = rep * length_of_chain + s
+                if np.isin(row_idx, index_where_photons_det_x):
+                    ind_long = np.where(index_where_photons_det_x == row_idx)[0]
+                    valid_x = time_photons_det_x[ind_long][~np.isnan(time_photons_det_x[ind_long])]
+                    bin_index = np.digitize(valid_x, bins_arr_per_symbol) - 1
+                    # calc with corresponding indexwherephoton and bins_per_symbol
+                    mod_ind_long_for_65_symbols = ind_long % length_of_chain
+                    histogram_counts_x[mod_ind_long_for_65_symbols + bin_index] += 1
+                if np.isin(row_idx, index_where_photons_det_z):
+                    ind_long = np.where(index_where_photons_det_z == row_idx)[0]
+                    valid_z = time_photons_det_z[ind_long][~np.isnan(time_photons_det_z[ind_long])]
+                    bin_index = np.digitize(valid_z, bins_arr_per_symbol) - 1
+                    # calc with corresponding indexwherephoton and bins_per_symbol
+                    mod_ind_long_for_65_symbols = ind_long % length_of_chain
+                    histogram_counts_z[mod_ind_long_for_65_symbols + bin_index] += 1
+        return histogram_counts_x, histogram_counts_z
 
-                    print(f"counts_x_batch after symbol {s}: {counts_x_batch}")
-            
-            # Update the corresponding batch in the cumulative histogram arrays.
-            # For a full batch, the number of bins is bins_per_symbol * batch_size,
-            # but if it's the last batch, we only update the used portion.
-            histogram_batches_x[batch, :batch_bins] += counts_x_batch
-            histogram_batches_z[batch, :batch_bins] += counts_z_batch
-        
-        return histogram_batches_x, histogram_batches_z
-
-    def plot_histogram_batch(length_of_chain, batch_index, batch_size, bins_per_symbol, symbol_window, hist_counts_x, hist_counts_z):
-        """
-        Plot the cumulative histogram for a given batch.
-        
-        Parameters:
-        - batch_index: which batch to plot (0-indexed).
-        - batch_size: number of in-cycle symbols per batch (except possibly the last one).
-        - bins_per_symbol: number of histogram bins per symbol.
-        - symbol_window: time interval allocated per symbol.
-        - hist_counts_x, hist_counts_z: cumulative histogram arrays for the batch.
-        """
-        # Determine the number of symbols in this batch.
-        # For the last batch, it might be less than batch_size.
-        # We assume length_of_chain total symbols; hence:
-        if batch_index == (math.ceil(length_of_chain / batch_size) - 1):
-            # Last batch: in-cycle indices from batch_index*batch_size to length_of_chain
-            num_symbols_in_batch = length_of_chain - batch_index * batch_size
-        else:
-            num_symbols_in_batch = batch_size
-        
-        batch_bins = bins_per_symbol * num_symbols_in_batch
-        bins = np.linspace(0, num_symbols_in_batch * symbol_window, batch_bins + 1)    
+    def plot_histogram_batch(length_of_chain, bins_per_symbol, time_one_symbol, histogram_counts_x, histogram_counts_z, lookup_arr, start_symbol=3, end_symbol=10):
+        assert 0 <= start_symbol <= end_symbol <= 64
+        amount_of_symbols_incl_start_and_end = end_symbol - start_symbol + 1
+        bins = np.linspace(0, amount_of_symbols_incl_start_and_end * time_one_symbol, bins_per_symbol * amount_of_symbols_incl_start_and_end + 1)    
         print(f"bins: {bins}")
 
         plt.figure(figsize=(10, 6))
         # Plot as bar chart; you can also use plt.hist with precomputed counts.
         width = (bins[1] - bins[0])
-        plt.bar(bins[:-1], hist_counts_x[:batch_bins], width=width, alpha=0.6, label='X basis', color='blue')
-        plt.bar(bins[:-1], hist_counts_z[:batch_bins], width=width, alpha=0.6, label='Z basis', color='red')
-        plt.xlabel("Time (offset for each symbol in batch)")
+        plt.bar(bins[:-1], histogram_counts_x[start_symbol * bins_per_symbol :(end_symbol + 1) * bins_per_symbol], width=width, alpha=0.6, label='X basis', color='blue')
+        plt.bar(bins[:-1], histogram_counts_z[start_symbol * bins_per_symbol :(end_symbol + 1) * bins_per_symbol], width=width, alpha=0.6, label='Z basis', color='red')
+        plt.xlabel("Time ")
         plt.ylabel("Cumulative Counts")
-        plt.title(f"Cumulative Histogram for Batch {batch_index+1} (In-cycle symbols {batch_index*batch_size} to {batch_index*batch_size + num_symbols_in_batch - 1})")
+        plt.title(f"Cumulative Histogram for symbols {lookup_arr[start_symbol:end_symbol + 1]}")
         plt.legend()
         plt.tight_layout()
-        plt.show()
+        Saver.save_plot(f"hist_symbols_{start_symbol}_to_{end_symbol}")
 
             

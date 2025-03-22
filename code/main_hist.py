@@ -65,42 +65,26 @@ end_time_read = time.time()  # Record end time
 execution_time_read = end_time_read - start_time  # Calculate execution time for reading
 print(f"Execution time for reading: {execution_time_read:.9f} seconds for {config.n_samples} samples")
 
-batch_size_hist = 10
 bins_per_symbol_hist = 30
-num_batches = math.ceil(length_of_chain / batch_size_hist)  # ceil(65 / 10) = 7
-full_batch_bins = batch_size_hist * bins_per_symbol_hist  # 10 * 30 = 300
-histogram_batches_x = np.zeros((num_batches, full_batch_bins), dtype=int)
-histogram_batches_z = np.zeros((num_batches, full_batch_bins), dtype=int)
+amount_bins = bins_per_symbol_hist * length_of_chain
+histogram_counts_x = np.zeros(amount_bins, dtype=int)
+histogram_counts_z = np.zeros(amount_bins, dtype=int)
 
 for i in range(times_per_n):#create simulation mean current 0.08, int(length_of_chain*n_rep)
     # Run the simulation
-    time_photons_det_x, time_photons_det_z, time_one_symbol = simulation.run_simulation_hist_final()
+    time_photons_det_x, time_photons_det_z, index_where_photons_det_x, index_where_photons_det_z, time_one_symbol, lookup_arr = simulation.run_simulation_hist_final()
     print(f"time_photons_det_x[:10]: {time_photons_det_x[:10]}")
     print(f"time_photons_det_z[:10]: {time_photons_det_z[:10]}")
     print(f"time_one_symbol: {time_one_symbol}")
 
-    # Check X basis
-    has_photons_x = np.any(~np.isnan(time_photons_det_x[:10]))
-    print(f"Are there any detected photons in the first 10 symbols (X basis)? {has_photons_x}")
-    has_photons_z = np.any(~np.isnan(time_photons_det_z[:10]))
-    print(f"Are there any detected photons in the first 10 symbols (Z basis)? {has_photons_z}")
+    Saver.update_histogram_batches(length_of_chain, time_photons_det_x, time_photons_det_z, time_one_symbol,
+                                   index_where_photons_det_x, index_where_photons_det_z,
+                                   histogram_counts_x, histogram_counts_z,
+                                   bins_per_symbol = 30)
 
-    histogram_batches_x, histogram_batches_z = Saver.update_histogram_batches(length_of_chain, time_photons_det_x, time_photons_det_z,
-                                                                              histogram_batches_x, histogram_batches_z,
-                                                                              batch_size = batch_size_hist, bins_per_symbol = bins_per_symbol_hist, symbol_window = time_one_symbol)
-                                                                    
-    print(f"histogram_batches_x: {histogram_batches_x.shape}")
-    print(f"histogram_batches_z: {histogram_batches_z.shape}")
-    
-Saver.plot_histogram_batch(
-    length_of_chain,         # total symbols in one cycle (65)
-    batch_index=0,           # first batch (symbols 0 to 9)
-    batch_size=batch_size_hist,   # batch size (10 symbols)
-    bins_per_symbol=bins_per_symbol_hist,
-    symbol_window=time_one_symbol,
-    hist_counts_x=histogram_batches_x[0],  # row corresponding to batch 0
-    hist_counts_z=histogram_batches_z[0]   # row corresponding to batch 0
-)
+
+Saver.plot_histogram_batch(length_of_chain, bins_per_symbol_hist, time_one_symbol, histogram_counts_x, histogram_counts_z, lookup_arr, start_symbol=3, end_symbol=10)
+
 
 
 '''pd.DataFrame(histogram_matrix_bins_x).to_csv("hist_x.csv", index=False, header=False)

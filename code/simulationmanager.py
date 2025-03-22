@@ -844,7 +844,7 @@ class SimulationManager:
         optical_power, peak_wavelength, chosen_voltage, chosen_current = self.simulation_engine.random_laser_output('current_power', 'voltage_shift')
     
         # Generate Alice's choices
-        basis_arr, value_arr, decoy_arr, _ = self.simulation_helper.create_all_symbol_combinations_for_hist()
+        basis_arr, value_arr, decoy_arr, lookup_arr = self.simulation_helper.create_all_symbol_combinations_for_hist()
 
         basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=basis_arr, value=value_arr, decoy=decoy_arr)
 
@@ -911,4 +911,4 @@ class SimulationManager:
                                  nr_photons_det_x=nr_photons_det_x,
                                  nr_photons_det_z=nr_photons_det_z)
         '''
-        return time_photons_det_x, time_photons_det_z, t[-1]
+        return time_photons_det_x, time_photons_det_z, index_where_photons_det_x, index_where_photons_det_z, t[-1], lookup_arr
