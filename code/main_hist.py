@@ -28,10 +28,14 @@ database.add_jitter(jitter, 'laser')
 detector_jitter = 100e-12
 database.add_jitter(detector_jitter, 'detector')
 
-times_per_n = 2
+times_per_n = 1
 length_of_chain = 8*8 +1
 n_rep = 50
 round_counter = 0
+bins_per_symbol_hist = 30
+amount_bins = bins_per_symbol_hist * length_of_chain
+histogram_counts_x = np.zeros(amount_bins, dtype=int)
+histogram_counts_z = np.zeros(amount_bins, dtype=int)
 
 # Define file name
 style_file = "Presentation_style_1_adjusted_no_grid.mplstyle"
@@ -65,11 +69,6 @@ end_time_read = time.time()  # Record end time
 execution_time_read = end_time_read - start_time  # Calculate execution time for reading
 print(f"Execution time for reading: {execution_time_read:.9f} seconds for {config.n_samples} samples")
 
-bins_per_symbol_hist = 30
-amount_bins = bins_per_symbol_hist * length_of_chain
-histogram_counts_x = np.zeros(amount_bins, dtype=int)
-histogram_counts_z = np.zeros(amount_bins, dtype=int)
-
 for i in range(times_per_n):#create simulation mean current 0.08, int(length_of_chain*n_rep)
     # Run the simulation
     time_photons_det_x, time_photons_det_z, index_where_photons_det_x, index_where_photons_det_z, time_one_symbol, lookup_arr = simulation.run_simulation_hist_final()
@@ -82,7 +81,9 @@ for i in range(times_per_n):#create simulation mean current 0.08, int(length_of_
                                    histogram_counts_x, histogram_counts_z,
                                    bins_per_symbol = 30)
 
-
+Saver.save_array_as_npz("histograms", histogram_counts_x=histogram_counts_x, histogram_counts_z=histogram_counts_z)
+print(f"hist z: {histogram_counts_z}")
+print(f"hist x: {histogram_counts_x}")
 Saver.plot_histogram_batch(length_of_chain, bins_per_symbol_hist, time_one_symbol, histogram_counts_x, histogram_counts_z, lookup_arr, start_symbol=3, end_symbol=10)
 
 

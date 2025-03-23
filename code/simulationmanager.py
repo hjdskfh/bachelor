@@ -903,12 +903,18 @@ class SimulationManager:
         # self.plotter.plot_and_delete_photon_nr_histogram(nr_photons_det_x, nr_photons_det_z)
         
         # get results for both detectors
-        '''Saver.save_arrays_to_csv('results',  
-                                 time_photons_det_x=time_photons_det_x, 
-                                 time_photons_det_z=time_photons_det_z, 
-                                 wavelength_photons_det_x=wavelength_photons_det_x, 
-                                 wavelength_photons_det_z=wavelength_photons_det_z, 
-                                 nr_photons_det_x=nr_photons_det_x,
-                                 nr_photons_det_z=nr_photons_det_z)
-        '''
+        # get results for both detectors
+        function_name = inspect.currentframe().f_code.co_name
+        Saver.save_results_to_txt(  # Save the results to a text file
+            function_used = function_name,
+            n_samples=self.config.n_samples,
+            seed=self.config.seed,
+            non_signal_voltage=self.config.non_signal_voltage,
+            voltage_decoy=self.config.voltage_decoy, 
+            voltage=self.config.voltage, 
+            voltage_decoy_sup=self.config.voltage_decoy_sup, 
+            voltage_sup=self.config.voltage_sup,
+            p_indep_x_states_non_dec=self.config.p_indep_x_states_non_dec,
+            p_indep_x_states_dec=self.config.p_indep_x_states_dec)
+        
         return time_photons_det_x, time_photons_det_z, index_where_photons_det_x, index_where_photons_det_z, t[-1], lookup_arr

@@ -46,6 +46,30 @@ class Saver:
         plt.close()
 
     @staticmethod
+    def save_array_as_npz(filename, **kwargs):
+        # Get the script's parent directory (the directory where the script is located)
+        script_dir = Path(__file__).parent
+
+        # Navigate to the parent folder (next to 'code') and then to the 'images' folder
+        target_dir = script_dir.parent / 'images'
+
+        # Create the directory if it doesn't exist
+        target_dir.mkdir(exist_ok=True)
+
+        # Generate a timestamp (e.g., '20231211_153012' for 11th December 2023 at 15:30:12)
+        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+
+        # Append the timestamp to the filename
+        filename_with_timestamp = f"{timestamp}_{filename}.npz"
+
+        # Define the file path
+        filepath = target_dir / filename_with_timestamp
+
+        # Save all provided arrays into the file
+        np.savez(filepath, **kwargs)
+
+
+    @staticmethod
     def save_to_json(config_object):
         """Save data to a JSON file with timestamp in the 'logs' folder next to the code."""
         
