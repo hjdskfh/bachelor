@@ -193,7 +193,7 @@ class SimulationEngine:
         for i in range(0, self.config.n_samples, self.config.batchsize):
             f_0_part = f_0[i:i + self.config.batchsize]
             f_0_part = np.repeat(f_0_part, len(t))
-            shifted_frequencies_for_w_0 = frequencies - f_0_part  
+            shifted_frequencies_for_w_0 = frequencies + f_0_part  
             t_shift = t[-1] / 2
             phi_shift = np.exp(1j * 2 * np.pi * shifted_frequencies_for_w_0 * t_shift)
 
@@ -296,53 +296,6 @@ class SimulationEngine:
         dark_count_times, num_dark_counts = self.simulation_helper.darkcount()
 
         return time_photons_det, wavelength_photons_det, nr_photons_det, index_where_photons_det, calc_mean_photon_nr_detector, dark_count_times, num_dark_counts
-    
-    def classificator(self, t, time_photons_det_x, index_where_photons_det_x, time_photons_det_z, index_where_photons_det_z, basis, value, decoy):
-        '''"""Classify time bins."""
-        num_segments = self.config.n_pulses // 2
-        timebins = np.linspace(t[-1] / num_segments, t[-1], num_segments)        
-        detected_indices_z_norm = self.simulation_helper.classificator_det_ind(timebins, decoy, time_photons_det_z, index_where_photons_det_z, is_decoy = False)
-        # print(f"shape detected_indices_z_norm: {detected_indices_z_norm}")
-
-        detected_indices_z_dec = self.simulation_helper.classificator_det_ind(timebins, decoy, time_photons_det_z, index_where_photons_det_z, is_decoy = True)
-        # print(f"shape detected_indices_z_dec: {detected_indices_z_dec}")
-
-        detected_indices_x_norm = self.simulation_helper.classificator_det_ind(timebins, decoy, time_photons_det_x, index_where_photons_det_x, is_decoy = False)
-        # print(f"shape detected_indices_x_norm: {detected_indices_x_norm}")
-
-        detected_indices_x_dec = self.simulation_helper.classificator_det_ind(timebins, decoy, time_photons_det_x, index_where_photons_det_x, is_decoy=True)
-        # print(f"detected_indices_x_dec shape: {detected_indices_x_dec.shape}")
-        gain_Z_norm, amount_Z_det_norm = self.simulation_helper.classificator_z(basis, value, decoy, index_where_photons_det_z, index_where_photons_det_x, detected_indices_z_norm, detected_indices_x_norm, is_decoy=False)
-        gain_Z_dec, amount_Z_det_dec = self.simulation_helper.classificator_z(basis, value, decoy, index_where_photons_det_z,  index_where_photons_det_x, detected_indices_z_dec, detected_indices_x_dec, is_decoy=True)
-        gain_XP_norm, amount_XP_det_norm = self.simulation_helper.classificator_x(basis, value, decoy, index_where_photons_det_x, index_where_photons_det_z, detected_indices_x_norm, detected_indices_z_norm, gain_Z_norm, is_decoy=False)
-        gain_XP_dec, amount_XP_det_dec = self.simulation_helper.classificator_x(basis, value, decoy, index_where_photons_det_x, index_where_photons_det_z, detected_indices_x_dec, detected_indices_z_dec, gain_Z_dec, is_decoy=True)
-
-        # Use np.hstack to concatenate, and it automatically handles empty arrays
-        total_detected_indices_x = np.vstack((detected_indices_x_dec, detected_indices_x_norm)) if detected_indices_x_dec.size > 0 or detected_indices_x_norm.size > 0 else np.empty((0, 0))
-        total_detected_indices_z = np.vstack((detected_indices_z_dec, detected_indices_z_norm)) if detected_indices_z_dec.size > 0 or detected_indices_z_norm.size > 0 else np.empty((0, 0))
-        # print(f"total_detected_indices_x: {total_detected_indices_x.shape}")
-        # print(f"total_detected_indices_z: {total_detected_indices_z.shape}")
-
-        wrong_detections_z, wrong_detections_x = self.simulation_helper.classificator_error_cases(basis, value, index_where_photons_det_x, index_where_photons_det_z, total_detected_indices_x, total_detected_indices_z)
-        len_wrong_detections_z = len(wrong_detections_z)
-        len_wrong_detections_x = len(wrong_detections_x)
-        amount_Z_detections = amount_Z_det_norm + amount_Z_det_dec
-        amount_XP_detections = amount_XP_det_norm + amount_XP_det_dec
-        total_amount_detections = amount_Z_det_norm + amount_Z_det_dec + amount_XP_det_norm + amount_XP_det_dec
-
-        if amount_Z_det_norm != 0:
-            qber = len(wrong_detections_z) / amount_Z_det_norm
-        else:
-            qber = 0
-
-        if amount_XP_det_norm != 0:
-            phase_error_rate = len(wrong_detections_x) / amount_XP_det_norm
-        else:
-            phase_error_rate = 0
-
-        raw_key_rate = total_amount_detections / (t[-1] * self.config.n_samples)
-
-        return len_wrong_detections_z, len_wrong_detections_x, total_amount_detections, amount_Z_detections, amount_XP_detections, qber, phase_error_rate, raw_key_rate, gain_XP_norm, gain_XP_dec, gain_Z_norm, gain_Z_dec, detected_indices_x_dec, detected_indices_x_norm, detected_indices_z_dec, detected_indices_z_norm'''
     
     def classificator_new(self, t, time_photons_det_x, index_where_photons_det_x, time_photons_det_z, index_where_photons_det_z, basis, value, decoy):
         """Classify time bins."""
@@ -503,5 +456,11 @@ class SimulationEngine:
 
         # set n_samples to normal
         self.config.n_samples = copy_old_n_samples
+        print(f"type p_indep_x_states: {type(p_indep_x_states)}")
+        print(f"shape p_indep_x_states: {p_indep_x_states.shape}")
+        print(f"len_ind_has_one_0_and_every_second_symbol: {len_ind_has_one_0_and_every_second_symbol}")
+        print(f"len_ind_every_second_symbol: {len_ind_every_second_symbol}")
+        print(f"Returning values: {p_indep_x_states}, {len_ind_has_one_0_and_every_second_symbol}, {len_ind_every_second_symbol}")
+        
         return p_indep_x_states, len_ind_has_one_0_and_every_second_symbol, len_ind_every_second_symbol
    

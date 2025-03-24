@@ -122,13 +122,16 @@ class Saver:
         # Generate timestamp for filename
         timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
 
-        output_dir = r"C:\Users\leavi\OneDrive\Dokumente\Uni\Semester 7\NeuMoQP\Programm\results"
-
-        # Ensure the output directory exists
-        os.makedirs(output_dir, exist_ok=True)
+        script_dir = Path(__file__).parent  # The folder where the script is located
+        
+        # Navigate to the parent directory (next to the code) and then to the 'logs' folder
+        logs_dir = script_dir.parent / 'logs'  # Go one level up and look for 'logs'
+        
+        # Create the 'logs' directory if it doesn't exist
+        logs_dir.mkdir(exist_ok=True)
 
         # Define the file path
-        filepath = os.path.join(output_dir, f"output_{timestamp}_n_samples_{n_samples}.txt")
+        filepath = os.path.join(logs_dir, f"output_{timestamp}_n_samples_{n_samples}.txt")
 
         # Write the key-value pairs to the file
         with open(filepath, "w") as f:
@@ -248,47 +251,46 @@ class Saver:
         bins_arr_per_symbol = np.linspace(0, time_one_symbol, bins_per_symbol + 1)        
         # Loop over each cycle (repetition)
         for rep in range(n_rep):
-            for s in range(length_of_chain):
+            for s in range(length_of_chain):  # which symbol
                 row_idx = rep * length_of_chain + s
                 if np.isin(row_idx, index_where_photons_det_x):
-                    print(f"isinloopx")
-                    ind_long = np.where(index_where_photons_det_x == row_idx)[0]
-                    print(f"row_idx: {row_idx}, index_where_photons_det_x: {index_where_photons_det_x}")
-                    print(f"ind_long:{ind_long}")
-                    valid_x = time_photons_det_x[ind_long][~np.isnan(time_photons_det_x[ind_long])]
+                    ind_short = np.where(index_where_photons_det_x == row_idx)[0]
+                    valid_x = time_photons_det_x[ind_short][~np.isnan(time_photons_det_x[ind_short])]
                     bin_index = np.digitize(valid_x, bins_arr_per_symbol) - 1
-                    # calc with corresponding indexwherephoton and bins_per_symbol
-                    mod_ind_long_for_65_symbols = ind_long % length_of_chain
-                    print(f"mod_ind: {mod_ind_long_for_65_symbols}")
-                    print(f"bin_index:{bin_index}")
-                    # n_rep dazu
-                    histogram_counts_x[n_rep * mod_ind_long_for_65_symbols + bin_index] += 1
+                    # insert into histogram_counts_z with 30*symbol + bin_index 
+                    histogram_counts_x[bins_per_symbol * s + bin_index] += 1
                 if np.isin(row_idx, index_where_photons_det_z):
-                    print(f"isinloopz")
-                    ind_long = np.where(index_where_photons_det_z == row_idx)[0]
-                    print(f"row_idx: {row_idx}, index_where_photons_det_z: {index_where_photons_det_z}")
-                    print(f"ind_long:{ind_long}")
-                    valid_z = time_photons_det_z[ind_long][~np.isnan(time_photons_det_z[ind_long])]
+                    ind_short = np.where(index_where_photons_det_z == row_idx)[0]
+                    valid_z = time_photons_det_z[ind_short][~np.isnan(time_photons_det_z[ind_short])]
                     bin_index = np.digitize(valid_z, bins_arr_per_symbol) - 1
-                    # calc with corresponding indexwherephoton and bins_per_symbol
-                    mod_ind_long_for_65_symbols = ind_long % length_of_chain
-                    print(f"mod_ind: {mod_ind_long_for_65_symbols}")
-                    print(f"bin_index:{bin_index}")
-
-                    histogram_counts_z[n_rep * mod_ind_long_for_65_symbols + bin_index] += 1
+                    # insert into histogram_counts_z with 30*symbol + bin_index 
+                    histogram_counts_z[bins_per_symbol * s + bin_index] += 1
         return histogram_counts_x, histogram_counts_z
 
     def plot_histogram_batch(length_of_chain, bins_per_symbol, time_one_symbol, histogram_counts_x, histogram_counts_z, lookup_arr, start_symbol=3, end_symbol=10):
         assert 0 <= start_symbol <= end_symbol <= 64
         amount_of_symbols_incl_start_and_end = end_symbol - start_symbol + 1
         bins = np.linspace(0, amount_of_symbols_incl_start_and_end * time_one_symbol, bins_per_symbol * amount_of_symbols_incl_start_and_end + 1)    
-        print(f"bins: {bins}")
 
         plt.figure(figsize=(10, 6))
         # Plot as bar chart; you can also use plt.hist with precomputed counts.
         width = (bins[1] - bins[0])
         plt.bar(bins[:-1], histogram_counts_x[start_symbol * bins_per_symbol :(end_symbol + 1) * bins_per_symbol], width=width, alpha=0.6, label='X basis', color='blue')
         plt.bar(bins[:-1], histogram_counts_z[start_symbol * bins_per_symbol :(end_symbol + 1) * bins_per_symbol], width=width, alpha=0.6, label='Z basis', color='red')
+        for i in range(amount_of_symbols_incl_start_and_end):
+            plt.axvline(x=i * time_one_symbol, color='grey', linestyle='--', linewidth=1)
+
+            # Place the symbol halfway between this line and the next
+            if i < amount_of_symbols_incl_start_and_end - 1:
+                x_mid = i * time_one_symbol + time_one_symbol / 2
+                symbol = lookup_arr[start_symbol + i]
+                y_max = max(max(histogram_counts_x), max(histogram_counts_z))
+                x_mid = i * time_one_symbol + time_one_symbol / 2
+                basis = symbol[0]  # assuming symbol is like 'X0' or 'Z1'
+                color = 'green' if basis == 'X' else 'purple'
+
+                plt.text(x_mid, y_max * 0.9, symbol, ha='center', va='bottom', fontsize=14, color=color, fontweight='bold')
+
         plt.xlabel("Time ")
         plt.ylabel("Cumulative Counts")
         plt.title(f"Cumulative Histogram for symbols {lookup_arr[start_symbol:end_symbol + 1]}")

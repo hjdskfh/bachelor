@@ -28,7 +28,7 @@ database.add_jitter(jitter, 'laser')
 detector_jitter = 100e-12
 database.add_jitter(detector_jitter, 'detector')
 
-times_per_n = 1
+times_per_n = 5
 length_of_chain = 8*8 +1
 n_rep = 50
 round_counter = 0
