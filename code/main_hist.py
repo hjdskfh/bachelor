@@ -76,14 +76,18 @@ for i in range(times_per_n):#create simulation mean current 0.08, int(length_of_
     print(f"time_photons_det_z[:10]: {time_photons_det_z[:10]}")
     print(f"time_one_symbol: {time_one_symbol}")
 
-    Saver.update_histogram_batches(length_of_chain, time_photons_det_x, time_photons_det_z, time_one_symbol,
+    Saver.update_histogram_batches(length_of_chain, time_photons_det_x, time_photons_det_z, time_one_symbol, int(length_of_chain * n_rep),
                                    index_where_photons_det_x, index_where_photons_det_z,
                                    histogram_counts_x, histogram_counts_z,
                                    bins_per_symbol = 30)
 
 Saver.save_array_as_npz("histograms", histogram_counts_x=histogram_counts_x, histogram_counts_z=histogram_counts_z)
+np.set_printoptions(threshold=2000)
 print(f"hist z: {histogram_counts_z}")
 print(f"hist x: {histogram_counts_x}")
+print(f"histz.shape:{histogram_counts_z.shape}")
+print(f"histx.shape:{histogram_counts_x.shape}")
+
 Saver.plot_histogram_batch(length_of_chain, bins_per_symbol_hist, time_one_symbol, histogram_counts_x, histogram_counts_z, lookup_arr, start_symbol=3, end_symbol=10)
 
 

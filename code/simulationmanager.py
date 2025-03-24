@@ -905,7 +905,7 @@ class SimulationManager:
         # get results for both detectors
         # get results for both detectors
         function_name = inspect.currentframe().f_code.co_name
-        Saver.save_results_to_txt(  # Save the results to a text file
+        Saver.save_results_to_txt(  # Save the results to a text file 
             function_used = function_name,
             n_samples=self.config.n_samples,
             seed=self.config.seed,

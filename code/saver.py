@@ -51,7 +51,7 @@ class Saver:
         script_dir = Path(__file__).parent
 
         # Navigate to the parent folder (next to 'code') and then to the 'images' folder
-        target_dir = script_dir.parent / 'images'
+        target_dir = script_dir.parent / 'results'
 
         # Create the directory if it doesn't exist
         target_dir.mkdir(exist_ok=True)
@@ -233,14 +233,17 @@ class Saver:
         time_photons_det_x, 
         time_photons_det_z,
         time_one_symbol,
+        total_symbols,
         index_where_photons_det_x, index_where_photons_det_z,
         histogram_counts_x, histogram_counts_z,
         bins_per_symbol = 30 
     ):
         
-        total_symbols = time_photons_det_x.shape[0]  # Should equal length_of_chain * n_rep
+        print(f"total_symbols: {total_symbols}")
         n_rep = total_symbols // length_of_chain
-        
+        print(f"n_rep: {n_rep}")
+        print(f"lengthofchain:{length_of_chain}")
+        print(f"first blub")
         # Define bins spanning the time interval for this batch.
         bins_arr_per_symbol = np.linspace(0, time_one_symbol, bins_per_symbol + 1)        
         # Loop over each cycle (repetition)
@@ -248,19 +251,31 @@ class Saver:
             for s in range(length_of_chain):
                 row_idx = rep * length_of_chain + s
                 if np.isin(row_idx, index_where_photons_det_x):
+                    print(f"isinloopx")
                     ind_long = np.where(index_where_photons_det_x == row_idx)[0]
+                    print(f"row_idx: {row_idx}, index_where_photons_det_x: {index_where_photons_det_x}")
+                    print(f"ind_long:{ind_long}")
                     valid_x = time_photons_det_x[ind_long][~np.isnan(time_photons_det_x[ind_long])]
                     bin_index = np.digitize(valid_x, bins_arr_per_symbol) - 1
                     # calc with corresponding indexwherephoton and bins_per_symbol
                     mod_ind_long_for_65_symbols = ind_long % length_of_chain
-                    histogram_counts_x[mod_ind_long_for_65_symbols + bin_index] += 1
+                    print(f"mod_ind: {mod_ind_long_for_65_symbols}")
+                    print(f"bin_index:{bin_index}")
+                    # n_rep dazu
+                    histogram_counts_x[n_rep * mod_ind_long_for_65_symbols + bin_index] += 1
                 if np.isin(row_idx, index_where_photons_det_z):
+                    print(f"isinloopz")
                     ind_long = np.where(index_where_photons_det_z == row_idx)[0]
+                    print(f"row_idx: {row_idx}, index_where_photons_det_z: {index_where_photons_det_z}")
+                    print(f"ind_long:{ind_long}")
                     valid_z = time_photons_det_z[ind_long][~np.isnan(time_photons_det_z[ind_long])]
                     bin_index = np.digitize(valid_z, bins_arr_per_symbol) - 1
                     # calc with corresponding indexwherephoton and bins_per_symbol
                     mod_ind_long_for_65_symbols = ind_long % length_of_chain
-                    histogram_counts_z[mod_ind_long_for_65_symbols + bin_index] += 1
+                    print(f"mod_ind: {mod_ind_long_for_65_symbols}")
+                    print(f"bin_index:{bin_index}")
+
+                    histogram_counts_z[n_rep * mod_ind_long_for_65_symbols + bin_index] += 1
         return histogram_counts_x, histogram_counts_z
 
     def plot_histogram_batch(length_of_chain, bins_per_symbol, time_one_symbol, histogram_counts_x, histogram_counts_z, lookup_arr, start_symbol=3, end_symbol=10):
