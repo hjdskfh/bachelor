@@ -238,7 +238,7 @@ class Saver:
         time_one_symbol,
         total_symbols,
         index_where_photons_det_x, index_where_photons_det_z,
-        amount_bins_hist,
+        histogram_counts_x, histogram_counts_z,
         bins_per_symbol = 30 
     ):
         
@@ -247,9 +247,6 @@ class Saver:
         print(f"n_rep: {n_rep}")
         print(f"lengthofchain:{length_of_chain}")
         print(f"first blub")
-
-        local_histogram_counts_x = np.zeros(amount_bins_hist, dtype=int)
-        local_histogram_counts_z = np.zeros(amount_bins_hist, dtype=int)
         # Define bins spanning the time interval for this batch.
         bins_arr_per_symbol = np.linspace(0, time_one_symbol, bins_per_symbol + 1)        
         # Loop over each cycle (repetition)
@@ -261,14 +258,14 @@ class Saver:
                     valid_x = time_photons_det_x[ind_short][~np.isnan(time_photons_det_x[ind_short])]
                     bin_index = np.digitize(valid_x, bins_arr_per_symbol) - 1
                     # insert into histogram_counts_z with 30*symbol + bin_index 
-                    local_histogram_counts_x[bins_per_symbol * s + bin_index] += 1
+                    histogram_counts_x[bins_per_symbol * s + bin_index] += 1
                 if np.isin(row_idx, index_where_photons_det_z):
                     ind_short = np.where(index_where_photons_det_z == row_idx)[0]
                     valid_z = time_photons_det_z[ind_short][~np.isnan(time_photons_det_z[ind_short])]
                     bin_index = np.digitize(valid_z, bins_arr_per_symbol) - 1
                     # insert into histogram_counts_z with 30*symbol + bin_index 
-                    local_histogram_counts_z[bins_per_symbol * s + bin_index] += 1
-        return local_histogram_counts_x, local_histogram_counts_z
+                    histogram_counts_z[bins_per_symbol * s + bin_index] += 1
+        return histogram_counts_x, histogram_counts_z
 
     def plot_histogram_batch(length_of_chain, bins_per_symbol, time_one_symbol, histogram_counts_x, histogram_counts_z, lookup_arr, start_symbol=3, end_symbol=10):
         assert 0 <= start_symbol <= end_symbol <= 64

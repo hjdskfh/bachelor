@@ -643,7 +643,7 @@ class SimulationManager:
         # print(f"shape of power_dampened after DLI: {power_dampened.shape}")
 
         # plot
-        self.plotter.plot_power(power_dampened, amount_symbols_in_plot=amount_symbols_in_first_part, where_plot_1='before DLI',  shortened_first_power=first_power, where_plot_2='after DLI ', title_rest='- in fft, mean_volt: ' + str("{:.5f}".format(self.config.mean_voltage)) + ' voltage: ' + str("{:.5f}".format(chosen_voltage[0])) + ' V and ' + str("{:.5f}".format(peak_wavelength[0])), shift=shift_DLI)
+        self.plotter.plot_power(power_dampened, amount_symbols_in_plot=amount_symbols_in_first_part, where_plot_1='before DLI',  shortened_first_power=first_power, where_plot_2='after DLI ', title_rest='+ in fft, mean_volt: ' + str("{:.5f}".format(self.config.mean_voltage)) + ' voltage: ' + str("{:.5f}".format(chosen_voltage[0])) + ' V and ' + str("{:.5f}".format(peak_wavelength[0])), shift=shift_DLI)
 
         Saver.memory_usage("after everything: " + str("{:.3f}".format(time.time() - start_time)))
         # print(f"first 10 symbols of basis, value, decoy: {basis[:10]}, {value[:10]}, {decoy[:10]}")
