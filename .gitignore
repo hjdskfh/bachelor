@@ -26,6 +26,3 @@ Thumbs.db  # Windows
 # IDE-spezifische Dateien
 .idea/
 .vscode/
-
-# data
-data/
