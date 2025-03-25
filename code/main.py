@@ -34,11 +34,7 @@ database.add_jitter(detector_jitter, 'detector')
 # Define file name
 style_file = "Presentation_style_1_adjusted_no_grid.mplstyle"
 
-# Check if running on Windows or Linux (Cluster)
-if os.name == "nt":  # Windows (Your PC)
-    base_path = "C:/Users/leavi/OneDrive/Dokumente/Uni/Semester 7/NeuMoQP/Programm/code/"
-else:  # Linux (Cluster)
-    base_path = "/wang/users/leavic98/cluster_home/NeuMoQP/Programm/code/"
+base_path = os.path.dirname(os.path.abspath(__file__))
 
 #create simulation mean current 0.08 , mena_voltage = 0.98 weil aus voltage_sweep
 config = SimulationConfig(database, seed=None, n_samples=20000, n_pulses=4, batchsize=1000, mean_voltage=0.982, mean_current=0.082111, voltage_amplitude=0.050, current_amplitude=0.0005,

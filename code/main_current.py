@@ -39,10 +39,7 @@ round_counter = 0
 style_file = "Presentation_style_1_adjusted_no_grid.mplstyle"
 
 # Check if running on Windows or Linux (Cluster)
-if os.name == "nt":  # Windows (Your PC)
-    base_path = "C:/Users/leavi/OneDrive/Dokumente/Uni/Semester 7/NeuMoQP/Programm/code/"
-else:  # Linux (Cluster)
-    base_path = "/wang/users/leavic98/cluster_home/NeuMoQP/Programm/code/"
+base_path = os.path.dirname(os.path.abspath(__file__))
 
 #for n in n_samples:
 for idx, var_current in enumerate(arr_current):

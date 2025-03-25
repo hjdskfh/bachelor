@@ -1,4 +1,4 @@
-
+#blub
 import time
 from datamanager import DataManager
 from config import SimulationConfig
@@ -11,7 +11,6 @@ import os
 import math
 from joblib import Parallel, delayed
 
-# savely 192 GB -> 640000 samples / 65 = 10000 max reps
 Saver.memory_usage("START of Simulation: Before everything")
 start_time = time.time()  # Record start time
 
@@ -26,21 +25,31 @@ database.add_jitter(jitter, 'laser')
 detector_jitter = 100e-12
 database.add_jitter(detector_jitter, 'detector')
 
+
+# Memory considerations:
+# 20,000 symbols ~ 6 GB per simulation.
+# To be safe, use up to ~75% of 256 GB → ~192 GB usable.
+# Maximum concurrent simulations ≈ 192 / 6 ≈ 32.
+# Here we choose a conservative maximum number of parallel tasks.
+max_concurrent_tasks = 32
+
+# How many simulations per batch (each batch runs sequentially inside one task)
+simulations_in_batch = 2  # adjust this to increase per-task workload
+
+# Total number of batches to run (total simulations = simulations_in_batch * total_batches)
+total_batches = 50  # e.g., total simulations = 2 * 50 = 100
+
 times_per_n = 100
 length_of_chain = 8*8 +1
 n_rep = 50
-round_counter = 0
 bins_per_symbol_hist = 30
 amount_bins_hist = bins_per_symbol_hist * length_of_chain
 
 # Define file name
 style_file = "Presentation_style_1_adjusted_no_grid.mplstyle"
 
-# Check if running on Windows or Linux (Cluster)
-if os.name == "nt":  # Windows (Your PC)
-    base_path = "C:/Users/leavi/OneDrive/Dokumente/Uni/Semester 7/NeuMoQP/Programm/code/"
-else:  # Linux (Cluster)
-    base_path = "/wang/users/leavic98/cluster_home/NeuMoQP/Programm/code/"
+base_path = os.path.dirname(os.path.abspath(__file__))
+
 
 best_batchsize = Saver.find_best_batchsize(length_of_chain, n_rep)
 
@@ -56,8 +65,6 @@ simulation = SimulationManager(config)
 
 # Convert the config object to a dictionary
 config_params = config.to_dict()
-
-# Save the config parameters to a JSON file
 Saver.save_to_json(config_params)
 
 # Read in time
@@ -66,7 +73,7 @@ execution_time_read = end_time_read - start_time  # Calculate execution time for
 print(f"Execution time for reading: {execution_time_read:.9f} seconds for {config.n_samples} samples")
 
 def run_simulation_and_update_hist(i, length_of_chain, n_rep, base_path, style_file, database, jitter,
-                                   detector_jitter, best_batchsize, bins_per_symbol):
+                                   detector_jitter, best_batchsize, bins_per_symbol, amount_bins):
     # Create the simulation config locally
     config = SimulationConfig(
         database, seed=None,
@@ -123,32 +130,72 @@ def run_simulation_and_update_hist(i, length_of_chain, n_rep, base_path, style_f
 
     return local_hist_x, local_hist_z, time_one_symbol, lookup_arr
 
-# Initialize global histograms to zero
-global_histogram_counts_x = np.zeros(amount_bins_hist, dtype=int)
-global_histogram_counts_z = np.zeros(amount_bins_hist, dtype=int)
+def run_simulation_batch(batch_id, simulations_in_batch, length_of_chain, n_rep, base_path, style_file,
+                         database, jitter, detector_jitter, best_batchsize, bins_per_symbol, amount_bins):
+    """
+    Run a batch of simulations sequentially and aggregate the local histograms.
+    """
+    # Initialize local histograms for the batch
+    local_hist_total_x = np.zeros(amount_bins, dtype=int)
+    local_hist_total_z = np.zeros(amount_bins, dtype=int)
+    time_one_symbol_final = None
+    lookup_arr_final = None
 
-# Optionally, process in batches if times_per_n is large
-results = Parallel(n_jobs=64)(
-    delayed(run_simulation_and_update_hist)(
-        i, length_of_chain, n_rep, base_path, style_file, database, jitter,
-        detector_jitter, best_batchsize, bins_per_symbol_hist
+    for j in range(simulations_in_batch):
+        # We pass a unique identifier if needed (here simply j)
+        local_hist_x, local_hist_z, time_one_symbol, lookup_arr = run_simulation_and_update_hist(
+            j, length_of_chain, n_rep, base_path, style_file, database, jitter,
+            detector_jitter, best_batchsize, bins_per_symbol, amount_bins
+        )
+        local_hist_total_x += local_hist_x
+        local_hist_total_z += local_hist_z
+        time_one_symbol_final = time_one_symbol  # assume it's the same for each simulation in the batch
+        lookup_arr_final = lookup_arr
+
+    return local_hist_total_x, local_hist_total_z, time_one_symbol_final, lookup_arr_final
+
+# --- Run Batches in Parallel ---
+
+results = Parallel(n_jobs=max_concurrent_tasks)(
+    delayed(run_simulation_batch)(
+         batch_id,
+         simulations_in_batch,
+         length_of_chain,
+         n_rep,
+         base_path,
+         style_file,
+         database,
+         jitter,
+         detector_jitter,
+         best_batchsize,
+         bins_per_symbol_hist,
+         amount_bins_hist
     )
-    for i in range(times_per_n)
+    for batch_id in range(total_batches)
 )
 
-# Merge (sum) the local histograms into the global histogram arrays
+# --- Aggregate Global Histograms ---
+global_histogram_counts_x = np.zeros(amount_bins_hist, dtype=int)
+global_histogram_counts_z = np.zeros(amount_bins_hist, dtype=int)
+final_time_one_symbol = None
+final_lookup_arr = None
+
 for local_hist_x, local_hist_z, time_one_symbol, lookup_arr in results:
     global_histogram_counts_x += local_hist_x
     global_histogram_counts_z += local_hist_z
+    final_time_one_symbol = time_one_symbol
+    final_lookup_arr = lookup_arr
+    
+# --- Plot and Save Results ---
+Saver.plot_histogram_batch(length_of_chain, bins_per_symbol_hist, final_time_one_symbol,
+                           global_histogram_counts_x, global_histogram_counts_z,
+                           final_lookup_arr, start_symbol=3, end_symbol=10)
 
-# Now you can plot using your existing plot_histogram_batch function.
-Saver.plot_histogram_batch(length_of_chain, bins_per_symbol_hist, time_one_symbol,
-                     global_histogram_counts_x, global_histogram_counts_z,
-                     lookup_arr, start_symbol=3, end_symbol=10)
+Saver.save_array_as_npz("histograms",
+                        histogram_counts_x=global_histogram_counts_x,
+                        histogram_counts_z=global_histogram_counts_z)
 
-np.set_printoptions(threshold=2000)
-Saver.save_array_as_npz("histograms", global_histogram_counts_x=global_histogram_counts_x, global_histogram_counts_z=global_histogram_counts_z)
-
-end_time_simulation = time.time()  # Record end time for simulation
-execution_time_simulation = end_time_simulation - end_time_read  # Calculate execution time for simulation
-print(f"Execution time for simulation: {execution_time_simulation:.9f} seconds for {config.n_samples} samples")
+# --- Timing ---
+end_time_simulation = time.time()
+execution_time_simulation = end_time_simulation - start_time
+print(f"Execution time for simulation: {execution_time_simulation:.9f} seconds")
