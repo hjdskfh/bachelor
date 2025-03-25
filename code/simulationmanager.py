@@ -528,6 +528,10 @@ class SimulationManager:
         end_time_read = time.time()  # Record end time  
         execution_time_run = end_time_read - start_time  # Calculate execution time
 
+        len_wrong_z_dec=len(wrong_detections_z_dec)
+        len_wrong_z_non_dec=len(wrong_detections_z_non_dec)
+        len_wrong_x_dec=len(wrong_detections_x_dec)
+        len_wrong_x_non_dec=len(wrong_detections_x_non_dec)
 
         '''Saver.save_arrays_to_csv('results', 
                                 p_vacuum_z=p_vacuum_z,
@@ -590,7 +594,7 @@ class SimulationManager:
             execution_time_run=execution_time_run
         )
         
-        return self.config.p_indep_x_states_non_dec, self.config.p_indep_x_states_dec
+        return len_wrong_x_dec, len_wrong_x_non_dec, len_wrong_z_dec, len_wrong_z_non_dec, len_Z_checked_dec, len_Z_checked_non_dec, X_P_calc_non_dec, X_P_calc_dec
         
     def run_simulation_till_DLI(self):
         start_time = time.time()  # Record start time

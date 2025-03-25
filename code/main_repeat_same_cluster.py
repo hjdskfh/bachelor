@@ -1,0 +1,192 @@
+#blub
+import time
+from datamanager import DataManager
+from config import SimulationConfig
+from simulationmanager import SimulationManager
+from saver import Saver
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import os
+import math
+from joblib import Parallel, delayed
+
+Saver.memory_usage("START of Simulation: Before everything")
+start_time = time.time()  # Record start time
+
+#database
+database = DataManager()
+database.add_data('data/current_power_data.csv', 'Current (mA)', 'Optical Power (mW)', 9, 'current_power') 
+database.add_data('data/voltage_shift_data.csv', 'Voltage (V)', 'Wavelength Shift (nm)', 20, 'voltage_shift')
+database.add_data('data/eam_transmission_data.csv', 'Voltage (V)', 'Transmission', 11, 'eam_transmission') 
+
+jitter = 1e-11
+database.add_jitter(jitter, 'laser')
+detector_jitter = 100e-12
+database.add_jitter(detector_jitter, 'detector')
+
+
+# Memory considerations:
+# 20,000 symbols ~ 6 GB per simulation.
+# To be safe, use up to ~75% of 256 GB → ~192 GB usable.
+# Maximum concurrent simulations ≈ 192 / 6 ≈ 32.
+# Here we choose a conservative maximum number of parallel tasks.
+max_concurrent_tasks = 32
+
+# How many simulations per batch (each batch runs sequentially inside one task)
+simulations_in_batch = 2  # adjust this to increase per-task workload
+
+# Total number of batches to run (total simulations = simulations_in_batch * total_batches)
+total_batches = 50  # e.g., total simulations = 2 * 50 = 100
+
+times_per_n = 100
+length_of_chain = 8*8 +1
+n_rep = 50
+bins_per_symbol_hist = 30
+amount_bins_hist = bins_per_symbol_hist * length_of_chain
+
+# Define file name
+style_file = "Presentation_style_1_adjusted_no_grid.mplstyle"
+
+base_path = os.path.dirname(os.path.abspath(__file__))
+
+
+best_batchsize = Saver.find_best_batchsize(length_of_chain, n_rep)
+
+config = SimulationConfig(database, seed=None, n_samples=int(length_of_chain*n_rep), n_pulses=4, batchsize=best_batchsize, mean_voltage=1.0, mean_current=0.080, voltage_amplitude=0.050, current_amplitude=0.0005,
+                p_z_alice=0.5, p_decoy=0.1, p_z_bob=0.85, sampling_rate_FPGA=6.5e9, bandwidth=4e9, jitter=jitter, 
+                non_signal_voltage=-1.1, voltage_decoy=-0.1, voltage=-0.1, voltage_decoy_sup=-0.1, voltage_sup=-0.1,
+                mean_photon_nr=0.7, mean_photon_decoy=0.1, 
+                fiber_attenuation=-3, insertion_loss_dli=-1, n_eff_in_fiber=1.558, detector_efficiency=0.3, dark_count_frequency=10, detection_time=1e-10, detector_jitter=detector_jitter,
+                p_indep_x_states_non_dec=None, p_indep_x_states_dec=None,
+                mlp=os.path.join(base_path, style_file), script_name = os.path.basename(__file__)
+                )
+simulation = SimulationManager(config)
+
+# Convert the config object to a dictionary
+config_params = config.to_dict()
+Saver.save_to_json(config_params)
+
+# Read in time
+end_time_read = time.time()  # Record end time
+execution_time_read = end_time_read - start_time  # Calculate execution time for reading
+print(f"Execution time for reading: {execution_time_read:.9f} seconds for {config.n_samples} samples")
+
+def run_simulation_and_update_hist(i, length_of_chain, n_rep, base_path, style_file, database, jitter,
+                                   detector_jitter, best_batchsize, bins_per_symbol, amount_bins):
+    # Create the simulation config locally
+    config = SimulationConfig(
+        database, seed=None,
+        n_samples=int(length_of_chain * n_rep),
+        n_pulses=4,
+        batchsize=best_batchsize,
+        mean_voltage=1.0,
+        mean_current=0.080,
+        voltage_amplitude=0.050,
+        current_amplitude=0.0005,
+        p_z_alice=0.5,
+        p_decoy=0.1,
+        p_z_bob=0.85,
+        sampling_rate_FPGA=6.5e9,
+        bandwidth=4e9,
+        jitter=jitter,
+        non_signal_voltage=-1.1,
+        voltage_decoy=-0.1,
+        voltage=-0.1,
+        voltage_decoy_sup=-0.1,
+        voltage_sup=-0.1,
+        mean_photon_nr=0.7,
+        mean_photon_decoy=0.1,
+        fiber_attenuation=-3,
+        insertion_loss_dli=-1,
+        n_eff_in_fiber=1.558,
+        detector_efficiency=0.3,
+        dark_count_frequency=10,
+        detection_time=1e-10,
+        detector_jitter=detector_jitter,
+        p_indep_x_states_non_dec=None,
+        p_indep_x_states_dec=None,
+        mlp=os.path.join(base_path, style_file),
+        script_name=os.path.basename(__file__)
+    )
+    simulation = SimulationManager(config)
+
+    # Run one simulation
+    len_wrong_x_dec, len_wrong_x_non_dec, len_wrong_z_dec, len_wrong_z_non_dec, len_Z_checked_dec, len_Z_checked_non_dec, X_P_calc_non_dec, X_P_calc_dec = simulation.run_simulation_classifier()
+
+    return len_wrong_x_dec, len_wrong_x_non_dec, len_wrong_z_dec, len_wrong_z_non_dec, len_Z_checked_dec, len_Z_checked_non_dec, X_P_calc_non_dec, X_P_calc_dec
+
+def run_simulation_batch(batch_id, simulations_in_batch, length_of_chain, n_rep, base_path, style_file,
+                         database, jitter, detector_jitter, best_batchsize, bins_per_symbol, amount_bins):
+    """
+    Run a batch of simulations sequentially and aggregate the local histograms.
+    """
+    # Initialize local histograms for the batch
+    len_wrong_x_dec = np.zero(1, type=int) 
+    len_wrong_x_non_dec= np.zero(1, type=int)
+    len_wrong_z_dec = np.zero(1, type=int)
+    len_wrong_z_non_dec = np.zero(1, type=int)
+    len_Z_checked_dec = np.zero(1, type=int)
+    len_Z_checked_non_dec = np.zero(1, type=int)
+    X_P_calc_non_dec = np.zero(1, type=int), X_P_calc_dec
+    time_one_symbol_final = None
+    lookup_arr_final = None
+
+    for j in range(simulations_in_batch):
+        # We pass a unique identifier if needed (here simply j)
+        local_hist_x, local_hist_z, time_one_symbol, lookup_arr = run_simulation_and_update_hist(
+            j, length_of_chain, n_rep, base_path, style_file, database, jitter,
+            detector_jitter, best_batchsize, bins_per_symbol, amount_bins
+        )
+        local_hist_total_x += local_hist_x
+        local_hist_total_z += local_hist_z
+        time_one_symbol_final = time_one_symbol  # assume it's the same for each simulation in the batch
+        lookup_arr_final = lookup_arr
+
+    return local_hist_total_x, local_hist_total_z, time_one_symbol_final, lookup_arr_final
+
+# --- Run Batches in Parallel ---
+
+results = Parallel(n_jobs=max_concurrent_tasks)(
+    delayed(run_simulation_batch)(
+         batch_id,
+         simulations_in_batch,
+         length_of_chain,
+         n_rep,
+         base_path,
+         style_file,
+         database,
+         jitter,
+         detector_jitter,
+         best_batchsize,
+         bins_per_symbol_hist,
+         amount_bins_hist
+    )
+    for batch_id in range(total_batches)
+)
+
+# --- Aggregate Global Histograms ---
+global_histogram_counts_x = np.zeros(amount_bins_hist, dtype=int)
+global_histogram_counts_z = np.zeros(amount_bins_hist, dtype=int)
+final_time_one_symbol = None
+final_lookup_arr = None
+
+for local_hist_x, local_hist_z, time_one_symbol, lookup_arr in results:
+    global_histogram_counts_x += local_hist_x
+    global_histogram_counts_z += local_hist_z
+    final_time_one_symbol = time_one_symbol
+    final_lookup_arr = lookup_arr
+    
+# --- Plot and Save Results ---
+Saver.plot_histogram_batch(length_of_chain, bins_per_symbol_hist, final_time_one_symbol,
+                           global_histogram_counts_x, global_histogram_counts_z,
+                           final_lookup_arr, start_symbol=3, end_symbol=10)
+
+Saver.save_array_as_npz("histograms",
+                        histogram_counts_x=global_histogram_counts_x,
+                        histogram_counts_z=global_histogram_counts_z)
+
+# --- Timing ---
+end_time_simulation = time.time()
+execution_time_simulation = end_time_simulation - start_time
+print(f"Execution time for simulation: {execution_time_simulation:.9f} seconds")
