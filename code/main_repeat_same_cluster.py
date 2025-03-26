@@ -30,14 +30,16 @@ database.add_jitter(detector_jitter, 'detector')
 # 20,000 symbols ~ 6 GB per simulation.
 # To be safe, use up to ~75% of 256 GB → ~192 GB usable.
 # Maximum concurrent simulations ≈ 192 / 6 ≈ 32.
-# Here we choose a conservative maximum number of parallel tasks.
-max_concurrent_tasks = 32
+# System memory configuration
+RAM_PER_SIMULATION_GB = 6
+TOTAL_SAFE_RAM_GB = 192
+max_concurrent_tasks = TOTAL_SAFE_RAM_GB // RAM_PER_SIMULATION_GB  # = 32max_concurrent_tasks = 32
 
 # How many simulations per batch (each batch runs sequentially inside one task)
 simulations_in_batch = 2  # adjust this to increase per-task workload
 
 # Total number of batches to run (total simulations = simulations_in_batch * total_batches)
-total_batches = 50  # e.g., total simulations = 2 * 50 = 100
+total_batches = 2  # e.g., total simulations = 2 * 50 = 100
 
 
 # Define file name
@@ -104,7 +106,7 @@ def run_simulation_and_update_hist(i, base_path, style_file, database, jitter,
     simulation = SimulationManager(config)
 
     # Run one simulation
-    len_wrong_x_dec, len_wrong_x_non_dec, len_wrong_z_dec, len_wrong_z_non_dec, len_Z_checked_dec, len_Z_checked_non_dec, X_P_calc_non_dec, X_P_calc_dec = simulation.run_simulation_classifier()
+    len_wrong_x_dec, len_wrong_x_non_dec, len_wrong_z_dec, len_wrong_z_non_dec, len_Z_checked_dec, len_Z_checked_non_dec, X_P_calc_non_dec, X_P_calc_dec = simulation.run_simulation_classificator()
 
     return len_wrong_x_dec, len_wrong_x_non_dec, len_wrong_z_dec, len_wrong_z_non_dec, len_Z_checked_dec, len_Z_checked_non_dec, X_P_calc_non_dec, X_P_calc_dec
 

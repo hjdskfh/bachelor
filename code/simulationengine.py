@@ -457,7 +457,6 @@ class SimulationEngine:
         # set n_samples to normal
         self.config.n_samples = copy_old_n_samples
         print(f"type p_indep_x_states: {type(p_indep_x_states)}")
-        print(f"shape p_indep_x_states: {p_indep_x_states.shape}")
         print(f"len_ind_has_one_0_and_every_second_symbol: {len_ind_has_one_0_and_every_second_symbol}")
         print(f"len_ind_every_second_symbol: {len_ind_every_second_symbol}")
         print(f"Returning values: {p_indep_x_states}, {len_ind_has_one_0_and_every_second_symbol}, {len_ind_every_second_symbol}")
