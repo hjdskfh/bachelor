@@ -188,12 +188,13 @@ class SimulationEngine:
 
         sampling_rate_fft = 100e11
         frequencies = fftfreq(len(t) * self.config.batchsize, d=1 / sampling_rate_fft)
-        f_0 = constants.c / peak_wavelength     # Frequency of the symbol (float64)
+        neff_for_wavelength = self.get_interpolated_value(peak_wavelength, 'eam_transmission')
+        f_0 = constants.c / (peak_wavelength * neff_for_wavelength)    # Frequency of the symbol (float64)
 
         for i in range(0, self.config.n_samples, self.config.batchsize):
             f_0_part = f_0[i:i + self.config.batchsize]
             f_0_part = np.repeat(f_0_part, len(t))
-            shifted_frequencies_for_w_0 = frequencies + f_0_part  
+            shifted_frequencies_for_w_0 = frequencies - f_0_part  
             t_shift = t[-1] / 2
             phi_shift = np.exp(1j * 2 * np.pi * shifted_frequencies_for_w_0 * t_shift)
 
@@ -320,7 +321,7 @@ class SimulationEngine:
 
         gain_Z_non_dec, gain_Z_dec, len_Z_checked_dec, len_Z_checked_non_dec = self.simulation_helper.classificator_identify_z(value, total_sift_z_basis_short, detected_indices_x_det_x_basis, index_where_photons_det_z, index_where_photons_det_x, decoy, indices_z_long)
 
-        X_P_calc_non_dec, X_P_calc_dec, gain_X_non_dec, gain_X_dec = self.simulation_helper.classificator_identify_x(detected_indices_x_det_x_basis, detected_indices_z_det_z_basis, index_where_photons_det_x, index_where_photons_det_z, decoy, indices_x_long)
+        X_P_calc_non_dec, X_P_calc_dec, gain_X_non_dec, gain_X_dec = self.simulation_helper.classificator_identify_x(detected_indices_x_det_x_basis, detected_indices_z_det_z_basis, index_where_photons_det_x, index_where_photons_det_z, basis, value, decoy, indices_x_long)
 
         wrong_detections_z_dec, wrong_detections_z_non_dec, wrong_detections_x_dec, wrong_detections_x_non_dec = self.simulation_helper.classificator_errors(indices_z_long, indices_x_long, value, index_where_photons_det_x, index_where_photons_det_z, detected_indices_z_det_z_basis, detected_indices_x_det_x_basis, basis, decoy)
 
@@ -463,3 +464,4 @@ class SimulationEngine:
         
         return p_indep_x_states, len_ind_has_one_0_and_every_second_symbol, len_ind_every_second_symbol
    
+ 

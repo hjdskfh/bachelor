@@ -5,7 +5,7 @@ class SimulationConfig:
                  p_z_alice=0.5, p_decoy=0.1, p_z_bob = 0.85, sampling_rate_FPGA=6.75e9, bandwidth = 4e9, jitter=1e-11, non_signal_voltage = -1, voltage_decoy=0,
                  voltage=0, voltage_decoy_sup=0, voltage_sup=0, 
                  mean_photon_nr=0.7, mean_photon_decoy=0.1, 
-                 fiber_attenuation = -3, insertion_loss_dli = -1, n_eff_in_fiber = 1.558, detector_efficiency = 0.3, dark_count_frequency = 100, detection_time = 1e-9, detector_jitter = 100e-12, 
+                 fiber_attenuation = -3, detector_efficiency = 0.3, dark_count_frequency = 100, detection_time = 1e-9, detector_jitter = 100e-12, 
                  p_indep_x_states_non_dec=None, p_indep_x_states_dec=None,
                  mlp = None, script_name = None
                  ):
@@ -53,10 +53,6 @@ class SimulationConfig:
 
         # attenuation in fiber in dB
         self.fiber_attenuation = fiber_attenuation
-
-        # DLI
-        self.insertion_loss_dli = insertion_loss_dli # in dB
-        self.n_eff_in_fiber = n_eff_in_fiber # effective refractive index in fiber
 
         # detector
         self.detector_efficiency = detector_efficiency

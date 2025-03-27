@@ -408,7 +408,7 @@ class SimulationManager:
         
         start_time = time.time()  # Record start time
         T1_dampening = self.simulation_engine.initialize()
-        if  self.config.p_indep_x_states_non_dec is None or self.config.p_indep_x_states_dec is None:
+        '''if  self.config.p_indep_x_states_non_dec is None or self.config.p_indep_x_states_dec is None:
             self.config.p_indep_x_states_non_dec, len_ind_has_one_0_and_every_second_symbol_non_dec, len_ind_every_second_symbol_non_dec = self.simulation_engine.find_p_indep_states_x_for_classifier(T1_dampening, simulation_length_factor=1000, is_decoy=False)
             self.config.p_indep_x_states_dec, len_ind_has_one_0_and_every_second_symbol_dec, len_ind_every_second_symbol_dec = self.simulation_engine.find_p_indep_states_x_for_classifier(T1_dampening, simulation_length_factor=1000, is_decoy=True)
             # print(f"len_ind_has_one_0_and_every_second_symbol_non_dec: {len_ind_has_one_0_and_every_second_symbol_non_dec}")
@@ -423,7 +423,7 @@ class SimulationManager:
             len_ind_every_second_symbol_dec = -999
             len_ind_every_second_symbol_non_dec = -999
         # print(f"p_indep_x_states_non_dec: {self.config.p_indep_x_states_non_dec}")
-        # print(f"p_indep_x_states_dec: {self.config.p_indep_x_states_dec}")
+        # print(f"p_indep_x_states_dec: {self.config.p_indep_x_states_dec}")'''
 
         optical_power, peak_wavelength, chosen_voltage, chosen_current = self.simulation_engine.random_laser_output('current_power', 'voltage_shift')
 
@@ -498,13 +498,13 @@ class SimulationManager:
         power_dampened = power_dampened * (1 - self.config.p_z_bob)
 
         #plot
-        '''amount_symbols_in_first_part = 20
-        first_power = power_dampened[:amount_symbols_in_first_part]'''
+        amount_symbols_in_first_part = 20
+        first_power = power_dampened[:amount_symbols_in_first_part]
 
         # DLI
         power_dampened, phase_shift = self.simulation_engine.delay_line_interferometer(power_dampened, t, peak_wavelength)
         # plot
-        # self.plotter.plot_power(power_dampened, amount_symbols_in_plot=amount_symbols_in_first_part, where_plot_1='before DLI',  shortened_first_power=first_power, where_plot_2='after DLI,', title_rest='- in fft, mean_volt: ' + str("{:.3f}".format(self.config.mean_voltage)) + ' voltage: ' + str("{:.3f}".format(chosen_voltage[0])) + ' V and ' + str("{:.3f}".format(peak_wavelength[0])))
+        self.plotter.plot_power(power_dampened, amount_symbols_in_plot=amount_symbols_in_first_part, where_plot_1='before DLI',  shortened_first_power=first_power, where_plot_2='after DLI,', title_rest='- in fft, mean_volt: ' + str("{:.3f}".format(self.config.mean_voltage)) + ' voltage: ' + str("{:.3f}".format(chosen_voltage[0])) + ' V and ' + str("{:.3f}".format(peak_wavelength[0])))
 
         # Saver.memory_usage("before detector x: " + str(time.time() - start_time))
         time_photons_det_x, wavelength_photons_det_x, nr_photons_det_x, index_where_photons_det_x, calc_mean_photon_nr_detector_x, dark_count_times_x, num_dark_counts_x = self.simulation_engine.detector(t, norm_transmission, peak_wavelength, power_dampened, start_time)        
@@ -554,7 +554,7 @@ class SimulationManager:
                                 )'''
 
         
-        '''function_name = inspect.currentframe().f_code.co_name
+        function_name = inspect.currentframe().f_code.co_name
         Saver.save_results_to_txt(  # Save the results to a text file
             function_used = function_name,
             n_samples=self.config.n_samples,
@@ -584,10 +584,6 @@ class SimulationManager:
             len_wrong_z_non_dec=len(wrong_detections_z_non_dec),
             len_wrong_x_dec=len(wrong_detections_x_dec),
             len_wrong_x_non_dec=len(wrong_detections_x_non_dec),
-            len_ind_has_one_0_and_every_second_symbol_non_dec=len_ind_has_one_0_and_every_second_symbol_non_dec, 
-            len_ind_every_second_symbol_dec=len_ind_every_second_symbol_dec,
-            len_ind_has_one_0_and_every_second_symbol_dec=len_ind_has_one_0_and_every_second_symbol_dec,
-            len_ind_every_second_symbol_non_dec=len_ind_every_second_symbol_non_dec,
             qber_z_dec=qber_z_dec,
             qber_z_non_dec=qber_z_non_dec,
             qber_x_dec=qber_x_dec,
@@ -595,7 +591,7 @@ class SimulationManager:
             raw_key_rate=raw_key_rate,
             total_amount_detections=total_amount_detections,
             execution_time_run=execution_time_run
-        )'''
+        )
         
         return len_wrong_x_dec, len_wrong_x_non_dec, len_wrong_z_dec, len_wrong_z_non_dec, len_Z_checked_dec, len_Z_checked_non_dec, X_P_calc_non_dec, X_P_calc_dec
         
@@ -931,7 +927,7 @@ class SimulationManager:
         signals, t, _ = self.simulation_engine.signal_bandwidth_jitter(basis, value, decoy)
         power_dampened_base = np.ones((self.config.n_samples, len(t)))
 
-        voltage_values = np.arange(0.96, 1, 0.002)  # Example range of mean_voltage
+        voltage_values = np.arange(0.8, 1, 0.002)  # Example range of mean_voltage
         powers = []
         wavelengths_nm = []
 
@@ -941,12 +937,13 @@ class SimulationManager:
 
             sampling_rate_fft = 100e11
             frequencies = fftfreq(len(t) * self.config.batchsize, d=1 / sampling_rate_fft)
-            f_0 = constants.c / peak_wavelength
+            neff_for_wavelength = self.simulation_engine.get_interpolated_value(peak_wavelength, 'eam_transmission')
+            f_0 = constants.c / (peak_wavelength * neff_for_wavelength)
 
             for i in range(0, self.config.n_samples, self.config.batchsize):
                 f_0_part = f_0[i:i + self.config.batchsize]
                 f_0_part = np.repeat(f_0_part, len(t))
-                shifted_frequencies_for_w_0 = frequencies + f_0_part
+                shifted_frequencies_for_w_0 = frequencies - f_0_part
                 t_shift = t[-1] / 2
                 phi_shift = np.exp(1j * 2 * np.pi * shifted_frequencies_for_w_0 * t_shift)
 
@@ -978,7 +975,7 @@ class SimulationManager:
         plt.subplot(1, 2, 1)
         plt.plot(voltage_values, powers, marker='o')
         plt.xlabel("Mean Voltage (V)")
-        plt.ylabel("power_dampened[0][0]")
+        plt.ylabel("power_dampened[0][0] - in DLI")
         plt.title("Power vs Mean Voltage")
         plt.grid(True)
         plt.minorticks_on()
@@ -994,4 +991,4 @@ class SimulationManager:
         plt.grid(True)
 
         plt.tight_layout()
-        Saver.save_plot("DLI_power_wavelength_vs_voltage")
+        Saver.save_plot("with_n_eff_DLI_power_wavelength_vs_voltage")

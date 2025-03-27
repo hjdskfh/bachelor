@@ -30,17 +30,14 @@ database.add_jitter(detector_jitter, 'detector')
 # 20,000 symbols ~ 6 GB per simulation.
 # To be safe, use up to ~75% of 256 GB → ~192 GB usable.
 # Maximum concurrent simulations ≈ 192 / 6 ≈ 32.
-# System memory configuration
-RAM_PER_SIMULATION_GB = 6
-TOTAL_SAFE_RAM_GB = 192
-max_concurrent_tasks = TOTAL_SAFE_RAM_GB // RAM_PER_SIMULATION_GB  # = 32max_concurrent_tasks = 32
+# Here we choose a conservative maximum number of parallel tasks.
+max_concurrent_tasks = 32
 
 # How many simulations per batch (each batch runs sequentially inside one task)
 simulations_in_batch = 2  # adjust this to increase per-task workload
 
 # Total number of batches to run (total simulations = simulations_in_batch * total_batches)
-total_batches = 2  # e.g., total simulations = 2 * 50 = 100 # 340 ergibt 4,5 stunden # 2 braucht 8:52
-
+total_batches = 50  # e.g., total simulations = 2 * 50 = 100
 
 # Define file name
 style_file = "Presentation_style_1_adjusted_no_grid.mplstyle"
@@ -69,40 +66,14 @@ print(f"Execution time for reading: {execution_time_read:.9f} seconds for {confi
 def run_simulation_and_update_hist(i, base_path, style_file, database, jitter,
                                    detector_jitter):
     # Create the simulation config locally
-    config = SimulationConfig(
-        database, seed=None,
-        n_samples=20000,
-        n_pulses=4,
-        batchsize=1000,
-        mean_voltage=1.0,
-        mean_current=0.080,
-        voltage_amplitude=0.050,
-        current_amplitude=0.0005,
-        p_z_alice=0.5,
-        p_decoy=0.1,
-        p_z_bob=0.85,
-        sampling_rate_FPGA=6.5e9,
-        bandwidth=4e9,
-        jitter=jitter,
-        non_signal_voltage=-1.1,
-        voltage_decoy=-0.1,
-        voltage=-0.1,
-        voltage_decoy_sup=-0.1,
-        voltage_sup=-0.1,
-        mean_photon_nr=0.7,
-        mean_photon_decoy=0.1,
-        fiber_attenuation=-3,
-        insertion_loss_dli=-1,
-        n_eff_in_fiber=1.558,
-        detector_efficiency=0.3,
-        dark_count_frequency=10,
-        detection_time=1e-10,
-        detector_jitter=detector_jitter,
-        p_indep_x_states_non_dec=None,
-        p_indep_x_states_dec=None,
-        mlp=os.path.join(base_path, style_file),
-        script_name=os.path.basename(__file__)
-    )
+    config = SimulationConfig(database, seed=None, n_samples=20000, n_pulses=4, batchsize=1000, mean_voltage=0.982, mean_current=0.080, voltage_amplitude=0.02, current_amplitude=0.0005,
+                p_z_alice=0.5, p_decoy=0.1, p_z_bob=0.85, sampling_rate_FPGA=6.5e9, bandwidth=4e9, jitter=jitter, 
+                non_signal_voltage=-1.1, voltage_decoy=-0.1, voltage=-0.1, voltage_decoy_sup=-0.1, voltage_sup=-0.1,
+                mean_photon_nr=0.7, mean_photon_decoy=0.1, 
+                fiber_attenuation=-3, detector_efficiency=0.3, dark_count_frequency=10, detection_time=1e-10, detector_jitter=detector_jitter,
+                p_indep_x_states_non_dec=None, p_indep_x_states_dec=None,
+                mlp=os.path.join(base_path, style_file), script_name = os.path.basename(__file__)
+                )
     simulation = SimulationManager(config)
 
     # Run one simulation
