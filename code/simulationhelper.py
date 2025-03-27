@@ -432,11 +432,11 @@ class SimulationHelper:
 
         return X_P_calc_non_dec, X_P_calc_dec, gain_X_non_dec, gain_X_dec
     
-    def classificator_identify_x_in_it_(self, detected_indices_x_det_x_basis, detected_indices_z_det_z_basis, index_where_photons_det_x, index_where_photons_det_z, decoy, indices_x_long):
+    def classificator_identify_x_in_it(self, basis, value, detected_indices_x_det_x_basis, detected_indices_z_det_z_basis, index_where_photons_det_x, index_where_photons_det_z, decoy, indices_x_long):
         """hier will ich aus GHz paper implementieren!"""
-        
         if index_where_photons_det_x.size == 0 or index_where_photons_det_z.size == 0:
             return 0, 0, 0, 0
+        
         # X basis
         # empty late in x basis
         no_one_in_x_short = np.where(np.sum(detected_indices_x_det_x_basis != 1, axis=1) == 0)[0]
@@ -454,6 +454,14 @@ class SimulationHelper:
         ind_XP_prime_checked_non_dec = np.intersect1d(X_P_prime_checked_long, ind_sent_non_dec_long)
         ind_sent_dec_long = np.where((decoy == 1))[0]
         ind_XP_prime_checked_dec = np.intersect1d(X_P_prime_checked_long, ind_sent_dec_long)
+
+        # sort out symbols
+        # create signal Z0X+ and then X+Z1
+        Z1_alice = np.where((basis == 1) & (value == 1))[0]  # Indices where Z1 was sent
+        Z0_alice = np.where((basis == 1) & (value == 0))[0]  # Indices where Z0 was sent
+        Z1_Z0_alice = Z0_alice[np.isin(Z0_alice - 1, Z1_alice)]  # Indices where Z1Z0 was sent (index of Z0 used aka the higher index at which time we measure the X+ state)
+        has_0_and_z0z1 = np.any(total_detected_indices_x == 0, axis=1) &  np.isin(index_where_photons_det_x, Z1_Z0_alice)
+        wrong_detection_mask_x[np.where(has_0_and_z0z1)[0]] = True
 
         # X_P_calc
         X_P_calc_dec = len(ind_XP_prime_checked_dec) * self.config.p_indep_x_states_dec

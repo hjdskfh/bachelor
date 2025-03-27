@@ -7,6 +7,9 @@ import time
 import os
 import datetime
 import inspect
+from scipy.fftpack import fft, ifft, fftfreq
+from scipy import constants
+
 
 from saver import Saver
 from simulationengine import SimulationEngine
@@ -922,3 +925,73 @@ class SimulationManager:
             p_indep_x_states_dec=self.config.p_indep_x_states_dec)
         
         return time_photons_det_x, time_photons_det_z, index_where_photons_det_x, index_where_photons_det_z, t[-1], lookup_arr
+
+    def run_DLI(self):
+        basis, value, decoy = self.simulation_engine.generate_alice_choices()
+        signals, t, _ = self.simulation_engine.signal_bandwidth_jitter(basis, value, decoy)
+        power_dampened_base = np.ones((self.config.n_samples, len(t)))
+
+        voltage_values = np.arange(0.96, 1, 0.002)  # Example range of mean_voltage
+        powers = []
+        wavelengths_nm = []
+
+        def DLI(peak_wavelength, power_dampened, t):
+            power_dampened = np.sqrt(power_dampened)
+            amplitude = power_dampened
+
+            sampling_rate_fft = 100e11
+            frequencies = fftfreq(len(t) * self.config.batchsize, d=1 / sampling_rate_fft)
+            f_0 = constants.c / peak_wavelength
+
+            for i in range(0, self.config.n_samples, self.config.batchsize):
+                f_0_part = f_0[i:i + self.config.batchsize]
+                f_0_part = np.repeat(f_0_part, len(t))
+                shifted_frequencies_for_w_0 = frequencies + f_0_part
+                t_shift = t[-1] / 2
+                phi_shift = np.exp(1j * 2 * np.pi * shifted_frequencies_for_w_0 * t_shift)
+
+                amplitude_batch = amplitude[i:i + self.config.batchsize, :]
+                amplitude_batch[:] = amplitude_batch[::-1]
+                flattened_amplitude_batch = amplitude_batch.reshape(-1)
+
+                amp_fft = np.fft.fft(flattened_amplitude_batch)
+                total_amplitude = np.real(np.fft.ifft(0.5 * amp_fft * (1 - phi_shift)))
+                total_amplitude[:] = total_amplitude[::-1]
+                total_amplitude = total_amplitude.reshape(self.config.batchsize, len(t))
+
+                amplitude[i:i + self.config.batchsize, :] = total_amplitude
+
+            amplitude = np.abs(amplitude)**2
+            power_dampened = amplitude
+            return power_dampened[0][0]
+
+        for voltage in voltage_values:
+            self.config.mean_voltage = voltage
+            optical_power, peak_wavelength, chosen_voltage, chosen_current = self.simulation_engine.random_laser_output('current_power', 'voltage_shift', fixed=True)
+            
+            power_val = DLI(peak_wavelength, power_dampened_base.copy(), t)
+            powers.append(power_val)
+            wavelengths_nm.append(peak_wavelength * 1e9)  # convert to nm
+
+        # Plot power vs voltage
+        plt.figure(figsize=(10, 5))
+        plt.subplot(1, 2, 1)
+        plt.plot(voltage_values, powers, marker='o')
+        plt.xlabel("Mean Voltage (V)")
+        plt.ylabel("power_dampened[0][0]")
+        plt.title("Power vs Mean Voltage")
+        plt.grid(True)
+        plt.minorticks_on()
+        plt.grid(True, which='both', linestyle='--', linewidth=0.5)
+
+
+        # Plot peak_wavelength vs voltage
+        plt.subplot(1, 2, 2)
+        plt.plot(voltage_values, wavelengths_nm, marker='x', color='orange')
+        plt.xlabel("Mean Voltage (V)")
+        plt.ylabel("Peak Wavelength (nm)")
+        plt.title("Wavelength vs Mean Voltage")
+        plt.grid(True)
+
+        plt.tight_layout()
+        Saver.save_plot("DLI_power_wavelength_vs_voltage")
