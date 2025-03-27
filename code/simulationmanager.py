@@ -411,10 +411,10 @@ class SimulationManager:
         if  self.config.p_indep_x_states_non_dec is None or self.config.p_indep_x_states_dec is None:
             self.config.p_indep_x_states_non_dec, len_ind_has_one_0_and_every_second_symbol_non_dec, len_ind_every_second_symbol_non_dec = self.simulation_engine.find_p_indep_states_x_for_classifier(T1_dampening, simulation_length_factor=1000, is_decoy=False)
             self.config.p_indep_x_states_dec, len_ind_has_one_0_and_every_second_symbol_dec, len_ind_every_second_symbol_dec = self.simulation_engine.find_p_indep_states_x_for_classifier(T1_dampening, simulation_length_factor=1000, is_decoy=True)
-            print(f"len_ind_has_one_0_and_every_second_symbol_non_dec: {len_ind_has_one_0_and_every_second_symbol_non_dec}")
-            print(f"len_ind_has_one_0_and_every_second_symbol_dec: {len_ind_has_one_0_and_every_second_symbol_dec}")
-            print(f"len_ind_every_second_symbol_dec: {len_ind_every_second_symbol_dec}")
-            print(f"len_ind_every_second_symbol_non_dec: {len_ind_every_second_symbol_non_dec}")
+            # print(f"len_ind_has_one_0_and_every_second_symbol_non_dec: {len_ind_has_one_0_and_every_second_symbol_non_dec}")
+            # print(f"len_ind_has_one_0_and_every_second_symbol_dec: {len_ind_has_one_0_and_every_second_symbol_dec}")
+            # print(f"len_ind_every_second_symbol_dec: {len_ind_every_second_symbol_dec}")
+            # print(f"len_ind_every_second_symbol_non_dec: {len_ind_every_second_symbol_non_dec}")
         
         
         else:
@@ -422,8 +422,8 @@ class SimulationManager:
             len_ind_has_one_0_and_every_second_symbol_dec = -999
             len_ind_every_second_symbol_dec = -999
             len_ind_every_second_symbol_non_dec = -999
-        print(f"p_indep_x_states_non_dec: {self.config.p_indep_x_states_non_dec}")
-        print(f"p_indep_x_states_dec: {self.config.p_indep_x_states_dec}")
+        # print(f"p_indep_x_states_non_dec: {self.config.p_indep_x_states_non_dec}")
+        # print(f"p_indep_x_states_dec: {self.config.p_indep_x_states_dec}")
 
         optical_power, peak_wavelength, chosen_voltage, chosen_current = self.simulation_engine.random_laser_output('current_power', 'voltage_shift')
 
@@ -438,7 +438,7 @@ class SimulationManager:
         basis, value, decoy = self.simulation_engine.generate_alice_choices()
 
         # Simulate signal and transmission
-        Saver.memory_usage("before simulating signal: " + str("{:.3f}".format(time.time() - start_time)))
+        # Saver.memory_usage("before simulating signal: " + str("{:.3f}".format(time.time() - start_time)))
         signals, t, _ = self.simulation_engine.signal_bandwidth_jitter(basis, value, decoy)
 
         '''amount_symbols_in_plot = 6
@@ -455,7 +455,7 @@ class SimulationManager:
         plt.xlabel('Time (ns)')
         Saver.save_plot(f"signal_after_bandwidth_first_symbols")'''
 
-        amount_symbols_in_plot = 20
+        '''amount_symbols_in_plot = 20
         pulse_duration = 1 / self.config.sampling_rate_FPGA
         sampling_rate_fft = 100e11
         samples_per_pulse = int(pulse_duration * sampling_rate_fft)
@@ -467,10 +467,10 @@ class SimulationManager:
         plt.title(f"Voltage Signal with Bandwidth and Jitter for {amount_symbols_in_plot} symbols")
         plt.ylabel('Volt (V)')
         plt.xlabel('Time (ns)')
-        Saver.save_plot(f"signal_after_bandwidth_100_symbols_into_batch")
+        Saver.save_plot(f"signal_after_bandwidth_100_symbols_into_batch")'''
 
         time_simulating_signal = time.time() - start_time
-        Saver.memory_usage("before eam: " + str("{:.3f}".format(time_simulating_signal)))
+        # Saver.memory_usage("before eam: " + str("{:.3f}".format(time_simulating_signal)))
         power_dampened, norm_transmission,  calc_mean_photon_nr_eam, _ = self.simulation_engine.eam_transmission(signals, optical_power, T1_dampening, peak_wavelength, t)
 
         # plot so I can delete
@@ -481,32 +481,32 @@ class SimulationManager:
         # self.plotter.plot_power(power_dampened, amount_symbols_in_plot=4, where_plot_1='after EAM')
 
         time_eam = time.time() - start_time
-        Saver.memory_usage("before fiber: " + str("{:.3f}".format(time_eam)))
+        # Saver.memory_usage("before fiber: " + str("{:.3f}".format(time_eam)))
         power_dampened = self.simulation_engine.fiber_attenuation(power_dampened)
         
         # self.plotter.plot_power(power_dampened, amount_symbols_in_plot=4, where_plot_1='after fiber')
 
         # first Z basis bc no interference
-        Saver.memory_usage("before detector z: " + str("{:.3f}".format(time.time() - start_time)))
+        # Saver.memory_usage("before detector z: " + str("{:.3f}".format(time.time() - start_time)))
         power_dampened = power_dampened * self.config.p_z_bob
         time_photons_det_z, wavelength_photons_det_z, nr_photons_det_z, index_where_photons_det_z, calc_mean_photon_nr_detector_z, dark_count_times_z, num_dark_counts_z = self.simulation_engine.detector(t, norm_transmission, peak_wavelength, power_dampened, start_time)
         power_dampened = power_dampened / self.config.p_z_bob
-        Saver.memory_usage("before classificator: " + str("{:.3f}".format(time.time() - start_time)))
+        # Saver.memory_usage("before classificator: " + str("{:.3f}".format(time.time() - start_time)))
 
         # path for X basis
-        Saver.memory_usage("before DLI: " + str("{:.3f}".format(time.time() - start_time)))
+        # Saver.memory_usage("before DLI: " + str("{:.3f}".format(time.time() - start_time)))
         power_dampened = power_dampened * (1 - self.config.p_z_bob)
 
         #plot
-        amount_symbols_in_first_part = 20
-        first_power = power_dampened[:amount_symbols_in_first_part]
+        '''amount_symbols_in_first_part = 20
+        first_power = power_dampened[:amount_symbols_in_first_part]'''
 
         # DLI
         power_dampened, phase_shift = self.simulation_engine.delay_line_interferometer(power_dampened, t, peak_wavelength)
         # plot
-        self.plotter.plot_power(power_dampened, amount_symbols_in_plot=amount_symbols_in_first_part, where_plot_1='before DLI',  shortened_first_power=first_power, where_plot_2='after DLI,', title_rest='- in fft, mean_volt: ' + str("{:.3f}".format(self.config.mean_voltage)) + ' voltage: ' + str("{:.3f}".format(chosen_voltage[0])) + ' V and ' + str("{:.3f}".format(peak_wavelength[0])))
+        # self.plotter.plot_power(power_dampened, amount_symbols_in_plot=amount_symbols_in_first_part, where_plot_1='before DLI',  shortened_first_power=first_power, where_plot_2='after DLI,', title_rest='- in fft, mean_volt: ' + str("{:.3f}".format(self.config.mean_voltage)) + ' voltage: ' + str("{:.3f}".format(chosen_voltage[0])) + ' V and ' + str("{:.3f}".format(peak_wavelength[0])))
 
-        Saver.memory_usage("before detector x: " + str(time.time() - start_time))
+        # Saver.memory_usage("before detector x: " + str(time.time() - start_time))
         time_photons_det_x, wavelength_photons_det_x, nr_photons_det_x, index_where_photons_det_x, calc_mean_photon_nr_detector_x, dark_count_times_x, num_dark_counts_x = self.simulation_engine.detector(t, norm_transmission, peak_wavelength, power_dampened, start_time)        
 
         # plot so I can delete
@@ -554,7 +554,7 @@ class SimulationManager:
                                 )'''
 
         
-        function_name = inspect.currentframe().f_code.co_name
+        '''function_name = inspect.currentframe().f_code.co_name
         Saver.save_results_to_txt(  # Save the results to a text file
             function_used = function_name,
             n_samples=self.config.n_samples,
@@ -595,7 +595,7 @@ class SimulationManager:
             raw_key_rate=raw_key_rate,
             total_amount_detections=total_amount_detections,
             execution_time_run=execution_time_run
-        )
+        )'''
         
         return len_wrong_x_dec, len_wrong_x_non_dec, len_wrong_z_dec, len_wrong_z_non_dec, len_Z_checked_dec, len_Z_checked_non_dec, X_P_calc_non_dec, X_P_calc_dec
         

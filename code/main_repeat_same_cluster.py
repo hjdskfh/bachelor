@@ -39,7 +39,7 @@ max_concurrent_tasks = TOTAL_SAFE_RAM_GB // RAM_PER_SIMULATION_GB  # = 32max_con
 simulations_in_batch = 2  # adjust this to increase per-task workload
 
 # Total number of batches to run (total simulations = simulations_in_batch * total_batches)
-total_batches = 2  # e.g., total simulations = 2 * 50 = 100
+total_batches = 2  # e.g., total simulations = 2 * 50 = 100 # 340 ergibt 4,5 stunden # 2 braucht 8:52
 
 
 # Define file name
@@ -47,7 +47,7 @@ style_file = "Presentation_style_1_adjusted_no_grid.mplstyle"
 
 base_path = os.path.dirname(os.path.abspath(__file__))
 
-config = SimulationConfig(database, seed=None, n_samples=20000, n_pulses=4, batchsize=1000, mean_voltage=1.0, mean_current=0.080, voltage_amplitude=0.050, current_amplitude=0.0005,
+config = SimulationConfig(database, seed=None, n_samples=20000, n_pulses=4, batchsize=1000, mean_voltage=0.982, mean_current=0.080, voltage_amplitude=0.02, current_amplitude=0.0005,
                 p_z_alice=0.5, p_decoy=0.1, p_z_bob=0.85, sampling_rate_FPGA=6.5e9, bandwidth=4e9, jitter=jitter, 
                 non_signal_voltage=-1.1, voltage_decoy=-0.1, voltage=-0.1, voltage_decoy_sup=-0.1, voltage_sup=-0.1,
                 mean_photon_nr=0.7, mean_photon_decoy=0.1, 
@@ -178,6 +178,10 @@ print(f"global_len_Z_checked_dec: {global_len_Z_checked_dec}")
 print(f"global_len_Z_checked_non_dec: {global_len_Z_checked_non_dec}")
 print(f"global_X_P_calc_non_dec: {global_X_P_calc_non_dec}")
 print(f"global_X_P_calc_dec: {global_X_P_calc_dec}")
+
+Saver.save_results_to_txt(global_len_wrong_x_dec=global_len_wrong_x_dec, global_len_wrong_x_non_dec=global_len_wrong_x_non_dec, global_len_wrong_z_dec=global_len_wrong_z_dec,
+                        global_len_wrong_z_non_dec=global_len_wrong_z_non_dec, global_len_Z_checked_dec=global_len_Z_checked_dec, global_len_Z_checked_non_dec=global_len_Z_checked_non_dec,
+                        global_X_P_calc_dec=global_X_P_calc_dec, global_X_P_calc_non_dec=global_X_P_calc_non_dec)
 
 # --- Timing ---
 end_time_simulation = time.time()

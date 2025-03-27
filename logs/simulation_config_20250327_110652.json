@@ -1,11 +1,11 @@
 {
     "round": 1,
-    "seed": 616910,
-    "n_samples": 200,
+    "seed": 493255,
+    "n_samples": 20000,
     "n_pulses": 4,
-    "batchsize": 100,
-    "mean_voltage": 0.982,
-    "mean_current": 0.082111,
+    "batchsize": 1000,
+    "mean_voltage": 1.0,
+    "mean_current": 0.08,
     "voltage_amplitude": 0.05,
     "current_amplitude": 0.0005,
     "p_z_alice": 0.5,
@@ -30,6 +30,6 @@
     "detector_jitter": 1e-10,
     "p_indep_x_states_non_dec": null,
     "p_indep_x_states_dec": null,
-    "mlp": "C:\\Users\\leavi\\bachelor\\code\\Presentation_style_1_adjusted_no_grid.mplstyle",
-    "script_name": "main_plot_dli_const_power.py"
+    "mlp": "/wang/users/leavic98/cluster_home/NeuMoQP/Programm/bachelor/code/Presentation_style_1_adjusted_no_grid.mplstyle",
+    "script_name": "main_repeat_same_cluster.py"
 }

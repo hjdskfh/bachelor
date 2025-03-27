@@ -9,5 +9,5 @@
 #SBATCH --error=error.log
 
 # Run Python script inside the Singularity container
-singularity exec --app dls /containers/stable/2025-02-19_1.img python ~/NeuMoQP/Programm/code/main.py
+singularity exec --app dls /containers/stable/2025-02-19_1.img python ~/NeuMoQP/Programm/bachelor/code/main.py
 
