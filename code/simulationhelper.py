@@ -301,7 +301,8 @@ class SimulationHelper:
 
     def classificator_sift_z_vacuum(self, basis, detected_indices_z, index_where_photons_det_z):
         # nur z basis sendung
-        detected_indices_z_det_z_basis = detected_indices_z[basis[index_where_photons_det_z] == 1]
+        mask_z_short = basis[index_where_photons_det_z] == 1
+        detected_indices_z_det_z_basis = detected_indices_z[mask_z_short]
         early_indices_short = np.where(np.sum(detected_indices_z == 0, axis=1) == 1)[0]
         late_indices_short = np.where(np.sum(detected_indices_z == 1, axis=1) == 1)[0]
         total_sift_z_basis_short = np.union1d(early_indices_short, late_indices_short)                  
@@ -315,11 +316,12 @@ class SimulationHelper:
         else:
             p_vacuum_z = 0
         
-        return detected_indices_z_det_z_basis, p_vacuum_z, total_sift_z_basis_short, indices_z_long
+        return detected_indices_z_det_z_basis, p_vacuum_z, total_sift_z_basis_short, indices_z_long, mask_z_short
 
     def classificator_sift_x_vacuum(self, basis, detected_indices_x, index_where_photons_det_x):
-        # nur x-basis sendung
-        detected_indices_x_det_x_basis = detected_indices_x[basis[index_where_photons_det_x] == 0]
+        # nur x-basis sendund
+        mask_x_short = basis[index_where_photons_det_x] == 0
+        detected_indices_x_det_x_basis = detected_indices_x[mask_x_short]
         # no measurement indices
         indices_x_long = np.where(basis == 0)[0]
         nothing_in_det_indices_short = np.where(np.all(detected_indices_x == -1, axis=1))[0]
@@ -335,10 +337,10 @@ class SimulationHelper:
 
         total_sift_x_basis_long = np.union1d(vacuum_indices_x_long, one_or_two_in_x_long)
 
-        return detected_indices_x_det_x_basis, total_sift_x_basis_long, vacuum_indices_x_long, indices_x_long
+        return detected_indices_x_det_x_basis, total_sift_x_basis_long, vacuum_indices_x_long, indices_x_long, mask_x_short
 
-    def classificator_identify_z(self, value, total_sift_z_basis_short, detected_indices_x_det_x_basis, index_where_photons_det_z, index_where_photons_det_x, decoy, indices_z_long):
-        if index_where_photons_det_x.size == 0 or index_where_photons_det_z.size == 0:
+    def classificator_identify_z(self, mask_x_short, value, total_sift_z_basis_short, detected_indices_x_det_x_basis, index_where_photons_det_z, decoy, indices_z_long):
+        if index_where_photons_det_z.size == 0:
             return 0, 0, 0, 0
         # Z basis
         # all indices
@@ -348,13 +350,17 @@ class SimulationHelper:
         # only overlaps between Z0 vs Z1 sent and measured
         ind_Z0_verified_long = Z_indices_measured_long[mask_Z0_long]
         ind_Z1_verified_long = Z_indices_measured_long[mask_Z1_long]
-        # check if no detection in late_bin X basis
-        one_in_x_short = np.where(np.any(detected_indices_x_det_x_basis == 1, axis=1))[0]
-        one_in_x_long = index_where_photons_det_x[one_in_x_short]
-        all_ind = np.arange(self.config.n_samples)
-        no_one_in_x_long = np.setdiff1d(all_ind, one_in_x_long)
-        ind_Z0_checked = np.intersect1d(ind_Z0_verified_long, no_one_in_x_long)
-        ind_Z1_checked = np.intersect1d(ind_Z1_verified_long, no_one_in_x_long)
+        if mask_x_short.size != 0:
+            # check if no detection in late_bin X basis
+            one_in_x_short = np.where(np.any(detected_indices_x_det_x_basis == 1, axis=1))[0]
+            one_in_x_long = mask_x_short[one_in_x_short]
+            all_ind = np.arange(self.config.n_samples)
+            no_one_in_x_long = np.setdiff1d(all_ind, one_in_x_long)
+            ind_Z0_checked = np.intersect1d(ind_Z0_verified_long, no_one_in_x_long)
+            ind_Z1_checked = np.intersect1d(ind_Z1_verified_long, no_one_in_x_long)
+        else:
+            ind_Z0_checked = ind_Z0_verified_long
+            ind_Z1_checked = ind_Z1_verified_long
 
         # decoy and non-decoy
         ind_sent_non_dec = np.where((decoy == 0))[0]
@@ -387,20 +393,22 @@ class SimulationHelper:
         
         return gain_Z_non_dec, gain_Z_dec, len_Z_checked_dec, len_Z_checked_non_dec
 
-    def classificator_identify_x(self, detected_indices_x_det_x_basis, detected_indices_z_det_z_basis, index_where_photons_det_x, index_where_photons_det_z, basis, value, decoy, indices_x_long):
-        if index_where_photons_det_x.size == 0 or index_where_photons_det_z.size == 0:
+    def classificator_identify_x(self, mask_x_short, mask_z_short, detected_indices_x_det_x_basis, detected_indices_z_det_z_basis, basis, value, decoy, indices_x_long):
+        if mask_x_short.size == 0:
             return 0, 0, 0, 0
         # X basis
         # empty late in x basis
         no_one_in_x_short = np.where(np.sum(detected_indices_x_det_x_basis != 1, axis=1) == 0)[0]
-        X_P_prime_long = index_where_photons_det_x[no_one_in_x_short]
-
-        # no detection in Z basis
-        zero_or_one_in_z_short = np.where(np.any(detected_indices_z_det_z_basis == 1, axis=1) | np.any(detected_indices_z_det_z_basis == 0))[0]
-        zero_or_one_in_z_long = index_where_photons_det_z[zero_or_one_in_z_short]
-        all_ind = np.arange(self.config.n_samples)
-        no_zero_or_one_in_z_long = np.setdiff1d(all_ind, zero_or_one_in_z_long)
-        X_P_prime_checked_long = np.intersect1d(X_P_prime_long, no_zero_or_one_in_z_long)
+        X_P_prime_long = mask_x_short[no_one_in_x_short]
+        if mask_z_short.size != 0:
+            # no detection in Z basis
+            zero_or_one_in_z_short = np.where(np.any(detected_indices_z_det_z_basis == 1, axis=1) | np.any(detected_indices_z_det_z_basis == 0))[0]
+            zero_or_one_in_z_long = mask_z_short[zero_or_one_in_z_short]
+            all_ind = np.arange(self.config.n_samples)
+            no_zero_or_one_in_z_long = np.setdiff1d(all_ind, zero_or_one_in_z_long)
+            X_P_prime_checked_long = np.intersect1d(X_P_prime_long, no_zero_or_one_in_z_long)
+        else:
+            X_P_prime_checked_long = X_P_prime_long
 
         # decoy or not
         ind_sent_non_dec_long = np.where((decoy == 0))[0]
@@ -414,7 +422,8 @@ class SimulationHelper:
             Z0_alice_s = np.where((basis == 1) & (value == 1) & (decoy == 0))[0]  # Indices where Z0 was sent
             XP_alice_s = np.where((basis == 0) & (decoy == 0))[0]  # Indices where XP was sent
             Z0_XP_alice_s = XP_alice_s[np.isin(XP_alice_s - 1, Z0_alice_s)]  # Indices where Z1Z0 was sent (index of Z0 used aka the higher index at which time we measure the X+ state)
-            has_0_long = index_where_photons_det_x[np.any(detected_indices_x_det_x_basis == 0, axis=1)]
+            has_0_short = np.where(np.any(detected_indices_x_det_x_basis == 0, axis=1))[0]
+            has_0_long = mask_x_short[has_0_short]
             has_0_z0xp = np.intersect1d(has_0_long, Z0_XP_alice_s)
             ind_has_0_z0xp = len(np.where(has_0_z0xp)[0])
             
@@ -433,7 +442,8 @@ class SimulationHelper:
             Z0_alice_s = np.where((basis == 1) & (value == 1) & (decoy == 1))[0]  # Indices where Z0 was sent
             XP_alice_s = np.where((basis == 0) & (decoy == 1))[0]  # Indices where XP was sent
             Z0_XP_alice_s = XP_alice_s[np.isin(XP_alice_s - 1, Z0_alice_s)]  # Indices where Z1Z0 was sent (index of Z0 used aka the higher index at which time we measure the X+ state)
-            has_0_long = index_where_photons_det_x[np.any(detected_indices_x_det_x_basis == 0, axis=1)]
+            has_0_short = np.where(np.any(detected_indices_x_det_x_basis == 0, axis=1))[0]
+            has_0_long = mask_x_short[has_0_short]
             has_0_z0xp = np.intersect1d(has_0_long, Z0_XP_alice_s)
             ind_has_0_z0xp = len(np.where(has_0_z0xp)[0])
             
@@ -468,15 +478,15 @@ class SimulationHelper:
 
         return X_P_calc_non_dec, X_P_calc_dec, gain_X_non_dec, gain_X_dec
     
-    def classificator_identify_x_calc_p_indep_states_x(self, detected_indices_x_det_x_basis, index_where_photons_det_x):
-        if index_where_photons_det_x.size == 0:
+    def classificator_identify_x_calc_p_indep_states_x(self, mask_x_short, detected_indices_x_det_x_basis):
+        if mask_x_short.size == 0:
             return 0, 0, 0
         
         # early bin gemessen jedes 2. symbol
         ind_every_second_symbol = np.arange(1, 1 + 2 * self.config.n_samples, 2)
         has_one_0_short = np.where(np.sum(detected_indices_x_det_x_basis == 0, axis=1) == 1)[0]
 
-        ind_has_one_0_long = index_where_photons_det_x[has_one_0_short]
+        ind_has_one_0_long = mask_x_short[has_one_0_short]
         ind_has_one_0_and_every_second_symbol = np.intersect1d(ind_has_one_0_long, ind_every_second_symbol)
         len_ind_has_one_0_and_every_second_symbol = len(ind_has_one_0_and_every_second_symbol)
         len_ind_every_second_symbol = len(ind_every_second_symbol)
@@ -486,7 +496,7 @@ class SimulationHelper:
 
         return p_indep_x_states, len_ind_has_one_0_and_every_second_symbol, len_ind_every_second_symbol
     
-    def classificator_errors(self, indices_z_long, indices_x_long, value, index_where_photons_det_x, index_where_photons_det_z, detected_indices_z_det_z_basis, detected_indices_x_det_x_basis, basis, decoy):
+    def classificator_errors(self, mask_x_short, mask_z_short, indices_z_long, indices_x_long, value, detected_indices_z_det_z_basis, detected_indices_x_det_x_basis, basis, decoy):
         wrong_detection_mask_z = np.zeros(len(basis), dtype=bool)
         wrong_detection_mask_x = np.zeros(len(basis), dtype=bool)
 
@@ -495,14 +505,13 @@ class SimulationHelper:
         if wrong_detection_mask_z.size != 0:
             # measure in late for Z0 (wrong detection): value 1 für Z0
             has_1_short = np.where(np.any(detected_indices_z_det_z_basis == 1, axis=1))[0]
-            has_1_long = index_where_photons_det_z[has_1_short]       # detected indices has shape of time_photons_det
+            has_1_long = mask_z_short[has_1_short]       # detected indices has shape of time_photons_det
             has_sent_Z0_long = np.intersect1d(indices_z_long, np.where(value == 1)[0])
-
             has_1_and_z0_long = np.intersect1d(has_1_long, has_sent_Z0_long)
             wrong_detection_mask_z[np.where(has_1_and_z0_long)[0]] = True
             #Condition 3: Measure in early for Z1 (wrong detection), value 0 for Z1
             has_0_short = np.where(np.any(detected_indices_z_det_z_basis == 0, axis=1))[0]
-            has_0_long = index_where_photons_det_z[has_0_short]
+            has_0_long = mask_z_short[has_0_short]
             has_sent_Z1_long = np.intersect1d(indices_z_long, np.where(value == 0)[0])
             has_0_and_z1_long = np.intersect1d(has_0_long, has_sent_Z1_long)
             wrong_detection_mask_z[np.where(has_0_and_z1_long)[0]] = True
@@ -519,7 +528,7 @@ class SimulationHelper:
         if wrong_detection_mask_x.size != 0:
             #Condition 6: Late detection in X+ after X+ sent
             has_1_short = np.any(detected_indices_x_det_x_basis == 1, axis=1)
-            has_1_long = index_where_photons_det_x[np.where(has_1_short)[0]]
+            has_1_long = mask_x_short[np.where(has_1_short)[0]]
             has_sent_xp_long = indices_x_long
             has_1_and_xp_long = np.intersect1d(has_1_long, has_sent_xp_long)
             wrong_detection_mask_x[np.where(has_1_and_xp_long)[0]] = True

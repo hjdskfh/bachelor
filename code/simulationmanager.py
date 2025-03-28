@@ -281,8 +281,8 @@ class SimulationManager:
                 differences_mean_photon_nr[index][idx_param] = (mean_photon_nr_max-mean_photon_nr_min) / np.mean(mean_of_mean_photon)
 
             plt.plot(parameters_amplitude*1e3, differences_mean_photon_nr[index], label= 'for ' + str(state['title'].replace(':', '').lower()))
-            '''
-            plt.title(f" spread of mean photon number for {state['title'].replace(':', '').lower()} over {self.config.n_samples} iterations")                    
+            
+            '''plt.title(f" spread of mean photon number for {state['title'].replace(':', '').lower()} over {self.config.n_samples} iterations")                    
             plt.xlabel(r'$\Delta I \, (\mathrm{mA})$')  # ΔI (mA)
             plt.ylabel(r'$\frac{\Delta \langle \mu \rangle}{\langle \mu \rangle}$')  # Δ⟨μ⟩
             plt.tight_layout()
@@ -509,6 +509,7 @@ class SimulationManager:
         # Saver.memory_usage("before detector x: " + str(time.time() - start_time))
         time_photons_det_x, wavelength_photons_det_x, nr_photons_det_x, index_where_photons_det_x, calc_mean_photon_nr_detector_x, dark_count_times_x, num_dark_counts_x = self.simulation_engine.detector(t, norm_transmission, peak_wavelength, power_dampened, start_time)        
 
+        print(f"nr_photons: {len(nr_photons_det_x)} {len(nr_photons_det_z)}")
         # plot so I can delete
         # self.plotter.plot_and_delete_mean_photon_histogram(calc_mean_photon_nr_detector_x, target_mean_photon_nr=None, type_photon_nr="Mean Photon Number at Detector X")
         # self.plotter.plot_and_delete_mean_photon_histogram(calc_mean_photon_nr_detector_z, target_mean_photon_nr=None, type_photon_nr="Mean Photon Number at Detector Z")
@@ -710,8 +711,8 @@ class SimulationManager:
                 differences_mean_photon_nr[index][idx_param] = (mean_photon_nr_max-mean_photon_nr_min) / np.mean(mean_of_mean_photon)
 
             plt.plot(parameters_amplitude*1e3, differences_mean_photon_nr[index], label= 'for ' + str(state['title'].replace(':', '').lower()))
-            '''
-            plt.title(f" spread of mean photon number for {state['title'].replace(':', '').lower()} over {self.config.n_samples} iterations")                    
+            
+            '''plt.title(f" spread of mean photon number for {state['title'].replace(':', '').lower()} over {self.config.n_samples} iterations")                    
             plt.xlabel(r'$\Delta I \, (\mathrm{mA})$')  # ΔI (mA)
             plt.ylabel(r'$\frac{\Delta \langle \mu \rangle}{\langle \mu \rangle}$')  # Δ⟨μ⟩
             plt.tight_layout()
@@ -927,7 +928,7 @@ class SimulationManager:
         signals, t, _ = self.simulation_engine.signal_bandwidth_jitter(basis, value, decoy)
         power_dampened_base = np.ones((self.config.n_samples, len(t)))
 
-        voltage_values = np.arange(0.8, 1, 0.002)  # Example range of mean_voltage
+        voltage_values = np.arange(0.95, 0.98, 0.002)  # Example range of mean_voltage
         powers = []
         wavelengths_nm = []
 

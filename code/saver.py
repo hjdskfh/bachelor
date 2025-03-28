@@ -124,8 +124,8 @@ class Saver:
 
         script_dir = Path(__file__).parent  # The folder where the script is located
         
-        # Navigate to the parent directory (next to the code) and then to the 'logs' folder
-        logs_dir = script_dir.parent / 'logs'  # Go one level up and look for 'logs'
+        # Navigate to the parent directory (next to the code) and then to the 'results' folder
+        logs_dir = script_dir.parent / 'results'  # Go one level up and look for 'results'
         
         # Create the 'logs' directory if it doesn't exist
         logs_dir.mkdir(exist_ok=True)

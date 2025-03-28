@@ -109,14 +109,8 @@ class SimulationConfig:
             print("Error: The starting voltage values are not the same") 
         if self.mean_photon_nr < 0 or self.mean_photon_decoy < 0 or self.mean_photon_nr < self.mean_photon_decoy or self.mean_photon_nr > 1:
             print("Error: mean_photon_nr and mean_photon_decoy must be between 0 and 1 and mean_photon_nr must be larger than mean_photon_decoy.")
-        '''if not (0 <= self.fraction_long_arm <= 1):
-            print("Error: fraction_long_arm must be between 0 and 1.")'''
         if self.fiber_attenuation > 0:
             print("Error: fiber_attenuation cannot be positive.")
-        if self.insertion_loss_dli > 0:
-            print("Error: insertion_loss_dli cannot be positive.")
-        if self.n_eff_in_fiber < 1:
-            print("Error: n_eff_in_fiber must be greater than 1.")
         if self.detector_efficiency < 0 or self.detector_efficiency > 1:
             print("Error: detector_efficiency must be between 0 and 1.")
         if self.dark_count_frequency < 0:

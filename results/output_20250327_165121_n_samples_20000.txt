@@ -1,0 +1,38 @@
+function_used: run_simulation_classificator
+n_samples: 20000
+seed: 253425
+non_signal_voltage: -1.1
+voltage_decoy: -0.694274380803108
+voltage: -0.1
+voltage_decoy_sup: -0.8032755225896835
+voltage_sup: -0.3838727623224258
+p_indep_x_states_non_dec: None
+p_indep_x_states_dec: None
+p_vacuum_z: 0.9193385763258721
+len_vacuum_indices_x_long: 19957
+len_Z_checked_dec: 8
+len_Z_checked_non_dec: 401
+XP_calc_non_dec: 56.0
+XP_calc_dec: 0.0
+gain_Z_non_dec: 0.04506630703528883
+gain_Z_dec: 0.00784313725490196
+gain_X_non_dec: 0.006153846153846154
+gain_X_dec: 0.0
+wrong_detections_z_dec: [ 2  3 56 72 76 83 91]
+wrong_detections_z_non_dec: [ 0  1  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25
+ 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49
+ 50 51 52 53 54 55 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 73 74 75
+ 77 78 79 80 81 82 84 85 86 87 88 89 90 92 93 94 95 96]
+wrong_detections_x_dec: []
+wrong_detections_x_non_dec: []
+len_wrong_z_dec: 7
+len_wrong_z_non_dec: 90
+len_wrong_x_dec: 0
+len_wrong_x_non_dec: 0
+qber_z_dec: 0.875
+qber_z_non_dec: 0.22443890274314215
+qber_x_dec: -999
+qber_x_non_dec: 0.0
+raw_key_rate: 37787392.29393595
+total_amount_detections: 465.0
+execution_time_run: 116.00045132637024
