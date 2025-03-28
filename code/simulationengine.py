@@ -186,7 +186,7 @@ class SimulationEngine:
         power_dampened = np.sqrt(power_dampened) # ignore phase bc is global phase
         amplitude = power_dampened
 
-        sampling_rate_fft = 100e11
+        sampling_rate_fft = 1e9
         frequencies = fftfreq(len(t) * self.config.batchsize, d=1 / sampling_rate_fft)
         neff_for_wavelength = self.get_interpolated_value(peak_wavelength, 'eam_transmission')
         f_0 = constants.c / (peak_wavelength * neff_for_wavelength)    # Frequency of the symbol (float64)
@@ -207,15 +207,27 @@ class SimulationEngine:
             del flattened_amplitude_batch
             gc.collect()
 
-            # if i == 0:
-            #     plt.plot(frequencies, np.abs(amp_fft), label = 'in DLI')
-            #     plt.title(f"Amplitude FFT in DLI")
-            #     plt.xlabel("Frequency (Hz)")
-            #     plt.ylabel("Amplitude")
-            #     plt.ylim(0, 0.5)
-            #     plt.xlim(-5e10, 5e10)
-            #     plt.grid()
-            #     Saver.save_plot(f"amplitude_fft_in_DLI_blub")
+            # Gaussian broadening with 5 MHz linewidth (convert to std dev for Gaussian)
+            linewidth_fwhm = 5e6  # 5 MHz
+            sigma = linewidth_fwhm / (2 * np.sqrt(2 * np.log(2)))  # Convert FWHM to std dev
+
+            # Create Gaussian broadening filter centered at 0 Hz
+            gaussian_broadening = np.exp(-0.5 * (shifted_frequencies_for_w_0 / sigma) ** 2)
+            gaussian_broadening = gaussian_broadening / np.sum(gaussian_broadening) * len(gaussian_broadening)  # normalize
+
+            # Apply the broadening in frequency domain
+            amp_fft *= gaussian_broadening
+
+
+            if i == 0:
+                plt.plot(frequencies, np.abs(amp_fft), label = 'in DLI')
+                plt.title(f"Amplitude FFT in DLI")
+                plt.xlabel("Frequency (Hz)")
+                plt.ylabel("Amplitude")
+                plt.ylim(0, 0.5)
+                plt.xlim(-5e10, 5e10)
+                plt.grid()
+                Saver.save_plot(f"amplitude_fft_in_DLI_blub")
 
             total_amplitude = np.real(np.fft.ifft(1 / 2 * amp_fft * (1 - phi_shift)))  # Convert back to time domain
             # total_amplitude = np.real(np.fft.ifft(1 / 2 * (1j * amp_fft + 1j * amp_fft * phi_shift)))

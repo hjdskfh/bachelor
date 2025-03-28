@@ -37,7 +37,7 @@ max_concurrent_tasks = 32
 simulations_in_batch = 2  # adjust this to increase per-task workload
 
 # Total number of batches to run (total simulations = simulations_in_batch * total_batches)
-total_batches = 50  # e.g., total simulations = 2 * 50 = 100
+total_batches = 100  # e.g., total simulations = 2 * 50 = 100  # 340 circa 4,5 stunden mit 2 sim per batch
 
 # Define file name
 style_file = "Presentation_style_1_adjusted_no_grid.mplstyle"
@@ -150,9 +150,11 @@ print(f"global_len_Z_checked_non_dec: {global_len_Z_checked_non_dec}")
 print(f"global_X_P_calc_non_dec: {global_X_P_calc_non_dec}")
 print(f"global_X_P_calc_dec: {global_X_P_calc_dec}")
 
+total_symbols = 20000 * simulations_in_batch * total_batches
+
 Saver.save_results_to_txt(global_len_wrong_x_dec=global_len_wrong_x_dec, global_len_wrong_x_non_dec=global_len_wrong_x_non_dec, global_len_wrong_z_dec=global_len_wrong_z_dec,
                         global_len_wrong_z_non_dec=global_len_wrong_z_non_dec, global_len_Z_checked_dec=global_len_Z_checked_dec, global_len_Z_checked_non_dec=global_len_Z_checked_non_dec,
-                        global_X_P_calc_dec=global_X_P_calc_dec, global_X_P_calc_non_dec=global_X_P_calc_non_dec)
+                        global_X_P_calc_dec=global_X_P_calc_dec, global_X_P_calc_non_dec=global_X_P_calc_non_dec, total_symbols=total_symbols)
 
 # --- Timing ---
 end_time_simulation = time.time()
