@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --job-name=sim_run                # Job name
-#SBATCH --output=output.log               # Stdout log file
-#SBATCH --error=error.log                 # Stderr log file
+#SBATCH --output=output_main.log               # Stdout log file
+#SBATCH --error=error_main.log                 # Stderr log file
 #SBATCH --partition=einc                  # Partition to run on
 #SBATCH -c 128                            # Number of cores
 #SBATCH --mem=950G                        # Memory you request

@@ -97,8 +97,6 @@ def run_simulation_and_update_hist(i, length_of_chain, n_rep, base_path, style_f
         mean_photon_nr=0.7,
         mean_photon_decoy=0.1,
         fiber_attenuation=-3,
-        insertion_loss_dli=-1,
-        n_eff_in_fiber=1.558,
         detector_efficiency=0.3,
         dark_count_frequency=10,
         detection_time=1e-10,

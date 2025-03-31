@@ -208,7 +208,7 @@ class SimulationEngine:
             del flattened_amplitude_batch
             gc.collect()
 
-            # Gaussian broadening with 5 MHz linewidth (convert to std dev for Gaussian)
+            '''# Gaussian broadening with 5 MHz linewidth (convert to std dev for Gaussian)
             linewidth_fwhm = 5e6  # 5 MHz
             sigma = linewidth_fwhm / (2 * np.sqrt(2 * np.log(2)))  # Convert FWHM to std dev
 
@@ -217,7 +217,7 @@ class SimulationEngine:
             gaussian_broadening = gaussian_broadening / np.sum(gaussian_broadening) * len(gaussian_broadening)  # normalize
 
             # Apply the broadening in frequency domain
-            amp_fft *= gaussian_broadening
+            amp_fft *= gaussian_broadening'''
 
             if i == 0:
                 plt.plot(frequencies, np.abs(amp_fft), label = 'in DLI')
