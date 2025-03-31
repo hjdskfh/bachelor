@@ -1073,8 +1073,18 @@ class SimulationManager:
             voltage_sup=self.config.voltage_sup,
             p_indep_x_states_non_dec=self.config.p_indep_x_states_non_dec,
             p_indep_x_states_dec=self.config.p_indep_x_states_dec)
+    
+
+        # Save the arrays to an NPZ file named "simulation_data.npz"
+        np.savez("simulation_data.npz", 
+                time_photons_det_z=time_photons_det_z,
+                time_photons_det_x=time_photons_det_x, 
+                index_where_photons_det_z=index_where_photons_det_z,
+                index_where_photons_det_x=index_where_photons_det_x)
+
+        print("Data saved to simulation_data.npz")
         
-        return time_photons_det_x, time_photons_det_z, index_where_photons_det_x, index_where_photons_det_z, t[-1], lookup_arr
+        return None
 
     def lookup(self):
          # Generate Alice's choices

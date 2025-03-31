@@ -407,7 +407,7 @@ class Saver:
         return local_histogram_counts
 
 
-    def get_all_pair_indices(lookup_arr):
+    def get_all_pair_indices_old(lookup_arr):
         """
         Given a 1D array (or list) of symbol identifiers (for one chain),
         return a dictionary mapping each adjacent pair (as a tuple)
@@ -526,4 +526,255 @@ class Saver:
     # data = np.load("simulation_data.npz")
     # time_photons_det = data["time_photons_det"]
     # index_where_photons_det = data["index_where_photons_det"]
+
+    '''def get_all_pair_indices(lookup_arr):
+        """
+        Given a 1D array (or list) of symbol identifiers (for one chain),
+        return a dictionary mapping each adjacent pair (as a tuple)
+        to a numpy array of indices where that pair occurs.
+        
+        The returned index i indicates that lookup_arr[i] and lookup_arr[i+1] form that pair.
+        """
+        lookup_arr = np.array(lookup_arr)
+        # Create an array of shape (N-1, 2) with each row as a pair (lookup_arr[i], lookup_arr[i+1])
+        pairs = np.column_stack((lookup_arr[:-1], lookup_arr[1:]))
+        # Get the unique pairs (each row is a unique pair)
+        unique_pairs = np.unique(pairs, axis=0)
+        
+        pair_indices_dict = {}
+        for pair in unique_pairs:
+            pair_tuple = tuple(pair)
+            # Find indices where this exact pair occurs (vectorized)
+            indices = np.nonzero((pairs[:, 0] == pair_tuple[0]) & (pairs[:, 1] == pair_tuple[1]))[0]
+            pair_indices_dict[pair_tuple] = indices
+        return pair_indices_dict
+
+    def update_histogram_batches_all_pairs(length_of_chain,
+                                        time_one_symbol,
+                                        total_symbols,
+                                        time_photons_det,
+                                        index_where_photons_det,
+                                        amount_bins_hist,
+                                        bins_per_symbol,
+                                        lookup_arr):
+        """
+        Update the histogram counts for all adjacent pairs in the given sequence.
+        
+        For each adjacent pair occurring at positions i (first symbol) and i+1 (second symbol)
+        within a chain, this function updates the histogram counts as follows:
+        
+        - For the first symbol in the pair: 
+            local_histogram_counts_x[bins_per_symbol * i + bin_index] += 1
+        - For the second symbol in the pair:
+            local_histogram_counts_x[bins_per_symbol * (i + 1) + bin_index] += 1
+        
+        where bin_index is obtained by digitizing the detection times (relative to the symbol start)
+        using a time window of length time_one_symbol divided into bins_per_symbol bins.
+        
+        The simulation data (time_photons_det and index_where_photons_det) is assumed to be stored
+        in an NPZ file, and total_symbols is the total number of symbols over all chains.
+        
+        Parameters:
+        length_of_chain: int
+            Number of symbols in one chain (e.g. 65).
+        time_one_symbol: float
+            Duration (time window) for one symbol.
+        total_symbols: int
+            Total number of symbols in the batch (should be a multiple of length_of_chain).
+        time_photons_det: 1D numpy array
+            The arrival times (relative to each symbol start) of detected photons.
+        index_where_photons_det: numpy array
+            Global symbol indices (across the batch) where detections occurred.
+        amount_bins_hist: int
+            Total number of histogram bins (typically bins_per_symbol * length_of_chain).
+        bins_per_symbol: int
+            Number of bins per symbol.
+        lookup_arr: list of str
+            The lookup array for one chain, e.g.:
+            ['Z0', 'Z0', 'Z1', 'Z0', 'X0', 'Z0', 'X1', ...]
+            (Here, strings are not normalized, so "Z0" and "Z0*" are distinct.)
+        
+        Returns:
+        local_histogram_counts: 1D numpy array of length amount_bins_hist.
+        """
+        n_rep = total_symbols // length_of_chain
+        local_histogram_counts = np.zeros(amount_bins_hist, dtype=int)
+        
+        # Define bin edges for one symbol's time window.
+        bins_arr = np.linspace(0, time_one_symbol, bins_per_symbol + 1)
+        
+        # Get dictionary mapping each adjacent pair (for one chain) to the positions where they occur.
+        pair_indices_dict = Saver.get_all_pair_indices(lookup_arr)
+        
+        # Process each chain (repetition)
+        for rep in range(n_rep):
+            base_index = rep * length_of_chain  # global index offset for the current chain
+            # For each pair type in the lookup array:
+            for pair, positions in pair_indices_dict.items():
+                # For each occurrence of this pair in one chain:
+                for pos in positions:
+                    # Global indices for the two symbols in the pair:
+                    global_index_first = base_index + pos      # for the first symbol of the pair
+                    global_index_second = base_index + pos + 1   # for the second symbol of the pair
+                    
+                    # Process the first symbol of the pair:
+                    if global_index_first in index_where_photons_det:
+                        inds_first = np.where(index_where_photons_det == global_index_first)[0]
+                        valid_times_first = time_photons_det[inds_first]
+                        valid_times_first = valid_times_first[~np.isnan(valid_times_first)]
+                        bin_indices_first = np.digitize(valid_times_first, bins_arr) - 1
+                        # Update histogram: position = pos (for first symbol)
+                        for b in bin_indices_first:
+                            if 0 <= b < bins_per_symbol:
+                                overall_bin = pos * bins_per_symbol + b
+                                local_histogram_counts[overall_bin] += 1
+                    
+                    # Process the second symbol of the pair:
+                    if global_index_second in index_where_photons_det:
+                        inds_second = np.where(index_where_photons_det == global_index_second)[0]
+                        valid_times_second = time_photons_det[inds_second]
+                        valid_times_second = valid_times_second[~np.isnan(valid_times_second)]
+                        bin_indices_second = np.digitize(valid_times_second, bins_arr) - 1
+                        # Update histogram: position = pos+1 (for second symbol)
+                        for b in bin_indices_second:
+                            if 0 <= b < bins_per_symbol:
+                                overall_bin = (pos + 1) * bins_per_symbol + b
+                                local_histogram_counts[overall_bin] += 1
+        
+        return local_histogram_counts'''
+
+    def get_all_pair_indices(lookup_arr):
+        """
+        Given a 1D array (or list) of symbol identifiers (for one chain),
+        return a dictionary mapping each adjacent pair (as a tuple)
+        to a numpy array of indices where that pair occurs.
+        
+        The returned index i indicates that lookup_arr[i] and lookup_arr[i+1] form that pair.
+        """
+        lookup_arr = np.array(lookup_arr)
+        # Create an array of shape (N-1, 2) with each row as a pair (lookup_arr[i], lookup_arr[i+1])
+        pairs = np.column_stack((lookup_arr[:-1], lookup_arr[1:]))
+        # Get the unique pairs (each row is a unique pair)
+        unique_pairs = np.unique(pairs, axis=0)
+        
+        pair_indices_dict = {}
+        for pair in unique_pairs:
+            pair_tuple = tuple(pair)
+            # Find indices where this exact pair occurs (vectorized)
+            indices = np.nonzero((pairs[:, 0] == pair_tuple[0]) & (pairs[:, 1] == pair_tuple[1]))[0]
+            pair_indices_dict[pair_tuple] = indices
+        return pair_indices_dict
+
+
+    def update_histogram_batches_all_pairs(length_of_chain,
+                                        time_one_symbol,
+                                        time_photons_det_z,
+                                        time_photons_det_x,
+                                        index_where_photons_det_z,
+                                        index_where_photons_det_x,
+                                        amount_bins_hist,
+                                        bins_per_symbol,
+                                        lookup_arr,
+                                        basis, value, decoy):
+        """
+        Update the histogram counts for all adjacent pairs in the given sequence.
+        
+        The simulation data (time_photons_det and index_where_photons_det) is assumed to be stored
+        in an NPZ file, and total_symbols is the total number of symbols over all chains.
+        
+        Parameters:
+        length_of_chain: int
+            Number of symbols in one chain (e.g. 65).
+        time_one_symbol: float
+            Duration (time window) for one symbol.
+        time_photons_det: 1D numpy array
+            The arrival times (relative to each symbol start) of detected photons.
+        index_where_photons_det: numpy array
+            Global symbol indices (across the batch) where detections occurred.
+        amount_bins_hist: int
+            Total number of histogram bins (typically bins_per_symbol * length_of_chain).
+        bins_per_symbol: int
+            Number of bins per symbol.
+        lookup_arr: list of str
+            The lookup array for one chain, e.g.:
+            ['Z0', 'Z0', 'Z1', 'Z0', 'X0', 'Z0', 'X1', ...]
+            (Here, strings are not normalized, so "Z0" and "Z0*" are distinct.)
+        
+        Returns:
+        local_histogram_counts: 1D numpy array of length amount_bins_hist.
+        """
+        raw_symbol_lookup = {
+            (1, 1, 0): "Z0",
+            (1, 0, 0): "Z1",
+            (0, -1, 0): "X+",
+            (1, 1, 1): "Z0*",  # or "Z0_decoy" if you prefer
+            (1, 0, 1): "Z1*",  # or "Z1_decoy"
+            (0, -1, 1): "X+*",  # or "X+_decoy"
+        }
+
+        local_histogram_counts_x = np.zeros(amount_bins_hist, dtype=int)
+        local_histogram_counts_z = np.zeros(amount_bins_hist, dtype=int)
+        
+        # Define bin edges for one symbol's time window.
+        bins_arr = np.linspace(0, time_one_symbol, bins_per_symbol + 1)
+        
+        # Get dictionary mapping each adjacent pair (for one chain) to the positions where they occur.
+        pair_indices_dict = Saver.get_all_pair_indices(lookup_arr)
+        
+        def process(idx_left, idx_right, index_where_photons_det, time_photons_det, local_histogram_counts):
+            # looked at index is second symbol:
+            pair_key = (raw_symbol_lookup[(basis[idx_left], value[idx_left], decoy[idx_left])], 
+                        raw_symbol_lookup[(basis[idx_right], value[idx_right], decoy[idx_right])])
+            if pair_key in pair_indices_dict:
+                position_brujin_left = pair_indices_dict[pair_key]
+            
+            # Process the first symbol of the pair:
+            if idx_left in index_where_photons_det:
+                inds_first = np.where(index_where_photons_det == idx_left)[0]
+                valid_times_first = time_photons_det[inds_first]
+                valid_times_first = valid_times_first[~np.isnan(valid_times_first)]
+                bin_indices_first = np.digitize(valid_times_first, bins_arr) - 1
+                # Update histogram: position = pos (for first symbol)
+                for b in bin_indices_first:
+                    if 0 <= b < bins_per_symbol:
+                        overall_bin = position_brujin_left * bins_per_symbol + b
+                        local_histogram_counts[overall_bin] += 1
+
+            # Process the second symbol of the pair:
+            if idx_right in index_where_photons_det:
+                inds_first = np.where(index_where_photons_det == idx_right)[0]
+                valid_times_first = time_photons_det[inds_first]
+                valid_times_first = valid_times_first[~np.isnan(valid_times_first)]
+                bin_indices_first = np.digitize(valid_times_first, bins_arr) - 1
+                # Update histogram: position = pos (for first symbol)
+                for b in bin_indices_first:
+                    if 0 <= b < bins_per_symbol:
+                        overall_bin = (position_brujin_left + 1) * bins_per_symbol + b
+                        local_histogram_counts[overall_bin] += 1
+
+        # Process each chain (repetition)
+        for idx_where_z in index_where_photons_det_z:
+            idx_before_z = idx_where_z - 1
+            idx_after_z = idx_where_z + 1
+        
+            # looked at photon is right part of symbol
+            if idx_where_z < 0:
+                process(idx_before_z, idx_where_z, index_where_photons_det_z, time_photons_det_z, local_histogram_counts_z)
+            # looked at photon is left part of symbol
+            if idx_where_z < length_of_chain - 1:
+                process(idx_where_z, idx_after_z)
+
+        for idx_where_x in index_where_photons_det_x:
+            idx_before_x = idx_where_x - 1
+            idx_after_x = idx_where_x + 1
+        
+            # looked at photon is right part of symbol
+            if idx_where_x < 0:
+                process(idx_before_x, idx_where_x, index_where_photons_det_x, time_photons_det_x, local_histogram_counts_x)
+            # looked at photon is left part of symbol
+            if idx_where_x < length_of_chain - 1:
+                process(idx_where_x, idx_after_x)
+
+        
+        return local_histogram_counts_z, local_histogram_counts_x
 

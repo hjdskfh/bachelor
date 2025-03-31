@@ -111,7 +111,7 @@ print("Value Array (sample):", value_array[:10])
 print("Decoy Array (sample):", decoy_array[:10])
 '''
 
-import numpy as np
+'''import numpy as np
 
 # Example of real photon times (replace this with actual data!)
 photon_times = np.array([100, 105, 109, 135, 145, 155, 160, 300, 310, 320])
@@ -145,4 +145,18 @@ for symbol_idx in range(num_symbols):
     # Store
     histogram_matrix[symbol_idx, :] = counts
 
-print("Histogram matrix shape:", histogram_matrix.shape)
+print("Histogram matrix shape:", histogram_matrix.shape)'''
+
+import numpy as np
+
+# Define your variables
+time_photons_det = np.random.uniform(0, 1e-9, size=500)
+index_where_photons_det = np.random.randint(0, 1000, size=500)
+
+# Save them
+np.savez("simulation_data.npz", 
+         time_photons_det=time_photons_det, 
+         index_where_photons_det=index_where_photons_det)
+
+print("Data saved to simulation_data.npz")
+
