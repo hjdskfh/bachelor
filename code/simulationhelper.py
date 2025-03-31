@@ -599,7 +599,6 @@ class SimulationHelper:
         nr_photons = x[sampled_indices]
         return nr_photons
     
-    
 
     
 

@@ -301,4 +301,229 @@ class Saver:
         plt.tight_layout()
         Saver.save_plot(f"hist_symbols_{start_symbol}_to_{end_symbol}")
 
+    import numpy as np
+
+    def update_histogram_batches_special_vectorized(length_of_chain,
+                                                    time_one_symbol,
+                                                    total_symbols,
+                                                    time_photons_det,
+                                                    index_where_photons_det,
+                                                    amount_bins_hist,
+                                                    bins_per_symbol,
+                                                    lookup_arr):
+        """
+        Update the histogram counts for a batch of symbols with special handling for 
+        a "Z0"-"Z1" pair, using vectorized pair-index identification.
+        
+        Parameters:
+        length_of_chain: int
+            Number of symbols in one chain (e.g. 65).
+        time_one_symbol: float
+            Duration (time window) for one symbol.
+        total_symbols: int
+            Total number of symbols in the batch (should be a multiple of length_of_chain).
+        time_photons_det: 1D numpy array
+            The arrival times (relative to each symbol start) of detected photons.
+        index_where_photons_det: numpy array
+            Global symbol indices (across the batch) where detections occurred.
+        amount_bins_hist: int
+            Total number of histogram bins (typically bins_per_symbol * length_of_chain).
+        bins_per_symbol: int
+            Number of bins per symbol.
+        lookup_arr: list of str
+            The lookup array for one chain, e.g.:
+            ['Z0', 'Z0', 'Z1', 'Z0', 'X0', 'Z0', 'X1', ...]
+            Note: The strings are NOT normalized here, so "Z0" and "Z0*" are treated differently.
             
+        Returns:
+        local_histogram_counts: 1D numpy array of length amount_bins_hist.
+        
+        Process:
+        1. Use vectorized NumPy comparisons on the original lookup_arr to determine, within one chain, 
+            the indices where a special pair ("Z0" followed by "Z1") occurs.
+        2. Loop over each chain and then over symbol indices. For indices that are part of
+            a special pair, update only the prescribed bins:
+                - For the "Z0" symbol: only the detections falling in the last (late) bin are counted.
+                - For the subsequent "Z1" symbol: only the detections in the first (early) and last (late) bins are counted.
+            For all other symbols, perform normal binning.
+        """
+        n_rep = total_symbols // length_of_chain
+        local_histogram_counts = np.zeros(amount_bins_hist, dtype=int)
+        
+        # Define bin edges for one symbol's time window.
+        bins_arr = np.linspace(0, time_one_symbol, bins_per_symbol + 1)
+        
+        # Use the lookup array as is (without normalization).
+        lookup_arr = np.array(lookup_arr)
+        # Identify special pair indices (within one chain) where a symbol exactly equals "Z0" 
+        # and the following symbol exactly equals "Z1".
+        special_pair_indices = np.nonzero((lookup_arr[:-1] == "Z0") & (lookup_arr[1:] == "Z1"))[0]
+        
+        # Process each chain.
+        for rep in range(n_rep):
+            s = 0
+            while s < length_of_chain:
+                global_index = rep * length_of_chain + s
+                # Check if this symbol index is part of a special pair.
+                if s in special_pair_indices:
+                    # --- Special update for the "Z0" symbol (early) ---
+                    if global_index in index_where_photons_det:
+                        inds = np.where(index_where_photons_det == global_index)[0]
+                        valid_times = time_photons_det[inds]
+                        valid_times = valid_times[~np.isnan(valid_times)]
+                        bin_indices = np.digitize(valid_times, bins_arr) - 1
+                        # Only update if the detection falls in the last (late) bin.
+                        for b in bin_indices:
+                            if b == (bins_per_symbol - 1):
+                                overall_bin = s * bins_per_symbol + b
+                                local_histogram_counts[overall_bin] += 1
+                    
+                    # --- Special update for the following "Z1" symbol ---
+                    if s + 1 < length_of_chain:
+                        global_index_next = rep * length_of_chain + (s + 1)
+                        if global_index_next in index_where_photons_det:
+                            inds_next = np.where(index_where_photons_det == global_index_next)[0]
+                            valid_times_next = time_photons_det[inds_next]
+                            valid_times_next = valid_times_next[~np.isnan(valid_times_next)]
+                            bin_indices_next = np.digitize(valid_times_next, bins_arr) - 1
+                            # For "Z1": only update if the detection is in the first (early) or last (late) bin.
+                            for b in bin_indices_next:
+                                if b == 0 or b == (bins_per_symbol - 1):
+                                    overall_bin = (s + 1) * bins_per_symbol + b
+                                    local_histogram_counts[overall_bin] += 1
+                    s += 2  # Skip the next symbol since it's already handled.
+                else:
+                    # --- Normal update for symbol s ---
+                    if global_index in index_where_photons_det:
+                        inds = np.where(index_where_photons_det == global_index)[0]
+                        valid_times = time_photons_det[inds]
+                        valid_times = valid_times[~np.isnan(valid_times)]
+                        bin_indices = np.digitize(valid_times, bins_arr) - 1
+                        for b in bin_indices:
+                            overall_bin = s * bins_per_symbol + b
+                            local_histogram_counts[overall_bin] += 1
+                    s += 1
+        
+        return local_histogram_counts
+
+
+    def get_all_pair_indices(lookup_arr):
+        """
+        Given a 1D array (or list) of symbol identifiers (for one chain),
+        return a dictionary mapping each adjacent pair (as a tuple)
+        to a numpy array of indices where that pair occurs.
+        
+        The returned index i indicates that lookup_arr[i] and lookup_arr[i+1] form that pair.
+        """
+        lookup_arr = np.array(lookup_arr)
+        # Create an array of shape (N-1, 2) with each row as a pair (lookup_arr[i], lookup_arr[i+1])
+        pairs = np.column_stack((lookup_arr[:-1], lookup_arr[1:]))
+        # Get the unique pairs (each row is a unique pair)
+        unique_pairs = np.unique(pairs, axis=0)
+        
+        pair_indices_dict = {}
+        for pair in unique_pairs:
+            pair_tuple = tuple(pair)
+            # Find indices where this exact pair occurs (vectorized)
+            indices = np.nonzero((pairs[:, 0] == pair_tuple[0]) & (pairs[:, 1] == pair_tuple[1]))[0]
+            pair_indices_dict[pair_tuple] = indices
+        return pair_indices_dict
+
+    def analyze_all_pairs(npz_filename, lookup_arr, time_one_symbol, bins_per_symbol, length_of_chain):
+        """
+        Load simulation data from an NPZ file and analyze all adjacent symbol pairs.
+        
+        The NPZ file should contain:
+        - "time_photons_det": 1D numpy array with detection times (relative to symbol start).
+        - "index_where_photons_det": 1D numpy array with the global symbol index for each detection.
+        
+        Parameters:
+        npz_filename      : str, filename of the NPZ file.
+        lookup_arr        : list of str, the symbol encoding for one chain (e.g. ['Z0', 'Z0', 'Z1', ...]).
+        time_one_symbol   : float, duration (in seconds) of one symbol's time window.
+        bins_per_symbol   : int, number of time bins per symbol.
+        length_of_chain   : int, number of symbols in one chain (should equal len(lookup_arr)).
+        
+        Returns:
+        pair_histograms   : dict mapping each adjacent pair (tuple of two strings) to a tuple:
+                            (histogram_first, histogram_second), where each histogram is a 1D array
+                            of length bins_per_symbol representing the binned detection counts.
+        """
+        # Load simulation data from NPZ file
+        data = np.load(npz_filename)
+        time_photons_det = data["time_photons_det"]
+        index_where_photons_det = data["index_where_photons_det"]
+        
+        # Determine total number of symbols.
+        # Here we assume that symbol indices range from 0 to (total_symbols-1).
+        total_symbols = int(np.max(index_where_photons_det)) + 1
+        # Calculate the number of chains (repetitions)
+        n_rep = total_symbols // length_of_chain
+
+        # Define bin edges for one symbol's time window
+        bins_arr = np.linspace(0, time_one_symbol, bins_per_symbol + 1)
+        
+        # Get the dictionary mapping adjacent pairs to their positions (within one chain)
+        pair_indices_dict = get_all_pair_indices(lookup_arr)
+        
+        # Initialize a dictionary to hold histograms for every pair.
+        # For each pair, we create two histograms (one for the first symbol, one for the second).
+        pair_histograms = {}
+        for pair in pair_indices_dict:
+            pair_histograms[pair] = (np.zeros(bins_per_symbol, dtype=int),
+                                    np.zeros(bins_per_symbol, dtype=int))
+        
+        # Loop over all chains (repetitions)
+        for rep in range(n_rep):
+            base_index = rep * length_of_chain
+            # For each unique pair, update histograms
+            for pair, indices_in_chain in pair_indices_dict.items():
+                # Loop over each occurrence of this pair within one chain
+                for idx in indices_in_chain:
+                    # Global indices for the two symbols in the pair:
+                    global_index_first = base_index + idx
+                    global_index_second = base_index + idx + 1  # pair is (symbol at idx, symbol at idx+1)
+                    
+                    # Process first symbol of the pair:
+                    if global_index_first in index_where_photons_det:
+                        inds_first = np.where(index_where_photons_det == global_index_first)[0]
+                        valid_times_first = time_photons_det[inds_first]
+                        valid_times_first = valid_times_first[~np.isnan(valid_times_first)]
+                        bin_indices_first = np.digitize(valid_times_first, bins_arr) - 1
+                        # Update histogram for first symbol in the pair
+                        for b in bin_indices_first:
+                            if 0 <= b < bins_per_symbol:
+                                pair_histograms[pair][0][b] += 1
+                    
+                    # Process second symbol of the pair:
+                    if global_index_second in index_where_photons_det:
+                        inds_second = np.where(index_where_photons_det == global_index_second)[0]
+                        valid_times_second = time_photons_det[inds_second]
+                        valid_times_second = valid_times_second[~np.isnan(valid_times_second)]
+                        bin_indices_second = np.digitize(valid_times_second, bins_arr) - 1
+                        # Update histogram for second symbol in the pair
+                        for b in bin_indices_second:
+                            if 0 <= b < bins_per_symbol:
+                                pair_histograms[pair][1][b] += 1
+
+        return pair_histograms
+    
+    # how to save 
+
+    # Let's assume these are your simulation arrays:
+    # time_photons_det: 1D array of detection times (relative to each symbol's start)
+    # index_where_photons_det: 1D array of global symbol indices corresponding to each detection
+    # time_photons_det = np.random.uniform(0, 1e-9, size=500)  # example data
+    # index_where_photons_det = np.random.randint(0, 1000, size=500)  # example data
+
+    # # Save the arrays to an NPZ file named "simulation_data.npz"
+    # np.savez("simulation_data.npz", 
+    #         time_photons_det=time_photons_det, 
+    #         index_where_photons_det=index_where_photons_det)
+
+    # print("Data saved to simulation_data.npz")
+
+    # data = np.load("simulation_data.npz")
+    # time_photons_det = data["time_photons_det"]
+    # index_where_photons_det = data["index_where_photons_det"]
+
