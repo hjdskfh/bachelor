@@ -24,6 +24,7 @@ jitter = 1e-11
 database.add_jitter(jitter, 'laser')
 detector_jitter = 100e-12
 database.add_jitter(detector_jitter, 'detector')
+n_samples_set = 20000
 
 
 # Memory considerations:
@@ -44,7 +45,7 @@ style_file = "Presentation_style_1_adjusted_no_grid.mplstyle"
 
 base_path = os.path.dirname(os.path.abspath(__file__))
 
-config = SimulationConfig(database, seed=None, n_samples=20000, n_pulses=4, batchsize=1000, mean_voltage=0.982, mean_current=0.080, voltage_amplitude=0.02, current_amplitude=0.0005,
+config = SimulationConfig(database, seed=None, n_samples=n_samples_set, n_pulses=4, batchsize=1000, mean_voltage=0.982, mean_current=0.080, voltage_amplitude=0.02, current_amplitude=0.0005,
                 p_z_alice=0.5, p_decoy=0.1, p_z_bob=0.85, sampling_rate_FPGA=6.5e9, bandwidth=4e9, jitter=jitter, 
                 non_signal_voltage=-1.1, voltage_decoy=-0.1, voltage=-0.1, voltage_decoy_sup=-0.1, voltage_sup=-0.1,
                 mean_photon_nr=0.7, mean_photon_decoy=0.1, 
@@ -64,9 +65,9 @@ execution_time_read = end_time_read - start_time  # Calculate execution time for
 print(f"Execution time for reading: {execution_time_read:.9f} seconds for {config.n_samples} samples")
 
 def run_simulation_and_update_hist(i, base_path, style_file, database, jitter,
-                                   detector_jitter):
+                                   detector_jitter, n_samples_set):
     # Create the simulation config locally
-    config = SimulationConfig(database, seed=None, n_samples=20000, n_pulses=4, batchsize=1000, mean_voltage=0.982, mean_current=0.080, voltage_amplitude=0.02, current_amplitude=0.0005,
+    config = SimulationConfig(database, seed=None, n_samples=n_samples_set, n_pulses=4, batchsize=1000, mean_voltage=0.982, mean_current=0.080, voltage_amplitude=0.02, current_amplitude=0.0005,
                 p_z_alice=0.5, p_decoy=0.1, p_z_bob=0.85, sampling_rate_FPGA=6.5e9, bandwidth=4e9, jitter=jitter, 
                 non_signal_voltage=-1.1, voltage_decoy=-0.1, voltage=-0.1, voltage_decoy_sup=-0.1, voltage_sup=-0.1,
                 mean_photon_nr=0.7, mean_photon_decoy=0.1, 
@@ -82,7 +83,7 @@ def run_simulation_and_update_hist(i, base_path, style_file, database, jitter,
     return len_wrong_x_dec, len_wrong_x_non_dec, len_wrong_z_dec, len_wrong_z_non_dec, len_Z_checked_dec, len_Z_checked_non_dec, X_P_calc_non_dec, X_P_calc_dec
 
 def run_simulation_batch(batch_id, base_path, style_file,
-                         database, jitter, detector_jitter):
+                         database, jitter, detector_jitter, n_samples_set):
     """
     Run a batch of simulations sequentially and aggregate the local histograms.
     """
@@ -99,7 +100,7 @@ def run_simulation_batch(batch_id, base_path, style_file,
     for j in range(simulations_in_batch):
         # We pass a unique identifier if needed (here simply j)
         len_wrong_x_dec, len_wrong_x_non_dec, len_wrong_z_dec, len_wrong_z_non_dec, len_Z_checked_dec, len_Z_checked_non_dec, X_P_calc_non_dec, X_P_calc_dec = run_simulation_and_update_hist(
-            j, base_path, style_file, database, jitter, detector_jitter)
+            j, base_path, style_file, database, jitter, detector_jitter, n_samples_set)
         
         total_len_wrong_x_dec += len_wrong_x_dec
         total_len_wrong_x_non_dec += len_wrong_x_non_dec
@@ -116,7 +117,7 @@ def run_simulation_batch(batch_id, base_path, style_file,
 
 results = Parallel(n_jobs=max_concurrent_tasks)(
     delayed(run_simulation_batch)(
-         batch_id, base_path, style_file, database, jitter, detector_jitter
+         batch_id, base_path, style_file, database, jitter, detector_jitter, n_samples_set
     )
     for batch_id in range(total_batches)
 )
@@ -150,7 +151,7 @@ print(f"global_len_Z_checked_non_dec: {global_len_Z_checked_non_dec}")
 print(f"global_X_P_calc_non_dec: {global_X_P_calc_non_dec}")
 print(f"global_X_P_calc_dec: {global_X_P_calc_dec}")
 
-total_symbols = 20000 * simulations_in_batch * total_batches
+total_symbols = n_samples_set * simulations_in_batch * total_batches
 
 Saver.save_results_to_txt(global_len_wrong_x_dec=global_len_wrong_x_dec, global_len_wrong_x_non_dec=global_len_wrong_x_non_dec, global_len_wrong_z_dec=global_len_wrong_z_dec,
                         global_len_wrong_z_non_dec=global_len_wrong_z_non_dec, global_len_Z_checked_dec=global_len_Z_checked_dec, global_len_Z_checked_non_dec=global_len_Z_checked_non_dec,

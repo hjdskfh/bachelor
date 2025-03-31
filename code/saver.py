@@ -293,7 +293,7 @@ class Saver:
                     local_histogram_counts_z[bins_per_symbol * s + bin_index] += 1
         return local_histogram_counts_x, local_histogram_counts_z
 
-    def plot_histogram_batch(length_of_chain, bins_per_symbol, time_one_symbol, histogram_counts_x, histogram_counts_z, lookup_arr, start_symbol=3, end_symbol=10):
+    def plot_histogram_batch(length_of_chain, bins_per_symbol, time_one_symbol, histogram_counts_x, histogram_counts_z, lookup_arr, total_symbols, start_symbol=3, end_symbol=10):
         assert 0 <= start_symbol <= end_symbol <= 64
         amount_of_symbols_incl_start_and_end = end_symbol - start_symbol + 1
         bins = np.linspace(0, amount_of_symbols_incl_start_and_end * time_one_symbol, bins_per_symbol * amount_of_symbols_incl_start_and_end + 1)    
@@ -319,7 +319,7 @@ class Saver:
 
         plt.xlabel("Time ")
         plt.ylabel("Cumulative Counts")
-        plt.title(f"Cumulative Histogram for symbols {lookup_arr[start_symbol:end_symbol + 1]}")
+        plt.title(f"Cumulative Histogram for symbols {lookup_arr[start_symbol:end_symbol + 1]} with {total_symbols} symbols sent")
         plt.legend()
         plt.tight_layout()
         Saver.save_plot(f"hist_symbols_{start_symbol}_to_{end_symbol}")

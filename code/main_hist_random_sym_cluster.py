@@ -13,10 +13,10 @@ from joblib import Parallel, delayed
 
 # Assuming Saver, DataManager, SimulationConfig, SimulationManager are already defined and imported
 
-def run_simulation_and_update_hist_all_pairs(i, length_of_chain, base_path, style_file, database, jitter,
+def run_simulation_and_update_hist_all_pairs(i, n_samples_set, length_of_chain, base_path, style_file, database, jitter,
                                              detector_jitter, bins_per_symbol):
     config = SimulationConfig(
-        database, seed=None, n_samples=20000, n_pulses=4, batchsize=1000,
+        database, seed=None, n_samples=n_samples_set, n_pulses=4, batchsize=1000,
         mean_voltage=1.0, mean_current=0.080, voltage_amplitude=0.050, current_amplitude=0.0005,
         p_z_alice=0.5, p_decoy=0.1, p_z_bob=0.85,
         sampling_rate_FPGA=6.5e9, bandwidth=4e9, jitter=jitter,
@@ -43,13 +43,13 @@ def run_simulation_and_update_hist_all_pairs(i, length_of_chain, base_path, styl
     decoy = data["decoy"]
     lookup_array = data["lookup_array"]
     
-    hist_z, hist_x = Saver.update_histogram_batches_all_pairs(length_of_chain, time_one_symbol, time_photons_det_z, time_photons_det_x,
+    hist_z, hist_x = Saver.update_histogram_batches_all_pairs(n_samples_set, length_of_chain, time_one_symbol, time_photons_det_z, time_photons_det_x,
                                                             index_where_photons_det_z, index_where_photons_det_x, amount_bins_hist,
                                                             bins_per_symbol, lookup_arr, basis, value, decoy)
 
     return hist_x, hist_z, t_sym, lookup_array
 
-def run_simulation_batch_all_pairs(batch_id, length_of_chain, base_path, style_file, database, jitter,
+def run_simulation_batch_all_pairs(batch_id, n_samples_set, length_of_chain, base_path, style_file, database, jitter,
                                    detector_jitter, bins_per_symbol, amount_bins):
     hist_total_x = np.zeros(amount_bins, dtype=int)
     hist_total_z = np.zeros(amount_bins, dtype=int)
@@ -58,7 +58,7 @@ def run_simulation_batch_all_pairs(batch_id, length_of_chain, base_path, style_f
 
     for j in range(simulations_in_batch):
         hist_x, hist_z, t_sym, lookup_arr = run_simulation_and_update_hist_all_pairs(
-            j, length_of_chain, base_path, style_file, database, jitter,
+            j, n_samples_set, length_of_chain, base_path, style_file, database, jitter,
             detector_jitter, bins_per_symbol
         )
         hist_total_x += hist_x
@@ -77,7 +77,9 @@ if __name__ == '__main__':
     database.add_data('data/voltage_shift_data.csv', 'Voltage (V)', 'Wavelength Shift (nm)', 20, 'voltage_shift')
     database.add_data('data/eam_transmission_data.csv', 'Voltage (V)', 'Transmission', 11, 'eam_transmission')
 
-    jitter, detector_jitter = 1e-11, 100e-12
+    jitter = 1e-11
+    detector_jitter =  100e-12
+    n_samples_set = 20000
     database.add_jitter(jitter, 'laser')
     database.add_jitter(detector_jitter, 'detector')
 
@@ -95,7 +97,7 @@ if __name__ == '__main__':
 
     results = Parallel(n_jobs=max_concurrent_tasks)(
         delayed(run_simulation_batch_all_pairs)( 
-            batch_id, length_of_chain, base_path, style_file, database, jitter,
+            batch_id, n_samples_set, length_of_chain, base_path, style_file, database, jitter,
             detector_jitter, bins_per_symbol_hist, amount_bins_hist
         ) for batch_id in range(total_batches)
     )
@@ -110,9 +112,11 @@ if __name__ == '__main__':
         final_time_one_symbol = t_sym
         final_lookup_arr = lookup_arr
 
+    total_symbols = n_samples_set * simulations_in_batch * total_batches
+
     Saver.plot_histogram_batch(length_of_chain, bins_per_symbol_hist, final_time_one_symbol,
                                global_histogram_counts_x, global_histogram_counts_z,
-                               final_lookup_arr, start_symbol=3, end_symbol=10)
+                               final_lookup_arr, total_symbols, start_symbol=3, end_symbol=10)
 
     Saver.save_array_as_npz("histograms_all_pairs",
                             histogram_counts_x=global_histogram_counts_x,

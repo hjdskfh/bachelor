@@ -39,7 +39,6 @@ simulations_in_batch = 2  # adjust this to increase per-task workload
 # Total number of batches to run (total simulations = simulations_in_batch * total_batches)
 total_batches = 50  # e.g., total simulations = 2 * 50 = 100
 
-times_per_n = 100
 length_of_chain = 8*8 +1
 n_rep = 50
 bins_per_symbol_hist = 30
@@ -187,9 +186,11 @@ for local_hist_x, local_hist_z, time_one_symbol, lookup_arr in results:
     final_lookup_arr = lookup_arr
     
 # --- Plot and Save Results ---
+total_symbols = int(length_of_chain*n_rep) * simulations_in_batch * total_batches
+
 Saver.plot_histogram_batch(length_of_chain, bins_per_symbol_hist, final_time_one_symbol,
                            global_histogram_counts_x, global_histogram_counts_z,
-                           final_lookup_arr, start_symbol=3, end_symbol=10)
+                           final_lookup_arr, total_symbols, start_symbol=3, end_symbol=10)
 
 Saver.save_array_as_npz("histograms",
                         histogram_counts_x=global_histogram_counts_x,
