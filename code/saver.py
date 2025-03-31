@@ -324,27 +324,6 @@ class Saver:
         plt.tight_layout()
         Saver.save_plot(f"hist_symbols_{start_symbol}_to_{end_symbol}")
 
-    import numpy as np
-
-    # how to save 
-
-    # Let's assume these are your simulation arrays:
-    # time_photons_det: 1D array of detection times (relative to each symbol's start)
-    # index_where_photons_det: 1D array of global symbol indices corresponding to each detection
-    # time_photons_det = np.random.uniform(0, 1e-9, size=500)  # example data
-    # index_where_photons_det = np.random.randint(0, 1000, size=500)  # example data
-
-    # # Save the arrays to an NPZ file named "simulation_data.npz"
-    # np.savez("simulation_data.npz", 
-    #         time_photons_det=time_photons_det, 
-    #         index_where_photons_det=index_where_photons_det)
-
-    # print("Data saved to simulation_data.npz")
-
-    # data = np.load("simulation_data.npz")
-    # time_photons_det = data["time_photons_det"]
-    # index_where_photons_det = data["index_where_photons_det"]
-
    
     def get_all_pair_indices(lookup_arr):
         """
