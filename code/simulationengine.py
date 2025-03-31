@@ -189,6 +189,7 @@ class SimulationEngine:
         sampling_rate_fft = 1e9
         frequencies = fftfreq(len(t) * self.config.batchsize, d=1 / sampling_rate_fft)
         neff_for_wavelength = self.get_interpolated_value(peak_wavelength, 'eam_transmission')
+        print(f"neff_for_wavelength: {neff_for_wavelength[:10]}")
         f_0 = constants.c / (peak_wavelength * neff_for_wavelength)    # Frequency of the symbol (float64)
 
         for i in range(0, self.config.n_samples, self.config.batchsize):
@@ -217,7 +218,6 @@ class SimulationEngine:
 
             # Apply the broadening in frequency domain
             amp_fft *= gaussian_broadening
-
 
             if i == 0:
                 plt.plot(frequencies, np.abs(amp_fft), label = 'in DLI')

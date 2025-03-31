@@ -1,3 +1,4 @@
+from codecs import lookup
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator
@@ -1002,9 +1003,8 @@ class SimulationManager:
         optical_power, peak_wavelength, chosen_voltage, chosen_current = self.simulation_engine.random_laser_output('current_power', 'voltage_shift')
     
         # Generate Alice's choices
-        basis_arr, value_arr, decoy_arr, lookup_arr = self.simulation_helper.create_all_symbol_combinations_for_hist()
-
-        basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=basis_arr, value=value_arr, decoy=decoy_arr)
+        _, _, _, lookup_array = self.simulation_helper.create_all_symbol_combinations_for_hist()
+        basis, value, decoy = self.simulation_engine.generate_alice_choices()
 
         # Simulate signal and transmission
         Saver.memory_usage("before simulating signal: " + str("{:.3f}".format(time.time() - start_time)))
@@ -1080,12 +1080,16 @@ class SimulationManager:
                 time_photons_det_z=time_photons_det_z,
                 time_photons_det_x=time_photons_det_x, 
                 index_where_photons_det_z=index_where_photons_det_z,
-                index_where_photons_det_x=index_where_photons_det_x)
+                index_where_photons_det_x=index_where_photons_det_x,
+                time_one_symbol=t[-1],
+                basis=basis,
+                value=value,
+                decoy=decoy,
+                lookup_array=lookup_array)
 
         print("Data saved to simulation_data.npz")
         
         return None
-
     def lookup(self):
          # Generate Alice's choices
         basis_arr, value_arr, decoy_arr, lookup_arr = self.simulation_helper.create_all_symbol_combinations_for_hist()
