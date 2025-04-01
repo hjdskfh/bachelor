@@ -284,12 +284,14 @@ class Saver:
                     valid_x = time_photons_det_x[ind_short][~np.isnan(time_photons_det_x[ind_short])]
                     bin_index = np.digitize(valid_x, bins_arr_per_symbol) - 1
                     # insert into histogram_counts_z with 30*symbol + bin_index 
+                    print(f"bins_per_symbol:{bins_per_symbol}, s:{s}, bin_index:{bin_index}")
                     local_histogram_counts_x[bins_per_symbol * s + bin_index] += 1
                 if np.isin(row_idx, index_where_photons_det_z):
                     ind_short = np.where(index_where_photons_det_z == row_idx)[0]
                     valid_z = time_photons_det_z[ind_short][~np.isnan(time_photons_det_z[ind_short])]
                     bin_index = np.digitize(valid_z, bins_arr_per_symbol) - 1
                     # insert into histogram_counts_z with 30*symbol + bin_index 
+                    print(f"bins_per_symbol:{bins_per_symbol}, s:{s}, bin_index:{bin_index}")
                     local_histogram_counts_z[bins_per_symbol * s + bin_index] += 1
         return local_histogram_counts_x, local_histogram_counts_z
 
@@ -403,7 +405,7 @@ class Saver:
                             raw_symbol_lookup[(basis[idx_right], value[idx_right], decoy[idx_right])])
                 print(f"pair_key:{pair_key}")
                 print(f"pair_indices_dict:{pair_indices_dict}")
-                #if pair_key in pair_indices_dict:
+                #if pair_key in pair_indices_dict:  
                 position_brujin_left = pair_indices_dict[pair_key].item()
                 
                 # Process the first symbol of the pair:
