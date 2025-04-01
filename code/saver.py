@@ -401,8 +401,10 @@ class Saver:
                 # looked at index is second symbol:
                 pair_key = (raw_symbol_lookup[(basis[idx_left], value[idx_left], decoy[idx_left])], 
                             raw_symbol_lookup[(basis[idx_right], value[idx_right], decoy[idx_right])])
-                if pair_key in pair_indices_dict:
-                    position_brujin_left = pair_indices_dict[pair_key].item()
+                print(f"pair_key:{pair_key}")
+                print(f"pair_indices_dict:{pair_indices_dict}")
+                #if pair_key in pair_indices_dict:
+                position_brujin_left = pair_indices_dict[pair_key].item()
                 
                 # Process the first symbol of the pair:
                 if idx_left in index_where_photons_det:

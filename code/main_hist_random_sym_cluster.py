@@ -43,7 +43,7 @@ def run_simulation_and_update_hist_all_pairs(i, n_samples_set, length_of_chain, 
     decoy = data["decoy"]
     lookup_array = data["lookup_array"]
     
-    hist_z, hist_x = Saver.update_histogram_batches_all_pairs(n_samples_set, length_of_chain, time_one_symbol, time_photons_det_z, time_photons_det_x,
+    hist_z, hist_x = Saver.update_histogram_batches_all_pairs(length_of_chain, time_one_symbol, time_photons_det_z, time_photons_det_x,
                                                             index_where_photons_det_z, index_where_photons_det_x, amount_bins_hist,
                                                             bins_per_symbol, lookup_array, basis, value, decoy)
 
