@@ -17,7 +17,7 @@ def run_simulation_and_update_hist_all_pairs(i, n_samples_set, length_of_chain, 
                                              detector_jitter, bins_per_symbol):
     config = SimulationConfig(
         database, seed=None, n_samples=n_samples_set, n_pulses=4, batchsize=1000,
-        mean_voltage=1.0, mean_current=0.080, voltage_amplitude=0.050, current_amplitude=0.0005,
+        mean_voltage=0.9825, mean_current=0.080, voltage_amplitude=0.050, current_amplitude=0.0005,
         p_z_alice=0.5, p_decoy=0.1, p_z_bob=0.85,
         sampling_rate_FPGA=6.5e9, bandwidth=4e9, jitter=jitter,
         non_signal_voltage=-1.1, voltage_decoy=-0.1, voltage=-0.1,

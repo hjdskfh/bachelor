@@ -51,7 +51,7 @@ for idx, var_current in enumerate(arr_current):
         round_counter += 1
 
         #create simulation
-        config = SimulationConfig(database, round=round_counter, seed=None, n_samples=200, n_pulses=4, batchsize=100, mean_voltage=0.9675, mean_current=var_current, voltage_amplitude=0.02, current_amplitude=0.0005,                        p_z_alice=0.5, p_decoy=0.1, p_z_bob=0.15, sampling_rate_FPGA=6.5e9, bandwidth=4e9, jitter=jitter, 
+        config = SimulationConfig(database, round=round_counter, seed=None, n_samples=200, n_pulses=4, batchsize=100, mean_voltage=0.9825, mean_current=var_current, voltage_amplitude=0.02, current_amplitude=0.0005,                        p_z_alice=0.5, p_decoy=0.1, p_z_bob=0.15, sampling_rate_FPGA=6.5e9, bandwidth=4e9, jitter=jitter, 
                         non_signal_voltage=-1.1, voltage_decoy=-0.1, voltage=-0.1, voltage_decoy_sup=-0.1, voltage_sup=-0.1,
                         mean_photon_nr=0.7, mean_photon_decoy=0.1, 
                         fiber_attenuation=-3, detector_efficiency=0.3, dark_count_frequency=10, detection_time=1e-10, detector_jitter=detector_jitter,

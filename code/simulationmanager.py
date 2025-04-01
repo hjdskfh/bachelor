@@ -898,7 +898,7 @@ class SimulationManager:
         Saver.memory_usage("before detector x: " + str(time.time() - start_time))
         time_photons_det_x, wavelength_photons_det_x, nr_photons_det_x, index_where_photons_det_x, calc_mean_photon_nr_detector_x, dark_count_times_x, num_dark_counts_x = self.simulation_engine.detector(t, norm_transmission, peak_wavelength, power_dampened, start_time)        
 
-        self.plotter.plot_and_delete_photon_time_histogram(time_photons_det_x, time_photons_det_z)   
+        # self.plotter.plot_and_delete_photon_time_histogram(time_photons_det_x, time_photons_det_z)   
 
         # plot so I can delete
         # self.plotter.plot_and_delete_mean_photon_histogram(calc_mean_photon_nr_detector_x, target_mean_photon_nr=None, type_photon_nr="Mean Photon Number at Detector X")
@@ -929,7 +929,7 @@ class SimulationManager:
         signals, t, _ = self.simulation_engine.signal_bandwidth_jitter(basis, value, decoy)
         power_dampened_base = np.ones((self.config.n_samples, len(t)))
 
-        voltage_values = np.arange(0.9, 0.99, 0.002)  # Example range of mean_voltage
+        voltage_values = np.arange(0.965, 1, 0.002)  # Example range of mean_voltage
         powers = []
         wavelengths_nm = []
 
@@ -939,9 +939,9 @@ class SimulationManager:
 
             sampling_rate_fft = 100e11
             frequencies = fftfreq(len(t) * self.config.batchsize, d=1 / sampling_rate_fft)
-            neff_for_wavelength = self.simulation_engine.get_interpolated_value(peak_wavelength*1e9, 'wavelength_neff') #1e9 so in nm
-            print(f"neff_for_wavelength: {neff_for_wavelength[:10]}")
-            f_0 = constants.c / (peak_wavelength * neff_for_wavelength)    # Frequency of the symbol (float64)
+            # neff_for_wavelength = self.simulation_engine.get_interpolated_value(peak_wavelength*1e9, 'wavelength_neff') #1e9 so in nm
+            # print(f"neff_for_wavelength: {neff_for_wavelength[:10]}")
+            f_0 = constants.c / (peak_wavelength) #* neff_for_wavelength)    # Frequency of the symbol (float64)
 
             for i in range(0, self.config.n_samples, self.config.batchsize):
                 f_0_part = f_0[i:i + self.config.batchsize]
