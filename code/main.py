@@ -38,7 +38,7 @@ style_file = "Presentation_style_1_adjusted_no_grid.mplstyle"
 base_path = os.path.dirname(os.path.abspath(__file__))
 
 #create simulation mean current 0.08 , mena_voltage = 0.98 weil aus voltage_sweep
-config = SimulationConfig(database, seed=None, n_samples=20, n_pulses=4, batchsize=10, mean_voltage=0.969, mean_current=0.082111, voltage_amplitude=0.001, current_amplitude=0.0005,
+config = SimulationConfig(database, seed=None, n_samples=2000, n_pulses=4, batchsize=1000, mean_voltage=0.94, mean_current=0.082111, voltage_amplitude=0.001, current_amplitude=0.0005,
                 p_z_alice=0.5, p_decoy=0.1, p_z_bob=0.85, sampling_rate_FPGA=6.5e9, bandwidth=4e9, jitter=jitter, 
                 non_signal_voltage=-1.1, voltage_decoy=-0.1, voltage=-0.1, voltage_decoy_sup=-0.1, voltage_sup=-0.1,
                 mean_photon_nr=0.7, mean_photon_decoy=0.1, 
@@ -60,9 +60,10 @@ execution_time_read = end_time_read - start_time  # Calculate execution time for
 print(f"Execution time for reading: {execution_time_read:.9f} seconds for {config.n_samples} samples")
 
 # Run the simulation
-lookup_results = simulation.lookup()
-print(lookup_results)
-#simulation.run_simulation_classificator()
+# lookup_results = simulation.lookup()
+# print(lookup_results)
+simulation.run_simulation_classificator()
+# simulation.run_DLI()
 
 end_time_simulation = time.time()  # Record end time for simulation
 execution_time_simulation = end_time_simulation - end_time_read  # Calculate execution time for simulation

@@ -19,6 +19,7 @@ database = DataManager()
 database.add_data('data/current_power_data.csv', 'Current (mA)', 'Optical Power (mW)', 9, 'current_power') 
 database.add_data('data/voltage_shift_data.csv', 'Voltage (V)', 'Wavelength Shift (nm)', 20, 'voltage_shift')
 database.add_data('data/eam_transmission_data.csv', 'Voltage (V)', 'Transmission', 11, 'eam_transmission') 
+database.add_data('data/wavelength_neff.csv', 'Wavelength (nm)', 'neff', 20, 'wavelength_neff')
 
 jitter = 1e-11
 database.add_jitter(jitter, 'laser')
@@ -79,9 +80,9 @@ def run_simulation_and_update_hist(i, length_of_chain, n_rep, base_path, style_f
         n_samples=int(length_of_chain * n_rep),
         n_pulses=4,
         batchsize=best_batchsize,
-        mean_voltage=1.0,
+        mean_voltage=0.982,
         mean_current=0.080,
-        voltage_amplitude=0.050,
+        voltage_amplitude=0.02,
         current_amplitude=0.0005,
         p_z_alice=0.5,
         p_decoy=0.1,
