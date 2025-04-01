@@ -191,7 +191,7 @@ class SimulationEngine:
         print(f"peak_wavelength: {peak_wavelength}")
         neff_for_wavelength = self.get_interpolated_value(peak_wavelength*1e9, 'wavelength_neff') #1e9 so in nm
         print(f"neff_for_wavelength: {neff_for_wavelength[:10]}")
-        f_0 = constants.c / (peak_wavelength * neff_for_wavelength)    # Frequency of the symbol (float64)
+        f_0 = constants.c / (peak_wavelength)# * neff_for_wavelength)    # Frequency of the symbol (float64)
 
         for i in range(0, self.config.n_samples, self.config.batchsize):
             f_0_part = f_0[i:i + self.config.batchsize]
