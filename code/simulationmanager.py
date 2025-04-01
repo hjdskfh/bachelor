@@ -890,8 +890,7 @@ class SimulationManager:
 
         # DLI
         power_dampened, phase_shift = self.simulation_engine.delay_line_interferometer(power_dampened, t, peak_wavelength)
-        print(f"PHASESHIFT in Grad: {np.angle(phase_shift) / (2 * np.pi) * 360}")
-        print(f"shape of power_dampened after DLI: {power_dampened.shape}")
+     
         # plot
         self.plotter.plot_power(power_dampened, amount_symbols_in_plot=amount_symbols_in_first_part, where_plot_1='before DLI',  shortened_first_power=first_power, where_plot_2='after DLI erster port,', title_rest='+ omega 0 for current ' + str(self.config.mean_current) + ' mA')
 
@@ -1039,19 +1038,19 @@ class SimulationManager:
         power_dampened = power_dampened * (1 - self.config.p_z_bob)
 
         #plot
-        amount_symbols_in_first_part = 10
-        first_power = power_dampened[:amount_symbols_in_first_part]
+        '''amount_symbols_in_first_part = 10
+        first_power = power_dampened[:amount_symbols_in_first_part]'''
 
         # DLI
         power_dampened, phase_shift = self.simulation_engine.delay_line_interferometer(power_dampened, t, peak_wavelength)
 
         # plot
-        self.plotter.plot_power(power_dampened, amount_symbols_in_plot=amount_symbols_in_first_part, where_plot_1='before DLI',  shortened_first_power=first_power, where_plot_2='after DLI erster port,', title_rest='+ omega 0 for current ' + str(self.config.mean_current) + ' mA')
+        # self.plotter.plot_power(power_dampened, amount_symbols_in_plot=amount_symbols_in_first_part, where_plot_1='before DLI',  shortened_first_power=first_power, where_plot_2='after DLI erster port,', title_rest='+ omega 0 for current ' + str(self.config.mean_current) + ' mA')
 
         Saver.memory_usage("before detector x: " + str(time.time() - start_time))
         time_photons_det_x, wavelength_photons_det_x, nr_photons_det_x, index_where_photons_det_x, calc_mean_photon_nr_detector_x, dark_count_times_x, num_dark_counts_x = self.simulation_engine.detector(t, norm_transmission, peak_wavelength, power_dampened, start_time)        
 
-        self.plotter.plot_and_delete_photon_time_histogram(time_photons_det_x, time_photons_det_z)   
+        # self.plotter.plot_and_delete_photon_time_histogram(time_photons_det_x, time_photons_det_z)   
 
         # plot so I can delete
         # self.plotter.plot_and_delete_mean_photon_histogram(calc_mean_photon_nr_detector_x, target_mean_photon_nr=None, type_photon_nr="Mean Photon Number at Detector X")
@@ -1061,7 +1060,7 @@ class SimulationManager:
         
         # get results for both detectors
         # get results for both detectors
-        function_name = inspect.currentframe().f_code.co_name
+        '''function_name = inspect.currentframe().f_code.co_name
         Saver.save_results_to_txt(  # Save the results to a text file 
             function_used = function_name,
             n_samples=self.config.n_samples,
@@ -1072,7 +1071,7 @@ class SimulationManager:
             voltage_decoy_sup=self.config.voltage_decoy_sup, 
             voltage_sup=self.config.voltage_sup,
             p_indep_x_states_non_dec=self.config.p_indep_x_states_non_dec,
-            p_indep_x_states_dec=self.config.p_indep_x_states_dec)
+            p_indep_x_states_dec=self.config.p_indep_x_states_dec)'''
     
 
         # Save the arrays to an NPZ file named "simulation_data.npz"
