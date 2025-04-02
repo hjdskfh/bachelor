@@ -6,6 +6,7 @@ from scipy import constants
 from scipy.special import factorial
 import time
 import gc
+from scipy.signal import convolve
 
 from saver import Saver
 from simulationsingle import SimulationSingle
@@ -204,10 +205,6 @@ class SimulationEngine:
             amplitude_batch[:] = amplitude_batch[::-1]
             flattened_amplitude_batch = amplitude_batch.reshape(-1)
 
-            amp_fft = np.fft.fft(flattened_amplitude_batch)  # FFT of row i
-            del flattened_amplitude_batch
-            gc.collect()
-
             '''# Gaussian broadening with 5 MHz linewidth (convert to std dev for Gaussian)
             linewidth_fwhm = 5e6  # 5 MHz
             sigma = linewidth_fwhm / (2 * np.sqrt(2 * np.log(2)))  # Convert FWHM to std dev
@@ -218,6 +215,42 @@ class SimulationEngine:
 
             # Apply the broadening in frequency domain
             amp_fft *= gaussian_broadening'''
+            '''# Assume 'flattened_amplitude_batch' is your time-domain signal (a 1D numpy array)
+            # and 't' is your corresponding time vector.
+            dt = t[1] - t[0]  # time step
+
+            # Define the linewidth in the frequency domain (5 MHz FWHM)
+            linewidth_fwhm = 5e6  # 5 MHz
+
+            # Convert FWHM to standard deviation (sigma) in Hz
+            # For a Gaussian: FWHM = 2 * sqrt(2*ln(2)) * sigma
+            sigma_f = linewidth_fwhm / (2 * np.sqrt(2 * np.log(2)))  # in Hz
+
+            # The Fourier transform of a Gaussian is also a Gaussian.
+            # The product of the time-domain and frequency-domain standard deviations (using these FT conventions)
+            # is sigma_t = 1/(2*pi*sigma_f)
+            sigma_t = 1 / (2 * np.pi * sigma_f)  # in seconds
+
+            # Create a time axis for the Gaussian kernel.
+            # We choose a window covering ±5*sigma_t for adequate sampling.
+            kernel_half_width = 5 * sigma_t
+            num_points = int(2 * kernel_half_width / dt)
+            if num_points % 2 == 0:
+                num_points += 1  # ensure an odd number of points for symmetry
+            time_kernel = np.linspace(-kernel_half_width, kernel_half_width, num_points)
+
+            # Generate the Gaussian kernel in the time domain
+            gaussian_kernel = np.exp(-0.5 * (time_kernel / sigma_t)**2)
+            gaussian_kernel /= np.sum(gaussian_kernel)  # Normalize so that its area equals 1
+
+            # Convolve the time-domain signal with the Gaussian kernel to apply broadening
+            broadened_signal = convolve(flattened_amplitude_batch, gaussian_kernel, mode='same')
+
+            # Now, 'broadened_signal' contains your original signal broadened with a 5 MHz linewidth.'''
+
+            amp_fft = np.fft.fft(flattened_amplitude_batch)  # FFT of row i
+            del flattened_amplitude_batch
+            gc.collect()
 
             '''if i == 0:
                 plt.plot(frequencies, np.abs(amp_fft), label = 'in DLI')

@@ -60,10 +60,11 @@ execution_time_read = end_time_read - start_time  # Calculate execution time for
 print(f"Execution time for reading: {execution_time_read:.9f} seconds for {config.n_samples} samples")
 
 # Run the simulation
-lookup_results = simulation.lookup()
-print(lookup_results)
+# lookup_results = simulation.lookup()
+# print(lookup_results)
 # simulation.run_simulation_classificator()
 # simulation.run_DLI()
+simulation.run_simulation_till_DLI()
 
 end_time_simulation = time.time()  # Record end time for simulation
 execution_time_simulation = end_time_simulation - end_time_read  # Calculate execution time for simulation
