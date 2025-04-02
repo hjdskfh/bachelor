@@ -47,7 +47,7 @@ def run_simulation_and_update_hist_all_pairs(i, n_samples_set, length_of_chain, 
                                                             index_where_photons_det_z, index_where_photons_det_x, amount_bins_hist,
                                                             bins_per_symbol, lookup_array, basis, value, decoy)
 
-    return hist_x, hist_z, t_sym, lookup_array
+    return hist_x, hist_z, time_one_symbol, lookup_array
 
 def run_simulation_batch_all_pairs(batch_id, n_samples_set, length_of_chain, base_path, style_file, database, jitter,
                                    detector_jitter, bins_per_symbol, amount_bins):
