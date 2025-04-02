@@ -90,7 +90,8 @@ if __name__ == '__main__':
     # Total number of batches to run (total simulations = simulations_in_batch * total_batches)
     total_batches = 1#100  # e.g., total simulations = 2 * 50 = 100  # 340 circa 4,5 stunden mit 2 sim per batch
 
-    length_of_chain, bins_per_symbol_hist = 8 * 8 + 1, 30
+    length_of_chain = 6*6 + 1
+    bins_per_symbol_hist = 30
     amount_bins_hist = bins_per_symbol_hist * length_of_chain
 
     style_file = "Presentation_style_1_adjusted_no_grid.mplstyle"

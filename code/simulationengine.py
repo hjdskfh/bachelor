@@ -62,12 +62,6 @@ class SimulationEngine:
         basis = np.array(basis, dtype=int)
         value = np.array(value, dtype=int)
         decoy = np.array(decoy, dtype=int)
-        
-        # Adjust value for array case if basis is 0
-        if isinstance(basis, np.ndarray):
-            value[basis == 0] = -1
-        else:
-            value = -1 if basis == 0 else value
 
         # Ensure outputs are arrays of the correct size
         if basis.size == 1:  # Scalar case
@@ -85,6 +79,11 @@ class SimulationEngine:
         if decoy.size > 1:
             decoy = np.tile(decoy, (self.config.n_samples // len(decoy)) + 1)[:self.config.n_samples]
 
+        # Adjust value for array case if basis is 0
+        if isinstance(basis, np.ndarray):
+            value[basis == 0] = -1
+        else:
+            value = -1 if basis == 0 else value
         return basis, value, decoy
     
     def signal_bandwidth_jitter(self, basis, values, decoy):

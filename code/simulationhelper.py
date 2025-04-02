@@ -55,7 +55,7 @@ class SimulationHelper:
         # Generate de Bruijn sequence for 8 symbols (order 2)
 
         # Map numbers to your symbols
-        symbols = ['Z0', 'Z1', 'X0', 'X1', 'Z0*', 'Z1*', 'X0*', 'X1*']
+        symbols = ['Z0', 'Z1', 'X+', 'Z0*', 'Z1*', 'X+*']
         seq = de_bruijn(len(symbols), 2)
         symbol_sequence = [symbols[i] for i in seq]
 
@@ -63,12 +63,10 @@ class SimulationHelper:
         symbols_dict = {
             'Z0':  (1, 1, 0),
             'Z1':  (1, 0, 0),
-            'X0':  (0, 0, 0),
-            'X+':  (0, 1, 0),
+            'X+':  (0, -1, 0),
             'Z0*': (1, 1, 1),
             'Z1*': (1, 0, 1),
-            'X0*': (0, 0, 1),
-            'X+*': (0, 1, 1),
+            'X+*': (0, -1, 1),
         }
 
         basis_array = np.empty(len(symbols_dict)**2 + 1, dtype=int)

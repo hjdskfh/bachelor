@@ -40,7 +40,7 @@ simulations_in_batch = 2  # adjust this to increase per-task workload
 # Total number of batches to run (total simulations = simulations_in_batch * total_batches)
 total_batches = 50  # e.g., total simulations = 2 * 50 = 100
 
-length_of_chain = 8*8 +1
+length_of_chain = 6*6 +1
 n_rep = 50
 bins_per_symbol_hist = 30
 amount_bins_hist = bins_per_symbol_hist * length_of_chain
