@@ -85,6 +85,7 @@ class SimulationHelper:
         basis_array[-1] = basis_array[0]
         value_array[-1] = value_array[0]
         decoy_array[-1] = decoy_array[0]
+        lookup_array.append(lookup_array[0])
 
         print("Basis Array (sample):", basis_array[:10])
         print("Value Array (sample):", value_array[:10])
@@ -370,9 +371,9 @@ class SimulationHelper:
 
         # gain  
         ind_Z_sent_non_dec = np.intersect1d(indices_z_long, ind_sent_non_dec)
-        print(f"indices_z_long: {indices_z_long}")
+        '''print(f"indices_z_long: {indices_z_long}")
         print(f"ind_sent_non_dec: {ind_sent_non_dec}")
-        print(f"ind_Z_sent_non_dec: {ind_Z_sent_non_dec}")
+        print(f"ind_Z_sent_non_dec: {ind_Z_sent_non_dec}")'''
         len_Z_checked_non_dec = len(ind_Z0_checked_non_dec) + len(ind_Z1_checked_non_dec)
 
         if len(ind_Z_sent_non_dec) != 0:

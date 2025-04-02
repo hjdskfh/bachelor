@@ -4,6 +4,7 @@ from datamanager import DataManager
 from config import SimulationConfig
 from simulationmanager import SimulationManager
 from saver import Saver
+from dataprocessor import DataProcessor
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -114,17 +115,9 @@ def run_simulation_and_update_hist(i, length_of_chain, n_rep, base_path, style_f
         time_one_symbol, lookup_arr = simulation.run_simulation_hist_final()
 
     # Compute local histograms
-    local_hist_x, local_hist_z = Saver.update_histogram_batches(
-        length_of_chain,
-        time_photons_det_x, 
-        time_photons_det_z,
-        time_one_symbol,
-        int(length_of_chain * n_rep),
-        index_where_photons_det_x,
-        index_where_photons_det_z,
-        amount_bins_hist,
-        bins_per_symbol=bins_per_symbol
-    )
+    local_hist_x, local_hist_z = DataProcessor.update_histogram_batches(length_of_chain,
+        time_photons_det_x, time_photons_det_z, time_one_symbol, int(length_of_chain * n_rep),
+        index_where_photons_det_x, index_where_photons_det_z, amount_bins_hist, bins_per_symbol=bins_per_symbol)
 
     return local_hist_x, local_hist_z, time_one_symbol, lookup_arr
 
@@ -187,9 +180,9 @@ for local_hist_x, local_hist_z, time_one_symbol, lookup_arr in results:
 # --- Plot and Save Results ---
 total_symbols = int(length_of_chain*n_rep) * simulations_in_batch * total_batches
 
-Saver.plot_histogram_batch(length_of_chain, bins_per_symbol_hist, final_time_one_symbol,
+DataProcessor.plot_histogram_batch(bins_per_symbol_hist, final_time_one_symbol,
                            global_histogram_counts_x, global_histogram_counts_z,
-                           final_lookup_arr, total_symbols, start_symbol=3, end_symbol=10)
+                           final_lookup_arr, total_symbols, start_symbol=3, end_symbol=10, name="fixed")
 
 Saver.save_array_as_npz("histograms",
                         histogram_counts_x=global_histogram_counts_x,

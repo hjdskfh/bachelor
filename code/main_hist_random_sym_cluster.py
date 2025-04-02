@@ -3,6 +3,7 @@ from datamanager import DataManager
 from config import SimulationConfig
 from simulationmanager import SimulationManager
 from saver import Saver
+from dataprocessor import DataProcessor
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -43,7 +44,7 @@ def run_simulation_and_update_hist_all_pairs(i, n_samples_set, length_of_chain, 
     decoy = data["decoy"]
     lookup_array = data["lookup_array"]
     
-    hist_z, hist_x = Saver.update_histogram_batches_all_pairs(length_of_chain, time_one_symbol, time_photons_det_z, time_photons_det_x,
+    hist_z, hist_x = DataProcessor.update_histogram_batches_all_pairs(length_of_chain, time_one_symbol, time_photons_det_z, time_photons_det_x,
                                                             index_where_photons_det_z, index_where_photons_det_x, amount_bins_hist,
                                                             bins_per_symbol, lookup_array, basis, value, decoy)
 
@@ -84,11 +85,11 @@ if __name__ == '__main__':
     database.add_jitter(jitter, 'laser')
     database.add_jitter(detector_jitter, 'detector')
 
-    max_concurrent_tasks = 1#32
+    max_concurrent_tasks = 32
     # How many simulations per batch (each batch runs sequentially inside one task)
-    simulations_in_batch = 1#2  # adjust this to increase per-task workload
+    simulations_in_batch = 2  # adjust this to increase per-task workload
     # Total number of batches to run (total simulations = simulations_in_batch * total_batches)
-    total_batches = 1#100  # e.g., total simulations = 2 * 50 = 100  # 340 circa 4,5 stunden mit 2 sim per batch
+    total_batches = 50  # e.g., total simulations = 2 * 50 = 100  # 340 circa 4,5 stunden mit 2 sim per batch
 
     length_of_chain = 6*6 + 1
     bins_per_symbol_hist = 30
@@ -116,9 +117,9 @@ if __name__ == '__main__':
 
     total_symbols = n_samples_set * simulations_in_batch * total_batches
 
-    Saver.plot_histogram_batch(length_of_chain, bins_per_symbol_hist, final_time_one_symbol,
+    DataProcessor.plot_histogram_batch(bins_per_symbol_hist, final_time_one_symbol,
                                global_histogram_counts_x, global_histogram_counts_z,
-                               final_lookup_array, total_symbols, start_symbol=3, end_symbol=10)
+                               final_lookup_array, total_symbols, start_symbol=3, end_symbol=10, name="random")
 
     Saver.save_array_as_npz("histograms_all_pairs",
                             histogram_counts_x=global_histogram_counts_x,

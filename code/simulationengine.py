@@ -330,9 +330,7 @@ class SimulationEngine:
         detected_indices_z_det_z_basis, p_vacuum_z, total_sift_z_basis_short, indices_z_long, mask_z_short = self.simulation_helper.classificator_sift_z_vacuum(basis, detected_indices_z, index_where_photons_det_z)
         
         detected_indices_x_det_x_basis, total_sift_x_basis_long, vacuum_indices_x_long, indices_x_long, mask_x_short = self.simulation_helper.classificator_sift_x_vacuum(basis, detected_indices_x, index_where_photons_det_x)
-        for i in range(len(detected_indices_z_det_z_basis)):
-            if np.any(detected_indices_z_det_z_basis[i] == 1):
-                print(f"detected_indices_z_det: {detected_indices_z_det_z_basis[i]}")
+        
         gain_Z_non_dec, gain_Z_dec, len_Z_checked_dec, len_Z_checked_non_dec = self.simulation_helper.classificator_identify_z(mask_x_short, value, total_sift_z_basis_short, detected_indices_x_det_x_basis, index_where_photons_det_z, decoy, indices_z_long)
 
         X_P_calc_non_dec, X_P_calc_dec, gain_X_non_dec, gain_X_dec = self.simulation_helper.classificator_identify_x(mask_x_short, mask_z_short, detected_indices_x_det_x_basis, detected_indices_z_det_z_basis, basis, value, decoy, indices_x_long)
