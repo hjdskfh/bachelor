@@ -64,11 +64,11 @@ class SimulationHelper:
             'Z0':  (1, 1, 0),
             'Z1':  (1, 0, 0),
             'X0':  (0, 0, 0),
-            'X1':  (0, 1, 0),
+            'X+':  (0, 1, 0),
             'Z0*': (1, 1, 1),
             'Z1*': (1, 0, 1),
             'X0*': (0, 0, 1),
-            'X1*': (0, 1, 1),
+            'X+*': (0, 1, 1),
         }
 
         basis_array = np.empty(len(symbols_dict)**2 + 1, dtype=int)
