@@ -435,7 +435,7 @@ class SimulationManager:
         Saver.save_plot(f"hist_peak_wavelength")'''
     
         # Generate Alice's choices
-        basis, value, decoy = self.simulation_engine.generate_alice_choices()
+        basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=np.array([1,0]), value=np.array([1,-1]), decoy=np.array([0,0]))
 
         # Simulate signal and transmission
         # Saver.memory_usage("before simulating signal: " + str("{:.3f}".format(time.time() - start_time)))
@@ -572,7 +572,7 @@ class SimulationManager:
             len_Z_checked_dec=len_Z_checked_dec,
             len_Z_checked_non_dec=len_Z_checked_non_dec,
             XP_calc_non_dec=X_P_calc_non_dec,
-            XP_calc_dec=X_P_calc_dec,
+            XP_calc_dec=X_P_calc_dec,       
             gain_Z_non_dec=gain_Z_non_dec,
             gain_Z_dec=gain_Z_dec,
             gain_X_non_dec=gain_X_non_dec,
@@ -1089,6 +1089,7 @@ class SimulationManager:
         print("Data saved to simulation_data.npz")
         
         return None
+    
     def lookup(self):
          # Generate Alice's choices
         basis_arr, value_arr, decoy_arr, lookup_arr = self.simulation_helper.create_all_symbol_combinations_for_hist()

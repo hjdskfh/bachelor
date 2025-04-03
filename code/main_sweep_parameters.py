@@ -32,10 +32,10 @@ def run_parameter_sweep():
     base_path = os.path.dirname(os.path.abspath(__file__))
 
     # Parameter sweep ranges.
-    mean_photon_nr_values = [0.5, 0.6, 0.7, 0.8, 0.9]
-    mean_photon_decoy_values = [0.05, 0.1, 0.15, 0.2]
-    p_z_alice_values = [0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
-    p_decoy_values = [0.05, 0.1, 0.15, 0.2, 0.25, 0.3]
+    mean_photon_nr_values = [0.5] #[0.65, 0.7, 0.75]
+    mean_photon_decoy_values = [0.25] #[0.05, 0.1, 0.15]
+    p_decoy_values = [0.3] #[0.05, 0.1, 0.15]
+    p_z_alice_values = [0.9] #[0.4, 0.5, 0.6]
 
     results = []
     overall_start = time.time()

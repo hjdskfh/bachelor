@@ -581,7 +581,7 @@ class SimulationHelper:
         """Calculate the number of photons based on a Poisson distribution."""
         #print(f"np.any(array < 0): {np.isnan(calc_value < 0)}")
         #print(f"np.any(np.isnan(array)):{np.any(np.isnan(calc_value))}")
-        print(f"calc_value: {calc_value}")
+        # print(f"calc_value: {calc_value}")
         upper_bounds = (calc_value + 5 * np.sqrt(calc_value)).astype(int) # shape: (n_samples,)
         max_upper_bound = upper_bounds.max()
         x = np.arange(0, max_upper_bound + 1)
