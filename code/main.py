@@ -38,7 +38,7 @@ style_file = "Presentation_style_1_adjusted_no_grid.mplstyle"
 base_path = os.path.dirname(os.path.abspath(__file__))
 
 #create simulation mean current 0.08 , mena_voltage = 0.98 weil aus voltage_sweep
-config = SimulationConfig(database, seed=None, n_samples=20000, n_pulses=4, batchsize=1000, mean_voltage=0.9825, mean_current=0.082111, voltage_amplitude=0.002, current_amplitude=0.0005,
+config = SimulationConfig(database, seed=None, n_samples=20000, n_pulses=4, batchsize=1000, mean_voltage=0.983, mean_current=0.082111, voltage_amplitude=0.002, current_amplitude=0.0005,
                 p_z_alice=0.9, #0.5,
                 p_decoy= 0.3, #0.1,
                 p_z_bob=0.5, sampling_rate_FPGA=6.5e9, bandwidth=4e9, jitter=jitter, 

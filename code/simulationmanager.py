@@ -436,6 +436,9 @@ class SimulationManager:
     
         # Generate Alice's choices
         basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=np.array([1,0]), value=np.array([1,-1]), decoy=np.array([0,0]))
+        print(f"basis: {basis[:10]}")
+        print(f"value: {value[:10]}")
+        print(f"decoy: {decoy[:10]}")
 
         # Simulate signal and transmission
         # Saver.memory_usage("before simulating signal: " + str("{:.3f}".format(time.time() - start_time)))
