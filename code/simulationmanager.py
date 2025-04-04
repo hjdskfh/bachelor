@@ -435,7 +435,8 @@ class SimulationManager:
         Saver.save_plot(f"hist_peak_wavelength")'''
     
         # Generate Alice's choices
-        basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=np.array([1,0]), value=np.array([1,-1]), decoy=np.array([0,0]))
+        basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=np.array([1,0,1]), value=np.array([1,-1, 0]), decoy=np.array([0,0,0]))
+        # basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=np.array([0,1]), value=np.array([-1, 0]), decoy=np.array([0,0]))
         print(f"basis: {basis[:10]}")
         print(f"value: {value[:10]}")
         print(f"decoy: {decoy[:10]}")
@@ -492,7 +493,8 @@ class SimulationManager:
         # first Z basis bc no interference
         # Saver.memory_usage("before detector z: " + str("{:.3f}".format(time.time() - start_time)))
         power_dampened = power_dampened * self.config.p_z_bob
-        time_photons_det_z, wavelength_photons_det_z, nr_photons_det_z, index_where_photons_det_z, calc_mean_photon_nr_detector_z, dark_count_times_z, num_dark_counts_z = self.simulation_engine.detector(t, norm_transmission, peak_wavelength, power_dampened, start_time)
+        time_photons_det_z, wavelength_photons_det_z, nr_photons_det_z, index_where_photons_det_z, \
+        calc_mean_photon_nr_detector_z, dark_count_times_z, num_dark_counts_z = self.simulation_engine.detector(t, norm_transmission, peak_wavelength, power_dampened, start_time)
         power_dampened = power_dampened / self.config.p_z_bob
         # Saver.memory_usage("before classificator: " + str("{:.3f}".format(time.time() - start_time)))
 
@@ -501,11 +503,13 @@ class SimulationManager:
         power_dampened = power_dampened * (1 - self.config.p_z_bob)
 
         #plot
-        amount_symbols_in_first_part = 20
+        amount_symbols_in_first_part = 10
         first_power = power_dampened[:amount_symbols_in_first_part]
+        plt.plot(first_power.reshape(-1), color='blue', label='0', linestyle='-', marker='o', markersize=1)
+        plt.show()
 
         # DLI
-        power_dampened, phase_shift = self.simulation_engine.delay_line_interferometer(power_dampened, t, peak_wavelength)
+        power_dampened = self.simulation_engine.delay_line_interferometer(power_dampened, t, peak_wavelength, value)
         # plot
         self.plotter.plot_power(power_dampened, amount_symbols_in_plot=amount_symbols_in_first_part, where_plot_1='before DLI',  shortened_first_power=first_power, where_plot_2='after DLI,', title_rest='- in fft, mean_volt: ' + str("{:.4f}".format(self.config.mean_voltage)) + ' voltage: ' + str("{:.4f}".format(chosen_voltage[0])) + ' V and ' + str("{:.3f}".format(peak_wavelength[0])))
 
@@ -966,14 +970,23 @@ class SimulationManager:
             amplitude = np.abs(amplitude)**2
             power_dampened = amplitude
             return power_dampened[0][0]
-
+        
         for voltage in voltage_values:
             self.config.mean_voltage = voltage
             optical_power, peak_wavelength, chosen_voltage, chosen_current = self.simulation_engine.random_laser_output('current_power', 'voltage_shift', fixed=True)
-            
-            power_val = DLI(peak_wavelength, power_dampened_base.copy(), t)
-            powers.append(power_val)
-            wavelengths_nm.append(peak_wavelength * 1e9)  # convert to nm
+            flatten_power = power_dampened_base.reshape(-1)
+            sample_rate = 1 / 1e-14  # too low relults in poor visibility? maybe only with square pulses
+            dt = 1e-14
+            samples_per_bit = int(sample_rate / self.config.sampling_rate_FPGA)
+            tau = 1 / self.config.sampling_rate_FPGA  # Should be 1/bit_rate but that doesn make sense???
+            n_g = 2.05 # For calculatting path length difference
+            # Assuming thegroup refractive index of the waveguide
+            n_eff = 1.56 # Effective refractive index
+            delta_L = tau * constants.c / n_g
+            f0 = peak_wavelength[0]
+            power_val = self.simulation_helper.DLI(flatten_power, dt, tau, delta_L, f0,  n_eff)
+            powers.append(power_val[0])
+            wavelengths_nm.append(f0)  # convert to nm
 
         # Plot power vs voltage
         plt.figure(figsize=(10, 5))

@@ -1,12 +1,12 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.interpolate import splev
 from scipy.fftpack import fft, ifft, fftfreq
 from scipy import constants
 from scipy.special import factorial
 import time
 import gc
 from scipy.signal import convolve
+from scipy.interpolate import splrep, splev
 
 from saver import Saver
 from simulationsingle import SimulationSingle
@@ -180,119 +180,49 @@ class SimulationEngine:
         power_dampened = power_dampened * attenuation_factor
         return power_dampened
 
-    def delay_line_interferometer(self, power_dampened, t, peak_wavelength):
+    def delay_line_interferometer(self, power_dampened, t, peak_wavelength, value):
+        sample_rate = 1 / 1e-14  # too low relults in poor visibility? maybe only with square pulses
+        dt = 1e-14
+        samples_per_bit = int(sample_rate / self.config.sampling_rate_FPGA)
+        tau = 1 / self.config.sampling_rate_FPGA  # Should be 1/bit_rate but that doesn make sense???
+        n_g = 2.05 # For calculatting path length difference
+        # Assuming thegroup refractive index of the waveguide
+        n_eff = 1.56 # Effective refractive index
+        delta_L = tau * constants.c / n_g
 
-        # get amplitude
-        power_dampened = np.sqrt(power_dampened) # ignore phase bc is global phase
-        amplitude = power_dampened
-
-        sampling_rate_fft = 100e11
-        frequencies = fftfreq(len(t) * self.config.batchsize, d=1 / sampling_rate_fft)
-        # print(f"peak_wavelength: {peak_wavelength}")
-        # neff_for_wavelength = self.get_interpolated_value(peak_wavelength*1e9, 'wavelength_neff') #1e9 so in nm
-        # print(f"neff_for_wavelength: {neff_for_wavelength[:10]}")
-        f_0 = constants.c / (peak_wavelength)# * neff_for_wavelength)    # Frequency of the symbol (float64)
-
-        for i in range(0, self.config.n_samples, self.config.batchsize):
-            f_0_part = f_0[i:i + self.config.batchsize]
-            f_0_part = np.repeat(f_0_part, len(t))
-            shifted_frequencies_for_w_0 = frequencies - f_0_part  
-            t_shift = t[-1] / 2
-            phi_shift = np.exp(1j * 2 * np.pi * shifted_frequencies_for_w_0 * t_shift)
-
-            amplitude_batch = amplitude[i:i + self.config.batchsize, :]
-            # reverse amplitude in batch
-            amplitude_batch[:] = amplitude_batch[::-1]
-            flattened_amplitude_batch = amplitude_batch.reshape(-1)
-
-            '''# Gaussian broadening with 5 MHz linewidth (convert to std dev for Gaussian)
-            linewidth_fwhm = 5e6  # 5 MHz
-            sigma = linewidth_fwhm / (2 * np.sqrt(2 * np.log(2)))  # Convert FWHM to std dev
-
-            # Create Gaussian broadening filter centered at 0 Hz
-            gaussian_broadening = np.exp(-0.5 * (shifted_frequencies_for_w_0 / sigma) ** 2)
-            gaussian_broadening = gaussian_broadening / np.sum(gaussian_broadening) * len(gaussian_broadening)  # normalize
-
-            # Apply the broadening in frequency domain
-            amp_fft *= gaussian_broadening'''
-            '''# Assume 'flattened_amplitude_batch' is your time-domain signal (a 1D numpy array)
-            # and 't' is your corresponding time vector.
-            dt = t[1] - t[0]  # time step
-
-            # Define the linewidth in the frequency domain (5 MHz FWHM)
-            linewidth_fwhm = 5e6  # 5 MHz
-
-            # Convert FWHM to standard deviation (sigma) in Hz
-            # For a Gaussian: FWHM = 2 * sqrt(2*ln(2)) * sigma
-            sigma_f = linewidth_fwhm / (2 * np.sqrt(2 * np.log(2)))  # in Hz
-
-            # The Fourier transform of a Gaussian is also a Gaussian.
-            # The product of the time-domain and frequency-domain standard deviations (using these FT conventions)
-            # is sigma_t = 1/(2*pi*sigma_f)
-            sigma_t = 1 / (2 * np.pi * sigma_f)  # in seconds
-
-            # Create a time axis for the Gaussian kernel.
-            # We choose a window covering ±5*sigma_t for adequate sampling.
-            kernel_half_width = 5 * sigma_t
-            num_points = int(2 * kernel_half_width / dt)
-            if num_points % 2 == 0:
-                num_points += 1  # ensure an odd number of points for symmetry
-            time_kernel = np.linspace(-kernel_half_width, kernel_half_width, num_points)
-
-            # Generate the Gaussian kernel in the time domain
-            gaussian_kernel = np.exp(-0.5 * (time_kernel / sigma_t)**2)
-            gaussian_kernel /= np.sum(gaussian_kernel)  # Normalize so that its area equals 1
-
-            # Convolve the time-domain signal with the Gaussian kernel to apply broadening
-            broadened_signal = convolve(flattened_amplitude_batch, gaussian_kernel, mode='same')
-
-            # Now, 'broadened_signal' contains your original signal broadened with a 5 MHz linewidth.'''
-
-            amp_fft = np.fft.fft(flattened_amplitude_batch)  # FFT of row i
-            del flattened_amplitude_batch
-            gc.collect()
-
+        for i in range(0, len(value), self.config.batchsize):
+            # print(f"i: {i}, batchsize: {self.config.batchsize}")
+            power_dampened_batch = power_dampened[i:i + self.config.batchsize, :]
+            flattened_power_batch = power_dampened_batch.reshape(-1)
+            print(f"flattened_power_batch: {flattened_power_batch.shape}")
             '''if i == 0:
-                plt.plot(frequencies, np.abs(amp_fft), label = 'in DLI')
-                plt.title(f"Amplitude FFT in DLI")
-                plt.xlabel("Frequency (Hz)")
-                plt.ylabel("Amplitude")
-                plt.ylim(0, 0.5)
-                plt.xlim(-5e10, 5e10)
-                plt.grid()
-                Saver.save_plot(f"amplitude_fft_in_DLI_blub")'''
-
-            total_amplitude = np.real(np.fft.ifft(1 / 2 * amp_fft * (1 - phi_shift)))  # Convert back to time domain
-            # total_amplitude = np.real(np.fft.ifft(1 / 2 * (1j * amp_fft + 1j * amp_fft * phi_shift)))
-            
-            # reverse total amplitude again
-            total_amplitude[:] = total_amplitude[::-1]
-
-            total_amplitude = total_amplitude.reshape(self.config.batchsize, len(t))
-
-            amplitude[i:i + self.config.batchsize, :] = total_amplitude
-            '''if i == 0:
-                plt.plot(total_amplitude[0], label = 'after DLI')
-                plt.title(f"Amplitude Shifted (2-6th row) after DLI")
-                plt.title("Amplitude Shifted (2-6th row)")
-                plt.xlabel("Time Bins")
-                plt.ylabel("Amplitude")
-                plt.xlim(-100, 100)
-                plt.grid()
-                plt.show()'''
-        '''
-        plt.plot(amplitude_shifted[2:6].flatten())
-        plt.title("Amplitude Shifted (2-6th row)")
-        plt.xlabel("Time Bins")
-        plt.ylabel("Amplitude")
-        plt.grid()
-        plt.show()
-        '''
-        amplitude = np.abs(amplitude)**2
-        power_dampened = amplitude
-
-        # power_dampened_total = np.zeros((self.config.n_samples, len(t)))
-        return power_dampened, phi_shift[0]
+                amount_symbols_in_plot = 3
+                pulse_duration = 1 / self.config.sampling_rate_FPGA
+                sampling_rate_fft = 100e11
+                samples_per_pulse = int(pulse_duration * sampling_rate_fft)
+                total_samples = self.config.n_pulses * samples_per_pulse
+                t_plot1 = np.linspace(0, amount_symbols_in_plot * self.config.n_pulses * pulse_duration, amount_symbols_in_plot * total_samples, endpoint=False)
+                # print(f"shape flattened_signals_batch: {flattened_signals_batch.shape}")
+                plt.plot(t_plot1 * 1e9, flattened_signals_batch[:len(t) * amount_symbols_in_plot])
+                print(f"basis[:amount], value[:amount], decoy[:amount]: {basis[:amount_symbols_in_plot]}, {values[:amount_symbols_in_plot]}, {decoy[:amount_symbols_in_plot]}")
+                for k in range(amount_symbols_in_plot + 1):
+                    plt.axvline(t_plot1[-1] * 1e9 * (k) / (amount_symbols_in_plot), label=f'Target Mean Photon Number {i+1}', color = 'darkgreen')
+                plt.title(f"Square Signal with jitter for the first 3 symbols")
+                plt.xlabel('Time (ns)')
+                plt.ylabel('Volt (V)')
+                Saver.save_plot(f"square_signal")'''
+            f_0 = peak_wavelength[i // self.config.batchsize]
+            flattened_power_batch, power_2, _ = self.simulation_helper.DLI(flattened_power_batch, dt, tau, delta_L, f_0,  n_eff)
+            plt.plot(flattened_power_batch[:len(t)*10], label = 'after DLI')
+            plt.show()
+            '''plt.plot(power_1[:len(t)], label = 'after DLI 1')
+            plt.plot(power_2[:len(t)], label = 'after DLI 2')
+            plt.legend()
+            Saver.save_plot(f"power_after_DLI_{i // self.config.batchsize}")'''
+            flattened_power_batch = flattened_power_batch.reshape(self.config.batchsize, len(t))
+            power_dampened[i:i + self.config.batchsize, :] = flattened_power_batch
+                        
+        return power_dampened
 
     
     def detector(self, t, norm_transmission, peak_wavelength, power_dampened, start_time=0):
@@ -360,15 +290,19 @@ class SimulationEngine:
             np.digitize(time_photons_det_x, timebins) - 1                         # Early = 0, Late = 1
             )
         
-        detected_indices_z_det_z_basis, p_vacuum_z, total_sift_z_basis_short, indices_z_long, mask_z_short = self.simulation_helper.classificator_sift_z_vacuum(basis, detected_indices_z, index_where_photons_det_z)
+        detected_indices_z_det_z_basis, p_vacuum_z, total_sift_z_basis_short, \
+        indices_z_long, mask_z_short, get_original_indexing_z = self.simulation_helper.classificator_sift_z_vacuum(basis, detected_indices_z, index_where_photons_det_z)
         
-        detected_indices_x_det_x_basis, total_sift_x_basis_long, vacuum_indices_x_long, indices_x_long, mask_x_short = self.simulation_helper.classificator_sift_x_vacuum(basis, detected_indices_x, index_where_photons_det_x)
+        detected_indices_x_det_x_basis, total_sift_x_basis_long, vacuum_indices_x_long, \
+        indices_x_long, mask_x_short, get_original_indexing_x = self.simulation_helper.classificator_sift_x_vacuum(basis, detected_indices_x, index_where_photons_det_x)
         
-        gain_Z_non_dec, gain_Z_dec, len_Z_checked_dec, len_Z_checked_non_dec = self.simulation_helper.classificator_identify_z(mask_x_short, value, total_sift_z_basis_short, detected_indices_x_det_x_basis, index_where_photons_det_z, decoy, indices_z_long)
+        gain_Z_non_dec, gain_Z_dec, len_Z_checked_dec, len_Z_checked_non_dec = self.simulation_helper.classificator_identify_z(mask_x_short, value, total_sift_z_basis_short, 
+                                                                                                                               detected_indices_x_det_x_basis, index_where_photons_det_z, decoy, indices_z_long, get_original_indexing_z, get_original_indexing_x)
 
-        X_P_calc_non_dec, X_P_calc_dec, gain_X_non_dec, gain_X_dec = self.simulation_helper.classificator_identify_x(mask_x_short, mask_z_short, detected_indices_x_det_x_basis, detected_indices_z_det_z_basis, basis, value, decoy, indices_x_long)
+        X_P_calc_non_dec, X_P_calc_dec, gain_X_non_dec, gain_X_dec = self.simulation_helper.classificator_identify_x(mask_x_short, mask_z_short, detected_indices_x_det_x_basis, 
+                                                                                                                     detected_indices_z_det_z_basis, basis, value, decoy, indices_x_long, get_original_indexing_x, get_original_indexing_z)
 
-        wrong_detections_z_dec, wrong_detections_z_non_dec, wrong_detections_x_dec, wrong_detections_x_non_dec = self.simulation_helper.classificator_errors(mask_x_short, mask_z_short, indices_z_long, indices_x_long, value, detected_indices_z_det_z_basis, detected_indices_x_det_x_basis, basis, decoy)
+        wrong_detections_z_dec, wrong_detections_z_non_dec, wrong_detections_x_dec, wrong_detections_x_non_dec = self.simulation_helper.classificator_errors(mask_x_short, mask_z_short, indices_z_long, indices_x_long, value, detected_indices_z_det_z_basis, detected_indices_x_det_x_basis, basis, decoy, get_original_indexing_x, get_original_indexing_z)
 
 
         qber_z_dec, qber_z_non_dec, qber_x_dec, qber_x_non_dec, raw_key_rate, total_amount_detections = self.simulation_helper.classificator_qber_rkr(t, wrong_detections_z_dec, wrong_detections_z_non_dec, wrong_detections_x_dec, wrong_detections_x_non_dec, len_Z_checked_dec, len_Z_checked_non_dec, X_P_calc_non_dec, X_P_calc_dec)
