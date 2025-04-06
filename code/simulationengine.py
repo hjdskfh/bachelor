@@ -184,7 +184,7 @@ class SimulationEngine:
         sample_rate = 1 / 1e-14  # too low relults in poor visibility? maybe only with square pulses
         dt = 1e-14
         samples_per_bit = int(sample_rate / self.config.sampling_rate_FPGA)
-        tau = 1 / self.config.sampling_rate_FPGA  # Should be 1/bit_rate but that doesn make sense???
+        tau = 2 / self.config.sampling_rate_FPGA  # Should be 1/bit_rate but that doesn make sense???
         n_g = 2.05 # For calculatting path length difference
         # Assuming thegroup refractive index of the waveguide
         n_eff = 1.56 # Effective refractive index
@@ -194,7 +194,7 @@ class SimulationEngine:
             # print(f"i: {i}, batchsize: {self.config.batchsize}")
             power_dampened_batch = power_dampened[i:i + self.config.batchsize, :]
             flattened_power_batch = power_dampened_batch.reshape(-1)
-            print(f"flattened_power_batch: {flattened_power_batch.shape}")
+            # print(f"flattened_power_batch: {flattened_power_batch.shape}")
             '''if i == 0:
                 amount_symbols_in_plot = 3
                 pulse_duration = 1 / self.config.sampling_rate_FPGA
@@ -212,9 +212,8 @@ class SimulationEngine:
                 plt.ylabel('Volt (V)')
                 Saver.save_plot(f"square_signal")'''
             f_0 = peak_wavelength[i // self.config.batchsize]
+            # print(f"f_0: {f_0}")
             flattened_power_batch, power_2, _ = self.simulation_helper.DLI(flattened_power_batch, dt, tau, delta_L, f_0,  n_eff)
-            plt.plot(flattened_power_batch[:len(t)*10], label = 'after DLI')
-            plt.show()
             '''plt.plot(power_1[:len(t)], label = 'after DLI 1')
             plt.plot(power_2[:len(t)], label = 'after DLI 2')
             plt.legend()
@@ -222,7 +221,7 @@ class SimulationEngine:
             flattened_power_batch = flattened_power_batch.reshape(self.config.batchsize, len(t))
             power_dampened[i:i + self.config.batchsize, :] = flattened_power_batch
                         
-        return power_dampened
+        return power_dampened, f_0
 
     
     def detector(self, t, norm_transmission, peak_wavelength, power_dampened, start_time=0):

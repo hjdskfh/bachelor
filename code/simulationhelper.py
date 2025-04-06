@@ -174,7 +174,7 @@ class SimulationHelper:
     
     # ========= Delay Line Interferometer Helpers ==========
 
-    def DLI(self, P_in, dt, tau, delta_L, f0,  n_eff, splitting_ratio = 0.5):
+    def DLI(self, P_in, dt, tau, delta_L, f_0,  n_eff, splitting_ratio = 0.5):
         """
         Simulates the behavior of a delay line interferometer (DLI), which is used to 
         measure phase differences between two optical signals.#
@@ -197,7 +197,7 @@ class SimulationHelper:
         
         # Input optical field (assuming carrier frequency)
         E0 = np.sqrt(P_in)
-        E_in = E0 * np.exp(1j * 2 * np.pi * f0 * t)
+        E_in = E0 * np.exp(1j * 2 * np.pi * f_0 * t)
 
         # Interpolate for delayed version
         interp_real = interp1d(t, np.real(E_in), bounds_error=False, fill_value=0.0)
@@ -205,7 +205,7 @@ class SimulationHelper:
         E_in_delayed = interp_real(t - tau) + 1j * interp_imag(t - tau)
 
         # Phase shift from path length difference
-        phi = 2 * np.pi * f0 *n_eff* delta_L / constants.c
+        phi = 2 * np.pi * f_0 *n_eff* delta_L / constants.c
         E_in_delayed *= np.exp(1j * phi)
 
         # Ideal 50/50 coupler outputs

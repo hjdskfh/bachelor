@@ -4,10 +4,6 @@ from scipy.interpolate import interp1d
 import time
 import os
 import sys
-# Add 'code' directory to sys.path
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'code')))# Import from 'code' directory
-from saver import Saver
-
 
 
 # Define DLI function
@@ -87,7 +83,7 @@ delta_L = tau * c / n_g
 # print(f"Path length difference (delta_L): {delta_L:.6f} m")
 
 # Wavelength sweep setup
-lambda0 = 1550e-9  # 1550 nm
+lambda0 = 1552.32e-9  # 1550 nm
 delta_lambda = 1e-10  # ±500 pm
 wavelengths = np.linspace(lambda0 - delta_lambda / 2, lambda0 + delta_lambda / 2, 100)
 frequencies = c / wavelengths  # convert to optical frequencies
@@ -130,8 +126,6 @@ for f0, P1, P2 in results:
     amplitudes_port2.append(P2[target_index])
     wavelengths_nm.append(c / f0 * 1e9)  # Convert frequency to wavelength in nm
 
-end_time_3 = time.time()
-print(f"Execution time for amplitude collection: {end_time_3 - end_time_2:.2f} seconds")
 # Plot amplitudes at 1 ns vs wavelength
 # plt.figure(figsize=(8, 5))
 # plt.plot(wavelengths_nm, amplitudes_port1, marker='o', label='Port 1')
@@ -186,4 +180,4 @@ for i, (label, (f0, P1, P2), wavelength) in enumerate(zip(selected_labels, selec
     plt.grid(True)
 
 plt.tight_layout()
-Saver.save_plot("DLI_Interference_Cases.png")
+plt.show()

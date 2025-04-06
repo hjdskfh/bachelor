@@ -426,7 +426,7 @@ class SimulationManager:
         # print(f"p_indep_x_states_dec: {self.config.p_indep_x_states_dec}")'''
 
         optical_power, peak_wavelength, chosen_voltage, chosen_current = self.simulation_engine.random_laser_output('current_power', 'voltage_shift', fixed = True)
-
+        print(f"peak_wavelength: {peak_wavelength}")
         # Create a histogram
         '''plt.hist(peak_wavelength *1e9, bins=10)  # bins=10 is just an example; adjust as needed
         plt.xlabel('Peak Wavelength (nm)')
@@ -482,13 +482,13 @@ class SimulationManager:
         #                                         type_photon_nr = "Mean Photon Number at EAM")
 
 
-        # self.plotter.plot_power(power_dampened, amount_symbols_in_plot=4, where_plot_1='after EAM')
+        self.plotter.plot_power(power_dampened, amount_symbols_in_plot=4, where_plot_1='after EAM')
 
         time_eam = time.time() - start_time
         # Saver.memory_usage("before fiber: " + str("{:.3f}".format(time_eam)))
         power_dampened = self.simulation_engine.fiber_attenuation(power_dampened)
         
-        # self.plotter.plot_power(power_dampened, amount_symbols_in_plot=4, where_plot_1='after fiber')
+        self.plotter.plot_power(power_dampened, amount_symbols_in_plot=4, where_plot_1='after fiber')
 
         # first Z basis bc no interference
         # Saver.memory_usage("before detector z: " + str("{:.3f}".format(time.time() - start_time)))
@@ -498,20 +498,31 @@ class SimulationManager:
         power_dampened = power_dampened / self.config.p_z_bob
         # Saver.memory_usage("before classificator: " + str("{:.3f}".format(time.time() - start_time)))
 
+        self.plotter.plot_power(power_dampened, amount_symbols_in_plot=4, where_plot_1='after Z det')
+
         # path for X basis
         # Saver.memory_usage("before DLI: " + str("{:.3f}".format(time.time() - start_time)))
         power_dampened = power_dampened * (1 - self.config.p_z_bob)
 
+        self.plotter.plot_power(power_dampened, amount_symbols_in_plot=4, where_plot_1='bob basis X')
+
+        plt.plot()
         #plot
         amount_symbols_in_first_part = 10
         first_power = power_dampened[:amount_symbols_in_first_part]
         plt.plot(first_power.reshape(-1), color='blue', label='0', linestyle='-', marker='o', markersize=1)
         plt.show()
+        print(f"power_damp:{power_dampened[0][:20]}")  # Check the first 10 values
+        print(f"first power:{first_power[0][:20]}")  # Check the first 10 values of the sliced data
+
+        plt.plot(power_dampened[0])
+        plt.show()
 
         # DLI
-        power_dampened = self.simulation_engine.delay_line_interferometer(power_dampened, t, peak_wavelength, value)
+        power_dampened, f_0 = self.simulation_engine.delay_line_interferometer(power_dampened, t, peak_wavelength, value)
+        # power_dampened = power_dampened / 2
         # plot
-        self.plotter.plot_power(power_dampened, amount_symbols_in_plot=amount_symbols_in_first_part, where_plot_1='before DLI',  shortened_first_power=first_power, where_plot_2='after DLI,', title_rest='- in fft, mean_volt: ' + str("{:.4f}".format(self.config.mean_voltage)) + ' voltage: ' + str("{:.4f}".format(chosen_voltage[0])) + ' V and ' + str("{:.3f}".format(peak_wavelength[0])))
+        self.plotter.plot_power(power_dampened, amount_symbols_in_plot=amount_symbols_in_first_part, where_plot_1='before DLI',  shortened_first_power=first_power, where_plot_2='after DLI,', title_rest='- in fft, mean_volt: ' + str("{:.4f}".format(self.config.mean_voltage)) + ' voltage: ' + str("{:.4f}".format(chosen_voltage[0])) + ' V and ' + str("{:.8f}".format(peak_wavelength[0])))
 
         # Saver.memory_usage("before detector x: " + str(time.time() - start_time))
         time_photons_det_x, wavelength_photons_det_x, nr_photons_det_x, index_where_photons_det_x, calc_mean_photon_nr_detector_x, dark_count_times_x, num_dark_counts_x = self.simulation_engine.detector(t, norm_transmission, peak_wavelength, power_dampened, start_time)        
@@ -649,7 +660,7 @@ class SimulationManager:
         first_power = power_dampened[shift_DLI:shift_DLI + amount_symbols_in_first_part]
 
         # DLI
-        power_dampened, phase_shift = self.simulation_engine.delay_line_interferometer(power_dampened, t, peak_wavelength)
+        power_dampened, f_0 = self.simulation_engine.delay_line_interferometer(power_dampened, t, peak_wavelength)
         # print(f"PHASESHIFT in Grad: {np.angle(phase_shift) / (2 * np.pi) * 360}")
         # print(f"shape of power_dampened after DLI: {power_dampened.shape}")
 
@@ -930,63 +941,20 @@ class SimulationManager:
         return time_photons_det_x, time_photons_det_z, index_where_photons_det_x, index_where_photons_det_z, t[-1], lookup_arr
 
     def run_DLI(self):
-
         basis, value, decoy = self.simulation_engine.generate_alice_choices()
-        signals, t, _ = self.simulation_engine.signal_bandwidth_jitter(basis, value, decoy)
+        _, t, _ = self.simulation_engine.signal_bandwidth_jitter(basis, value, decoy)
         power_dampened_base = np.ones((self.config.n_samples, len(t)))
 
-        voltage_values = np.arange(0.965, 1, 0.002)  # Example range of mean_voltage
+        voltage_values = np.arange(0.9, 1.1, 0.002)  # Example range of mean_voltage
         powers = []
         wavelengths_nm = []
-
-        def DLI(peak_wavelength, power_dampened, t):
-            power_dampened = np.sqrt(power_dampened)
-            amplitude = power_dampened
-
-            sampling_rate_fft = 100e11
-            frequencies = fftfreq(len(t) * self.config.batchsize, d=1 / sampling_rate_fft)
-            # neff_for_wavelength = self.simulation_engine.get_interpolated_value(peak_wavelength*1e9, 'wavelength_neff') #1e9 so in nm
-            # print(f"neff_for_wavelength: {neff_for_wavelength[:10]}")
-            f_0 = constants.c / (peak_wavelength) #* neff_for_wavelength)    # Frequency of the symbol (float64)
-
-            for i in range(0, self.config.n_samples, self.config.batchsize):
-                f_0_part = f_0[i:i + self.config.batchsize]
-                f_0_part = np.repeat(f_0_part, len(t))
-                shifted_frequencies_for_w_0 = frequencies - f_0_part
-                t_shift = t[-1] / 2
-                phi_shift = np.exp(1j * 2 * np.pi * shifted_frequencies_for_w_0 * t_shift)
-
-                amplitude_batch = amplitude[i:i + self.config.batchsize, :]
-                amplitude_batch[:] = amplitude_batch[::-1]
-                flattened_amplitude_batch = amplitude_batch.reshape(-1)
-
-                amp_fft = np.fft.fft(flattened_amplitude_batch)
-                total_amplitude = np.real(np.fft.ifft(0.5 * amp_fft * (1 - phi_shift)))
-                total_amplitude[:] = total_amplitude[::-1]
-                total_amplitude = total_amplitude.reshape(self.config.batchsize, len(t))
-
-                amplitude[i:i + self.config.batchsize, :] = total_amplitude
-
-            amplitude = np.abs(amplitude)**2
-            power_dampened = amplitude
-            return power_dampened[0][0]
         
         for voltage in voltage_values:
             self.config.mean_voltage = voltage
             optical_power, peak_wavelength, chosen_voltage, chosen_current = self.simulation_engine.random_laser_output('current_power', 'voltage_shift', fixed=True)
-            flatten_power = power_dampened_base.reshape(-1)
-            sample_rate = 1 / 1e-14  # too low relults in poor visibility? maybe only with square pulses
-            dt = 1e-14
-            samples_per_bit = int(sample_rate / self.config.sampling_rate_FPGA)
-            tau = 1 / self.config.sampling_rate_FPGA  # Should be 1/bit_rate but that doesn make sense???
-            n_g = 2.05 # For calculatting path length difference
-            # Assuming thegroup refractive index of the waveguide
-            n_eff = 1.56 # Effective refractive index
-            delta_L = tau * constants.c / n_g
-            f0 = peak_wavelength[0]
-            power_val = self.simulation_helper.DLI(flatten_power, dt, tau, delta_L, f0,  n_eff)
-            powers.append(power_val[0])
-            wavelengths_nm.append(f0)  # convert to nm
+            power_dampened, f_0 = self.simulation_engine.delay_line_interferometer(power_dampened_base, t, peak_wavelength, value)
+            powers.append(power_dampened[0])
+            wavelengths_nm.append(f_0)  # convert to nm
 
         # Plot power vs voltage
         plt.figure(figsize=(10, 5))
