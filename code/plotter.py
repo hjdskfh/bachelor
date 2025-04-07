@@ -37,16 +37,14 @@ class Plotter:
             # Flatten and concatenate all elements
             return np.concatenate([arr.flatten() for arr in data])
     
-    def plot_power(self, second_power, amount_symbols_in_plot=4, where_plot_1=None, shortened_first_power=None, where_plot_2=None, title_rest=None, shift=0):	
-        print(f"len(second_power): {len(second_power)}")
-        pulse_duration = 1 / self.config.sampling_rate_FPGA
-        sampling_rate_fft = 100e11
-        samples_per_pulse = int(pulse_duration * sampling_rate_fft)
-        total_samples = self.config.n_pulses * samples_per_pulse
-        t_plot1 = np.linspace(0, amount_symbols_in_plot * self.config.n_pulses * pulse_duration, amount_symbols_in_plot * total_samples, endpoint=False)
+    def plot_power(self, t, second_power, amount_symbols_in_plot=4, where_plot_1=None, shortened_first_power=None, where_plot_2=None, title_rest=None, shift=0, is_DLI=False):	
+        step_size = t[1] - t[0]
+        # Calculate the new length
+        new_length = len(t) * amount_symbols_in_plot
+        # Generate the new array with the same step size
+        t_plot1 = np.arange(t[0], t[0] + step_size * new_length, step_size)
         second_part = second_power[shift:shift + amount_symbols_in_plot]
         second_part = second_part.reshape(-1)
-        print(f"len(second_part): {len(second_part)}")
         plt.figure(figsize=(8, 6))
        
         if shortened_first_power is None:
@@ -67,6 +65,32 @@ class Plotter:
             Saver.save_plot(f"power_{where_plot_1.replace(' ', '_').lower()}_for_{amount_symbols_in_plot}_symbols")
         else:
             Saver.save_plot(f"power_{amount_symbols_in_plot}_{where_plot_2.replace(' ', '_').lower()}_symbols")
+
+        if is_DLI:
+            plt.plot(t_plot1 * 1e9, second_part * 1e3, label = where_plot_1)
+            plt.title(f"single_second_Power over {self.config.n_samples} Iterations") 
+            plt.ylabel('Power (mW)')
+            plt.xlabel('Time (ns)')
+            plt.gca().yaxis.set_major_locator(MaxNLocator(integer=True))
+            plt.legend()
+            plt.tight_layout()       
+            Saver.save_plot(f"single_second_power_{where_plot_1.replace(' ', '_').lower()}_for_{amount_symbols_in_plot}_symbols")
+
+            if shortened_first_power is not None:
+                print(f"blub")
+                shortened_first_power = shortened_first_power.reshape(-1)
+                plt.plot(t_plot1 * 1e9, shortened_first_power * 1e3, label=where_plot_1)
+                # plt.show()
+                plt.plot(t_plot1 * 1e9, second_part * 1e3, label=where_plot_2)
+                # plt.show()
+                plt.ylabel('Power (mW)')
+                plt.xlabel('Time (ns)')
+                plt.gca().yaxis.set_major_locator(MaxNLocator(integer=True))
+                plt.legend()
+                plt.tight_layout()
+                plt.title(f"single_first_Power over {amount_symbols_in_plot} Symbols")
+                Saver.save_plot(f"single_first_power_{amount_symbols_in_plot}_{where_plot_2.replace(' ', '_').lower()}_symbols")
+
         del second_power
         gc.collect()
     

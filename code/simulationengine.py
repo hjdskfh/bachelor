@@ -5,8 +5,9 @@ from scipy import constants
 from scipy.special import factorial
 import time
 import gc
-from scipy.signal import convolve
+from scipy.signal import convolve, resample
 from scipy.interpolate import splrep, splev
+
 
 from saver import Saver
 from simulationsingle import SimulationSingle
@@ -21,10 +22,12 @@ class SimulationEngine:
         self.simulation_helper = SimulationHelper(config)
         self.plotter = Plotter(config)
 
-    def get_interpolated_value(self, x_data, name):
-        #calculate tck for which curve
-        tck = self.config.data.get_data(x_data, name)
-        return splev(x_data, tck)
+    def get_interpolated_value(self, x_data, name, inverse_flag=False):
+        # Otherwise, use the regular spline
+        tck = self.config.data.get_data(x_data, name, inverse=inverse_flag)
+        if inverse_flag:
+            return tck(x_data)
+        return splev(x_data, tck)  # Interpolate with the regular spline
 
     def random_laser_output(self, current_power, voltage_shift, fixed=None):
         'every batchsize values we get a new chosen value'
@@ -73,7 +76,6 @@ class SimulationEngine:
             decoy = np.full(self.config.n_samples, decoy, dtype=int)
 
         if basis.size > 1: # array-case
-            print(f"n_sample in generate_alice_choices: {self.config.n_samples}")
             basis = np.tile(basis, (self.config.n_samples // len(basis)) + 1)[:self.config.n_samples]
         if value.size > 1:
             value = np.tile(value, (self.config.n_samples // len(value)) + 1)[:self.config.n_samples]
@@ -184,7 +186,7 @@ class SimulationEngine:
         sample_rate = 1 / 1e-14  # too low relults in poor visibility? maybe only with square pulses
         dt = 1e-14
         samples_per_bit = int(sample_rate / self.config.sampling_rate_FPGA)
-        tau = 2 / self.config.sampling_rate_FPGA  # Should be 1/bit_rate but that doesn make sense???
+        tau = 2 / self.config.sampling_rate_FPGA  
         n_g = 2.05 # For calculatting path length difference
         # Assuming thegroup refractive index of the waveguide
         n_eff = 1.56 # Effective refractive index
@@ -213,6 +215,11 @@ class SimulationEngine:
                 Saver.save_plot(f"square_signal")'''
             f_0 = peak_wavelength[i // self.config.batchsize]
             # print(f"f_0: {f_0}")
+
+            # Assume `my_signal` is your Gaussian signal sampled at 6.5 GHz or higher
+            bits_in_this_batch = self.config.batchsize * self.config.n_pulses
+            flattened_power_batch = resample(flattened_power_batch, samples_per_bit * bits_in_this_batch)  # Upsample to 15384 samples
+
             flattened_power_batch, power_2, _ = self.simulation_helper.DLI(flattened_power_batch, dt, tau, delta_L, f_0,  n_eff)
             '''plt.plot(power_1[:len(t)], label = 'after DLI 1')
             plt.plot(power_2[:len(t)], label = 'after DLI 2')

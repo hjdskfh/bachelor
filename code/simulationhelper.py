@@ -1,3 +1,4 @@
+from matplotlib.pylab import f
 import numpy as np
 from scipy.fftpack import fft, ifft, fftfreq
 from scipy.interpolate import interp1d
@@ -126,15 +127,18 @@ class SimulationHelper:
         # make len(t) divisible by n_pulses
         samples_per_pulse = int(pulse_duration * sampling_rate_fft)
         total_samples = self.config.n_pulses * samples_per_pulse
-        t = np.linspace(0, self.config.n_pulses * pulse_duration, total_samples, endpoint=False)
-        #t = np.arange(0, self.config.n_pulses * pulse_duration, inv_sampling, dtype=np.float64)
+        # t = np.linspace(0, self.config.n_pulses * pulse_duration, total_samples, endpoint=False)
+        # t = np.arange(0, total_samples, 1 / sampling_rate_fft)
+        dt = 1 / sampling_rate_fft
+        t = np.linspace(0, total_samples * dt, total_samples, endpoint=False)
         repeating_square_pulses = np.full((len(pulse_height), len(t)), self.config.non_signal_voltage, dtype=np.float64)
         one_pulse = len(t) // self.config.n_pulses
         indices = np.arange(len(t))
-        for i, pattern in enumerate(pattern):
-            for j, bit in enumerate(pattern):
+        for i, p in enumerate(pattern):
+            for j, bit in enumerate(p):
+                pulse_indices = (indices // one_pulse) == j
                 if bit == 1:
-                    repeating_square_pulses[i, (indices // one_pulse) == j] = pulse_height[i]
+                    repeating_square_pulses[i, pulse_indices] = pulse_height[i] 
         return t, repeating_square_pulses
     
     def generate_encoded_pulse(self, pulse_height, pulse_duration, value, sampling_rate_fft):
@@ -153,23 +157,27 @@ class SimulationHelper:
         return np.real(ifft(S_fourier))
 
     def apply_jitter_to_pulse(self, t, signals, jitter_shifts):
-        index_shift_per_symbol = ((len(t) // t[-1]) * jitter_shifts).astype(int)
-        index_shift_per_symbol = index_shift_per_symbol[: self.config.n_pulses * self.config.batchsize - 1]  #size = n_pulses * batchsize - 1 (minus Anfang und Ende)
+        dt = t[1] - t[0]  # sampling interval in seconds
+        # Convert jitter from seconds to integer index shift
+        index_shift_per_symbol = (jitter_shifts / dt).astype(int)
+        # One pulse = how many samples?
         index_one_signal = len(t) // self.config.n_pulses
+        # Where transitions would normally occur (e.g., 128, 256, 384...)
         transition_indices = np.arange(index_one_signal, len(signals), index_one_signal)
-
+        # Sanity check: align lengths
+        min_len = min(len(transition_indices), len(index_shift_per_symbol))
+        transition_indices = transition_indices[:min_len]
+        index_shift_per_symbol = index_shift_per_symbol[:min_len]
+        # Apply jitter to transitions
         new_transition_indices = transition_indices + index_shift_per_symbol
-        # Step through and shift transitions **in-place**
         for i, old_idx in enumerate(transition_indices):
-            new_idx = new_transition_indices[i]  # Get the new shifted index
-            
+            new_idx = new_transition_indices[i]
+            # Make sure new_idx stays within bounds
+            new_idx = np.clip(new_idx, 0, len(signals) - 1)
             if old_idx < new_idx:
-                # Shift right: Fill original transition spot with previous value
                 signals[old_idx:new_idx] = signals[old_idx - 1]
             elif old_idx > new_idx:
-                # Shift left: Fill new transition spot with flipped value
                 signals[new_idx:old_idx] = signals[old_idx + 1]
-
         return signals
     
     # ========= Delay Line Interferometer Helpers ==========
@@ -191,18 +199,19 @@ class SimulationHelper:
                 - np.ndarray: Output power at the second port of the interferometer.
                 - np.ndarray: Time array corresponding to the input signal.
         """
-        print(f"P_in: {P_in}")
         # Time array
         t = np.arange(len(P_in)) * dt
+        print(f"shape t: {t.shape}")
         
         # Input optical field (assuming carrier frequency)
         E0 = np.sqrt(P_in)
         E_in = E0 * np.exp(1j * 2 * np.pi * f_0 * t)
-
+        print(f"shape E_in: {E_in.shape}")
         # Interpolate for delayed version
         interp_real = interp1d(t, np.real(E_in), bounds_error=False, fill_value=0.0)
         interp_imag = interp1d(t, np.imag(E_in), bounds_error=False, fill_value=0.0)
         E_in_delayed = interp_real(t - tau) + 1j * interp_imag(t - tau)
+        print(f"shape E_in_delayed: {E_in_delayed.shape}")
 
         # Phase shift from path length difference
         phi = 2 * np.pi * f_0 *n_eff* delta_L / constants.c

@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.interpolate import splrep
+from scipy.interpolate import splrep, InterpolatedUnivariateSpline
 import pandas as pd 
 from saver import Saver
 
@@ -9,8 +9,7 @@ class DataManager:
     def __init__(self):
         self.curves = {}
 
-    def add_data(self, csv_file, column1, column2, rows, name):
-               
+    def add_data(self, csv_file, column1, column2, rows, name, do_inverse=False, parabola=False):
         df = pd.read_csv(csv_file, nrows = rows)            
         df.columns = df.columns.str.strip()
 
@@ -29,8 +28,55 @@ class DataManager:
         x_min = df[column1].iloc[0]  # First element
         x_max = df[column1].iloc[-1]  # Last element
 
+        if do_inverse and parabola:
+            print(f"{name} in not mono loop")
+            # Split the data into two parts: one for positive x, one for negative x
+            positive_mask = df[column1] >= 0
+            negative_mask = df[column1] < 0
+
+            # For positive x-values, sort the data while preserving the index
+            df_pos_sorted = df[positive_mask].sort_values(by=column1)
+            x_vals_pos_sorted = df_pos_sorted[column1].values
+            y_vals_pos_sorted = df_pos_sorted[column2].values
+
+            # For negative x-values, sort the data while preserving the index
+            df_neg_sorted = df[negative_mask].sort_values(by=column1)
+            x_vals_neg_sorted = df_neg_sorted[column1].values
+            y_vals_neg_sorted = df_neg_sorted[column2].values
+
+            x_vals_neg_sorted = x_vals_neg_sorted[::-1]
+            y_vals_neg_sorted = y_vals_neg_sorted[::-1]
+            # Reverse the negative values to make sure they are strictly increasing for the spline
+            x_vals_neg_sorted = -x_vals_neg_sorted  # Multiply by -1 to reverse the direction
+
+            print(f"x_vals_neg_sorted which: {x_vals_neg_sorted}")
+
+            if not np.all(np.diff(x_vals_pos_sorted) > 0) or not np.all(np.diff(x_vals_neg_sorted) > 0):
+                raise ValueError("After sorting and reversing, x values should be strictly increasing.")
+        
+            # Create the regular spline for the full curve
+            tck = splrep(df[column1], df[column2])
+            # Create inverse splines for both positive and negative regions
+            inverse_spline = None            
+            inverse_spline_positive = InterpolatedUnivariateSpline(y_vals_pos_sorted, x_vals_pos_sorted)
+            inverse_spline_negative = InterpolatedUnivariateSpline(y_vals_neg_sorted, x_vals_neg_sorted)
+            
+        elif do_inverse:
+            tck = splrep(df[column1], df[column2])  # Regular spline only
+            inverse_spline = InterpolatedUnivariateSpline(df[column2], df[column1])
+            inverse_spline_positive = None
+            inverse_spline_negative = None   
+        else:
+            tck = splrep(df[column1], df[column2])
+            inverse_spline = None
+            inverse_spline_positive = None
+            inverse_spline_negative = None         
+
         self.curves[name] = {
-            'tck': splrep(df[column1], df[column2]),  # Store the tck
+            'tck': tck,  # Store the tck
+            'inverse_spline_positive': inverse_spline_positive,  # Positive inverse spline
+            'inverse_spline_negative': inverse_spline_negative,  # Negative inverse spline
+            'inverse_spline': inverse_spline,  # General inverse spline
             'x_min': x_min,  # Store minimum x-value
             'x_max': x_max   # Store maximum x-value
             }
@@ -67,7 +113,7 @@ class DataManager:
             raise ValueError(f"Invalid name for probabilities: {name}")
         return self.curves[name]['prob'], self.curves[name]['x']
 
-    def get_data(self, x_data, name):
+    def get_data(self, x_data, name, inverse=False):
         x_min = self.curves[name]['x_min']
         x_max = self.curves[name]['x_max']
         if isinstance(x_data, np.ndarray) and x_data.ndim == 2:
@@ -86,12 +132,9 @@ class DataManager:
                                     " out of bounds: ",x_data[out_of_bounds])
             else:
                 out_of_bounds = np.where((x_data < x_min) | (x_data > x_max))
-                print(f"out_of_bounds: {out_of_bounds}")
                 if out_of_bounds[0].size > 0:
                     out_of_bounds_values = x_data[out_of_bounds]
                     out_of_bounds_indices = list(zip(out_of_bounds[0], out_of_bounds[1]))  # Pair indices
-                    print("Out of bounds values:", out_of_bounds_values[:20])
-                    print("Out of bounds indices:", out_of_bounds_indices)
                     raise ValueError(x_data, " x data array isn't in table for ", name, " x_data: ", x_data, 
                                     " x_min ", x_min, " and x_max: ", x_max, " out of bounds index: ", out_of_bounds, 
                                     " out of bounds: ",x_data[out_of_bounds])
@@ -100,6 +143,16 @@ class DataManager:
         if name not in self.curves:
             raise ValueError(f"Spline '{name}' not found.")
         
+        if inverse:
+            if self.curves[name]['inverse_spline'] is not None:
+                return self.curves[name]['inverse_spline']
+            elif x_data >= 0:
+                return self.curves[name]['inverse_spline_positive']
+            elif x_data < 0:
+                return self.curves[name]['inverse_spline_negative']
+            else:
+                raise ValueError("Invalid x_data value for inverse spline.")
+
         return self.curves[name]['tck'] # Return tck
 
     def get_data_x_min_x_max(self, name):

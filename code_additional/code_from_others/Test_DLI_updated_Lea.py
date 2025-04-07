@@ -4,6 +4,8 @@ from scipy.interpolate import interp1d
 import time
 import os
 import sys
+from pathlib import Path
+import datetime
 
 
 # Define DLI function
@@ -28,15 +30,17 @@ def delay_line_interferometer(P_in, dt, tau, delta_L, f0,  n_eff, splitting_rati
 
     # Time array
     t = np.arange(len(P_in)) * dt
+    # print(f"shape t: {t.shape}")
     
     # Input optical field (assuming carrier frequency)
     E0 = np.sqrt(P_in)
     E_in = E0 * np.exp(1j * 2 * np.pi * f0 * t)
-
+    # print(f"shape E_in: {E_in.shape}")
     # Interpolate for delayed version
     interp_real = interp1d(t, np.real(E_in), bounds_error=False, fill_value=0.0)
     interp_imag = interp1d(t, np.imag(E_in), bounds_error=False, fill_value=0.0)
     E_in_delayed = interp_real(t - tau) + 1j * interp_imag(t - tau)
+    # print(f"shape E_in_delayed: {E_in_delayed.shape}")
 
     # Phase shift from path length difference
     phi = 2 * np.pi * f0 * n_eff * delta_L / c
@@ -51,7 +55,7 @@ def delay_line_interferometer(P_in, dt, tau, delta_L, f0,  n_eff, splitting_rati
 start_time = time.time()
 
 # Signal and simulation setup
-bit_sequence = "01010001010101000101000101000101010100010100"
+bit_sequence = "1010001010101000101000101000101010100010100"
 bit_rate = 6.5e9 
 sample_rate = 1 / 1e-14  # too low relults in poor visibility? maybe only with square pulses
 dt = 1e-14
@@ -70,6 +74,8 @@ for bit in bit_sequence:
         pulse_train.extend([0.0] * samples_per_bit)
 
 P_in = np.array(pulse_train)
+print(f"shape P_in: {np.shape(P_in)}")	
+print(f"samples_per_bit: {samples_per_bit}")
 t = np.arange(len(P_in)) * dt
 
 # Delay and path length
@@ -83,7 +89,7 @@ delta_L = tau * c / n_g
 # print(f"Path length difference (delta_L): {delta_L:.6f} m")
 
 # Wavelength sweep setup
-lambda0 = 1552.32e-9  # 1550 nm
+lambda0 = 1550.7e-9  # 1550 nm
 delta_lambda = 1e-10  # ±500 pm
 wavelengths = np.linspace(lambda0 - delta_lambda / 2, lambda0 + delta_lambda / 2, 100)
 frequencies = c / wavelengths  # convert to optical frequencies
@@ -112,7 +118,7 @@ visibilities = []
 wavelengths_nm = []
 
 # Find the index corresponding to 1 ns
-target_time_ns = ((3.5)/bit_rate) * 1e9  
+target_time_ns = 1.0/3.5 + 1 #((3.5)/bit_rate) * 1e9  
 target_index = np.argmin(np.abs(t * 1e9 - target_time_ns))
 print(target_time_ns)
 
@@ -125,6 +131,8 @@ for f0, P1, P2 in results:
     amplitudes_port1.append(P1[target_index])
     amplitudes_port2.append(P2[target_index])
     wavelengths_nm.append(c / f0 * 1e9)  # Convert frequency to wavelength in nm
+
+print(f"shape amplitudes_port1: {np.shape(amplitudes_port1)}")
 
 # Plot amplitudes at 1 ns vs wavelength
 # plt.figure(figsize=(8, 5))
@@ -173,11 +181,34 @@ for i, (label, (f0, P1, P2), wavelength) in enumerate(zip(selected_labels, selec
     plt.plot(t * 1e9, P_in, label='Input Power', linestyle='--')
     plt.plot(t * 1e9, P1, label='Output Port 1')
     plt.plot(t * 1e9, P2, label='Output Port 2')
-    plt.title(f"{label} Interference Case @ {wavelength:.2f} nm")
+    plt.title(f"{label} Interference Case @ {wavelength:.5f} nm")
     plt.xlabel("Time (ns)")
     plt.ylabel("Power (a.u.)")
     plt.legend()
     plt.grid(True)
+    print(f"{label} Interference Case @ {wavelength:.5f} nm")
 
 plt.tight_layout()
-plt.show()
+# Get the script's parent directory (the directory where the script is located)
+script_dir = Path(__file__).parent
+
+# Navigate to the parent folder (next to 'code') and then to the 'data' folder
+target_dir = script_dir.parent / 'images'
+
+# Create the directory if it doesn't exist
+target_dir.mkdir(exist_ok=True)
+
+# Generate a timestamp (e.g., '20231211_153012' for 11th December 2023 at 15:30:12)
+timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+
+# Append the timestamp to the filename
+filename_with_timestamp = f"{timestamp}_dli_test"
+
+# Define the file path
+filepath = target_dir / filename_with_timestamp
+
+# Save the plot
+plt.savefig(filepath)
+
+# Close the plot to free up memory
+plt.close()

@@ -5,12 +5,9 @@ import json
 import psutil
 import os
 import time
-import threading
 from matplotlib.ticker import MaxNLocator
 import numpy as np
 import pandas as pd
-import inspect
-import math
 
 
 class Saver:
