@@ -81,7 +81,7 @@ def run_simulation_and_update_hist(i, length_of_chain, n_rep, base_path, style_f
         n_samples=int(length_of_chain * n_rep),
         n_pulses=4,
         batchsize=best_batchsize,
-        mean_voltage=0.982,
+        mean_voltage=-1.708,
         mean_current=0.080,
         voltage_amplitude=0.02,
         current_amplitude=0.0005,

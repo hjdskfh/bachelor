@@ -218,7 +218,7 @@ class SimulationEngine:
 
             # t_test ist gleich wie das t das in der Funktion gemacht wird
             t_test = np.arange(len(flattened_power_batch_resampled)) * dt_new
-            print(f"t_test:{t_test.shape}, t_test:{t_test[-1]}, t_new_all_sym:{t_new_all_sym.shape} t_new_all_sym: {t_new_all_sym[-1]}")
+            # print(f"t_test:{t_test.shape}, t_test:{t_test[-1]}, t_new_all_sym:{t_new_all_sym.shape} t_new_all_sym: {t_new_all_sym[-1]}")
             
             f_0 = constants.c / peak_wavelength[i]
             '''print(f"f_0: {f_0}, i: {i}, batchsize: {self.config.batchsize}, peak_wavelength[i]: {peak_wavelength[i]}")'''
