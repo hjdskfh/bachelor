@@ -201,20 +201,20 @@ class SimulationHelper:
         """
         # Time array
         t = np.arange(len(P_in)) * dt
-        print(f"shape t: {t.shape}")
+        # print(f"shape t: {t.shape}")
         
         # Input optical field (assuming carrier frequency)
         E0 = np.sqrt(P_in)
         E_in = E0 * np.exp(1j * 2 * np.pi * f_0 * t)
-        print(f"shape E_in: {E_in.shape}")
+        # print(f"shape E_in: {E_in.shape}")
         # Interpolate for delayed version
         interp_real = interp1d(t, np.real(E_in), bounds_error=False, fill_value=0.0)
         interp_imag = interp1d(t, np.imag(E_in), bounds_error=False, fill_value=0.0)
         E_in_delayed = interp_real(t - tau) + 1j * interp_imag(t - tau)
-        print(f"shape E_in_delayed: {E_in_delayed.shape}")
+        # print(f"shape E_in_delayed: {E_in_delayed.shape}")
 
         # Phase shift from path length difference
-        phi = 2 * np.pi * f_0 *n_eff* delta_L / constants.c
+        phi = 2 * np.pi * f_0 * n_eff * delta_L / constants.c
         E_in_delayed *= np.exp(1j * phi)
 
         # Ideal 50/50 coupler outputs

@@ -482,13 +482,13 @@ class SimulationManager:
         #                                         type_photon_nr = "Mean Photon Number at EAM")
 
 
-        self.plotter.plot_power(t, power_dampened, amount_symbols_in_plot=5, where_plot_1='after EAM')
+        # self.plotter.plot_power(t, power_dampened, amount_symbols_in_plot=5, where_plot_1='after EAM')
 
         time_eam = time.time() - start_time
         # Saver.memory_usage("before fiber: " + str("{:.3f}".format(time_eam)))
         power_dampened = self.simulation_engine.fiber_attenuation(power_dampened)
         
-        self.plotter.plot_power(t, power_dampened, amount_symbols_in_plot=20, where_plot_1='after fiber')
+        # self.plotter.plot_power(t, power_dampened, amount_symbols_in_plot=20, where_plot_1='after fiber')
 
         # first Z basis bc no interference
         # Saver.memory_usage("before detector z: " + str("{:.3f}".format(time.time() - start_time)))
@@ -498,48 +498,27 @@ class SimulationManager:
         power_dampened = power_dampened / self.config.p_z_bob
         # Saver.memory_usage("before classificator: " + str("{:.3f}".format(time.time() - start_time)))
 
-        self.plotter.plot_power(t, power_dampened, amount_symbols_in_plot=20, where_plot_1='after Z det')
+        # self.plotter.plot_power(t, power_dampened, amount_symbols_in_plot=20, where_plot_1='after Z det')
 
         # path for X basis
         # Saver.memory_usage("before DLI: " + str("{:.3f}".format(time.time() - start_time)))
         power_dampened = power_dampened * (1 - self.config.p_z_bob)
 
-        self.plotter.plot_power(t, power_dampened, amount_symbols_in_plot=20, where_plot_1='bob basis X')
+        # self.plotter.plot_power(t, power_dampened, amount_symbols_in_plot=20, where_plot_1='bob basis X')
 
         #plot
         amount_symbols_in_first_part = 20
         first_power = power_dampened[:amount_symbols_in_first_part].copy()
-        plt.plot(first_power.reshape(-1), color='blue', label='0', linestyle='-', marker='o', markersize=1)
-        print(f"first_power: {first_power[:10]}")
-        Saver.save_plot(f"power_before_DLI_in_mW_outside_before_DLI")
 
         # DLI
-        print(f"important{np.shares_memory(first_power, power_dampened)}")  # True means it's a view
+        print(f"important shares memory?: {np.shares_memory(first_power, power_dampened)}")  # True means it's a view
         power_dampened, f_0 = self.simulation_engine.delay_line_interferometer(power_dampened, t, peak_wavelength, value)
-        plt.plot(first_power.reshape(-1), color='blue', label='0', linestyle='-', marker='o', markersize=1)
-        print(f"first_power: {first_power[:10]}")
-        Saver.save_plot(f"power_before_DLI_in_mW_outside_direkt_nach_DLI")
-        # power_dampened = power_dampened / 2
-        # plot
-        self.plotter.plot_power(t, power_dampened, amount_symbols_in_plot=amount_symbols_in_first_part, where_plot_1='before DLI',  shortened_first_power=first_power, where_plot_2='after DLI,', title_rest='- in fft, mean_volt: ' + str("{:.4f}".format(self.config.mean_voltage)) + ' voltage: ' + str("{:.4f}".format(chosen_voltage[0])) + ' V and ' + str("{:.8f}".format(peak_wavelength[0])), is_DLI=True)
-        
-        plt.plot(first_power.reshape(-1) * 1e3, color='blue', label='0', linestyle='-', marker='o', markersize=1)
-        Saver.save_plot(f"power_before_DLI_in_mW_outside")
 
-        second_power = power_dampened[:amount_symbols_in_first_part]
-        step_size = t[1] - t[0]
-        # Calculate the new length
-        new_length = len(t) * amount_symbols_in_first_part
-        # Generate the new array with the same step size
-        t_plot1 = np.arange(t[0], t[0] + step_size * new_length, step_size)
-        plt.plot(t_plot1 * 1e9, first_power.reshape(-1) * 1e3, color='blue', label='before', linestyle='-', marker='o', markersize=1)
-        plt.plot(t_plot1 * 1e9, second_power.reshape(-1) * 1e3, color='green', label='after', linestyle='-', marker='o', markersize=1)
-        plt.ylabel('Power (mW)')
-        plt.xlabel('Time (ns)')
-        plt.gca().yaxis.set_major_locator(MaxNLocator(integer=True))
-        plt.legend()
-        plt.tight_layout()
-        Saver.save_plot(f"power_outside_plotter_symbols")
+        # plot
+        self.plotter.plot_power(t, power_dampened, amount_symbols_in_plot=amount_symbols_in_first_part, where_plot_1='before DLI',  shortened_first_power=first_power, where_plot_2='after DLI,', title_rest='- in fft, mean_volt: ' + str("{:.4f}".format(self.config.mean_voltage)) + ' voltage: ' + str("{:.4f}".format(chosen_voltage[0])) + ' V and ' + str("{:.8f}".format(peak_wavelength[0])))
+        
+        # plt.plot(first_power.reshape(-1) * 1e3, color='blue', label='0', linestyle='-', marker='o', markersize=1)
+        # Saver.save_plot(f"power_before_DLI_in_mW_outside")
 
         # Saver.memory_usage("before detector x: " + str(time.time() - start_time))
         time_photons_det_x, wavelength_photons_det_x, nr_photons_det_x, index_where_photons_det_x, calc_mean_photon_nr_detector_x, dark_count_times_x, num_dark_counts_x = self.simulation_engine.detector(t, norm_transmission, peak_wavelength, power_dampened, start_time)        
@@ -965,32 +944,40 @@ class SimulationManager:
 
         def laser_till_dli(T1_dampening):
             optical_power, peak_wavelength, chosen_voltage, chosen_current = self.simulation_engine.random_laser_output('current_power', 'voltage_shift', fixed = True)
-            basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=np.array([1,0,1]), value=np.array([1,-1, 0]), decoy=np.array([0,0,0]))
-
+            # basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=np.array([1,0,1]), value=np.array([1,-1, 0]), decoy=np.array([0,0,0]))
+            basis, value, decoy = self.simulation_engine.generate_alice_choices(basis = np.array([0, 0, 0, 1, 1]), value = np.array([-1, -1, -1, 1, 1]), decoy = np.array([0, 0, 0, 0, 0]))
             signals, t, _ = self.simulation_engine.signal_bandwidth_jitter(basis, value, decoy)
 
-            # plot signal to check how it looks like
-            step_size = t[1] - t[0]
-            # Calculate the new length
-            new_length = len(t) * self.config.n_samples
-            # Generate the new array with the same step size
-            t_plot1 = np.arange(t[0], t[0] + step_size * new_length, step_size)
-            # plt.plot(t_plot1 * 1e9, signals.reshape(-1), label='Signal')
-            # plt.show()
-
             power_dampened, norm_transmission,  calc_mean_photon_nr_eam, _ = self.simulation_engine.eam_transmission(signals, optical_power, T1_dampening, peak_wavelength, t)
-            print(f"shape of power_dampened: {power_dampened.shape}")
+            
+            '''dt_original = t[1]-t[0]
+            num_points = signals.reshape(-1).size 
+            print(f"num_points:{num_points}")
+            t_original_all_sym = np.arange(t[0], t[0] + num_points * dt_original, dt_original)   
+            plt.plot(t_original_all_sym *1e9, power_dampened.reshape(-1) , label='Signal')
+            plt.title(f"power Signal after eam with Bandwidth and Jitter")
+            plt.ylabel('Power (W)')
+            plt.xlabel('Time (ns)')
+            plt.legend()
+            Saver.save_plot(f"power_after_eam")'''
+            
+            original_power = power_dampened.reshape(-1).copy()
+
             destructive_port, f_0 = self.simulation_engine.delay_line_interferometer(power_dampened, t, peak_wavelength, value)
-            print(f"shape destructive_port: {destructive_port.shape}")
-            return chosen_voltage[0], peak_wavelength[0], destructive_port, power_dampened
+            # print(f"shape destructive_port: {destructive_port.shape}")
+            destructive_port = destructive_port.reshape(-1)
+            return chosen_voltage[0], peak_wavelength[0], destructive_port, original_power, t
         
-        voltage_values = np.arange(0.9, 1.1, 0.002)  # Example range of mean_voltage
+        voltage_values = np.arange(-1.75, -1.65, 0.001)  # Example range of mean_voltage
         results = []
         wavelengths_nm = []
         
         for voltage in voltage_values:
             self.config.mean_voltage = voltage
-            chosen_voltage, peak_wavelength, destructive_port, power_dampened = laser_till_dli(T1_dampening)
+            chosen_voltage, peak_wavelength, destructive_port, original_power, t = laser_till_dli(T1_dampening)
+            # plt.plot(original_power, color = 'blue', label='Input Power')
+            # # plt.plot(destructive_port, color = 'red', label='Destructive Port')
+            # plt.show()
             results.append({
                 "voltage": chosen_voltage,
                 "wavelength": peak_wavelength,
@@ -999,13 +986,26 @@ class SimulationManager:
             # print(f"chosen_voltage: {chosen_voltage}, peak_wavelength: {peak_wavelength}, destructive_port: {destructive_port[:5]}")
             # print(f" shape of destructive_port: {destructive_port.shape}, shape chosen_voltage: {chosen_voltage.shape}, shape peak_wavelength: {peak_wavelength.shape}")
 
-        dt = 1e-14
-        t = np.arange(len(power_dampened)) * dt  # Time array in seconds
-        target_time_ns = 0.2 #((3.5)/bit_rate) * 1e9  
-        target_index = np.argmin(np.abs(t * 1e9 - target_time_ns))
-        print(f"target_time_ns:{target_time_ns}, target_index: {target_index}")
+        # t = np.arange(len(power_dampened)) * dt  # Time array in seconds
+        step_size = t[1] - t[0]
+        # Calculate the new length
+        new_length = len(t) * self.config.n_samples
+        # Generate the new array with the same step size
+        t_all_symbols = np.arange(t[0], t[0] + step_size * new_length, step_size)
+        print(f"t: {t[:5]} with {self.config.n_samples} samples")
+        print(f"t_all_symbols: {t_all_symbols[:5]} with {self.config.n_samples} samples")
+        print(f"shape of t: {np.shape(t)}")
+        target_time_ns = 1/6.5 * 3  # 1/6.5 is one pulse then multiply by how manyth pulse you want to see
+        target_index = np.argmin(np.abs(t_all_symbols * 1e9 - target_time_ns))
+        print(f"target_time_ns:{target_time_ns}, target_index: {target_index}, len(t_all_symbols): {len(t_all_symbols)}, len(t): {len(t)}")
+        target_index = 10500
+
+        '''for r in results:
+            print(f"Shape of r['destructive_port']: {np.shape(r['destructive_port'])}")
+            print(f"Value at index {target_index}: {r['destructive_port'][target_index]}")'''
 
         wavelengths_nm = np.array([r["wavelength"] for r in results])
+        print(f"wavelengths_nm: {wavelengths_nm}")
         amplitudes_port1 = np.array([r["destructive_port"][target_index] for r in results])
         print(f"wavelengths_nm shape: {wavelengths_nm.shape}")
         print(f"amplitudes_port1 shape: {amplitudes_port1.shape}")
@@ -1014,6 +1014,7 @@ class SimulationManager:
         # Step 2: Find max, min, and midpoint amplitude locations
         idx_max = np.argmax(amplitudes_port1)
         idx_min = np.argmin(amplitudes_port1)
+        print(f"idx_max: {idx_max}, idx_min: {idx_min}")
 
         # Get mid index between min and max (closest to halfway in wavelength)
         lambda_mid = (wavelengths_nm[idx_max] + wavelengths_nm[idx_min]) / 2
@@ -1023,13 +1024,17 @@ class SimulationManager:
         selected_indices = [idx_max, idx_min, idx_mid]
         selected_labels = ["Max", "Min", "Mid"]
         selected_data = [results[i] for i in selected_indices]
+        print(f"selected_data: {selected_data}")
+
+        for item in selected_data:
+            print(item['wavelength'])  # should show a non-zero value
 
         plt.figure(figsize=(14, 10))
         for i, (label, data) in enumerate(zip(selected_labels, selected_data)):
             plt.subplot(3, 1, i + 1)
-            plt.plot(t * 1e9, power_dampened, label='Input Power', linestyle='--')
-            plt.plot(t * 1e9, data["destructive_port"], label='Destructive Port')
-            plt.title(f"{label} Interference Case @ {data['wavelength']:.5f} nm")
+            plt.plot(t_all_symbols * 1e9, original_power, label='Input Power', linestyle='--')
+            plt.plot(t_all_symbols * 1e9, data["destructive_port"], label='Destructive Port')
+            plt.title(f"{label} Interference Case @ {data['wavelength']*1e9:.5f} nm")
             plt.xlabel("Time (ns)")
             plt.ylabel("Power (a.u.)")
             plt.legend()
@@ -1059,6 +1064,9 @@ class SimulationManager:
 
         plt.tight_layout()
         Saver.save_plot("DLI_power_wavelength_vs_voltage")
+        '''for wave in wavelengths_nm:
+            inverse_voltage = self.simulation_engine.get_interpolated_value(wave * 1e9 - 1550, 'voltage_shift', inverse_flag=True)
+            print(f"inverse voltage: {inverse_voltage}")'''
 
     def run_simulation_hist_pick_symbols(self):
         start_time = time.time()  # Record start time

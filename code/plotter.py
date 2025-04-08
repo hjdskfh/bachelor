@@ -66,7 +66,7 @@ class Plotter:
         else:
             Saver.save_plot(f"power_{amount_symbols_in_plot}_{where_plot_2.replace(' ', '_').lower()}_symbols")
 
-        if is_DLI:
+        '''if is_DLI:
             plt.plot(t_plot1 * 1e9, second_part * 1e3, label = where_plot_1)
             plt.title(f"single_second_Power over {self.config.n_samples} Iterations") 
             plt.ylabel('Power (mW)')
@@ -77,7 +77,6 @@ class Plotter:
             Saver.save_plot(f"single_second_power_{where_plot_1.replace(' ', '_').lower()}_for_{amount_symbols_in_plot}_symbols")
 
             if shortened_first_power is not None:
-                print(f"blub")
                 shortened_first_power = shortened_first_power.reshape(-1)
                 plt.plot(t_plot1 * 1e9, shortened_first_power * 1e3, label=where_plot_1)
                 # plt.show()
@@ -89,7 +88,7 @@ class Plotter:
                 plt.legend()
                 plt.tight_layout()
                 plt.title(f"single_first_Power over {amount_symbols_in_plot} Symbols")
-                Saver.save_plot(f"single_first_power_{amount_symbols_in_plot}_{where_plot_2.replace(' ', '_').lower()}_symbols")
+                Saver.save_plot(f"single_first_power_{amount_symbols_in_plot}_{where_plot_2.replace(' ', '_').lower()}_symbols")'''
 
         del second_power
         gc.collect()

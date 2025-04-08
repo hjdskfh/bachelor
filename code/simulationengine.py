@@ -1,3 +1,6 @@
+from random import sample
+from re import A
+from matplotlib.image import resample
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.fftpack import fft, ifft, fftfreq
@@ -5,7 +8,7 @@ from scipy import constants
 from scipy.special import factorial
 import time
 import gc
-from scipy.signal import convolve, resample
+from scipy.signal import convolve, resample_poly
 from scipy.interpolate import splrep, splev
 
 
@@ -183,51 +186,76 @@ class SimulationEngine:
         return power_dampened
 
     def delay_line_interferometer(self, power_dampened, t, peak_wavelength, value):
-        sample_rate = 1 / 1e-14  # too low relults in poor visibility? maybe only with square pulses
-        dt = 1e-14
-        samples_per_bit = int(sample_rate / self.config.sampling_rate_FPGA)
+        dt_new = 1e-14
+
         tau = 2 / self.config.sampling_rate_FPGA  
         n_g = 2.05 # For calculatting path length difference
-        # Assuming thegroup refractive index of the waveguide
+        # Assuming the group refractive index of the waveguide
         n_eff = 1.56 # Effective refractive index
         delta_L = tau * constants.c / n_g
 
         for i in range(0, len(value), self.config.batchsize):
-            # print(f"i: {i}, batchsize: {self.config.batchsize}")
             power_dampened_batch = power_dampened[i:i + self.config.batchsize, :]
             flattened_power_batch = power_dampened_batch.reshape(-1)
-            # print(f"flattened_power_batch: {flattened_power_batch.shape}")
-            '''if i == 0:
-                amount_symbols_in_plot = 3
-                pulse_duration = 1 / self.config.sampling_rate_FPGA
-                sampling_rate_fft = 100e11
-                samples_per_pulse = int(pulse_duration * sampling_rate_fft)
-                total_samples = self.config.n_pulses * samples_per_pulse
-                t_plot1 = np.linspace(0, amount_symbols_in_plot * self.config.n_pulses * pulse_duration, amount_symbols_in_plot * total_samples, endpoint=False)
-                # print(f"shape flattened_signals_batch: {flattened_signals_batch.shape}")
-                plt.plot(t_plot1 * 1e9, flattened_signals_batch[:len(t) * amount_symbols_in_plot])
-                print(f"basis[:amount], value[:amount], decoy[:amount]: {basis[:amount_symbols_in_plot]}, {values[:amount_symbols_in_plot]}, {decoy[:amount_symbols_in_plot]}")
-                for k in range(amount_symbols_in_plot + 1):
-                    plt.axvline(t_plot1[-1] * 1e9 * (k) / (amount_symbols_in_plot), label=f'Target Mean Photon Number {i+1}', color = 'darkgreen')
-                plt.title(f"Square Signal with jitter for the first 3 symbols")
-                plt.xlabel('Time (ns)')
-                plt.ylabel('Volt (V)')
-                Saver.save_plot(f"square_signal")'''
-            f_0 = peak_wavelength[i // self.config.batchsize]
-            # print(f"f_0: {f_0}")
+            # print(f"flattened_power_batch: {flattened_power_batch.shape}, power_dampened_batch: {power_dampened_batch.shape}, t: {t.shape}")
 
-            # Assume `my_signal` is your Gaussian signal sampled at 6.5 GHz or higher
-            bits_in_this_batch = self.config.batchsize * self.config.n_pulses
-            flattened_power_batch = resample(flattened_power_batch, samples_per_bit * bits_in_this_batch)  # Upsample to 15384 samples
+            dt_original = t[1] - t[0]
+            num_points = flattened_power_batch.size 
+            # print(f"num_points:{num_points}")
+            t_original_all_sym = np.arange(t[0], t[0] + num_points * dt_original, dt_original)     
+            # print(f"t_original_all_sym: {t_original_all_sym.shape}, t: {t.shape}, step t_original: {t_original_all_sym[1]-t_original_all_sym[0]}, t step:{t[1]-t[0]}")       
 
-            flattened_power_batch, power_2, _ = self.simulation_helper.DLI(flattened_power_batch, dt, tau, delta_L, f_0,  n_eff)
+            # calculate new time axis
+            t_new_all_sym = np.arange(t_original_all_sym[0], t_original_all_sym[-1], dt_new)
+            
+            # Resample the data using np.interp (linear interpolation)
+            flattened_power_batch_resampled = np.interp(t_new_all_sym, t_original_all_sym, flattened_power_batch)
+            '''plt.plot(flattened_power_batch_resampled[:len(t)*100], color = 'green', label = 'after resample')
+            plt.plot(flattened_power_batch[:len(t)*10], label = 'before resample')
+            plt.show()'''
+            
+            flattened_power_batch_resampled_copy = flattened_power_batch_resampled.copy()
+
+            # t_test ist gleich wie das t das in der Funktion gemacht wird
+            t_test = np.arange(len(flattened_power_batch_resampled)) * dt_new
+            print(f"t_test:{t_test.shape}, t_test:{t_test[-1]}, t_new_all_sym:{t_new_all_sym.shape} t_new_all_sym: {t_new_all_sym[-1]}")
+            
+            f_0 = constants.c / peak_wavelength[i]
+            '''print(f"f_0: {f_0}, i: {i}, batchsize: {self.config.batchsize}, peak_wavelength[i]: {peak_wavelength[i]}")'''
+
+            power_1, power_2, _ = self.simulation_helper.DLI(flattened_power_batch_resampled, dt_new, tau, delta_L, f_0,  n_eff)
             '''plt.plot(power_1[:len(t)], label = 'after DLI 1')
             plt.plot(power_2[:len(t)], label = 'after DLI 2')
             plt.legend()
             Saver.save_plot(f"power_after_DLI_{i // self.config.batchsize}")'''
-            flattened_power_batch = flattened_power_batch.reshape(self.config.batchsize, len(t))
+            
+            '''# plot von power_1 und power_2
+            fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 6))
+            # Plot the first graph in the first subplot
+            ax1.plot(t_test *1e9, flattened_power_batch_resampled_copy, label='before DLI')
+            ax1.plot(t_test *1e9, power_2, label='after DLI 2, ' + str(peak_wavelength[i // self.config.batchsize]))
+            ax1.set_ylabel('Power (W)')
+            ax1.set_xlabel('Time (ns)')
+            ax1.set_title(f"Power after DLI port 2 wavelength {peak_wavelength[i]} for {self.config.batchsize} symbols")
+            ax1.legend()
+            # Plot the second graph in the second subplot
+            ax2.plot(t_test *1e9, flattened_power_batch_resampled_copy, label='before DLI')
+            ax2.plot(t_test *1e9, power_1, label='after DLI 1, ' + str(peak_wavelength[i // self.config.batchsize]))
+            ax2.set_ylabel('Power (W)')
+            ax2.set_xlabel('Time (ns)')
+            ax2.set_title(f"Power after DLI port 1 wavelength {peak_wavelength[i]} for {self.config.batchsize} symbols")
+            ax2.legend()
+            # Save the plot with a custom filename
+            Saver.save_plot(f"power_after_DLI_combined")'''
+
+            # Use interpolation to compute signal values at new time points
+            signal_downsampled = np.interp(t_original_all_sym, t_new_all_sym, power_1)
+            '''plt.plot(signal_downsampled[:len(t)*100], label = 'after DLI 1')
+            plt.plot(power_1[:len(t)*100], color = 'green', label = 'after DLI 1')
+            plt.show()'''
+
+            flattened_power_batch = signal_downsampled.reshape(self.config.batchsize, len(t))
             power_dampened[i:i + self.config.batchsize, :] = flattened_power_batch
-                        
         return power_dampened, f_0
 
     
