@@ -36,7 +36,7 @@ style_file = "Presentation_style_1_adjusted_no_grid.mplstyle"
 base_path = os.path.dirname(os.path.abspath(__file__))
 
 #create simulation mean current 0.08 , mena_voltage = 0.98 weil aus voltage_sweep, 0.9835 # mean voltage mit skript 1.6094623981710416 rausbekommen
-config = SimulationConfig(database, seed=None, n_samples=11, n_pulses=4, batchsize=11, mean_voltage=1, mean_current=0.082111, voltage_amplitude=0.002, current_amplitude=0.0005,
+config = SimulationConfig(database, seed=None, n_samples=20, n_pulses=4, batchsize=10, mean_voltage=-1.708, mean_current=0.082111, voltage_amplitude=0.002, current_amplitude=0.0005,
                 p_z_alice=0.9, #0.5,
                 p_decoy= 0.3, #0.1,
                 p_z_bob=0.5, sampling_rate_FPGA=6.5e9, bandwidth=4e9, #4e9,
@@ -64,12 +64,12 @@ print(f"Execution time for reading: {execution_time_read:.9f} seconds for {confi
 # Run the simulation
 # lookup_results = simulation.lookup()
 # print(lookup_results)
-# len_wrong_x_dec, len_wrong_x_non_dec, len_wrong_z_dec, len_wrong_z_non_dec, \
-# len_Z_checked_dec, len_Z_checked_non_dec, X_P_calc_non_dec, X_P_calc_dec = simulation.run_simulation_classificator()
+len_wrong_x_dec, len_wrong_x_non_dec, len_wrong_z_dec, len_wrong_z_non_dec, \
+len_Z_checked_dec, len_Z_checked_non_dec, X_P_calc_non_dec, X_P_calc_dec = simulation.run_simulation_classificator()
 # print(f"len_wrong_x_dec: {len_wrong_x_dec}, len_wrong_x_non_dec: {len_wrong_x_non_dec}, len_wrong_z_dec: {len_wrong_z_dec}, len_wrong_z_non_dec: {len_wrong_z_non_dec}")
 # print(f"len_Z_checked_dec: {len_Z_checked_dec}, len_Z_checked_non_dec: {len_Z_checked_non_dec}")
 # print(f"X_P_calc_non_dec: {X_P_calc_non_dec}, X_P_calc_dec: {X_P_calc_dec}")
-simulation.run_DLI()
+# simulation.run_DLI()
 # simulation.run_simulation_till_DLI()
 
 end_time_simulation = time.time()  # Record end time for simulation

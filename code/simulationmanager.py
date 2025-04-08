@@ -509,12 +509,17 @@ class SimulationManager:
         #plot
         amount_symbols_in_first_part = 20
         first_power = power_dampened[:amount_symbols_in_first_part].copy()
+        '''print("len(t):", len(t))
+        print("first_power.shape:", first_power.shape)
+        print("expected shape:", (amount_symbols_in_first_part, len(t)))
+        print("power_dampened.shape:", power_dampened.shape)'''
 
         # DLI
         print(f"important shares memory?: {np.shares_memory(first_power, power_dampened)}")  # True means it's a view
         power_dampened, f_0 = self.simulation_engine.delay_line_interferometer(power_dampened, t, peak_wavelength, value)
 
         # plot
+        assert power_dampened.shape[1] == len(t), f"Mismatch: power_dampened has {power_dampened.shape[1]} samples per symbol, t has {len(t)}!"
         self.plotter.plot_power(t, power_dampened, amount_symbols_in_plot=amount_symbols_in_first_part, where_plot_1='before DLI',  shortened_first_power=first_power, where_plot_2='after DLI,', title_rest='- in fft, mean_volt: ' + str("{:.4f}".format(self.config.mean_voltage)) + ' voltage: ' + str("{:.4f}".format(chosen_voltage[0])) + ' V and ' + str("{:.8f}".format(peak_wavelength[0])))
         
         # plt.plot(first_power.reshape(-1) * 1e3, color='blue', label='0', linestyle='-', marker='o', markersize=1)
@@ -861,7 +866,7 @@ class SimulationManager:
         start_time = time.time()  # Record start time
         T1_dampening = self.simulation_engine.initialize()
 
-        optical_power, peak_wavelength, chosen_voltage, chosen_current = self.simulation_engine.random_laser_output('current_power', 'voltage_shift')
+        optical_power, peak_wavelength, chosen_voltage, chosen_current = self.simulation_engine.random_laser_output('current_power', 'voltage_shift', fixed = True)
     
         # Generate Alice's choices
         basis_arr, value_arr, decoy_arr, lookup_arr = self.simulation_helper.create_all_symbol_combinations_for_hist()
@@ -1072,7 +1077,7 @@ class SimulationManager:
         start_time = time.time()  # Record start time
         T1_dampening = self.simulation_engine.initialize()
 
-        optical_power, peak_wavelength, chosen_voltage, chosen_current = self.simulation_engine.random_laser_output('current_power', 'voltage_shift')
+        optical_power, peak_wavelength, chosen_voltage, chosen_current = self.simulation_engine.random_laser_output('current_power', 'voltage_shift', fixed = True)
     
         # Generate Alice's choices
         _, _, _, lookup_array = self.simulation_helper.create_all_symbol_combinations_for_hist()
