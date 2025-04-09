@@ -14,11 +14,11 @@ class DataProcessor:
     @staticmethod
     def update_histogram_batches(length_of_chain, time_photons_det_x, time_photons_det_z, time_one_symbol, total_symbols,
                                 index_where_photons_det_x, index_where_photons_det_z, amount_bins_hist, bins_per_symbol = 30):
-        print(f"total_symbols: {total_symbols}")
+        # print(f"total_symbols: {total_symbols}")
         n_rep = total_symbols // length_of_chain
-        print(f"n_rep: {n_rep}")
-        print(f"lengthofchain:{length_of_chain}")
-        print(f"first blub")
+        # print(f"n_rep: {n_rep}")
+        # print(f"lengthofchain:{length_of_chain}")
+        # print(f"first blub")
 
         local_histogram_counts_x = np.zeros(amount_bins_hist, dtype=int)
         local_histogram_counts_z = np.zeros(amount_bins_hist, dtype=int)
@@ -28,27 +28,34 @@ class DataProcessor:
         for rep in range(n_rep):
             for s in range(length_of_chain):  # which symbol
                 row_idx = rep * length_of_chain + s 
-                
                 if np.isin(row_idx, index_where_photons_det_x):
                     ind_short = np.where(index_where_photons_det_x == row_idx)[0]
                     valid_x = time_photons_det_x[ind_short][~np.isnan(time_photons_det_x[ind_short])]
                     bin_index = np.digitize(valid_x, bins_arr_per_symbol) - 1
                     # insert into histogram_counts_z with 30*symbol + bin_index 
-                    print(f"bins_per_symbol:{bins_per_symbol}, s:{s}, bin_index:{bin_index}")
-                    idx = bins_per_symbol * s + bin_index
-                    if idx >= len(local_histogram_counts_z):
-                        print(f"Out of bounds: idx={idx}, len={len(local_histogram_counts_z)}, s={s}, bin_index={bin_index}")
-                    local_histogram_counts_x[bins_per_symbol * s + bin_index] += 1
+                    idx_hist = bins_per_symbol * s + bin_index
+                    if np.size(idx_hist) > 1:
+                        print("idx has multiple values!")
+                        print(f"bins_per_symbol:{bins_per_symbol}, s:{s}, bin_index:{bin_index}")
+                    else:
+                        if idx_hist >= len(local_histogram_counts_x):
+                            print(f"Out of bounds: idx_hist={idx_hist}, len={len(local_histogram_counts_x)}, s={s}, bin_index={bin_index}")
+                    assert 0 <= bin_index < bins_per_symbol, f"bin_index {bin_index} out of bounds for symbol {s}"
+                    np.add.at(local_histogram_counts_x, idx_hist, 1)
                 if np.isin(row_idx, index_where_photons_det_z):
                     ind_short = np.where(index_where_photons_det_z == row_idx)[0]
                     valid_z = time_photons_det_z[ind_short][~np.isnan(time_photons_det_z[ind_short])]
                     bin_index = np.digitize(valid_z, bins_arr_per_symbol) - 1
                     # insert into histogram_counts_z with 30*symbol + bin_index 
-                    print(f"bins_per_symbol:{bins_per_symbol}, s:{s}, bin_index:{bin_index}")
-                    idx = bins_per_symbol * s + bin_index
-                    if idx >= len(local_histogram_counts_z):
-                        print(f"Out of bounds: idx={idx}, len={len(local_histogram_counts_z)}, s={s}, bin_index={bin_index}")
-                    local_histogram_counts_z[bins_per_symbol * s + bin_index] += 1
+                    idx_hist = bins_per_symbol * s + bin_index
+                    if np.size(idx_hist) > 1:
+                        print("idx has multiple values!")
+                        print(f"bins_per_symbol:{bins_per_symbol}, s:{s}, bin_index:{bin_index}")
+                    else:
+                        if idx_hist >= len(local_histogram_counts_z):
+                            print(f"Out of bounds: idx_hist={idx_hist}, len={len(local_histogram_counts_z)}, s={s}, bin_index={bin_index}")
+                    assert 0 <= bin_index < bins_per_symbol, f"bin_index {bin_index} out of bounds for symbol {s}"
+                    np.add.at(local_histogram_counts_z, idx_hist, 1)
         return local_histogram_counts_x, local_histogram_counts_z
 
     @staticmethod
@@ -160,8 +167,8 @@ class DataProcessor:
                 # looked at index is second symbol:
                 pair_key = (raw_symbol_lookup[(basis[idx_left], value[idx_left], decoy[idx_left])], 
                             raw_symbol_lookup[(basis[idx_right], value[idx_right], decoy[idx_right])])
-                print(f"pair_key:{pair_key}")
-                print(f"pair_indices_dict:{pair_indices_dict}")
+                # print(f"pair_key:{pair_key}")
+                # print(f"pair_indices_dict:{pair_indices_dict}")
                 #if pair_key in pair_indices_dict:  
                 position_brujin_left = pair_indices_dict[pair_key].item()
                 
@@ -194,7 +201,7 @@ class DataProcessor:
             idx_before_z = idx_where_z - 1
             idx_after_z = idx_where_z + 1
 
-            print(f"idx_before_z:{idx_before_z}, idx_after_z:{idx_after_z}, idx_where_z:{idx_where_z}")
+            # print(f"idx_before_z:{idx_before_z}, idx_after_z:{idx_after_z}, idx_where_z:{idx_where_z}")
             # looked at photon is right part of symbol
             process(idx_before_z, idx_where_z, index_where_photons_det_z, time_photons_det_z, local_histogram_counts_z)
             # looked at photon is left part of symbol
@@ -204,7 +211,7 @@ class DataProcessor:
             idx_before_x = idx_where_x - 1
             idx_after_x = idx_where_x + 1
 
-            print(f"idx_before_x:{idx_before_x}, idx_after_x:{idx_after_x}, idx_where_x:{idx_where_x}")
+            # print(f"idx_before_x:{idx_before_x}, idx_after_x:{idx_after_x}, idx_where_x:{idx_where_x}")
             # looked at photon is right part of symbol
             process(idx_before_x, idx_where_x, index_where_photons_det_x, time_photons_det_x, local_histogram_counts_x)
             # looked at photon is left part of symbol

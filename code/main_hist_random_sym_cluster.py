@@ -11,6 +11,10 @@ import os
 import math
 from joblib import Parallel, delayed
 
+job_id = os.getenv("SLURM_JOB_ID")
+print(f"Running SLURM Job ID: {job_id}")
+
+
 os.environ["OMP_NUM_THREADS"] = "1"
 os.environ["MKL_NUM_THREADS"] = "1"
 
@@ -28,14 +32,14 @@ def run_simulation_and_update_hist_all_pairs(i, n_samples_set, length_of_chain, 
         mean_photon_nr=0.7, mean_photon_decoy=0.1, fiber_attenuation=-3,
         detector_efficiency=0.3, dark_count_frequency=10, detection_time=1e-10,
         detector_jitter=detector_jitter, p_indep_x_states_non_dec=None, p_indep_x_states_dec=None,
-        mlp=os.path.join(base_path, style_file), script_name=os.path.basename(__file__)
+        mlp=os.path.join(base_path, style_file), script_name=os.path.basename(__file__), job_id=job_id
     )
     simulation = SimulationManager(config)
 
     simulation.run_simulation_hist_pick_symbols()
     
     # load data either from just simulated or from previous simulation
-    data = np.load("simulation_data.npz")
+    data = np.load("simulation_data.npz", allow_pickle=True)
     time_photons_det_z = data["time_photons_det_z"]
     time_photons_det_x = data["time_photons_det_x"]
     index_where_photons_det_z = data["index_where_photons_det_z"]

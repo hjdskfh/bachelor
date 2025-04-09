@@ -5,8 +5,8 @@
 #SBATCH --cpus-per-task=64
 #SBATCH --gres=gpu:1
 #SBATCH --time=12:00:00
-#SBATCH --output=output_hist.log
-#SBATCH --error=error_hist.log
+#SBATCH --output=output_hist_%j.log
+#SBATCH --error=error_hist_%j.log
 
 # Run Python script inside the Singularity container
 singularity exec --app dls /containers/stable/2025-02-19_1.img python ~/NeuMoQP/Programm/bachelor/code/main_hist_cluster.py

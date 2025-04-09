@@ -11,6 +11,13 @@ import pandas as pd
 import os
 import math
 from joblib import Parallel, delayed
+import sys
+
+sys.stdout.flush()
+
+job_id = os.getenv("SLURM_JOB_ID")
+print(f"Running SLURM Job ID: {job_id}")
+
 
 os.environ["OMP_NUM_THREADS"] = "1"
 os.environ["MKL_NUM_THREADS"] = "1"
@@ -63,7 +70,7 @@ config = SimulationConfig(database, seed=None, n_samples=int(length_of_chain*n_r
                 mean_photon_nr=0.7, mean_photon_decoy=0.1, 
                 fiber_attenuation=-3, detector_efficiency=0.3, dark_count_frequency=10, detection_time=1e-10, detector_jitter=detector_jitter,
                 p_indep_x_states_non_dec=None, p_indep_x_states_dec=None,
-                mlp=os.path.join(base_path, style_file), script_name = os.path.basename(__file__)
+                mlp=os.path.join(base_path, style_file), script_name = os.path.basename(__file__), job_id=job_id
                 )
 simulation = SimulationManager(config)
 
@@ -80,36 +87,15 @@ def run_simulation_and_update_hist(i, length_of_chain, n_rep, base_path, style_f
                                    detector_jitter, best_batchsize, bins_per_symbol, amount_bins):
     # Create the simulation config locally
     config = SimulationConfig(
-        database, seed=None,
-        n_samples=int(length_of_chain * n_rep),
-        n_pulses=4,
-        batchsize=best_batchsize,
-        mean_voltage=-1.708,
-        mean_current=0.080,
-        voltage_amplitude=0.02,
-        current_amplitude=0.0005,
-        p_z_alice=0.5,
-        p_decoy=0.1,
-        p_z_bob=0.85,
-        sampling_rate_FPGA=6.5e9,
-        bandwidth=4e9,
-        jitter=jitter,
-        non_signal_voltage=-1.1,
-        voltage_decoy=-0.1,
-        voltage=-0.1,
-        voltage_decoy_sup=-0.1,
-        voltage_sup=-0.1,
-        mean_photon_nr=0.7,
-        mean_photon_decoy=0.1,
-        fiber_attenuation=-3,
-        detector_efficiency=0.3,
-        dark_count_frequency=10,
-        detection_time=1e-10,
-        detector_jitter=detector_jitter,
-        p_indep_x_states_non_dec=None,
-        p_indep_x_states_dec=None,
-        mlp=os.path.join(base_path, style_file),
-        script_name=os.path.basename(__file__)
+        database, seed=None, n_samples=int(length_of_chain * n_rep), n_pulses=4, batchsize=best_batchsize, 
+        mean_voltage=-1.708, mean_current=0.080, voltage_amplitude=0.02, current_amplitude=0.0005,
+        p_z_alice=0.5, p_decoy=0.1, p_z_bob=0.85,
+        sampling_rate_FPGA=6.5e9, bandwidth=4e9, jitter=jitter,
+        non_signal_voltage=-1.1, voltage_decoy=-0.1, voltage=-0.1, voltage_decoy_sup=-0.1, voltage_sup=-0.1, 
+        mean_photon_nr=0.7, mean_photon_decoy=0.1, fiber_attenuation=-3,
+        detector_efficiency=0.3, dark_count_frequency=10, detection_time=1e-10, detector_jitter=detector_jitter, 
+        p_indep_x_states_non_dec=None, p_indep_x_states_dec=None, 
+        mlp=os.path.join(base_path, style_file), script_name=os.path.basename(__file__), job_id=job_id
     )
     simulation = SimulationManager(config)
 

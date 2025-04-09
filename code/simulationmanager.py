@@ -436,8 +436,9 @@ class SimulationManager:
         Saver.save_plot(f"hist_peak_wavelength")'''
     
         # Generate Alice's choices
-        basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=np.array([1,0,1]), value=np.array([1,-1, 0]), decoy=np.array([0,0,0]))
+        # basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=np.array([1,0,1]), value=np.array([1,-1, 0]), decoy=np.array([0,0,0]))
         # basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=np.array([0,1]), value=np.array([-1, 0]), decoy=np.array([0,0]))
+        basis, value, decoy = self.simulation_engine.generate_alice_choices()
         print(f"basis: {basis[:10]}")
         print(f"value: {value[:10]}")
         print(f"decoy: {decoy[:10]}")

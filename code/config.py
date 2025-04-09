@@ -7,7 +7,7 @@ class SimulationConfig:
                  mean_photon_nr=0.7, mean_photon_decoy=0.1, 
                  fiber_attenuation = -3, detector_efficiency = 0.3, dark_count_frequency = 100, detection_time = 1e-9, detector_jitter = 100e-12, 
                  p_indep_x_states_non_dec=None, p_indep_x_states_dec=None,
-                 mlp = None, script_name = None
+                 mlp = None, script_name = None, job_id = None
                  ):
         # Input data
         self.data = data
@@ -67,6 +67,7 @@ class SimulationConfig:
         # mlp-style
         self.mlp = mlp
         self.script_name = script_name
+        self.job_id = job_id
 
     def to_dict(self):
         """Convert instance parameters to dictionary, excluding non-serializable objects."""
