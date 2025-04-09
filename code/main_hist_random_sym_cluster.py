@@ -11,6 +11,8 @@ import os
 import math
 from joblib import Parallel, delayed
 
+os.environ["OMP_NUM_THREADS"] = "1"
+os.environ["MKL_NUM_THREADS"] = "1"
 
 # Assuming Saver, DataManager, SimulationConfig, SimulationManager are already defined and imported
 
@@ -85,11 +87,11 @@ if __name__ == '__main__':
     database.add_jitter(jitter, 'laser')
     database.add_jitter(detector_jitter, 'detector')
 
-    max_concurrent_tasks = 32
+    max_concurrent_tasks = 16
     # How many simulations per batch (each batch runs sequentially inside one task)
     simulations_in_batch = 2  # adjust this to increase per-task workload
     # Total number of batches to run (total simulations = simulations_in_batch * total_batches)
-    total_batches = 50  # e.g., total simulations = 2 * 50 = 100  # 340 circa 4,5 stunden mit 2 sim per batch
+    total_batches = 100  # e.g., total simulations = 2 * 50 = 100  # 340 circa 4,5 stunden mit 2 sim per batch
 
     length_of_chain = 6*6 + 1
     bins_per_symbol_hist = 30

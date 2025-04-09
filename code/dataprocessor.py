@@ -27,13 +27,17 @@ class DataProcessor:
         # Loop over each cycle (repetition)
         for rep in range(n_rep):
             for s in range(length_of_chain):  # which symbol
-                row_idx = rep * length_of_chain + s
+                row_idx = rep * length_of_chain + s 
+                
                 if np.isin(row_idx, index_where_photons_det_x):
                     ind_short = np.where(index_where_photons_det_x == row_idx)[0]
                     valid_x = time_photons_det_x[ind_short][~np.isnan(time_photons_det_x[ind_short])]
                     bin_index = np.digitize(valid_x, bins_arr_per_symbol) - 1
                     # insert into histogram_counts_z with 30*symbol + bin_index 
                     print(f"bins_per_symbol:{bins_per_symbol}, s:{s}, bin_index:{bin_index}")
+                    idx = bins_per_symbol * s + bin_index
+                    if idx >= len(local_histogram_counts_z):
+                        print(f"Out of bounds: idx={idx}, len={len(local_histogram_counts_z)}, s={s}, bin_index={bin_index}")
                     local_histogram_counts_x[bins_per_symbol * s + bin_index] += 1
                 if np.isin(row_idx, index_where_photons_det_z):
                     ind_short = np.where(index_where_photons_det_z == row_idx)[0]
@@ -41,6 +45,9 @@ class DataProcessor:
                     bin_index = np.digitize(valid_z, bins_arr_per_symbol) - 1
                     # insert into histogram_counts_z with 30*symbol + bin_index 
                     print(f"bins_per_symbol:{bins_per_symbol}, s:{s}, bin_index:{bin_index}")
+                    idx = bins_per_symbol * s + bin_index
+                    if idx >= len(local_histogram_counts_z):
+                        print(f"Out of bounds: idx={idx}, len={len(local_histogram_counts_z)}, s={s}, bin_index={bin_index}")
                     local_histogram_counts_z[bins_per_symbol * s + bin_index] += 1
         return local_histogram_counts_x, local_histogram_counts_z
 

@@ -10,6 +10,7 @@ import datetime
 import inspect
 from scipy.fftpack import fft, ifft, fftfreq
 from scipy import constants
+import gc
 
 
 from saver import Saver
@@ -1165,6 +1166,7 @@ class SimulationManager:
                 lookup_array=lookup_array)
 
         print("Data saved to simulation_data.npz")
+        gc.collect()
         
         return None
     

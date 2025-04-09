@@ -12,6 +12,9 @@ import os
 import math
 from joblib import Parallel, delayed
 
+os.environ["OMP_NUM_THREADS"] = "1"
+os.environ["MKL_NUM_THREADS"] = "1"
+
 Saver.memory_usage("START of Simulation: Before everything")
 start_time = time.time()  # Record start time
 
@@ -33,13 +36,13 @@ database.add_jitter(detector_jitter, 'detector')
 # To be safe, use up to ~75% of 256 GB → ~192 GB usable.
 # Maximum concurrent simulations ≈ 192 / 6 ≈ 32.
 # Here we choose a conservative maximum number of parallel tasks.
-max_concurrent_tasks = 32
+max_concurrent_tasks = 16
 
 # How many simulations per batch (each batch runs sequentially inside one task)
 simulations_in_batch = 2  # adjust this to increase per-task workload
 
 # Total number of batches to run (total simulations = simulations_in_batch * total_batches)
-total_batches = 50  # e.g., total simulations = 2 * 50 = 100
+total_batches = 100  # e.g., total simulations = 2 * 50 = 100
 
 length_of_chain = 6*6 +1
 n_rep = 50
