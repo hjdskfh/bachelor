@@ -32,6 +32,7 @@ class DataProcessor:
                     ind_short = np.where(index_where_photons_det_x == row_idx)[0]
                     valid_x = time_photons_det_x[ind_short][~np.isnan(time_photons_det_x[ind_short])]
                     bin_index = np.digitize(valid_x, bins_arr_per_symbol) - 1
+                    bin_index = np.minimum(bin_index, bins_per_symbol - 1)  # Ensure it counts in the last bin if exactly time_one_symbol
                     # insert into histogram_counts_z with 30*symbol + bin_index 
                     idx_hist = bins_per_symbol * s + bin_index
                     if np.size(idx_hist) > 1:
@@ -40,12 +41,13 @@ class DataProcessor:
                     else:
                         if idx_hist >= len(local_histogram_counts_x):
                             print(f"Out of bounds: idx_hist={idx_hist}, len={len(local_histogram_counts_x)}, s={s}, bin_index={bin_index}")
-                    assert 0 <= bin_index < bins_per_symbol, f"bin_index {bin_index} out of bounds for symbol {s}"
+                    assert np.all(0 <= bin_index) and np.all(bin_index < bins_per_symbol), f"bin_index {bin_index} out of bounds for symbol {s}"
                     np.add.at(local_histogram_counts_x, idx_hist, 1)
                 if np.isin(row_idx, index_where_photons_det_z):
                     ind_short = np.where(index_where_photons_det_z == row_idx)[0]
                     valid_z = time_photons_det_z[ind_short][~np.isnan(time_photons_det_z[ind_short])]
                     bin_index = np.digitize(valid_z, bins_arr_per_symbol) - 1
+                    bin_index = np.minimum(bin_index, bins_per_symbol - 1)  # Ensure it counts in the last bin if exactly time_one_symbol
                     # insert into histogram_counts_z with 30*symbol + bin_index 
                     idx_hist = bins_per_symbol * s + bin_index
                     if np.size(idx_hist) > 1:
@@ -54,7 +56,7 @@ class DataProcessor:
                     else:
                         if idx_hist >= len(local_histogram_counts_z):
                             print(f"Out of bounds: idx_hist={idx_hist}, len={len(local_histogram_counts_z)}, s={s}, bin_index={bin_index}")
-                    assert 0 <= bin_index < bins_per_symbol, f"bin_index {bin_index} out of bounds for symbol {s}"
+                    assert np.all(0 <= bin_index) and np.all(bin_index < bins_per_symbol), f"bin_index {bin_index} out of bounds for symbol {s}"
                     np.add.at(local_histogram_counts_z, idx_hist, 1)
         return local_histogram_counts_x, local_histogram_counts_z
 

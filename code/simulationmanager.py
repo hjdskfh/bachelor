@@ -436,9 +436,9 @@ class SimulationManager:
         Saver.save_plot(f"hist_peak_wavelength")'''
     
         # Generate Alice's choices
-        # basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=np.array([1,0,1]), value=np.array([1,-1, 0]), decoy=np.array([0,0,0]))
+        basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=np.array([1,0,1]), value=np.array([1,-1, 0]), decoy=np.array([0,0,0]))
         # basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=np.array([0,1]), value=np.array([-1, 0]), decoy=np.array([0,0]))
-        basis, value, decoy = self.simulation_engine.generate_alice_choices()
+        # basis, value, decoy = self.simulation_engine.generate_alice_choices()
         print(f"basis: {basis[:10]}")
         print(f"value: {value[:10]}")
         print(f"decoy: {decoy[:10]}")
@@ -529,7 +529,9 @@ class SimulationManager:
 
         # Saver.memory_usage("before detector x: " + str(time.time() - start_time))
         time_photons_det_x, wavelength_photons_det_x, nr_photons_det_x, index_where_photons_det_x, calc_mean_photon_nr_detector_x, dark_count_times_x, num_dark_counts_x = self.simulation_engine.detector(t, norm_transmission, peak_wavelength, power_dampened, start_time)        
-
+        np.set_printoptions(threshold=np.inf)  # disable truncation
+        print(f"calc_mean_photon_nr_detector_x: {calc_mean_photon_nr_detector_x}")
+        print(f"calc_mean_photon_nr_detector_z: {calc_mean_photon_nr_detector_z}")
         print(f"nr_photons: {len(nr_photons_det_x)} {len(nr_photons_det_z)}")
         # plot so I can delete
         # self.plotter.plot_and_delete_mean_photon_histogram(calc_mean_photon_nr_detector_x, target_mean_photon_nr=None, type_photon_nr="Mean Photon Number at Detector X")
@@ -951,8 +953,8 @@ class SimulationManager:
 
         def laser_till_dli(T1_dampening):
             optical_power, peak_wavelength, chosen_voltage, chosen_current = self.simulation_engine.random_laser_output('current_power', 'voltage_shift', fixed = True)
-            # basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=np.array([1,0,1]), value=np.array([1,-1, 0]), decoy=np.array([0,0,0]))
-            basis, value, decoy = self.simulation_engine.generate_alice_choices(basis = np.array([0, 0, 0, 1, 1]), value = np.array([-1, -1, -1, 1, 1]), decoy = np.array([0, 0, 0, 0, 0]))
+            basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=np.array([1,0,1]), value=np.array([1,-1, 0]), decoy=np.array([0,0,0]))
+            # basis, value, decoy = self.simulation_engine.generate_alice_choices(basis = np.array([0, 0, 0, 1, 1]), value = np.array([-1, -1, -1, 1, 1]), decoy = np.array([0, 0, 0, 0, 0]))
             signals, t, _ = self.simulation_engine.signal_bandwidth_jitter(basis, value, decoy)
 
             power_dampened, norm_transmission,  calc_mean_photon_nr_eam, _ = self.simulation_engine.eam_transmission(signals, optical_power, T1_dampening, peak_wavelength, t)
