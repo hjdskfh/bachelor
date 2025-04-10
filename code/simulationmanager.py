@@ -60,66 +60,76 @@ class SimulationManager:
         Saver.save_plot('9_12_Z0dec_111aka1000d_voltage_and_transmission_for_4GHz_and_1e-11_jitter')
 
     def run_simulation_states(self):
-        T1_dampening = self.simulation_engine.initialize()
-        optical_power, peak_wavelength, chosen_voltage, chosen_current = self.simulation_single.random_laser_output_single('current_power', 'voltage_shift')
-        
+        T1_dampening = self.simulation_engine.initialize()        
+
         # Define the states and their corresponding arguments
         states = [
-            {"title": "State: Z0", "basis": 1, "value": 1, "decoy": 0},
-            {"title": "State: Z1", "basis": 1, "value": 0, "decoy": 0},
-            {"title": "State: X+", "basis": 0, "value": -1, "decoy": 0},
-            {"title": "State: Z0 decoy", "basis": 1, "value": 1, "decoy": 1},
-            {"title": "State: Z1 decoy", "basis": 1, "value": 0, "decoy": 1},
-            {"title": "State: X+ decoy", "basis": 0, "value": -1, "decoy": 1},
+            {"title": "State: Z0", "basis": np.array([1]), "value": np.array([1]), "decoy": np.array([0])},
+            {"title": "State: Z1", "basis": np.array([1]), "value": np.array([0]), "decoy": np.array([0])},
+            {"title": "State: X+", "basis": np.array([0]), "value": np.array([-1]), "decoy": np.array([0])},
+            {"title": "State: Z0 decoy", "basis": np.array([1]), "value": np.array([1]), "decoy": np.array([1])},
+            {"title": "State: Z1 decoy", "basis": np.array([1]), "value": np.array([0]), "decoy": np.array([1])},
+            {"title": "State: X+ decoy", "basis": np.array([0]), "value": np.array([-1]), "decoy": np.array([1])},
         ]
     
         def process_state(state):
-            # Generate Alice's choices
-            basis, value, decoy = self.simulation_single.generate_alice_choices_single(basis=state["basis"], value=state["value"], decoy=state["decoy"])
-            
-            # Simulate signal and transmission
-            voltage_signal, t_jitter, signals = self.simulation_single.signal_bandwidth_jitter_single(basis, value, decoy)
-            _, transmission = self.simulation_single.eam_transmission_single(voltage_signal, optical_power, T1_dampening)
-            
-            return state, t_jitter, voltage_signal, transmission, signals
+            optical_power, peak_wavelength, chosen_voltage, chosen_current = self.simulation_engine.random_laser_output('current_power', 'voltage_shift', fixed = True)
 
-        '''# Use ThreadPoolExecutor to process states in parallel
-        with ThreadPoolExecutor() as executor:
-            futures = [executor.submit(process_state, state) for state in states]
-            results = [future.result() for future in futures]
-            print(f"results len: {len(results)}")'''
+            basis, value, decoy = self.simulation_single.generate_alice_choices_single(basis=state["basis"], value=state["value"], decoy=state["decoy"])
+
+            signals, t, square_signals = self.simulation_engine.signal_bandwidth_jitter(basis, value, decoy)
+            power_dampened, norm_transmission, calc_mean_photon_nr, energy_per_pulse = self.simulation_engine.eam_transmission(signals, optical_power, T1_dampening, peak_wavelength, t)
+            
+            return state, t, signals, power_dampened, square_signals
+
 
         # Plotting results sequentially to avoid threading issues with Matplotlib
-        #for result in enumerate(results): #, desc="parameters", unit="parameters", leave = False, position=0):
         for state in states:
-            state, t_jitter, voltage_signal, transmission, signals = process_state(state)
+            state, t, signals, power_dampened, square_signals = process_state(state)
+            chosen_index = 10
+            fig, ax = plt.subplots(figsize=(8, 5))
+
+            # Plot voltage (left y-axis)
+            ax.plot(t * 1e9, signals[chosen_index], color='blue', label='Voltage Signal with Bandwidth')
+            ax.set_ylabel('Voltage (V)')
+
+            # Plot square signals (right y-axis)
+            ax.plot(t * 1e9, square_signals[chosen_index], color='green', label='Square Voltage Signal')
+            ax.set_ylabel('Voltage (V)')
+
+            # Titles and labels
+            ax.set_title(state["title"])
+            ax.set_xlabel('Time (ns)')
+
+            # Save or show the plot
+            Saver.save_plot(f"9_12_{state['title'].replace(' ', '_').replace(':', '').lower()}_voltage_and_transmission_for_4GHz_and_1e-11_jitter")
+
             fig, ax = plt.subplots(figsize=(8, 5))
             ax2 = ax.twinx()  # Create a second y-axis
 
             # Plot voltage (left y-axis)
-            ax.plot(t_jitter * 1e9, voltage_signal, color='blue', label='Voltage')
-            ax.set_ylabel('Voltage (V)', color='blue')
-            ax.tick_params(axis='y', labelcolor='blue')
+            ax.plot(t * 1e9, signals[chosen_index], color='blue', label='Voltage Signal with Bandwidth')
+            ax.set_ylabel('Voltage (V)')
+            ax.tick_params(axis='y')
 
-            # Plot voltage (left y-axis)
-            ax.plot(t_jitter * 1e9, signals, color='green', label='square voltage')
-            ax.set_ylabel('Voltage (V)', color='green')
-            ax.tick_params(axis='y', labelcolor='green')
+            # Plot square signals (right y-axis)
+            ax.plot(t * 1e9, square_signals[chosen_index], color='green', label='Square Voltage Signal')
+            ax.set_ylabel('Voltage (V)')
+            ax.tick_params(axis='y')
 
             # Plot transmission (right y-axis)
-            ax2.plot(t_jitter * 1e9, transmission, color='red', label='Transmission')
-            ax2.set_ylabel('Transmission', color='red')
-            ax2.tick_params(axis='y', labelcolor='red')
-
+            ax2.plot(t * 1e9, power_dampened[chosen_index], color='red', label='Optical Laser Pulse')
+            ax2.set_ylabel('Transmission')
+            ax2.tick_params(axis='y')
 
             # Titles and labels
             ax.set_title(state["title"])
-            ax.set_xlabel('Time in ns')
-            ax.grid(True)
+            ax.set_xlabel('Time (ns)')
 
             # Save or show the plot
             plt.tight_layout()
             Saver.save_plot(f"9_12_{state['title'].replace(' ', '_').replace(':', '').lower()}_voltage_and_transmission_for_4GHz_and_1e-11_jitter")
+
 
     def run_simulation_histograms(self):
         #initialize

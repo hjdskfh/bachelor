@@ -115,7 +115,7 @@ class SimulationHelper:
 
     def encode_pulse(self, value):
         """Return a binary pattern for a square pulse based on the given value"""
-        pattern = np.zeros((len(value), self.config.n_pulses), dtype=int)
+        pattern = np.zeros((self.config.n_samples, self.config.n_pulses), dtype=int) #hatte eig len(value)
         pattern[value == 1, 0] = 1
         pattern[value == 0, self.config.n_pulses // 2] = 1
         pattern[value == -1, 0] = 1
