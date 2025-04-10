@@ -228,17 +228,13 @@ class SimulationHelper:
     def choose_photons(self, norm_transmission, t, power_dampened, peak_wavelength, start_time, fixed_nr_photons=None):
         """Calculate and choose photons based on the transmission and jitter."""
         # Calculate the mean photon number
-        Saver.memory_usage("in choose photon before anything")
         energy_per_pulse = np.trapz(power_dampened, t, axis=1)
-        Saver.memory_usage("in choose photon after energy_per_pulse")
         # delete power_dampened
         del power_dampened
         gc.collect()
-        Saver.memory_usage("in choose photon after gc.collect")
         energy_one_photon = constants.h * constants.c / peak_wavelength
         calc_mean_photon_nr_detector = energy_per_pulse / energy_one_photon
         # Use Poisson distribution to get the number of photons
-        Saver.memory_usage("in choose photon after calc_mean_photon_nr_detector")
         nr_photons = fixed_nr_photons if fixed_nr_photons is not None else self.poisson_distr(calc_mean_photon_nr_detector)
         all_time_max_nr_photons = max(nr_photons)
             
@@ -660,5 +656,12 @@ class SimulationHelper:
         nr_photons = x[sampled_indices]
         return nr_photons
     
+# --------- check mean photon number at different points -----------
 
+    def calculate_mean_photon_number(self, power_dampened, peak_wavelength, t):
+        energy_per_pulse = np.trapz(power_dampened, t, axis=1)
+        energy_one_photon = constants.h * constants.c / peak_wavelength
+        calc_mean_photon_nr = energy_per_pulse / energy_one_photon
+
+        return calc_mean_photon_nr
 

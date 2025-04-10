@@ -29,7 +29,6 @@ class DataManager:
         x_max = df[column1].iloc[-1]  # Last element
 
         if do_inverse and parabola:
-            print(f"{name} in not mono loop")
             # Split the data into two parts: one for positive x, one for negative x
             positive_mask = df[column1] >= 0
             negative_mask = df[column1] < 0
@@ -48,9 +47,7 @@ class DataManager:
             y_vals_neg_sorted = y_vals_neg_sorted[::-1]
             # Reverse the negative values to make sure they are strictly increasing for the spline
             x_vals_neg_sorted = -x_vals_neg_sorted  # Multiply by -1 to reverse the direction
-
-            print(f"x_vals_neg_sorted which: {x_vals_neg_sorted}")
-
+            
             if not np.all(np.diff(x_vals_pos_sorted) > 0) or not np.all(np.diff(x_vals_neg_sorted) > 0):
                 raise ValueError("After sorting and reversing, x values should be strictly increasing.")
         
@@ -82,13 +79,20 @@ class DataManager:
             }
         
         '''# Plot the data
-        plt.figure(figsize=(10, 6))
-        plt.plot(df[column1], df[column2], label=name, marker='o', linestyle='-', color='b')
+        title = ''
+        if name == 'voltage_shift':
+            title = 'Wavelength Shift depending on Voltage of Heater'
+        if name == 'current_power':
+            title = 'Optical Power depending on Current of Laser Diode'
+        if name == 'eam_transmission':
+            title = 'Optical Transmission depending on Voltage given to the EAM'
+        if name == 'wavelength_neff':
+            title = 'Effective Refractive Index in Fiber depending on Wavelength'
+        plt.plot(df[column1], df[column2], marker='o')
         plt.xlabel(column1)
         plt.ylabel(column2)
-        plt.title(f'{name} Data Plot')
+        plt.title(f'{title}')
         plt.grid(True)
-        plt.legend()
         Saver.save_plot(f'{name}_data_plot.png')'''
     
     def add_jitter(self, jitter, name): #Gaussian

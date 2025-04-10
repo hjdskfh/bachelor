@@ -1,0 +1,35 @@
+function_used: run_simulation_detection_tester
+n_samples: 2000
+seed: 344715
+non_signal_voltage: -1.1
+voltage_decoy: -0.17850015461444851
+voltage: -0.1
+voltage_decoy_sup: -0.4175719827413558
+voltage_sup: -0.3769288271665573
+p_indep_x_states_non_dec: None
+p_indep_x_states_dec: None
+p_vacuum_z: 0.9866518353726362
+len_vacuum_indices_x_long: 1996
+len_Z_checked_dec: 12
+len_Z_checked_non_dec: 12
+XP_calc_non_dec: 0.0
+XP_calc_dec: 0.0
+gain_Z_non_dec: 0.009448818897637795
+gain_Z_dec: 0.022727272727272728
+gain_X_non_dec: 0.0
+gain_X_dec: 0.0
+wrong_detections_z_dec: [ 0  5  8 10 12 14 20 22 23]
+wrong_detections_z_non_dec: [ 1  2  3  4  6  7  9 11 13 15 16 17 18 19 21]
+wrong_detections_x_dec: []
+wrong_detections_x_non_dec: []
+len_wrong_z_dec: 9
+len_wrong_z_non_dec: 15
+len_wrong_x_dec: 0
+len_wrong_x_non_dec: 0
+qber_z_dec: 0.75
+qber_z_non_dec: 1.25
+qber_x_dec: -999
+qber_x_non_dec: -999
+raw_key_rate: 19509022.923101936
+total_amount_detections: 24.0
+execution_time_run: 19.149479627609253

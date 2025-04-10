@@ -88,10 +88,6 @@ class SimulationConfig:
             print("Error: n_samples must be positive.")
         if self.n_pulses <= 0 or self.n_pulses % 2 != 0:
             print("Error: n_pulses must be positive and even.")
-        if self.mean_voltage < 0:
-            print("Error: mean_voltage must be positive.")
-        if self.mean_current < 0:
-            print("Error: mean_current must be positive.")
         if self.current_amplitude < 0:
             print("Error: current_amplitude must be positive.")
         if not (0 <= self.p_z_alice <= 1):

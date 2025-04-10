@@ -304,32 +304,38 @@ class SimulationEngine:
 
         # calculate darkcount
         dark_count_times, num_dark_counts = self.simulation_helper.darkcount()
+        print(f"Rows with all NaN in time_photons_det: {np.isnan(time_photons_det).all(axis=1).sum()}")
 
         return time_photons_det, wavelength_photons_det, nr_photons_det, index_where_photons_det, calc_mean_photon_nr_detector, dark_count_times, num_dark_counts
     
     def classificator_new(self, t, time_photons_det_x, index_where_photons_det_x, time_photons_det_z, index_where_photons_det_z, basis, value, decoy):
         """Classify time bins."""
-        num_segments = self.config.n_pulses // 2
-        timebins = np.linspace(t[-1] / num_segments, t[-1], num_segments)        
-        
+        midpoint = t[-1] / 2  # Midpoint for classification
         detected_indices_z = np.where(
             np.isnan(time_photons_det_z),                                         # Check for NaN values
             -1,                                                                 # Assign -1 for undetected photons
-            np.digitize(time_photons_det_z, timebins) - 1                         # Early = 0, Late = 1
+            np.where(time_photons_det_z < midpoint, 0, 1)  # else, go deeper                         # Early = 0, Late = 1
             )
         
         detected_indices_x = np.where(
             np.isnan(time_photons_det_x),                                         # Check for NaN values
             -1,                                                                 # Assign -1 for undetected photons
-            np.digitize(time_photons_det_x, timebins) - 1                         # Early = 0, Late = 1
+            np.where(time_photons_det_x < midpoint, 0, 1)  # else, go deeper                        # Early = 0, Late = 1
             )
         
         detected_indices_z_det_z_basis, p_vacuum_z, total_sift_z_basis_short, \
         indices_z_long, mask_z_short, get_original_indexing_z = self.simulation_helper.classificator_sift_z_vacuum(basis, detected_indices_z, index_where_photons_det_z)
-        
         detected_indices_x_det_x_basis, total_sift_x_basis_long, vacuum_indices_x_long, \
         indices_x_long, mask_x_short, get_original_indexing_x = self.simulation_helper.classificator_sift_x_vacuum(basis, detected_indices_x, index_where_photons_det_x)
-        
+        with np.printoptions(threshold=np.inf):
+            print(f"time_photons_det_x: {time_photons_det_x}")
+            len(f"time_photons_det_x: {len(time_photons_det_x)}")
+            print(f"detected_indices_x: {detected_indices_x}")
+            print(f"detected_indices_x shape: {detected_indices_x.shape}")
+            print("index_where_photons_det_x: ", index_where_photons_det_x)
+            print(f"detected_indices_x_det_x_basis: {detected_indices_x_det_x_basis}")
+            print(f"get_original_indexing_x: {get_original_indexing_x}")
+            print(f"XP_alice_s {np.where((basis == 0) & (decoy == 1))[0]}")
         gain_Z_non_dec, gain_Z_dec, len_Z_checked_dec, len_Z_checked_non_dec = self.simulation_helper.classificator_identify_z(mask_x_short, value, total_sift_z_basis_short, 
                                                                                                                                detected_indices_x_det_x_basis, index_where_photons_det_z, decoy, indices_z_long, get_original_indexing_z, get_original_indexing_x)
 

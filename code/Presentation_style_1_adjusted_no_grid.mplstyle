@@ -1,7 +1,7 @@
 axes.titlesize : 14
 axes.labelsize : 11
 lines.linewidth : 3    # lines.marker : o
-lines.markersize : 6
+lines.markersize : 4
 xtick.labelsize : 11
 ytick.labelsize : 11
 errorbar.capsize: 5
