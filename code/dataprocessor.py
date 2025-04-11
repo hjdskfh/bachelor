@@ -71,15 +71,15 @@ class DataProcessor:
         width = (bins[1] - bins[0])
         plt.bar(bins[:-1], histogram_counts_x[start_symbol * bins_per_symbol :(end_symbol + 1) * bins_per_symbol], width=width, alpha=0.6, label='X basis', color='blue')
         plt.bar(bins[:-1], histogram_counts_z[start_symbol * bins_per_symbol :(end_symbol + 1) * bins_per_symbol], width=width, alpha=0.6, label='Z basis', color='red')
+        
         for i in range(amount_of_symbols_incl_start_and_end):
             plt.axvline(x=i * time_one_symbol, color='grey', linestyle='--', linewidth=1)
 
             # Place the symbol halfway between this line and the next
-            if i < amount_of_symbols_incl_start_and_end - 1:
+            if i < amount_of_symbols_incl_start_and_end:
                 x_mid = i * time_one_symbol + time_one_symbol / 2
                 symbol = lookup_arr[start_symbol + i]
                 y_max = max(max(histogram_counts_x), max(histogram_counts_z))
-                x_mid = i * time_one_symbol + time_one_symbol / 2
                 basis = symbol[0]  # assuming symbol is like 'X0' or 'Z1'
                 color = 'green' if basis == 'X' else 'purple'
 

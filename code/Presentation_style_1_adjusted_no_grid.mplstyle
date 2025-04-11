@@ -12,6 +12,7 @@ figure.frameon:     True
 # figure.raise_window : True
 
 legend.fancybox : True
+legend.fontsize : small
 xtick.bottom:        True
 xtick.labelbottom:   True
 xtick.major.size:    3.5

@@ -127,7 +127,7 @@ if __name__ == '__main__':
                                global_histogram_counts_x, global_histogram_counts_z,
                                final_lookup_array, total_symbols, start_symbol=3, end_symbol=10, name="random")
 
-    Saver.save_array_as_npz("histograms_all_pairs",
+    Saver.save_array_as_npz("histograms_random",
                             histogram_counts_x=global_histogram_counts_x,
                             histogram_counts_z=global_histogram_counts_z)
 

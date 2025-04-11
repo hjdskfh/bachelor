@@ -1,0 +1,35 @@
+function_used: run_simulation_classificator
+n_samples: 20000
+seed: 828608
+non_signal_voltage: -1.2
+voltage_decoy: -0.745242926478386
+voltage: -0.2
+voltage_decoy_sup: -0.8355372935533523
+voltage_sup: -0.4324394613504409
+p_indep_x_states_non_dec: None
+p_indep_x_states_dec: None
+p_vacuum_z: 0.9131832797427653
+len_vacuum_indices_x_long: 19870
+len_Z_checked_dec: 12
+len_Z_checked_non_dec: 424
+XP_calc_non_dec: 8.0
+XP_calc_dec: 0.0
+gain_Z_non_dec: 0.047459144839937316
+gain_Z_dec: 0.011787819253438114
+gain_X_non_dec: 0.0008881980681692017
+gain_X_dec: 0.0
+wrong_detections_z_dec: [2 6]
+wrong_detections_z_non_dec: [ 0  1  3  4  5  7  8  9 10 11]
+wrong_detections_x_dec: []
+wrong_detections_x_non_dec: []
+len_wrong_z_dec: 2
+len_wrong_z_non_dec: 10
+len_wrong_x_dec: 0
+len_wrong_x_non_dec: 0
+qber_z_dec: 0.16666666666666666
+qber_z_non_dec: 0.02358490566037736
+qber_x_dec: -999
+qber_x_non_dec: 0.0
+raw_key_rate: 36091692.40773858
+total_amount_detections: 444.0
+execution_time_run: 164.67151594161987

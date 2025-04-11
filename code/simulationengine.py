@@ -1,3 +1,4 @@
+from hmac import new
 from random import sample
 from re import A
 from matplotlib.image import resample
@@ -97,20 +98,23 @@ class SimulationEngine:
         jitter_shifts = self.simulation_helper.get_jitter('laser', size_jitter = self.config.n_samples * self.config.n_pulses)
         pulse_duration = 1 / self.config.sampling_rate_FPGA
         sampling_rate_fft = 100e11
-        t, signals = self.simulation_helper.generate_encoded_pulse(pulse_heights, pulse_duration, values, sampling_rate_fft)
-        #plt.plot(signals[0], label = 'before everything')
-        #plt.legend()
+        t, square_signals = self.simulation_helper.generate_encoded_pulse(pulse_heights, pulse_duration, values, sampling_rate_fft)
+        signals = square_signals.copy()
         indexshift = len(t) // self.config.n_pulses // 2
         new_save_shift = np.empty(indexshift)
         old_save_shift = np.ones(indexshift) * self.config.non_signal_voltage
+        new_save_shift_square = np.empty(indexshift)
+        old_save_shift_square = np.ones(indexshift) * self.config.non_signal_voltage
 
         for i in range(0, len(values), self.config.batchsize):
             signals_batch = signals[i:i + self.config.batchsize, :]
+            square_signals_batch = square_signals[i:i + self.config.batchsize, :]
             flattened_signals_batch = signals_batch.reshape(-1)
+            square_signals_batch = square_signals_batch.reshape(-1)
 
             flattened_signals_batch = self.simulation_helper.apply_jitter_to_pulse(t, flattened_signals_batch, jitter_shifts[self.config.n_pulses * i:self.config.n_pulses *(i + self.config.batchsize)])
 
-            if i == 0:
+            '''if i == 0:
                 amount_symbols_in_plot = 3
                 pulse_duration = 1 / self.config.sampling_rate_FPGA
                 sampling_rate_fft = 100e11
@@ -118,7 +122,7 @@ class SimulationEngine:
                 total_samples = self.config.n_pulses * samples_per_pulse
                 t_plot1 = np.linspace(0, amount_symbols_in_plot * self.config.n_pulses * pulse_duration, amount_symbols_in_plot * total_samples, endpoint=False)
                 # print(f"shape flattened_signals_batch: {flattened_signals_batch.shape}")
-                '''plt.plot(t_plot1 * 1e9, flattened_signals_batch[:len(t) * amount_symbols_in_plot])
+                plt.plot(t_plot1 * 1e9, flattened_signals_batch[:len(t) * amount_symbols_in_plot])
                 print(f"basis[:amount], value[:amount], decoy[:amount]: {basis[:amount_symbols_in_plot]}, {values[:amount_symbols_in_plot]}, {decoy[:amount_symbols_in_plot]}")
                 for k in range(amount_symbols_in_plot + 1):
                     plt.axvline(t_plot1[-1] * 1e9 * (k) / (amount_symbols_in_plot), label=f'Target Mean Photon Number {i+1}', color = 'darkgreen')
@@ -126,26 +130,36 @@ class SimulationEngine:
                 plt.xlabel('Time (ns)')
                 plt.ylabel('Volt (V)')
                 Saver.save_plot(f"square_signal")'''
-
+            # roll for better detection
             flattened_signals_batch = np.roll(flattened_signals_batch, indexshift)
             new_save_shift = flattened_signals_batch[:indexshift]
             flattened_signals_batch[: indexshift] = old_save_shift
             old_save_shift = new_save_shift
+
+            # also roll square_signals_batch for comparison
+            square_signals_batch = np.roll(square_signals_batch, indexshift)
+            new_save_shift_square = square_signals_batch[:indexshift]
+            square_signals_batch[: indexshift] = old_save_shift_square
+            old_save_shift_square = new_save_shift_square
             
             flattened_signals_batch = self.simulation_helper.apply_bandwidth_filter(flattened_signals_batch, sampling_rate_fft)
             '''print(f"shape flattened_signals_batch: {flattened_signals_batch.shape}")
             plt.plot(flattened_signals_batch[:len(t)*3], label = 'BW')
             plt.show()'''
 
+            # reshape so one can write back into matrix
             flattened_signals_batch = flattened_signals_batch.reshape(self.config.batchsize, len(t))
             signals[i:i + self.config.batchsize, :] = flattened_signals_batch
+            square_signals_batch = square_signals_batch.reshape(self.config.batchsize, len(t))
+            square_signals[i:i + self.config.batchsize, :] = square_signals_batch
+
           
             '''plt.legend()
             Saver.save_plot('without_bandwidth')
             plt.plot(filtered_signals[:6*len(t)], label = 'ende')
             Saver.save_plot('with_bandwidth')'''
             
-        return signals, t, jitter_shifts
+        return signals, t, square_signals
 
     def eam_transmission(self, voltage_signal, optical_power, T1_dampening, peak_wavelength, t):
         """fastest? prob not: Calculate the transmission and power for all elements in the arrays."""
@@ -328,14 +342,14 @@ class SimulationEngine:
         detected_indices_x_det_x_basis, total_sift_x_basis_long, vacuum_indices_x_long, \
         indices_x_long, mask_x_short, get_original_indexing_x = self.simulation_helper.classificator_sift_x_vacuum(basis, detected_indices_x, index_where_photons_det_x)
         with np.printoptions(threshold=np.inf):
-            print(f"time_photons_det_x: {time_photons_det_x}")
+            print(f"time_photons_det_x part: {time_photons_det_x[:10]}")
             len(f"time_photons_det_x: {len(time_photons_det_x)}")
-            print(f"detected_indices_x: {detected_indices_x}")
+            print(f"detected_indices_x part: {detected_indices_x[:10]}")
             print(f"detected_indices_x shape: {detected_indices_x.shape}")
-            print("index_where_photons_det_x: ", index_where_photons_det_x)
+            print("index_where_photons_det_x part: ", index_where_photons_det_x[:10])
             print(f"detected_indices_x_det_x_basis: {detected_indices_x_det_x_basis}")
-            print(f"get_original_indexing_x: {get_original_indexing_x}")
-            print(f"XP_alice_s {np.where((basis == 0) & (decoy == 1))[0]}")
+            print(f"get_original_indexing_x part: {get_original_indexing_x[:10]}")
+            print(f"XP_alice_s part {np.where((basis == 0) & (decoy == 1))[0][:10]}")
         gain_Z_non_dec, gain_Z_dec, len_Z_checked_dec, len_Z_checked_non_dec = self.simulation_helper.classificator_identify_z(mask_x_short, value, total_sift_z_basis_short, 
                                                                                                                                detected_indices_x_det_x_basis, index_where_photons_det_z, decoy, indices_z_long, get_original_indexing_z, get_original_indexing_x)
 

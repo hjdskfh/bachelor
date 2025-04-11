@@ -52,7 +52,7 @@ simulations_in_batch = 2  # adjust this to increase per-task workload
 total_batches = 100  # e.g., total simulations = 2 * 50 = 100
 
 length_of_chain = 6*6 +1
-n_rep = 50
+n_rep = 500
 bins_per_symbol_hist = 30
 amount_bins_hist = bins_per_symbol_hist * length_of_chain
 
@@ -173,7 +173,7 @@ DataProcessor.plot_histogram_batch(bins_per_symbol_hist, final_time_one_symbol,
                            global_histogram_counts_x, global_histogram_counts_z,
                            final_lookup_arr, total_symbols, start_symbol=3, end_symbol=10, name="fixed")
 
-Saver.save_array_as_npz("histograms",
+Saver.save_array_as_npz("histograms_fixed",
                         histogram_counts_x=global_histogram_counts_x,
                         histogram_counts_z=global_histogram_counts_z)
 

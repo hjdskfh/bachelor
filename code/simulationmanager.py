@@ -1,4 +1,5 @@
 from codecs import lookup
+from turtle import color
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator
@@ -27,43 +28,21 @@ class SimulationManager:
         self.simulation_single = SimulationSingle(config)
         self.simulation_helper = SimulationHelper(config)
         self.plotter = Plotter(config)
-    
-    def run_simulation_one_state(self):
-        
-        T1_dampening = self.simulation_engine.initialize()
-        optical_power, peak_wavelength, chosen_voltage, chosen_current = self.simulation_single.random_laser_output_single('current_power','voltage_shift')
-        
-        basis, value, decoy = self.simulation_single.generate_alice_choices_single(basis = 0, value = 0, decoy = 0)
-        signals, t, _ = self.simulation_single.signal_bandwidth_single(basis, value, decoy)
-        _, transmission = self.simulation_single.eam_transmission_single(signals, optical_power, T1_dampening)
-
-        fig, ax = plt.subplots(figsize=(8, 5))
-        ax2 = ax.twinx()  # Create a second y-axis
-        
-        # Plot voltage (left y-axis)
-        ax.plot(t *1e9, signals, color='blue', label='Voltage', linestyle='-', marker='o', markersize=1)
-        ax.set_ylabel('Voltage (V)', color='blue')
-        ax.tick_params(axis='y', labelcolor='blue')
-
-        # Plot transmission (right y-axis)
-        ax2.plot(t * 1e9, transmission, color='red', label='Transmission', linestyle='-', marker='o', markersize=1)
-        ax2.set_ylabel('Transmission', color='red')
-        ax2.tick_params(axis='y', labelcolor='red')
-    
-        # Titles and labels
-        ax.set_title(f"State: Z0")
-        ax.set_xlabel('Time in ns')
-        ax.grid(True)
-
-        # Save or show the plot
-        plt.tight_layout()
-        Saver.save_plot('9_12_Z0dec_111aka1000d_voltage_and_transmission_for_4GHz_and_1e-11_jitter')
 
     def run_simulation_states(self):
         T1_dampening = self.simulation_engine.initialize()        
-
-        # Define the states and their corresponding arguments
+        
         states = [
+                {"title": "State: Z0", "basis": 1, "value": 1, "decoy": 0},
+                {"title": "State: Z1", "basis": 1, "value": 0, "decoy": 0},
+                {"title": "State: X+", "basis": 0, "value": -1, "decoy": 0},
+                {"title": "State: Z0 decoy", "basis": 1, "value": 1, "decoy": 1},
+                {"title": "State: Z1 decoy", "basis": 1, "value": 0, "decoy": 1},
+                {"title": "State: X+ decoy", "basis": 0, "value": -1, "decoy": 1},
+                ]
+        
+        # Define the states and their corresponding arguments
+        other_states = [
             {"title": "State: Z0", "basis": np.array([1]), "value": np.array([1]), "decoy": np.array([0])},
             {"title": "State: Z1", "basis": np.array([1]), "value": np.array([0]), "decoy": np.array([0])},
             {"title": "State: X+", "basis": np.array([0]), "value": np.array([-1]), "decoy": np.array([0])},
@@ -75,7 +54,7 @@ class SimulationManager:
         def process_state(state):
             optical_power, peak_wavelength, chosen_voltage, chosen_current = self.simulation_engine.random_laser_output('current_power', 'voltage_shift', fixed = True)
 
-            basis, value, decoy = self.simulation_single.generate_alice_choices_single(basis=state["basis"], value=state["value"], decoy=state["decoy"])
+            basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=state["basis"], value=state["value"], decoy=state["decoy"])
 
             signals, t, square_signals = self.simulation_engine.signal_bandwidth_jitter(basis, value, decoy)
             power_dampened, norm_transmission, calc_mean_photon_nr, energy_per_pulse = self.simulation_engine.eam_transmission(signals, optical_power, T1_dampening, peak_wavelength, t)
@@ -100,36 +79,41 @@ class SimulationManager:
             # Titles and labels
             ax.set_title(state["title"])
             ax.set_xlabel('Time (ns)')
+            ax.legend()
 
             # Save or show the plot
-            Saver.save_plot(f"9_12_{state['title'].replace(' ', '_').replace(':', '').lower()}_voltage_and_transmission_for_4GHz_and_1e-11_jitter")
+            Saver.save_plot(f"{state['title'].replace(' ', '_').replace(':', '').lower()}_voltage_and_square")
 
-            fig, ax = plt.subplots(figsize=(8, 5))
+            fig, ax = plt.subplots(figsize=(8, 5)) #8, 5
             ax2 = ax.twinx()  # Create a second y-axis
 
             # Plot voltage (left y-axis)
-            ax.plot(t * 1e9, signals[chosen_index], color='blue', label='Voltage Signal with Bandwidth')
-            ax.set_ylabel('Voltage (V)')
-            ax.tick_params(axis='y')
+            ax.plot(t * 1e9, signals[chosen_index], color='blue', label='Signal incl. BW')
+            ax.set_ylabel('Voltage (V)', color='blue')
+            ax.tick_params(axis='y', labelcolor='blue')
 
             # Plot square signals (right y-axis)
-            ax.plot(t * 1e9, square_signals[chosen_index], color='green', label='Square Voltage Signal')
-            ax.set_ylabel('Voltage (V)')
-            ax.tick_params(axis='y')
+            ax.plot(t * 1e9, square_signals[chosen_index], color='lightblue', label='Square Signal')
+            ax.set_ylabel('Voltage (V)', color='blue')
+            ax.tick_params(axis='y', labelcolor='blue')
 
             # Plot transmission (right y-axis)
-            ax2.plot(t * 1e9, power_dampened[chosen_index], color='red', label='Optical Laser Pulse')
-            ax2.set_ylabel('Transmission')
-            ax2.tick_params(axis='y')
+            ax2.plot(t * 1e9, power_dampened[chosen_index], color='red', label='Laser Pulse')
+            ax2.set_ylabel('Transmission', color='red')
+            ax2.tick_params(axis='y', labelcolor='red')
 
             # Titles and labels
             ax.set_title(state["title"])
             ax.set_xlabel('Time (ns)')
 
             # Save or show the plot
-            plt.tight_layout()
-            Saver.save_plot(f"9_12_{state['title'].replace(' ', '_').replace(':', '').lower()}_voltage_and_transmission_for_4GHz_and_1e-11_jitter")
-
+            lines, labels = ax.get_legend_handles_labels()  # Get handles and labels from the first axis
+            lines2, labels2 = ax2.get_legend_handles_labels()  # Get handles and labels from the second axis
+            if state["basis"] == 0:
+                ax.legend(lines + lines2, labels + labels2, loc='upper center')  # Combine and add the legend
+            else:
+                ax.legend(lines + lines2, labels + labels2)
+            Saver.save_plot(f"{state['title'].replace(' ', '_').replace(':', '').lower()}_voltage_square_transmission")
 
     def run_simulation_histograms(self):
         #initialize
@@ -437,7 +421,6 @@ class SimulationManager:
         # print(f"p_indep_x_states_dec: {self.config.p_indep_x_states_dec}")'''
 
         optical_power, peak_wavelength, chosen_voltage, chosen_current = self.simulation_engine.random_laser_output('current_power', 'voltage_shift', fixed = True)
-        print(f"peak_wavelength: {peak_wavelength}")
         # Create a histogram
         '''plt.hist(peak_wavelength *1e9, bins=10)  # bins=10 is just an example; adjust as needed
         plt.xlabel('Peak Wavelength (nm)')
@@ -446,7 +429,8 @@ class SimulationManager:
         Saver.save_plot(f"hist_peak_wavelength")'''
     
         # Generate Alice's choices
-        basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=np.array([1,0,1]), value=np.array([1,-1, 0]), decoy=np.array([0,0,0]))
+        basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=np.array([1, 0, 0, 1, 1, 0, 0, 1]), value=np.array([1, -1, -1, 0, 1, -1, -1, 0]), decoy=np.array([0, 0, 0, 0, 1, 1, 1, 1]))
+        # basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=np.array([1,0,1]), value=np.array([1,-1, 0]), decoy=np.array([0,0,0]))
         # basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=np.array([0,1]), value=np.array([-1, 0]), decoy=np.array([0,0]))
         # basis, value, decoy = self.simulation_engine.generate_alice_choices()
         print(f"basis: {basis[:10]}")
@@ -527,7 +511,6 @@ class SimulationManager:
         print("power_dampened.shape:", power_dampened.shape)'''
 
         # DLI
-        print(f"important shares memory?: {np.shares_memory(first_power, power_dampened)}")  # True means it's a view
         power_dampened, f_0 = self.simulation_engine.delay_line_interferometer(power_dampened, t, peak_wavelength, value)
 
         # plot
@@ -540,8 +523,8 @@ class SimulationManager:
         # Saver.memory_usage("before detector x: " + str(time.time() - start_time))
         time_photons_det_x, wavelength_photons_det_x, nr_photons_det_x, index_where_photons_det_x, calc_mean_photon_nr_detector_x, dark_count_times_x, num_dark_counts_x = self.simulation_engine.detector(t, norm_transmission, peak_wavelength, power_dampened, start_time)        
         np.set_printoptions(threshold=np.inf)  # disable truncation
-        print(f"calc_mean_photon_nr_detector_x: {calc_mean_photon_nr_detector_x}")
-        print(f"calc_mean_photon_nr_detector_z: {calc_mean_photon_nr_detector_z}")
+        print(f"calc_mean_photon_nr_detector_x part: {calc_mean_photon_nr_detector_x[:10]}")
+        print(f"calc_mean_photon_nr_detector_z part: {calc_mean_photon_nr_detector_z[:10]}")
         print(f"nr_photons: {len(nr_photons_det_x)} {len(nr_photons_det_z)}")
         # plot so I can delete
         # self.plotter.plot_and_delete_mean_photon_histogram(calc_mean_photon_nr_detector_x, target_mean_photon_nr=None, type_photon_nr="Mean Photon Number at Detector X")
@@ -554,8 +537,16 @@ class SimulationManager:
                                                                                                             time_photons_det_z, index_where_photons_det_z, 
                                                                                                             basis, value, decoy)
         '''
-        p_vacuum_z, vacuum_indices_x_long, len_Z_checked_dec, len_Z_checked_non_dec, gain_Z_non_dec, gain_Z_dec, gain_X_non_dec, gain_X_dec, X_P_calc_non_dec, X_P_calc_dec, wrong_detections_z_dec, wrong_detections_z_non_dec, wrong_detections_x_dec, wrong_detections_x_non_dec, qber_z_dec, qber_z_non_dec, qber_x_dec, qber_x_non_dec, raw_key_rate, total_amount_detections = self.simulation_engine.classificator_new(t, time_photons_det_x, index_where_photons_det_x, time_photons_det_z, index_where_photons_det_z, basis, value, decoy)
+        p_vacuum_z, vacuum_indices_x_long, len_Z_checked_dec, len_Z_checked_non_dec, \
+        gain_Z_non_dec, gain_Z_dec, gain_X_non_dec, gain_X_dec, X_P_calc_non_dec, \
+        X_P_calc_dec, wrong_detections_z_dec, wrong_detections_z_non_dec, wrong_detections_x_dec, \
+        wrong_detections_x_non_dec, qber_z_dec, qber_z_non_dec, qber_x_dec, qber_x_non_dec, raw_key_rate, \
+        total_amount_detections = self.simulation_engine.classificator_new(t, time_photons_det_x, index_where_photons_det_x, time_photons_det_z, index_where_photons_det_z, basis, value, decoy)
 
+        Z0_alice_s = np.where((basis == 1) & (value == 1) & (decoy == 1))[0]  # Indices where Z0 was sent
+        XP_alice_s = np.where((basis == 0) & (decoy == 1))[0]  # Indices where XP was sent
+        Z0_XP_alice_s = XP_alice_s[np.isin(XP_alice_s - 1, Z0_alice_s)]  # Indices where Z1Z0 was sent
+        print(f"calc_mean_photon_nr_detector_x bei index XP erste wenn Z0X+: {calc_mean_photon_nr_detector_x[Z0_XP_alice_s]}")
         # plot so I can delete
         # self.plotter.plot_and_delete_photon_time_histogram(time_photons_det_x, time_photons_det_z)
 
