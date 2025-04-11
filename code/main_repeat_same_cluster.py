@@ -34,7 +34,7 @@ n_samples_set = 20000
 # To be safe, use up to ~75% of 256 GB → ~192 GB usable.
 # Maximum concurrent simulations ≈ 192 / 6 ≈ 32.
 # Here we choose a conservative maximum number of parallel tasks.
-max_concurrent_tasks = 32
+max_concurrent_tasks = 16
 
 # How many simulations per batch (each batch runs sequentially inside one task)
 simulations_in_batch = 2  # adjust this to increase per-task workload

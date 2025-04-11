@@ -174,8 +174,13 @@ DataProcessor.plot_histogram_batch(bins_per_symbol_hist, final_time_one_symbol,
                            final_lookup_arr, total_symbols, start_symbol=3, end_symbol=10, name="fixed")
 
 Saver.save_array_as_npz("histograms_fixed",
-                        histogram_counts_x=global_histogram_counts_x,
-                        histogram_counts_z=global_histogram_counts_z)
+                        bins_per_symbol_hist=bins_per_symbol_hist,
+                        final_time_one_symbol=final_time_one_symbol,
+                        global_histogram_counts_x=global_histogram_counts_x,
+                        global_histogram_counts_z=global_histogram_counts_z,
+                        final_lookup_array=final_lookup_arr,
+                        total_symbols=total_symbols,
+                        )
 
 # --- Timing ---
 end_time_simulation = time.time()

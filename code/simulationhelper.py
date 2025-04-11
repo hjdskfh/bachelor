@@ -532,8 +532,8 @@ class SimulationHelper:
             gain_X_dec = X_P_calc_dec / len(ind_x_sent_dec_long)
         else:
             gain_X_dec = -999 #raise ValueError("No Z decoy sent detected")
-
-        return X_P_calc_non_dec, X_P_calc_dec, gain_X_non_dec, gain_X_dec, Z0_XP_alice_s
+        print(f"Returning: {X_P_calc_non_dec}, {X_P_calc_dec}, {gain_X_non_dec}, {gain_X_dec}")
+        return X_P_calc_non_dec, X_P_calc_dec, gain_X_non_dec, gain_X_dec
     
     def classificator_identify_x_calc_p_indep_states_x(self, mask_x_short, detected_indices_x_det_x_basis):
         if mask_x_short.size == 0:

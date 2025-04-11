@@ -128,7 +128,11 @@ if __name__ == '__main__':
                                final_lookup_array, total_symbols, start_symbol=3, end_symbol=10, name="random")
 
     Saver.save_array_as_npz("histograms_random",
-                            histogram_counts_x=global_histogram_counts_x,
-                            histogram_counts_z=global_histogram_counts_z)
+                            bins_per_symbol_hist=bins_per_symbol_hist,
+                            final_time_one_symbol=final_time_one_symbol,
+                            global_histogram_counts_x=global_histogram_counts_x,
+                            global_histogram_counts_z=global_histogram_counts_z,
+                            final_lookup_array=final_lookup_array,
+                            total_symbols=total_symbols)
 
     print(f"Execution time for simulation: {time.time() - start_time:.9f} seconds")

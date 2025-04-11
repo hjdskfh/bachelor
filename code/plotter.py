@@ -127,7 +127,7 @@ class Plotter:
         # Formatting title and labels
         plt.title(f"{type_photon_nr} over {self.config.n_samples} Iterations")
         plt.ylabel('Counts')
-        plt.xlabel(r'$\Delta \langle \mu \rangle$')
+        plt.xlabel(f"$\Delta \langle \mu \rangle$")
 
         # Ensure y-axis is integer-labeled
         plt.gca().yaxis.set_major_locator(MaxNLocator(integer=True))
