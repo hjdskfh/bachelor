@@ -161,6 +161,10 @@ final_lookup_arr = None
 for local_hist_x, local_hist_z, time_one_symbol, lookup_arr in results:
     global_histogram_counts_x += local_hist_x
     global_histogram_counts_z += local_hist_z
+    if final_time_one_symbol is None:
+        final_time_one_symbol = time_one_symbol  # Set the time_one_symbol from the first result
+    if final_lookup_arr is None:
+        final_lookup_arr = lookup_arr
     
 # --- Plot and Save Results ---
 total_symbols = int(length_of_chain*n_rep) * simulations_in_batch * total_batches
