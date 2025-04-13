@@ -393,7 +393,7 @@ class SimulationManager:
         plt.xlabel('Time (ns)')
         Saver.save_plot(f"signal_after_bandwidth")
     
-    def run_simulation_classificator(self):
+    def run_simulation_classificator(self, save_output = False):
         
         start_time = time.time()  # Record start time
         T1_dampening = self.simulation_engine.initialize()
@@ -571,45 +571,45 @@ class SimulationManager:
                                 wrong_detections_x_non_dec=wrong_detections_x_non_dec,
                                 )'''
 
-        
-        function_name = inspect.currentframe().f_code.co_name
-        Saver.save_results_to_txt(  # Save the results to a text file
-            function_used = function_name,
-            n_samples=self.config.n_samples,
-            seed=self.config.seed,
-            non_signal_voltage=self.config.non_signal_voltage,
-            voltage_decoy=self.config.voltage_decoy, 
-            voltage=self.config.voltage, 
-            voltage_decoy_sup=self.config.voltage_decoy_sup, 
-            voltage_sup=self.config.voltage_sup,
-            p_indep_x_states_non_dec=self.config.p_indep_x_states_non_dec,
-            p_indep_x_states_dec=self.config.p_indep_x_states_dec,
-            p_vacuum_z=p_vacuum_z,
-            len_vacuum_indices_x_long=len(vacuum_indices_x_long),
-            len_Z_checked_dec=len_Z_checked_dec,
-            len_Z_checked_non_dec=len_Z_checked_non_dec,
-            XP_calc_non_dec=X_P_calc_non_dec,
-            XP_calc_dec=X_P_calc_dec,       
-            gain_Z_non_dec=gain_Z_non_dec,
-            gain_Z_dec=gain_Z_dec,
-            gain_X_non_dec=gain_X_non_dec,
-            gain_X_dec=gain_X_dec,
-            wrong_detections_z_dec=wrong_detections_z_dec,
-            wrong_detections_z_non_dec=wrong_detections_z_non_dec,
-            wrong_detections_x_dec=wrong_detections_x_dec,
-            wrong_detections_x_non_dec=wrong_detections_x_non_dec,
-            len_wrong_z_dec=len(wrong_detections_z_dec),
-            len_wrong_z_non_dec=len(wrong_detections_z_non_dec),
-            len_wrong_x_dec=len(wrong_detections_x_dec),
-            len_wrong_x_non_dec=len(wrong_detections_x_non_dec),
-            qber_z_dec=qber_z_dec,
-            qber_z_non_dec=qber_z_non_dec,
-            qber_x_dec=qber_x_dec,
-            qber_x_non_dec=qber_x_non_dec,
-            raw_key_rate=raw_key_rate,
-            total_amount_detections=total_amount_detections,
-            execution_time_run=execution_time_run
-        )
+        if save_output == True:
+            function_name = inspect.currentframe().f_code.co_name
+            Saver.save_results_to_txt(  # Save the results to a text file
+                function_used = function_name,
+                n_samples=self.config.n_samples,
+                seed=self.config.seed,
+                non_signal_voltage=self.config.non_signal_voltage,
+                voltage_decoy=self.config.voltage_decoy, 
+                voltage=self.config.voltage, 
+                voltage_decoy_sup=self.config.voltage_decoy_sup, 
+                voltage_sup=self.config.voltage_sup,
+                p_indep_x_states_non_dec=self.config.p_indep_x_states_non_dec,
+                p_indep_x_states_dec=self.config.p_indep_x_states_dec,
+                p_vacuum_z=p_vacuum_z,
+                len_vacuum_indices_x_long=len(vacuum_indices_x_long),
+                len_Z_checked_dec=len_Z_checked_dec,
+                len_Z_checked_non_dec=len_Z_checked_non_dec,
+                XP_calc_non_dec=X_P_calc_non_dec,
+                XP_calc_dec=X_P_calc_dec,       
+                gain_Z_non_dec=gain_Z_non_dec,
+                gain_Z_dec=gain_Z_dec,
+                gain_X_non_dec=gain_X_non_dec,
+                gain_X_dec=gain_X_dec,
+                wrong_detections_z_dec=wrong_detections_z_dec,
+                wrong_detections_z_non_dec=wrong_detections_z_non_dec,
+                wrong_detections_x_dec=wrong_detections_x_dec,
+                wrong_detections_x_non_dec=wrong_detections_x_non_dec,
+                len_wrong_z_dec=len(wrong_detections_z_dec),
+                len_wrong_z_non_dec=len(wrong_detections_z_non_dec),
+                len_wrong_x_dec=len(wrong_detections_x_dec),
+                len_wrong_x_non_dec=len(wrong_detections_x_non_dec),
+                qber_z_dec=qber_z_dec,
+                qber_z_non_dec=qber_z_non_dec,
+                qber_x_dec=qber_x_dec,
+                qber_x_non_dec=qber_x_non_dec,
+                raw_key_rate=raw_key_rate,
+                total_amount_detections=total_amount_detections,
+                execution_time_run=execution_time_run
+            )
         
         return len_wrong_x_dec, len_wrong_x_non_dec, len_wrong_z_dec, len_wrong_z_non_dec, len_Z_checked_dec, len_Z_checked_non_dec, X_P_calc_non_dec, X_P_calc_dec
         
@@ -1150,7 +1150,7 @@ class SimulationManager:
             p_indep_x_states_dec=self.config.p_indep_x_states_dec)'''
     
 
-        # Save the arrays to an NPZ file named "simulation_data.npz"
+        '''# Save the arrays to an NPZ file named "simulation_data.npz"
         np.savez("simulation_data.npz", 
                 time_photons_det_z=time_photons_det_z,
                 time_photons_det_x=time_photons_det_x, 
@@ -1162,10 +1162,10 @@ class SimulationManager:
                 decoy=decoy,
                 lookup_array=lookup_array)
 
-        print("Data saved to simulation_data.npz")
+        print("Data saved to simulation_data.npz")'''
         gc.collect()
-        
-        return None
+        time_one_symbol = t[-1]
+        return time_one_symbol, time_photons_det_z, time_photons_det_x, index_where_photons_det_z, index_where_photons_det_x, lookup_array, basis, value, decoy
     
     def lookup(self):
          # Generate Alice's choices

@@ -9,7 +9,6 @@ import numpy as np
 import pandas as pd
 import os
 import math
-from joblib import Parallel, delayed
 
 job_id = os.getenv("SLURM_JOB_ID")
 print(f"Running SLURM Job ID: {job_id}")
@@ -17,8 +16,6 @@ print(f"Running SLURM Job ID: {job_id}")
 
 os.environ["OMP_NUM_THREADS"] = "1"
 os.environ["MKL_NUM_THREADS"] = "1"
-
-# Assuming Saver, DataManager, SimulationConfig, SimulationManager are already defined and imported
 
 def run_simulation_and_update_hist_all_pairs(i, n_samples_set, length_of_chain, base_path, style_file, database, jitter,
                                              detector_jitter, bins_per_symbol):
@@ -36,9 +33,9 @@ def run_simulation_and_update_hist_all_pairs(i, n_samples_set, length_of_chain, 
     )
     simulation = SimulationManager(config)
 
-    simulation.run_simulation_hist_pick_symbols()
+    time_one_symbol, time_photons_det_z, time_photons_det_x, index_where_photons_det_z, index_where_photons_det_x, lookup_array, basis, value, decoy = simulation.run_simulation_hist_pick_symbols()
     
-    # load data either from just simulated or from previous simulation
+    '''# load data either from just simulated or from previous simulation
     data = np.load("simulation_data.npz", allow_pickle=True)
     time_photons_det_z = data["time_photons_det_z"]
     time_photons_det_x = data["time_photons_det_x"]
@@ -48,7 +45,7 @@ def run_simulation_and_update_hist_all_pairs(i, n_samples_set, length_of_chain, 
     basis = data["basis"]
     value = data["value"]
     decoy = data["decoy"]
-    lookup_array = data["lookup_array"]
+    lookup_array = data["lookup_array"]'''
     
     hist_z, hist_x = DataProcessor.update_histogram_batches_all_pairs(length_of_chain, time_one_symbol, time_photons_det_z, time_photons_det_x,
                                                             index_where_photons_det_z, index_where_photons_det_x, amount_bins_hist,
@@ -90,6 +87,29 @@ if __name__ == '__main__':
     n_samples_set = 20000
     database.add_jitter(jitter, 'laser')
     database.add_jitter(detector_jitter, 'detector')
+
+    style_file = "Presentation_style_1_adjusted_no_grid.mplstyle"
+
+    base_path = os.path.dirname(os.path.abspath(__file__))
+    
+    config = SimulationConfig(
+        database, seed=None, n_samples=n_samples_set, n_pulses=4, batchsize=1000,
+        mean_voltage=-1.708, mean_current=0.080, voltage_amplitude=0.050, current_amplitude=0.0005,
+        p_z_alice=0.5, p_decoy=0.1, p_z_bob=0.85,
+        sampling_rate_FPGA=6.5e9, bandwidth=4e9, jitter=jitter,
+        non_signal_voltage=-1.1, voltage_decoy=-0.1, voltage=-0.1,
+        voltage_decoy_sup=-0.1, voltage_sup=-0.1,
+        mean_photon_nr=0.7, mean_photon_decoy=0.1, fiber_attenuation=-3,
+        detector_efficiency=0.3, dark_count_frequency=10, detection_time=1e-10,
+        detector_jitter=detector_jitter, p_indep_x_states_non_dec=None, p_indep_x_states_dec=None,
+        mlp=os.path.join(base_path, style_file), script_name=os.path.basename(__file__), job_id=job_id
+    )
+    simulation = SimulationManager(config)
+
+    # Convert the config object to a dictionary
+    config_params = config.to_dict()
+    Saver.save_to_json(config_params)
+
 
     max_concurrent_tasks = 16
     # How many simulations per batch (each batch runs sequentially inside one task)
