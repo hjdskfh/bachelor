@@ -91,7 +91,7 @@ if __name__ == '__main__':
     style_file = "Presentation_style_1_adjusted_no_grid.mplstyle"
 
     base_path = os.path.dirname(os.path.abspath(__file__))
-    
+
     config = SimulationConfig(
         database, seed=None, n_samples=n_samples_set, n_pulses=4, batchsize=1000,
         mean_voltage=-1.708, mean_current=0.080, voltage_amplitude=0.050, current_amplitude=0.0005,
@@ -147,7 +147,7 @@ if __name__ == '__main__':
                                global_histogram_counts_x, global_histogram_counts_z,
                                final_lookup_array, total_symbols, start_symbol=3, end_symbol=10, name="random")
 
-    Saver.save_array_as_npz("histograms_random",
+    Saver.save_array_as_npz_data("histograms_random",
                             bins_per_symbol_hist=bins_per_symbol_hist,
                             final_time_one_symbol=final_time_one_symbol,
                             global_histogram_counts_x=global_histogram_counts_x,
