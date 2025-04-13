@@ -530,6 +530,14 @@ class SimulationHelper:
             gain_X_dec = -999 #raise ValueError("No Z decoy sent detected")
         print(f"Returning: {X_P_calc_non_dec}, {X_P_calc_dec}, {gain_X_non_dec}, {gain_X_dec}")
 
+        
+        if len(Z0_XP_alice_s) > 100:
+            Z0_XP_alice_s = Z0_XP_alice_s[:100]
+        if len(has_0_short) > 100:
+            has_0_short = has_0_short[:100]
+        if len(has_0_long) > 100:
+            has_0_long = has_0_long[:100]
+            
         Saver.save_results_to_txt(  # Save the results to a text file
             function_used = None,
             n_samples=self.config.n_samples,
@@ -541,10 +549,10 @@ class SimulationHelper:
             voltage_sup=self.config.voltage_sup,
             p_indep_x_states_non_dec=self.config.p_indep_x_states_non_dec,
             p_indep_x_states_dec=self.config.p_indep_x_states_dec,
-            Z0_XP_alice_s_part=Z0_XP_alice_s[:10],
-            has_0_short=has_0_short[:10],
-            has_0_long=has_0_long[:10],
-            ind_has_0_z0xp=ind_has_0_z0xp[:10])
+            Z0_XP_alice_s_part=Z0_XP_alice_s,
+            has_0_short=has_0_short,
+            has_0_long=has_0_long,
+            ind_has_0_z0xp=ind_has_0_z0xp)
 
             
         return X_P_calc_non_dec, X_P_calc_dec, gain_X_non_dec, gain_X_dec

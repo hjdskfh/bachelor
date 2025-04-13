@@ -6,7 +6,6 @@ import time
 import inspect
 import gc
 
-
 from saver import Saver
 from simulationengine import SimulationEngine
 from simulationsingle import SimulationSingle
@@ -1233,14 +1232,17 @@ class SimulationManager:
         
         # plt.plot(first_power.reshape(-1) * 1e3, color='blue', label='0', linestyle='-', marker='o', markersize=1)
         # Saver.save_plot(f"power_before_DLI_in_mW_outside")
-
+        mean_photon_at_x_detector = self.simulation_helper.calculate_mean_photon_number(power_dampened, peak_wavelength, t)
+        print(f"len(mean_photon_at_x_detector): {len(mean_photon_at_x_detector)}")
         # Saver.memory_usage("before detector x: " + str(time.time() - start_time))
         time_photons_det_x, wavelength_photons_det_x, nr_photons_det_x, index_where_photons_det_x, calc_mean_photon_nr_detector_x, dark_count_times_x, num_dark_counts_x = self.simulation_engine.detector(t, norm_transmission, peak_wavelength, power_dampened, start_time)        
         # print(f"calc_mean_photon_nr_detector_x: {calc_mean_photon_nr_detector_x[:20]}")
-        mean_photon_at_x_detector = self.simulation_helper.calculate_mean_photon_number(power_dampened, peak_wavelength, t)[:20]
+        
         Z0_alice_s = np.where((basis == 1) & (value == 1) & (decoy == 0))[0]  # Indices where Z0 was sent
         XP_alice_s = np.where((basis == 0) & (decoy == 0))[0]  # Indices where XP was sent
         Z0_XP_alice_s = XP_alice_s[np.isin(XP_alice_s - 1, Z0_alice_s)]
+        print(f"len(Z0_alice_s): {len(Z0_alice_s)}, len(XP_alice_s): {len(XP_alice_s)}, len(Z0_XP_alice_s): {len(Z0_XP_alice_s)}")
+
         mean_photon_at_detector_of_Z0_XP_symbol_mean_photon_for_whole_symbol = mean_photon_at_x_detector[Z0_XP_alice_s]
         print(f"nr_photons: {len(nr_photons_det_x)}")
 
@@ -1321,7 +1323,8 @@ class SimulationManager:
             mean_photon_at_detector_of_Z0_XP_symbol_mean_photon_for_whole_symbol=mean_photon_at_detector_of_Z0_XP_symbol_mean_photon_for_whole_symbol
         )
         
-        return None
+        return len_wrong_x_dec, len_wrong_x_non_dec, len_wrong_z_dec, len_wrong_z_non_dec, len_Z_checked_dec, len_Z_checked_non_dec, X_P_calc_non_dec, X_P_calc_dec
+        
 
     def run_simulation_repeat(self, save_output = False):
         

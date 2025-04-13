@@ -151,7 +151,7 @@ class Saver:
         logs_dir.mkdir(exist_ok=True)
 
         # Define the file path
-        filepath = os.path.join(logs_dir, f"output_{timestamp}_n_samples_{n_samples}.txt")
+        filepath = os.path.join(logs_dir, f"output_{timestamp}_n_samples_{n_samples}_function_{function_used}.txt")
 
         # Write the key-value pairs to the file
         with open(filepath, "w") as f:
