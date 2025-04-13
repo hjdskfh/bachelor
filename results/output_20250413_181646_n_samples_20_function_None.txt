@@ -1,0 +1,14 @@
+function_used: None
+n_samples: 20
+seed: 433134
+non_signal_voltage: -1.2
+voltage_decoy: -0.745242926478386
+voltage: -0.2
+voltage_decoy_sup: -0.8355372935533523
+voltage_sup: -0.4324394613504409
+p_indep_x_states_non_dec: None
+p_indep_x_states_dec: None
+Z0_XP_alice_s: []
+has_0_short: []
+has_0_long: []
+ind_has_0_z0xp: 0

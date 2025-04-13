@@ -15,6 +15,9 @@ from joblib import Parallel, delayed
 Saver.memory_usage("START of Simulation: Before everything")
 start_time = time.time()  # Record start time
 
+job_id = os.getenv("SLURM_JOB_ID")
+print(f"Running SLURM Job ID: {job_id}")
+
 #database
 database = DataManager()
 database.add_data('data/current_power_data.csv', 'Current (mA)', 'Optical Power (mW)', 9, 'current_power') 
@@ -53,7 +56,7 @@ config = SimulationConfig(database, seed=None, n_samples=n_samples_set, n_pulses
                 non_signal_voltage=-1.1, voltage_decoy=-0.1, voltage=-0.1, voltage_decoy_sup=-0.1, voltage_sup=-0.1,
                 mean_photon_nr=0.7, mean_photon_decoy=0.1, 
                 fiber_attenuation=-3, detector_efficiency=0.3, dark_count_frequency=10, detection_time=1e-10, detector_jitter=detector_jitter,
-                mlp=os.path.join(base_path, style_file), script_name = os.path.basename(__file__)
+                mlp=os.path.join(base_path, style_file), script_name = os.path.basename(__file__), job_id=job_id
                 )
 simulation = SimulationManager(config)
 
@@ -74,14 +77,10 @@ def run_simulation_and_update_hist(i, base_path, style_file, database, jitter,
                 non_signal_voltage=-1.1, voltage_decoy=-0.1, voltage=-0.1, voltage_decoy_sup=-0.1, voltage_sup=-0.1,
                 mean_photon_nr=0.7, mean_photon_decoy=0.1, 
                 fiber_attenuation=-3, detector_efficiency=0.3, dark_count_frequency=10, detection_time=1e-10, detector_jitter=detector_jitter,
-                mlp=os.path.join(base_path, style_file), script_name = os.path.basename(__file__)
+                mlp=os.path.join(base_path, style_file), script_name = os.path.basename(__file__), job_id=job_id
                 )
     simulation = SimulationManager(config)
 
-    if random.random() < 0.01:
-        save_output_var = True
-    else:
-        save_output_var = False
     len_wrong_x_dec, len_wrong_x_non_dec, len_wrong_z_dec, len_wrong_z_non_dec, len_Z_checked_dec, len_Z_checked_non_dec, X_P_calc_non_dec, X_P_calc_dec = simulation.run_simulation_detection_tester()
 
     return len_wrong_x_dec, len_wrong_x_non_dec, len_wrong_z_dec, len_wrong_z_non_dec, len_Z_checked_dec, len_Z_checked_non_dec, X_P_calc_non_dec, X_P_calc_dec
@@ -105,6 +104,11 @@ def run_simulation_batch(batch_id, base_path, style_file,
         # We pass a unique identifier if needed (here simply j)
         len_wrong_x_dec, len_wrong_x_non_dec, len_wrong_z_dec, len_wrong_z_non_dec, len_Z_checked_dec, len_Z_checked_non_dec, X_P_calc_non_dec, X_P_calc_dec = run_simulation_and_update_hist(
             j, base_path, style_file, database, jitter, detector_jitter, n_samples_set)
+        
+        if X_P_calc_dec > 0:
+            print(f"X_P_calc_dec in batch {j}: {X_P_calc_dec}")
+        if X_P_calc_non_dec > 0:
+            print(f"X_P_calc_non_dec in batch {j}: {X_P_calc_non_dec}")
         
         total_len_wrong_x_dec += len_wrong_x_dec
         total_len_wrong_x_non_dec += len_wrong_x_non_dec

@@ -530,9 +530,6 @@ class SimulationHelper:
             gain_X_dec = -999 #raise ValueError("No Z decoy sent detected")
         print(f"Returning: {X_P_calc_non_dec}, {X_P_calc_dec}, {gain_X_non_dec}, {gain_X_dec}")
 
-        
-        if len(Z0_XP_alice_s) > 100:
-            Z0_XP_alice_s = Z0_XP_alice_s[:100]
         if len(has_0_short) > 100:
             has_0_short = has_0_short[:100]
         if len(has_0_long) > 100:
@@ -549,7 +546,8 @@ class SimulationHelper:
             voltage_sup=self.config.voltage_sup,
             p_indep_x_states_non_dec=self.config.p_indep_x_states_non_dec,
             p_indep_x_states_dec=self.config.p_indep_x_states_dec,
-            Z0_XP_alice_s_part=Z0_XP_alice_s,
+            Z0_XP_alice_s=Z0_XP_alice_s,
+            XP_Z1_alice_s=XP_Z1_alice_s,
             has_0_short=has_0_short,
             has_0_long=has_0_long,
             ind_has_0_z0xp=ind_has_0_z0xp)
@@ -680,7 +678,18 @@ class SimulationHelper:
     
 # --------- check mean photon number at different points -----------
 
-    def calculate_mean_photon_number(self, power_dampened, peak_wavelength, t):
+    def calculate_mean_photon_number(self, power_dampened, peak_wavelength, t, one_peak= False):
+        if one_peak == 'first':
+            # Select the first peak (e.g., first half of the pulse)
+            midpoint = len(t) // 2
+            power_dampened = power_dampened[:, :midpoint]
+            t = t[:midpoint]
+        elif one_peak == 'last':
+            # Select the last peak (e.g., second half of the pulse)
+            midpoint = len(t) // 2
+            power_dampened = power_dampened[:, midpoint:]
+            t = t[midpoint:]
+
         energy_per_pulse = np.trapz(power_dampened, t, axis=1)
         energy_one_photon = constants.h * constants.c / peak_wavelength
         calc_mean_photon_nr = energy_per_pulse / energy_one_photon

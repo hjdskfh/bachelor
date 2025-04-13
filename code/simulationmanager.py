@@ -1237,14 +1237,18 @@ class SimulationManager:
         # Saver.memory_usage("before detector x: " + str(time.time() - start_time))
         time_photons_det_x, wavelength_photons_det_x, nr_photons_det_x, index_where_photons_det_x, calc_mean_photon_nr_detector_x, dark_count_times_x, num_dark_counts_x = self.simulation_engine.detector(t, norm_transmission, peak_wavelength, power_dampened, start_time)        
         # print(f"calc_mean_photon_nr_detector_x: {calc_mean_photon_nr_detector_x[:20]}")
-        
-        Z0_alice_s = np.where((basis == 1) & (value == 1) & (decoy == 0))[0]  # Indices where Z0 was sent
-        XP_alice_s = np.where((basis == 0) & (decoy == 0))[0]  # Indices where XP was sent
-        Z0_XP_alice_s = XP_alice_s[np.isin(XP_alice_s - 1, Z0_alice_s)]
-        print(f"len(Z0_alice_s): {len(Z0_alice_s)}, len(XP_alice_s): {len(XP_alice_s)}, len(Z0_XP_alice_s): {len(Z0_XP_alice_s)}")
+        with np.printoptions(threshold=100):
+            Z0_alice_s = np.where((basis == 1) & (value == 1) & (decoy == 0))[0]  # Indices where Z0 was sent
+            XP_alice_s = np.where((basis == 0) & (decoy == 0))[0]  # Indices where XP was sent
+            Z0_XP_alice_s = XP_alice_s[np.isin(XP_alice_s - 1, Z0_alice_s)]
+            print(f"len(Z0_alice_s): {len(Z0_alice_s)}, len(XP_alice_s): {len(XP_alice_s)}, len(Z0_XP_alice_s): {len(Z0_XP_alice_s)}")
+            Z1_alice_s = np.where((basis == 1) & (value == 0) & (decoy == 1))[0]  # Indices where Z0 was sent
+            XP_Z1_alice_s = Z1_alice_s[np.isin(Z1_alice_s - 1, XP_alice_s)]  # Indices where Z1Z0 was sent (index of Z0 used aka the higher index at which time we measure the X+ state)
+            print(f"len(Z1_alice_s): {len(Z1_alice_s)}, len(XP_Z1_alice_s): {len(XP_Z1_alice_s)}")
+            mean_photon_at_detector_of_Z0_XP_symbol_mean_photon_for_whole_symbol = mean_photon_at_x_detector[Z0_XP_alice_s]
+            mean_of_Z0_XP = np.mean(mean_photon_at_detector_of_Z0_XP_symbol_mean_photon_for_whole_symbol)
 
-        mean_photon_at_detector_of_Z0_XP_symbol_mean_photon_for_whole_symbol = mean_photon_at_x_detector[Z0_XP_alice_s]
-        print(f"nr_photons: {len(nr_photons_det_x)}")
+            print(f"nr_photons: {len(nr_photons_det_x)}")
 
         
         # plot so I can delete
@@ -1320,7 +1324,8 @@ class SimulationManager:
             mean_photon_after_basis_choice=mean_photon_after_basis_choice,
             mean_photon_after_dli=mean_photon_after_dli,
             calc_mean_photon_nr_detector_x=calc_mean_photon_nr_detector_x,
-            mean_photon_at_detector_of_Z0_XP_symbol_mean_photon_for_whole_symbol=mean_photon_at_detector_of_Z0_XP_symbol_mean_photon_for_whole_symbol
+            mean_photon_at_detector_of_Z0_XP_symbol_mean_photon_for_whole_symbol=mean_photon_at_detector_of_Z0_XP_symbol_mean_photon_for_whole_symbol,
+            mean_of_Z0_XP=mean_of_Z0_XP,
         )
         
         return len_wrong_x_dec, len_wrong_x_non_dec, len_wrong_z_dec, len_wrong_z_non_dec, len_Z_checked_dec, len_Z_checked_non_dec, X_P_calc_non_dec, X_P_calc_dec
