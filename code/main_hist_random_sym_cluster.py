@@ -28,7 +28,7 @@ def run_simulation_and_update_hist_all_pairs(i, n_samples_set, length_of_chain, 
         voltage_decoy_sup=-0.1, voltage_sup=-0.1,
         mean_photon_nr=0.7, mean_photon_decoy=0.1, fiber_attenuation=-3,
         detector_efficiency=0.3, dark_count_frequency=10, detection_time=1e-10,
-        detector_jitter=detector_jitter, p_indep_x_states_non_dec=None, p_indep_x_states_dec=None,
+        detector_jitter=detector_jitter, 
         mlp=os.path.join(base_path, style_file), script_name=os.path.basename(__file__), job_id=job_id
     )
     simulation = SimulationManager(config)
@@ -101,7 +101,7 @@ if __name__ == '__main__':
         voltage_decoy_sup=-0.1, voltage_sup=-0.1,
         mean_photon_nr=0.7, mean_photon_decoy=0.1, fiber_attenuation=-3,
         detector_efficiency=0.3, dark_count_frequency=10, detection_time=1e-10,
-        detector_jitter=detector_jitter, p_indep_x_states_non_dec=None, p_indep_x_states_dec=None,
+        detector_jitter=detector_jitter,
         mlp=os.path.join(base_path, style_file), script_name=os.path.basename(__file__), job_id=job_id
     )
     simulation = SimulationManager(config)

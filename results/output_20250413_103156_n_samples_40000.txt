@@ -1,0 +1,53 @@
+function_used: run_simulation_detection_tester
+n_samples: 40000
+seed: 625412
+non_signal_voltage: -1.2
+voltage_decoy: -0.745242926478386
+voltage: -0.2
+voltage_decoy_sup: -0.8355372935533523
+voltage_sup: -0.4324394613504409
+p_indep_x_states_non_dec: None
+p_indep_x_states_dec: None
+p_vacuum_z: 0
+len_vacuum_indices_x_long: 40000
+len_Z_checked_dec: 0
+len_Z_checked_non_dec: 0
+XP_calc_non_dec: 0.0
+XP_calc_dec: 0.0
+gain_Z_non_dec: -999
+gain_Z_dec: -999
+gain_X_non_dec: 0.0
+gain_X_dec: -999
+wrong_detections_z_dec: []
+wrong_detections_z_non_dec: []
+wrong_detections_x_dec: []
+wrong_detections_x_non_dec: []
+len_wrong_z_dec: 0
+len_wrong_z_non_dec: 0
+len_wrong_x_dec: 0
+len_wrong_x_non_dec: 0
+qber_z_dec: -999
+qber_z_non_dec: -999
+qber_x_dec: -999
+qber_x_non_dec: -999
+raw_key_rate: 0.0
+total_amount_detections: 0.0
+mean_photon_after_eam: [0.71498929 0.65796915 0.67725938 0.65170503 0.67345499 0.73050354
+ 0.69215127 0.7001688  0.69573032 0.7240481  0.73964696 0.75281199
+ 0.73750998 0.67691007 0.74631127 0.74505273 0.72159719 0.72722346
+ 0.70572627 0.70423276]
+mean_photon_after_fiber: [0.35834351 0.32976574 0.33943376 0.32662624 0.33752704 0.36611905
+ 0.34689738 0.35091566 0.34869116 0.36288366 0.37070161 0.37729976
+ 0.36963059 0.33925868 0.37404168 0.37341092 0.3616553  0.36447511
+ 0.353701   0.35295247]
+mean_photon_after_basis_choice: [0.17917175 0.16488287 0.16971688 0.16331312 0.16876352 0.18305952
+ 0.17344869 0.17545783 0.17434558 0.18144183 0.18535081 0.18864988
+ 0.18481529 0.16962934 0.18702084 0.18670546 0.18082765 0.18223756
+ 0.1768505  0.17647623]
+mean_photon_after_dli: [2.25759869e-02 4.60075408e-04 6.92652676e-05 4.38826552e-04
+ 8.13862259e-04 2.26172854e-04 3.86494462e-04 3.38509868e-04
+ 3.54053621e-04 8.55348474e-04 2.23220888e-02 1.70480632e-04
+ 3.39246786e-04 3.64232636e-04 5.28636719e-04 3.16080427e-04
+ 1.35691405e-04 2.46651472e-04 2.50484458e-04 1.59222317e-04]
+calc_mean_photon_nr_detector_x: [2.25759869e-02 4.60075408e-04 6.92652676e-05 ... 4.78264513e-04
+ 1.81810060e-04 1.44869500e-04]

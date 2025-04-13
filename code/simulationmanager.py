@@ -422,6 +422,7 @@ class SimulationManager:
         Saver.save_plot(f"hist_peak_wavelength")'''
     
         # Generate Alice's choices
+        # basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=np.array([1, 0, 0, 1, 1, 1, 1, 0, 0, 1]), value=np.array([1, -1, -1, 0, 0, 1, 1, -1, -1, 0]), decoy=np.array([0, 0, 0, 0, 0, 0, 1, 1, 1, 1]))
         basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=np.array([1, 0, 0, 1, 1, 0, 0, 1]), value=np.array([1, -1, -1, 0, 1, -1, -1, 0]), decoy=np.array([0, 0, 0, 0, 1, 1, 1, 1]))
         # basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=np.array([1,0,1]), value=np.array([1,-1, 0]), decoy=np.array([0,0,0]))
         # basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=np.array([0,1]), value=np.array([-1, 0]), decoy=np.array([0,0]))
@@ -496,7 +497,7 @@ class SimulationManager:
         # self.plotter.plot_power(t, power_dampened, amount_symbols_in_plot=20, where_plot_1='bob basis X')
 
         #plot
-        amount_symbols_in_first_part = 20
+        amount_symbols_in_first_part = 30
         first_power = power_dampened[:amount_symbols_in_first_part].copy()
         '''print("len(t):", len(t))
         print("first_power.shape:", first_power.shape)
@@ -1177,22 +1178,23 @@ class SimulationManager:
         start_time = time.time()  # Record start time
         T1_dampening = self.simulation_engine.initialize()
         optical_power, peak_wavelength, chosen_voltage, chosen_current = self.simulation_engine.random_laser_output('current_power', 'voltage_shift', fixed = True)
-        print(f"peak_wavelength: {peak_wavelength}")
         
         # Generate Alice's choices
         # basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=np.array([1,0,1]), value=np.array([1,-1, 0]), decoy=np.array([0,0,0]))
-        # basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=np.array([0,1]), value=np.array([-1, 0]), decoy=np.array([0,0]))
-        basis, value, decoy = self.simulation_engine.generate_alice_choices()
+        basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=np.array([0,1]), value=np.array([-1, 0]), decoy=np.array([0,0]))
+        # basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=np.array([0]), value=np.array([-1]), decoy=np.array([0]))
+        # basis, value, decoy = self.simulation_engine.generate_alice_choices()
 
         # Simulate signal and transmission
         signals, t, _ = self.simulation_engine.signal_bandwidth_jitter(basis, value, decoy)
 
         power_dampened, norm_transmission,  calc_mean_photon_nr_eam, _ = self.simulation_engine.eam_transmission(signals, optical_power, T1_dampening, peak_wavelength, t)
-        print(f"mean_photon_nr after EAM: {self.simulation_helper.calculate_mean_photon_number(power_dampened, peak_wavelength, t)[:20]}")
-
+        # print(f"mean_photon_nr after EAM: {self.simulation_helper.calculate_mean_photon_number(power_dampened, peak_wavelength, t)[:20]}")
+        mean_photon_after_eam = self.simulation_helper.calculate_mean_photon_number(power_dampened, peak_wavelength, t)[:20]
+        
         power_dampened = self.simulation_engine.fiber_attenuation(power_dampened)
         print(f"mean_photon_nr after fiber: {self.simulation_helper.calculate_mean_photon_number(power_dampened, peak_wavelength, t)[:20]}")
-
+        mean_photon_after_fiber = self.simulation_helper.calculate_mean_photon_number(power_dampened, peak_wavelength, t)[:20]
         # self.plotter.plot_power(t, power_dampened, amount_symbols_in_plot=20, where_plot_1='after fiber')
 
         # first Z basis bc no interference
@@ -1205,7 +1207,8 @@ class SimulationManager:
 
         # path for X basis
         power_dampened = power_dampened * (1 - self.config.p_z_bob)
-        print(f"mean_photon_nr after basis choice: {self.simulation_helper.calculate_mean_photon_number(power_dampened, peak_wavelength, t)[:20]}")
+        # print(f"mean_photon_nr after basis choice: {self.simulation_helper.calculate_mean_photon_number(power_dampened, peak_wavelength, t)[:20]}")
+        mean_photon_after_basis_choice = self.simulation_helper.calculate_mean_photon_number(power_dampened, peak_wavelength, t)[:20]
 
         # self.plotter.plot_power(t, power_dampened, amount_symbols_in_plot=20, where_plot_1='bob basis X')
 
@@ -1219,7 +1222,8 @@ class SimulationManager:
 
         # DLI
         power_dampened, f_0 = self.simulation_engine.delay_line_interferometer(power_dampened, t, peak_wavelength, value)
-        print(f"mean_photon_nr after DLI: {self.simulation_helper.calculate_mean_photon_number(power_dampened, peak_wavelength, t)[:20]}")
+        # print(f"mean_photon_nr after DLI: {self.simulation_helper.calculate_mean_photon_number(power_dampened, peak_wavelength, t)[:20]}")
+        mean_photon_after_dli = self.simulation_helper.calculate_mean_photon_number(power_dampened, peak_wavelength, t)[:20]
 
         # plot
         assert power_dampened.shape[1] == len(t), f"Mismatch: power_dampened has {power_dampened.shape[1]} samples per symbol, t has {len(t)}!"
@@ -1230,7 +1234,8 @@ class SimulationManager:
 
         # Saver.memory_usage("before detector x: " + str(time.time() - start_time))
         time_photons_det_x, wavelength_photons_det_x, nr_photons_det_x, index_where_photons_det_x, calc_mean_photon_nr_detector_x, dark_count_times_x, num_dark_counts_x = self.simulation_engine.detector(t, norm_transmission, peak_wavelength, power_dampened, start_time)        
-        print(f"calc_mean_photon_nr_detector_x: {calc_mean_photon_nr_detector_x[:20]}")
+        # print(f"calc_mean_photon_nr_detector_x: {calc_mean_photon_nr_detector_x[:20]}")
+        mean_photon_at_x_detector = self.simulation_helper.calculate_mean_photon_number(power_dampened, peak_wavelength, t)[:20]
         print(f"nr_photons: {len(nr_photons_det_x)}")
         # plot so I can delete
         # self.plotter.plot_and_delete_mean_photon_histogram(calc_mean_photon_nr_detector_x, target_mean_photon_nr=None, type_photon_nr="Mean Photon Number at Detector X")
@@ -1249,7 +1254,7 @@ class SimulationManager:
                                                                            basis, value, decoy)
 
         # plot so I can delete
-        self.plotter.plot_and_delete_photon_time_histogram(time_photons_det_x, time_photons_det_z)
+        # self.plotter.plot_and_delete_photon_time_histogram(time_photons_det_x, time_photons_det_z)
 
         # Z1_sent_norm, Z1_sent_dec, Z0_sent_norm, Z0_sent_dec, XP_sent_norm, XP_sent_dec = self.simulation_helper.count_alice_choices(basis, value, decoy)
 
@@ -1298,7 +1303,11 @@ class SimulationManager:
             qber_x_non_dec=qber_x_non_dec,
             raw_key_rate=raw_key_rate,
             total_amount_detections=total_amount_detections,
-            execution_time_run=execution_time_run
+            mean_photon_after_eam=mean_photon_after_eam,
+            mean_photon_after_fiber=mean_photon_after_fiber,
+            mean_photon_after_basis_choice=mean_photon_after_basis_choice,
+            mean_photon_after_dli=mean_photon_after_dli,
+            calc_mean_photon_nr_detector_x=calc_mean_photon_nr_detector_x,
         )
         
         return None

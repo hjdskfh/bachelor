@@ -207,9 +207,17 @@ class SimulationEngine:
         # Assuming the group refractive index of the waveguide
         n_eff = 1.56 # Effective refractive index
         delta_L = tau * constants.c / n_g
+        overlap_symbols = 0
 
         for i in range(0, len(value), self.config.batchsize):
-            power_dampened_batch = power_dampened[i:i + self.config.batchsize, :]
+            print(f"beginning i: {i}, batchsize: {self.config.batchsize}, len(value): {len(value)}")
+            #  Determine the start and end indices for the current batch, including overlap
+            start_index = i - (overlap_symbols) if i > 0 else i
+            end_index = i + self.config.batchsize if i > 0 else i + self.config.batchsize + overlap_symbols
+            amount_symbols_in_batch = end_index - start_index
+            print(f"start_index: {start_index}, end_index: {end_index}, amount_symbols_in_batch: {amount_symbols_in_batch}")
+
+            power_dampened_batch = power_dampened[start_index:end_index, :]
             flattened_power_batch = power_dampened_batch.reshape(-1)
             # print(f"flattened_power_batch: {flattened_power_batch.shape}, power_dampened_batch: {power_dampened_batch.shape}, t: {t.shape}")
 
@@ -264,12 +272,23 @@ class SimulationEngine:
 
             # Use interpolation to compute signal values at new time points
             signal_downsampled = np.interp(t_original_all_sym, t_new_all_sym, power_1)
-            '''plt.plot(signal_downsampled[:len(t)*100], label = 'after DLI 1')
-            plt.plot(power_1[:len(t)*100], color = 'green', label = 'after DLI 1')
-            plt.show()'''
+            plt.plot(signal_downsampled, label = 'after DLI 1')
+            # plt.plot(power_1[:len(t)*100], color = 'green', label = 'after DLI 1')
+            plt.show()
 
+            if overlap_symbols > 0:
+                if i == 0:
+                    print(f"loop before i = 0 i: {i}, overlap_symbols: {overlap_symbols}, amount_symbols_in_batch: {amount_symbols_in_batch}, signal_downsampled: {signal_downsampled.shape}, t: {t.shape}")
+                    signal_downsampled = signal_downsampled[: - len(t) * overlap_symbols]
+                    print(f"loop after i = 0 i: {i}, amount_symbols_in_batch: {amount_symbols_in_batch}, signal_downsampled: {signal_downsampled.shape}, t: {t.shape}")
+                else:
+                    assert amount_symbols_in_batch == self.config.batchsize + overlap_symbols 
+                    signal_downsampled = signal_downsampled[len(t) * overlap_symbols:]
+            print(f"i: {i}, amount_symbols_in_batch: {amount_symbols_in_batch}, signal_downsampled: {signal_downsampled.shape}, t: {t.shape}")
             flattened_power_batch = signal_downsampled.reshape(self.config.batchsize, len(t))
-            power_dampened[i:i + self.config.batchsize, :] = flattened_power_batch
+           
+            power_dampened[i: i + self.config.batchsize, :] = flattened_power_batch
+         
         return power_dampened, f_0
 
     
