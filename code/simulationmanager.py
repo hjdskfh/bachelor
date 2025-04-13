@@ -540,7 +540,7 @@ class SimulationManager:
         Z0_alice_s = np.where((basis == 1) & (value == 1) & (decoy == 1))[0]  # Indices where Z0 was sent
         XP_alice_s = np.where((basis == 0) & (decoy == 1))[0]  # Indices where XP was sent
         Z0_XP_alice_s = XP_alice_s[np.isin(XP_alice_s - 1, Z0_alice_s)]  # Indices where Z1Z0 was sent
-        print(f"calc_mean_photon_nr_detector_x bei index XP erste wenn Z0X+: {calc_mean_photon_nr_detector_x[Z0_XP_alice_s]}")
+        print(f"calc_mean_photon_nr_detector_x bei index XP erste wenn Z0X+: {calc_mean_photon_nr_detector_x[Z0_XP_alice_s][:10]}")
         # plot so I can delete
         # self.plotter.plot_and_delete_photon_time_histogram(time_photons_det_x, time_photons_det_z)
 

@@ -27,7 +27,7 @@ jitter = 1e-11
 database.add_jitter(jitter, 'laser')
 detector_jitter = 100e-12
 database.add_jitter(detector_jitter, 'detector')
-n_samples_set = 20000
+n_samples_set = 50000
 
 
 # Memory considerations:

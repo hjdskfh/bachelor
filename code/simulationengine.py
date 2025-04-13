@@ -273,9 +273,9 @@ class SimulationEngine:
 
             # Use interpolation to compute signal values at new time points
             signal_downsampled = np.interp(t_original_all_sym, t_new_all_sym, power_1)
-            plt.plot(signal_downsampled, label = 'after DLI 1')
+            '''plt.plot(signal_downsampled, label = 'after DLI 1')
             # plt.plot(power_1[:len(t)*100], color = 'green', label = 'after DLI 1')
-            plt.show()
+            plt.show()'''
 
             flattened_power_batch = signal_downsampled.reshape(amount_symbols_in_batch, len(t))
             
@@ -283,21 +283,18 @@ class SimulationEngine:
                 save_overlap_symbols = flattened_power_batch[-overlap_symbols:].copy() # the last overlap symbols
                 flattened_power_batch = flattened_power_batch[:-overlap_symbols]
                 power_dampened[i: i + self.config.batchsize, :] = flattened_power_batch
-                print(f"loop i = 0 i: {i}, amount_symbols_in_batch: {amount_symbols_in_batch}, signal_downsampled: {signal_downsampled.shape}, t: {t.shape}")
             elif i + self.config.batchsize == len(value):
                 power_dampened[i:i + overlap_symbols, :] = save_overlap_symbols # old overlap symbol
                 save_overlap_symbols = flattened_power_batch[-overlap_symbols:].copy() # last symbols save for overlap
                 # no overlap symbol for the next batch, bc it is the last one
                 flattened_power_batch = flattened_power_batch[overlap_symbols:] # everything but the first symbols
                 power_dampened[i + overlap_symbols: i + self.config.batchsize, :] = flattened_power_batch
-                print(f"loop else i: {i}, amount_symbols_in_batch: {amount_symbols_in_batch}, signal_downsampled: {signal_downsampled.shape}, t: {t.shape}")
             else:
                 power_dampened[i:i + overlap_symbols, :] = save_overlap_symbols # old overlap symbol
                 save_overlap_symbols = flattened_power_batch[-overlap_symbols:].copy() # last symbols save for overlap
 
                 flattened_power_batch = flattened_power_batch[overlap_symbols:-overlap_symbols] # everything but the first and last overlap symbols
                 power_dampened[i + overlap_symbols: i + self.config.batchsize, :] = flattened_power_batch
-                print(f"loop else i: {i}, amount_symbols_in_batch: {amount_symbols_in_batch}, signal_downsampled: {signal_downsampled.shape}, t: {t.shape}")
            
         return power_dampened, f_0
 
