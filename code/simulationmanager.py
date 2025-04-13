@@ -393,7 +393,7 @@ class SimulationManager:
         plt.xlabel('Time (ns)')
         Saver.save_plot(f"signal_after_bandwidth")
     
-    def run_simulation_classificator(self, save_output = False):
+    def run_simulation_classificator(self, save_output = True):
         
         start_time = time.time()  # Record start time
         T1_dampening = self.simulation_engine.initialize()
@@ -1323,3 +1323,165 @@ class SimulationManager:
         
         return None
 
+    def run_simulation_repeat(self, save_output = False):
+        
+        start_time = time.time()  # Record start time
+        T1_dampening = self.simulation_engine.initialize()
+     
+
+        optical_power, peak_wavelength, chosen_voltage, chosen_current = self.simulation_engine.random_laser_output('current_power', 'voltage_shift', fixed = True)
+
+    
+        # Generate Alice's choices
+        # basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=np.array([1, 0, 0, 1, 1, 1, 1, 0, 0, 1]), value=np.array([1, -1, -1, 0, 0, 1, 1, -1, -1, 0]), decoy=np.array([0, 0, 0, 0, 0, 0, 1, 1, 1, 1]))
+        basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=np.array([1, 0, 0, 1, 1, 0, 0, 1]), value=np.array([1, -1, -1, 0, 1, -1, -1, 0]), decoy=np.array([0, 0, 0, 0, 1, 1, 1, 1]))
+        # basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=np.array([1,0,1]), value=np.array([1,-1, 0]), decoy=np.array([0,0,0]))
+        # basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=np.array([0,1]), value=np.array([-1, 0]), decoy=np.array([0,0]))
+        # basis, value, decoy = self.simulation_engine.generate_alice_choices()
+        print(f"basis: {basis[:10]}")
+        print(f"value: {value[:10]}")
+        print(f"decoy: {decoy[:10]}")
+
+        # Simulate signal and transmission
+        # Saver.memory_usage("before simulating signal: " + str("{:.3f}".format(time.time() - start_time)))
+        signals, t, _ = self.simulation_engine.signal_bandwidth_jitter(basis, value, decoy)
+
+        time_simulating_signal = time.time() - start_time
+        # Saver.memory_usage("before eam: " + str("{:.3f}".format(time_simulating_signal)))
+        power_dampened, norm_transmission,  calc_mean_photon_nr_eam, _ = self.simulation_engine.eam_transmission(signals, optical_power, T1_dampening, peak_wavelength, t)
+
+        # plot so I can delete
+        # self.plotter.plot_and_delete_mean_photon_histogram(calc_mean_photon_nr_eam, target_mean_photon_nr = np.array([self.config.mean_photon_nr, self.config.mean_photon_decoy]), 
+        #                                         type_photon_nr = "Mean Photon Number at EAM")
+
+
+        # self.plotter.plot_power(t, power_dampened, amount_symbols_in_plot=5, where_plot_1='after EAM')
+
+        time_eam = time.time() - start_time
+        # Saver.memory_usage("before fiber: " + str("{:.3f}".format(time_eam)))
+        power_dampened = self.simulation_engine.fiber_attenuation(power_dampened)
+        
+        # self.plotter.plot_power(t, power_dampened, amount_symbols_in_plot=20, where_plot_1='after fiber')
+
+        # first Z basis bc no interference
+        # Saver.memory_usage("before detector z: " + str("{:.3f}".format(time.time() - start_time)))
+        power_dampened = power_dampened * self.config.p_z_bob
+        time_photons_det_z, wavelength_photons_det_z, nr_photons_det_z, index_where_photons_det_z, \
+        calc_mean_photon_nr_detector_z, dark_count_times_z, num_dark_counts_z = self.simulation_engine.detector(t, norm_transmission, peak_wavelength, power_dampened, start_time)
+        power_dampened = power_dampened / self.config.p_z_bob
+        # Saver.memory_usage("before classificator: " + str("{:.3f}".format(time.time() - start_time)))
+
+        # self.plotter.plot_power(t, power_dampened, amount_symbols_in_plot=20, where_plot_1='after Z det')
+
+        # path for X basis
+        # Saver.memory_usage("before DLI: " + str("{:.3f}".format(time.time() - start_time)))
+        power_dampened = power_dampened * (1 - self.config.p_z_bob)
+
+        # self.plotter.plot_power(t, power_dampened, amount_symbols_in_plot=20, where_plot_1='bob basis X')
+
+        #plot
+        '''amount_symbols_in_first_part = 30
+        first_power = power_dampened[:amount_symbols_in_first_part].copy()'''
+
+        # DLI
+        power_dampened, f_0 = self.simulation_engine.delay_line_interferometer(power_dampened, t, peak_wavelength, value)
+
+        # plot
+        '''assert power_dampened.shape[1] == len(t), f"Mismatch: power_dampened has {power_dampened.shape[1]} samples per symbol, t has {len(t)}!"
+        self.plotter.plot_power(t, power_dampened, amount_symbols_in_plot=amount_symbols_in_first_part, where_plot_1='before DLI',  shortened_first_power=first_power, where_plot_2='after DLI,', title_rest='- in fft, mean_volt: ' + str("{:.4f}".format(self.config.mean_voltage)) + ' voltage: ' + str("{:.4f}".format(chosen_voltage[0])) + ' V and ' + str("{:.8f}".format(peak_wavelength[0])))'''
+        
+        # plt.plot(first_power.reshape(-1) * 1e3, color='blue', label='0', linestyle='-', marker='o', markersize=1)
+        # Saver.save_plot(f"power_before_DLI_in_mW_outside")
+
+        # Saver.memory_usage("before detector x: " + str(time.time() - start_time))
+        time_photons_det_x, wavelength_photons_det_x, nr_photons_det_x, index_where_photons_det_x, calc_mean_photon_nr_detector_x, dark_count_times_x, num_dark_counts_x = self.simulation_engine.detector(t, norm_transmission, peak_wavelength, power_dampened, start_time)        
+        # np.set_printoptions(threshold=np.inf)  # disable truncation
+        # print(f"calc_mean_photon_nr_detector_x part: {calc_mean_photon_nr_detector_x[:10]}")
+        # print(f"calc_mean_photon_nr_detector_z part: {calc_mean_photon_nr_detector_z[:10]}")
+        # print(f"nr_photons: {len(nr_photons_det_x)} {len(nr_photons_det_z)}")
+        # plot so I can delete
+        # self.plotter.plot_and_delete_mean_photon_histogram(calc_mean_photon_nr_detector_x, target_mean_photon_nr=None, type_photon_nr="Mean Photon Number at Detector X")
+        # self.plotter.plot_and_delete_mean_photon_histogram(calc_mean_photon_nr_detector_z, target_mean_photon_nr=None, type_photon_nr="Mean Photon Number at Detector Z")
+        # self.plotter.plot_and_delete_photon_wavelength_histogram_two_diagrams(wavelength_photons_det_x, wavelength_photons_det_z)
+        # self.plotter.plot_and_delete_photon_nr_histogram(nr_photons_det_x, nr_photons_det_z)
+        
+        # get results for both detectors
+        p_vacuum_z, vacuum_indices_x_long, len_Z_checked_dec, len_Z_checked_non_dec, \
+        gain_Z_non_dec, gain_Z_dec, gain_X_non_dec, gain_X_dec, X_P_calc_non_dec, \
+        X_P_calc_dec, wrong_detections_z_dec, wrong_detections_z_non_dec, wrong_detections_x_dec, \
+        wrong_detections_x_non_dec, qber_z_dec, qber_z_non_dec, qber_x_dec, qber_x_non_dec, raw_key_rate, \
+        total_amount_detections = self.simulation_engine.classificator_new(t, time_photons_det_x, index_where_photons_det_x, time_photons_det_z, index_where_photons_det_z, basis, value, decoy)
+
+        # plot so I can delete
+        # self.plotter.plot_and_delete_photon_time_histogram(time_photons_det_x, time_photons_det_z)
+
+        # Z1_sent_norm, Z1_sent_dec, Z0_sent_norm, Z0_sent_dec, XP_sent_norm, XP_sent_dec = self.simulation_helper.count_alice_choices(basis, value, decoy)
+
+        #readin time
+        end_time_read = time.time()  # Record end time  
+        execution_time_run = end_time_read - start_time  # Calculate execution time
+
+        len_wrong_z_dec=len(wrong_detections_z_dec)
+        len_wrong_z_non_dec=len(wrong_detections_z_non_dec)
+        len_wrong_x_dec=len(wrong_detections_x_dec)
+        len_wrong_x_non_dec=len(wrong_detections_x_non_dec)
+
+        '''Saver.save_arrays_to_csv('results', 
+                                p_vacuum_z=p_vacuum_z,
+                                len_vacuum_indices_x_long=len(vacuum_indices_x_long),
+                                len_Z_checked_dec=len_Z_checked_dec,
+                                len_Z_checked_non_dec=len_Z_checked_non_dec,
+                                XP_calc_non_dec=X_P_calc_non_dec,
+                                XP_calc_dec=X_P_calc_dec,
+                                gain_Z_non_dec=gain_Z_non_dec,
+                                gain_Z_dec=gain_Z_dec,
+                                gain_X_non_dec=gain_X_non_dec,
+                                gain_X_dec=gain_X_dec,
+                                wrong_detections_z_dec=wrong_detections_z_dec,
+                                wrong_detections_z_non_dec=wrong_detections_z_non_dec,
+                                wrong_detections_x_dec=wrong_detections_x_dec,
+                                wrong_detections_x_non_dec=wrong_detections_x_non_dec,
+                                )'''
+
+        if save_output == True:
+            function_name = inspect.currentframe().f_code.co_name
+            Saver.save_results_to_txt(  # Save the results to a text file
+                function_used = function_name,
+                n_samples=self.config.n_samples,
+                seed=self.config.seed,
+                non_signal_voltage=self.config.non_signal_voltage,
+                voltage_decoy=self.config.voltage_decoy, 
+                voltage=self.config.voltage, 
+                voltage_decoy_sup=self.config.voltage_decoy_sup, 
+                voltage_sup=self.config.voltage_sup,
+                p_indep_x_states_non_dec=self.config.p_indep_x_states_non_dec,
+                p_indep_x_states_dec=self.config.p_indep_x_states_dec,
+                p_vacuum_z=p_vacuum_z,
+                len_vacuum_indices_x_long=len(vacuum_indices_x_long),
+                len_Z_checked_dec=len_Z_checked_dec,
+                len_Z_checked_non_dec=len_Z_checked_non_dec,
+                XP_calc_non_dec=X_P_calc_non_dec,
+                XP_calc_dec=X_P_calc_dec,       
+                gain_Z_non_dec=gain_Z_non_dec,
+                gain_Z_dec=gain_Z_dec,
+                gain_X_non_dec=gain_X_non_dec,
+                gain_X_dec=gain_X_dec,
+                wrong_detections_z_dec=wrong_detections_z_dec,
+                wrong_detections_z_non_dec=wrong_detections_z_non_dec,
+                wrong_detections_x_dec=wrong_detections_x_dec,
+                wrong_detections_x_non_dec=wrong_detections_x_non_dec,
+                len_wrong_z_dec=len(wrong_detections_z_dec),
+                len_wrong_z_non_dec=len(wrong_detections_z_non_dec),
+                len_wrong_x_dec=len(wrong_detections_x_dec),
+                len_wrong_x_non_dec=len(wrong_detections_x_non_dec),
+                qber_z_dec=qber_z_dec,
+                qber_z_non_dec=qber_z_non_dec,
+                qber_x_dec=qber_x_dec,
+                qber_x_non_dec=qber_x_non_dec,
+                raw_key_rate=raw_key_rate,
+                total_amount_detections=total_amount_detections,
+                execution_time_run=execution_time_run
+            )
+        
+        return len_wrong_x_dec, len_wrong_x_non_dec, len_wrong_z_dec, len_wrong_z_non_dec, len_Z_checked_dec, len_Z_checked_non_dec, X_P_calc_non_dec, X_P_calc_dec
+        
