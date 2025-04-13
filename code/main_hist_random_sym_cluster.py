@@ -9,6 +9,8 @@ import numpy as np
 import pandas as pd
 import os
 import math
+from joblib import Parallel, delayed
+
 
 job_id = os.getenv("SLURM_JOB_ID")
 print(f"Running SLURM Job ID: {job_id}")

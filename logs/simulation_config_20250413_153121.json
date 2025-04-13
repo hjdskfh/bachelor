@@ -1,7 +1,7 @@
 {
     "round": 1,
-    "seed": 167235,
-    "n_samples": 30,
+    "seed": 789856,
+    "n_samples": 40,
     "n_pulses": 4,
     "batchsize": 10,
     "mean_voltage": -1.708,
