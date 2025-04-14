@@ -584,8 +584,6 @@ class SimulationManager:
                 voltage=self.config.voltage, 
                 voltage_decoy_sup=self.config.voltage_decoy_sup, 
                 voltage_sup=self.config.voltage_sup,
-                p_indep_x_states_non_dec=self.config.p_indep_x_states_non_dec,
-                p_indep_x_states_dec=self.config.p_indep_x_states_dec,
                 p_vacuum_z=p_vacuum_z,
                 len_vacuum_indices_x_long=len(vacuum_indices_x_long),
                 len_Z_checked_dec=len_Z_checked_dec,
@@ -1188,8 +1186,8 @@ class SimulationManager:
         optical_power, peak_wavelength, chosen_voltage, chosen_current = self.simulation_engine.random_laser_output('current_power', 'voltage_shift', fixed = True)
         print(f"peak_wavelegth: {peak_wavelength[:10]}")
         # Generate Alice's choices
-        basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=np.array([1,0,1]), value=np.array([1,-1, 0]), decoy=np.array([0,0,0]))
-        # basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=np.array([0,1]), value=np.array([-1, 0]), decoy=np.array([0,0]))
+        # basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=np.array([1,0,1]), value=np.array([1,-1, 0]), decoy=np.array([0,0,0]))
+        basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=np.array([0,1]), value=np.array([-1, 0]), decoy=np.array([0,0]))
         # basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=np.array([0]), value=np.array([-1]), decoy=np.array([0]))
         # basis, value, decoy = self.simulation_engine.generate_alice_choices()
         # basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=np.array([1, 0, 0, 1, 1, 0, 0, 1]), value=np.array([1, -1, -1, 0, 1, -1, -1, 0]), decoy=np.array([0, 0, 0, 0, 1, 1, 1, 1]))
@@ -1223,8 +1221,8 @@ class SimulationManager:
         # self.plotter.plot_power(t, power_dampened, amount_symbols_in_plot=20, where_plot_1='bob basis X')
 
         #plot
-        # amount_symbols_in_first_part = 20
-        # first_power = power_dampened[:amount_symbols_in_first_part].copy()
+        amount_symbols_in_first_part = 20
+        first_power = power_dampened[:amount_symbols_in_first_part].copy()
         '''print("len(t):", len(t))
         print("first_power.shape:", first_power.shape)
         print("expected shape:", (amount_symbols_in_first_part, len(t)))
@@ -1236,8 +1234,8 @@ class SimulationManager:
         mean_photon_after_dli = self.simulation_helper.calculate_mean_photon_number(power_dampened, peak_wavelength, t)[:20]
 
         # plot
-        # assert power_dampened.shape[1] == len(t), f"Mismatch: power_dampened has {power_dampened.shape[1]} samples per symbol, t has {len(t)}!"
-        # self.plotter.plot_power(t, power_dampened, amount_symbols_in_plot=amount_symbols_in_first_part, where_plot_1='before DLI',  shortened_first_power=first_power, where_plot_2='after DLI,', title_rest='- in fft, mean_volt: ' + str("{:.4f}".format(self.config.mean_voltage)) + ' voltage: ' + str("{:.4f}".format(chosen_voltage[0])) + ' V and ' + str("{:.8f}".format(peak_wavelength[0])))
+        assert power_dampened.shape[1] == len(t), f"Mismatch: power_dampened has {power_dampened.shape[1]} samples per symbol, t has {len(t)}!"
+        self.plotter.plot_power(t, power_dampened, amount_symbols_in_plot=amount_symbols_in_first_part, where_plot_1='before DLI',  shortened_first_power=first_power, where_plot_2='after DLI,', title_rest='- in fft, mean_volt: ' + str("{:.4f}".format(self.config.mean_voltage)) + ' voltage: ' + str("{:.4f}".format(chosen_voltage[0])) + ' V and ' + str("{:.8f}".format(peak_wavelength[0])))
         
         # plt.plot(first_power.reshape(-1) * 1e3, color='blue', label='0', linestyle='-', marker='o', markersize=1)
         # Saver.save_plot(f"power_before_DLI_in_mW_outside")
@@ -1302,8 +1300,6 @@ class SimulationManager:
             voltage=self.config.voltage, 
             voltage_decoy_sup=self.config.voltage_decoy_sup, 
             voltage_sup=self.config.voltage_sup,
-            p_indep_x_states_non_dec=self.config.p_indep_x_states_non_dec,
-            p_indep_x_states_dec=self.config.p_indep_x_states_dec,
             p_vacuum_z=p_vacuum_z,
             len_vacuum_indices_x_long=len(vacuum_indices_x_long),
             len_Z_checked_dec=len_Z_checked_dec,
@@ -1479,8 +1475,6 @@ class SimulationManager:
                 voltage=self.config.voltage, 
                 voltage_decoy_sup=self.config.voltage_decoy_sup, 
                 voltage_sup=self.config.voltage_sup,
-                p_indep_x_states_non_dec=self.config.p_indep_x_states_non_dec,
-                p_indep_x_states_dec=self.config.p_indep_x_states_dec,
                 p_vacuum_z=p_vacuum_z,
                 len_vacuum_indices_x_long=len(vacuum_indices_x_long),
                 len_Z_checked_dec=len_Z_checked_dec,

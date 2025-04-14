@@ -1,9 +1,9 @@
 {
     "round": 1,
-    "seed": 408418,
-    "n_samples": 7,
+    "seed": 907306,
+    "n_samples": 18500,
     "n_pulses": 4,
-    "batchsize": 7,
+    "batchsize": 925,
     "mean_voltage": -1.708,
     "mean_current": 0.082111,
     "voltage_amplitude": 0.002,
@@ -25,8 +25,8 @@
     "detector_efficiency": 0.3,
     "dark_count_frequency": 10,
     "detection_time": 1e-10,
-    "detector_jitter": 1e-10,
-    "mlp": "C:\\Users\\leavi\\bachelor\\code\\Presentation_style_1_adjusted_no_grid.mplstyle",
-    "script_name": "main.py",
-    "job_id": null
+    "detector_jitter": 1e-11,
+    "mlp": "/wang/users/leavic98/cluster_home/NeuMoQP/Programm/bachelor/code/Presentation_style_1_adjusted_no_grid.mplstyle",
+    "script_name": "main_hist_cluster.py",
+    "job_id": "6735140"
 }

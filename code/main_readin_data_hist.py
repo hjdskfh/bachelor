@@ -36,5 +36,5 @@ total_symbols = data["total_samples"]
 
 DataProcessor.plot_histogram_batch(bins_per_symbol_hist, final_time_one_symbol,
                             global_histogram_counts_x, global_histogram_counts_z,
-                            final_lookup_array, total_symbols, start_symbol=2, end_symbol=6, name="random", leave_z=True)
+                            final_lookup_array, total_symbols, start_symbol=11, end_symbol=15, name="random", leave_z=True)
 
