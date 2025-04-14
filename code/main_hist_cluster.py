@@ -34,7 +34,7 @@ database.add_data('data/wavelength_neff.csv', 'Wavelength (nm)', 'neff', 20, 'wa
 
 jitter = 1e-11
 database.add_jitter(jitter, 'laser')
-detector_jitter = 100e-12
+detector_jitter = 1e-11
 database.add_jitter(detector_jitter, 'detector')
 
 
@@ -49,7 +49,7 @@ max_concurrent_tasks = 16
 simulations_in_batch = 2  # adjust this to increase per-task workload
 
 # Total number of batches to run (total simulations = simulations_in_batch * total_batches)
-total_batches = 100  # e.g., total simulations = 2 * 50 = 100
+total_batches = 20 # e.g., total simulations = 2 * 50 = 100
 
 length_of_chain = 6*6 +1
 n_rep = 500

@@ -60,10 +60,14 @@ class DataProcessor:
                             print(f"Out of bounds: idx_hist={idx_hist}, len={len(local_histogram_counts_z)}, s={s}, bin_index={bin_index}")
                     assert np.all(0 <= bin_index) and np.all(bin_index < bins_per_symbol), f"bin_index {bin_index} out of bounds for symbol {s}"
                     np.add.at(local_histogram_counts_z, idx_hist, 1)
+        if np.any(local_histogram_counts_x > 0) or np.any(local_histogram_counts_z > 0):
+            print(f"local_histogram_counts_x: {local_histogram_counts_x}")
+            print(f"local_histogram_counts_z: {local_histogram_counts_z}")
+
         return local_histogram_counts_x, local_histogram_counts_z
 
     @staticmethod
-    def plot_histogram_batch(bins_per_symbol, time_one_symbol, histogram_counts_x, histogram_counts_z, lookup_arr, total_symbols, start_symbol=3, end_symbol=10, name=' '):
+    def plot_histogram_batch(bins_per_symbol, time_one_symbol, histogram_counts_x, histogram_counts_z, lookup_arr, total_symbols, start_symbol=3, end_symbol=10, name=' ', leave_x = False, leave_z = False):
         assert 0 <= start_symbol <= end_symbol <= 64
         amount_of_symbols_incl_start_and_end = end_symbol - start_symbol + 1
         bins = np.linspace(0, amount_of_symbols_incl_start_and_end * time_one_symbol, bins_per_symbol * amount_of_symbols_incl_start_and_end + 1)    
@@ -71,9 +75,11 @@ class DataProcessor:
         plt.figure(figsize=(10, 6))
         # Plot as bar chart; you can also use plt.hist with precomputed counts.
         width = (bins[1] - bins[0])
-        plt.bar(bins[:-1], histogram_counts_x[start_symbol * bins_per_symbol :(end_symbol + 1) * bins_per_symbol], width=width, alpha=0.6, label='X basis', color='blue')
-        plt.bar(bins[:-1], histogram_counts_z[start_symbol * bins_per_symbol :(end_symbol + 1) * bins_per_symbol], width=width, alpha=0.6, label='Z basis', color='red')
-        
+        if leave_x == False:
+            plt.bar(bins[:-1], histogram_counts_x[start_symbol * bins_per_symbol :(end_symbol + 1) * bins_per_symbol], width=width, alpha=0.6, label='X basis', color='blue')
+        if leave_z == False:
+            plt.bar(bins[:-1], histogram_counts_z[start_symbol * bins_per_symbol :(end_symbol + 1) * bins_per_symbol], width=width, alpha=0.6, label='Z basis', color='red')
+
         for i in range(amount_of_symbols_incl_start_and_end):
             plt.axvline(x=i * time_one_symbol, color='grey', linestyle='--', linewidth=1)
 

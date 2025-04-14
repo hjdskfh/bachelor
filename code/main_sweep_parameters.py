@@ -23,7 +23,7 @@ def run_parameter_sweep():
     # Add jitter values.
     jitter = 1e-11
     database.add_jitter(jitter, 'laser')
-    detector_jitter = 100e-12
+    detector_jitter = 1e-11
     database.add_jitter(detector_jitter, 'detector')
     total_symbols = 2000    # Total number of symbols to be processed.
 

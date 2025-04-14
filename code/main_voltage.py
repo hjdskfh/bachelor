@@ -23,7 +23,7 @@ database.add_data('data/wavelength_neff.csv', 'Wavelength (nm)', 'neff', 20, 'wa
 
 jitter = 1e-11
 database.add_jitter(jitter, 'laser')
-detector_jitter = 100e-12
+detector_jitter = 1e-11
 database.add_jitter(detector_jitter, 'detector')
 
 #seed = 45
