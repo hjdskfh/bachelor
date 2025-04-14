@@ -16,9 +16,9 @@ class DataProcessor:
                                 index_where_photons_det_x, index_where_photons_det_z, amount_bins_hist, bins_per_symbol = 30):
         # print(f"total_symbols: {total_symbols}")
         n_rep = total_symbols // length_of_chain
-        # print(f"n_rep: {n_rep}")
-        # print(f"lengthofchain:{length_of_chain}")
-        # print(f"first blub")
+    
+        assert len(time_photons_det_x) == len(index_where_photons_det_x), f"Length mismatch: {len(time_photons_det_x)} vs {len(index_where_photons_det_x)}"
+        assert len(time_photons_det_z) == len(index_where_photons_det_z), f"Length mismatch: {len(time_photons_det_z)} vs {len(index_where_photons_det_z)}"
 
         local_histogram_counts_x = np.zeros(amount_bins_hist, dtype=int)
         local_histogram_counts_z = np.zeros(amount_bins_hist, dtype=int)
@@ -28,6 +28,7 @@ class DataProcessor:
         for rep in range(n_rep):
             for s in range(length_of_chain):  # which symbol
                 row_idx = rep * length_of_chain + s 
+                print(f"row_idx: {row_idx}, index_where_photons_det_x: {index_where_photons_det_x}")
                 if np.isin(row_idx, index_where_photons_det_x):
                     ind_short = np.where(index_where_photons_det_x == row_idx)[0]
                     valid_x = time_photons_det_x[ind_short][~np.isnan(time_photons_det_x[ind_short])]

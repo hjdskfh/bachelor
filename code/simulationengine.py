@@ -1,15 +1,9 @@
-from hmac import new
-from random import sample
 from re import A
-from matplotlib.image import resample
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.fftpack import fft, ifft, fftfreq
 from scipy import constants
-from scipy.special import factorial
 import time
 import gc
-from scipy.signal import convolve, resample_poly
 from scipy.interpolate import splrep, splev
 
 
@@ -41,6 +35,30 @@ class SimulationEngine:
         if fixed is None:
             chosen_voltage = self.config.mean_voltage + self.config.voltage_amplitude * np.sin(2 * np.pi * 1 * times)  # 50 mV passt
             chosen_current = ((self.config.mean_current) + self.config.current_amplitude * np.sin(2 * np.pi * 1 * times)) * 1e3
+            '''# plot sinuses
+            mean_voltage = 0.05  # 50 mV
+            voltage_amplitude = 0.02  # 20 mV
+            mean_current = 0.01  # 10 mA
+            current_amplitude = 0.005  # 5 mA
+
+            # Generate time values
+            times = np.linspace(0, 1, 1000)  # 1 second with 1000 points
+
+            # Generate sinusoidal signals
+            chosen_voltage = mean_voltage + voltage_amplitude * np.sin(2 * np.pi * 1 * times)
+            chosen_current = (mean_current + current_amplitude * np.sin(2 * np.pi * 1 * times)) * 1e3  # Convert to mA
+
+            # Plot the signals
+            plt.figure(figsize=(10, 6))
+            plt.plot(times, chosen_voltage, label="Voltage (V)", color="blue")
+            plt.plot(times, chosen_current, label="Current (mA)", color="red")
+            plt.title("Sinusoidal Voltage and Current Signals")
+            plt.xlabel("Time (s)")
+            plt.ylabel("Amplitude")
+            plt.legend()
+            plt.grid(True)
+            plt.tight_layout()
+            plt.show()'''
         else:
             chosen_voltage = np.ones(self.config.n_samples // self.config.batchsize) * self.config.mean_voltage
             chosen_current = np.ones(self.config.n_samples // self.config.batchsize) * (self.config.mean_current) * 1e3
@@ -200,7 +218,6 @@ class SimulationEngine:
         return power_dampened
 
     def delay_line_interferometer(self, power_dampened, t, peak_wavelength, value):
-        start_time = time.time()
         dt_new = 1e-14
 
         tau = 2 / self.config.sampling_rate_FPGA  
@@ -208,18 +225,9 @@ class SimulationEngine:
         # Assuming the group refractive index of the waveguide
         n_eff = 1.56 # Effective refractive index
         delta_L = tau * constants.c / n_g
-        overlap_symbols = 1
-        save_overlap_symbols = np.empty(overlap_symbols*len(t))
-        Saver.memory_usage("before DLI time in DLI: " + str(time.time() - start_time))
 
         for i in range(0, len(value), self.config.batchsize):
-            print(f"beginning i: {i}, batchsize: {self.config.batchsize}, len(value): {len(value)}, overlap_symbols: {overlap_symbols}")
-            #  Determine the start and end indices for the current batch, including overlap
-            start_index = i 
-            end_index = i + self.config.batchsize if i + self.config.batchsize >= len(value) else i + self.config.batchsize + overlap_symbols
-            amount_symbols_in_batch = end_index - start_index
-            print(f"start_index: {start_index}, end_index: {end_index}, amount_symbols_in_batch: {amount_symbols_in_batch}")
-            power_dampened_batch = power_dampened[start_index:end_index, :]
+            power_dampened_batch = power_dampened[i:i + self.config.batchsize, :]
             flattened_power_batch = power_dampened_batch.reshape(-1)
             # print(f"flattened_power_batch: {flattened_power_batch.shape}, power_dampened_batch: {power_dampened_batch.shape}, t: {t.shape}")
 
@@ -234,12 +242,12 @@ class SimulationEngine:
             
             # Resample the data using np.interp (linear interpolation)
             flattened_power_batch_resampled = np.interp(t_new_all_sym, t_original_all_sym, flattened_power_batch)
-            Saver.memory_usage("after interpolate DLI time in DLI: " + str(time.time() - start_time))
-
             '''plt.plot(flattened_power_batch_resampled[:len(t)*100], color = 'green', label = 'after resample')
             plt.plot(flattened_power_batch[:len(t)*10], label = 'before resample')
             plt.show()'''
             
+            flattened_power_batch_resampled_copy = flattened_power_batch_resampled.copy()
+
             # t_test ist gleich wie das t das in der Funktion gemacht wird
             t_test = np.arange(len(flattened_power_batch_resampled)) * dt_new
             # print(f"t_test:{t_test.shape}, t_test:{t_test[-1]}, t_new_all_sym:{t_new_all_sym.shape} t_new_all_sym: {t_new_all_sym[-1]}")
@@ -248,8 +256,6 @@ class SimulationEngine:
             '''print(f"f_0: {f_0}, i: {i}, batchsize: {self.config.batchsize}, peak_wavelength[i]: {peak_wavelength[i]}")'''
 
             power_1, power_2, _ = self.simulation_helper.DLI(flattened_power_batch_resampled, dt_new, tau, delta_L, f_0,  n_eff)
-            Saver.memory_usage("after DLI function time in DLI: " + str(time.time() - start_time))
-
             '''plt.plot(power_1[:len(t)], label = 'after DLI 1')
             plt.plot(power_2[:len(t)], label = 'after DLI 2')
             plt.legend()
@@ -276,31 +282,12 @@ class SimulationEngine:
 
             # Use interpolation to compute signal values at new time points
             signal_downsampled = np.interp(t_original_all_sym, t_new_all_sym, power_1)
-            '''plt.plot(signal_downsampled, label = 'after DLI 1')
-            # plt.plot(power_1[:len(t)*100], color = 'green', label = 'after DLI 1')
+            '''plt.plot(signal_downsampled[:len(t)*100], label = 'after DLI 1')
+            plt.plot(power_1[:len(t)*100], color = 'green', label = 'after DLI 1')
             plt.show()'''
 
-            flattened_power_batch = signal_downsampled.reshape(amount_symbols_in_batch, len(t))
-            
-            if i == 0:
-                save_overlap_symbols = flattened_power_batch[-overlap_symbols:].copy() # the last overlap symbols
-                flattened_power_batch = flattened_power_batch[:-overlap_symbols]
-                power_dampened[i: i + self.config.batchsize, :] = flattened_power_batch
-            elif i + self.config.batchsize == len(value):
-                power_dampened[i:i + overlap_symbols, :] = save_overlap_symbols # old overlap symbol
-                save_overlap_symbols = flattened_power_batch[-overlap_symbols:].copy() # last symbols save for overlap
-                # no overlap symbol for the next batch, bc it is the last one
-                flattened_power_batch = flattened_power_batch[overlap_symbols:] # everything but the first symbols
-                power_dampened[i + overlap_symbols: i + self.config.batchsize, :] = flattened_power_batch
-            else:
-                power_dampened[i:i + overlap_symbols, :] = save_overlap_symbols # old overlap symbol
-                save_overlap_symbols = flattened_power_batch[-overlap_symbols:].copy() # last symbols save for overlap
-
-                flattened_power_batch = flattened_power_batch[overlap_symbols:-overlap_symbols] # everything but the first and last overlap symbols
-                power_dampened[i + overlap_symbols: i + self.config.batchsize, :] = flattened_power_batch
-
-            Saver.memory_usage("after DLI batch time in DLI: " + str(time.time() - start_time))
-           
+            flattened_power_batch = signal_downsampled.reshape(self.config.batchsize, len(t))
+            power_dampened[i:i + self.config.batchsize, :] = flattened_power_batch
         return power_dampened, f_0
 
     
@@ -372,7 +359,7 @@ class SimulationEngine:
         indices_z_long, mask_z_short, get_original_indexing_z = self.simulation_helper.classificator_sift_z_vacuum(basis, detected_indices_z, index_where_photons_det_z)
         detected_indices_x_det_x_basis, total_sift_x_basis_long, vacuum_indices_x_long, \
         indices_x_long, mask_x_short, get_original_indexing_x = self.simulation_helper.classificator_sift_x_vacuum(basis, detected_indices_x, index_where_photons_det_x)
-        '''with np.printoptions(threshold=np.inf):
+        with np.printoptions(threshold=np.inf):
             print(f"time_photons_det_x part: {time_photons_det_x[:10]}")
             len(f"time_photons_det_x: {len(time_photons_det_x)}")
             print(f"detected_indices_x part: {detected_indices_x[:10]}")
@@ -380,7 +367,7 @@ class SimulationEngine:
             print("index_where_photons_det_x part: ", index_where_photons_det_x[:10])
             print(f"detected_indices_x_det_x_basis: {detected_indices_x_det_x_basis}")
             print(f"get_original_indexing_x part: {get_original_indexing_x[:10]}")
-            print(f"XP_alice_s part {np.where((basis == 0) & (decoy == 1))[0][:10]}")'''
+            print(f"XP_alice_s part {np.where((basis == 0) & (decoy == 1))[0][:10]}")
         gain_Z_non_dec, gain_Z_dec, len_Z_checked_dec, len_Z_checked_non_dec = self.simulation_helper.classificator_identify_z(mask_x_short, value, total_sift_z_basis_short, 
                                                                                                                                detected_indices_x_det_x_basis, index_where_photons_det_z, decoy, indices_z_long, get_original_indexing_z, get_original_indexing_x)
 
@@ -391,7 +378,26 @@ class SimulationEngine:
 
 
         qber_z_dec, qber_z_non_dec, qber_x_dec, qber_x_non_dec, raw_key_rate, total_amount_detections = self.simulation_helper.classificator_qber_rkr(t, wrong_detections_z_dec, wrong_detections_z_non_dec, wrong_detections_x_dec, wrong_detections_x_non_dec, len_Z_checked_dec, len_Z_checked_non_dec, X_P_calc_non_dec, X_P_calc_dec)
-
+        
+        with np.printoptions(threshold=100):
+            Saver.save_results_to_txt(  # Save the results to a text file
+                function_used = "classificator_new",
+                n_samples=self.config.n_samples,
+                seed=self.config.seed,
+                non_signal_voltage=self.config.non_signal_voltage,
+                voltage_decoy=self.config.voltage_decoy, 
+                voltage=self.config.voltage, 
+                voltage_decoy_sup=self.config.voltage_decoy_sup, 
+                voltage_sup=self.config.voltage_sup,
+                p_indep_x_states_non_dec=self.config.p_indep_x_states_non_dec,
+                p_indep_x_states_dec=self.config.p_indep_x_states_dec,
+                time_photons_det_x=time_photons_det_x,
+                time_photons_det_z=time_photons_det_z, 
+                detected_indices_x=detected_indices_x,
+                detected_indices_z=detected_indices_z,
+                detected_indices_x_det_x_basis=detected_indices_x_det_x_basis,
+                detected_indices_z_det_z_basis=detected_indices_z_det_z_basis
+                )
     
 
         return p_vacuum_z, vacuum_indices_x_long, len_Z_checked_dec, len_Z_checked_non_dec, gain_Z_non_dec, gain_Z_dec, gain_X_non_dec, gain_X_dec, X_P_calc_non_dec, X_P_calc_dec, wrong_detections_z_dec, wrong_detections_z_non_dec, wrong_detections_x_dec, wrong_detections_x_non_dec, qber_z_dec, qber_z_non_dec, qber_x_dec, qber_x_non_dec, raw_key_rate, total_amount_detections

@@ -379,6 +379,23 @@ class SimulationHelper:
         vacuum_indices_x_long = np.union1d(indices_x_no_photons_long, nothing_in_det_indices_long)
         get_original_indexing_x = index_where_photons_det_x[basis[index_where_photons_det_x] == 1]
 
+        with np.printoptions(threshold=100):
+            Saver.save_results_to_txt(  # Save the results to a text file
+                function_used = "sift_vac_x",
+                n_samples=self.config.n_samples,
+                seed=self.config.seed,
+                non_signal_voltage=self.config.non_signal_voltage,
+                voltage_decoy=self.config.voltage_decoy, 
+                voltage=self.config.voltage, 
+                voltage_decoy_sup=self.config.voltage_decoy_sup, 
+                voltage_sup=self.config.voltage_sup,
+                p_indep_x_states_non_dec=self.config.p_indep_x_states_non_dec,
+                p_indep_x_states_dec=self.config.p_indep_x_states_dec,
+                get_original_indexing_x = get_original_indexing_x,
+                detected_indices_x_det_x_basis = detected_indices_x_det_x_basis,
+                detected_indices_x = detected_indices_x
+                )
+
         # 1 or 2 signals in X basis
         sum_det_ind = np.sum(detected_indices_x >= 0, axis=1)
         one_or_two_in_x_short = np.where((sum_det_ind == 1) | (sum_det_ind == 2))[0]
@@ -489,25 +506,23 @@ class SimulationHelper:
         print(f"ind_has_0_xpz1: {ind_has_0_xpz1}")
         print(f"ind_has_0_z0xp: {ind_has_0_z0xp}")
         
-        X_P_calc_non_dec = (ind_has_0_xpz1 + ind_has_0_z0xp) / ( (1 / 4) * self.config.p_z_alice)
+        X_P_calc_non_dec = (ind_has_0_xpz1 + ind_has_0_z0xp) / ( (1 / 2) * self.config.p_z_bob * self.config.p_z_alice)
        
-    
-        # sort out symbols for p_indep_x_states
         # create signal Z0X+ and then X+Z1
-        Z0_alice_s = np.where((basis == 1) & (value == 1) & (decoy == 1))[0]  # Indices where Z0 was sent
-        XP_alice_s = np.where((basis == 0) & (decoy == 1))[0]  # Indices where XP was sent
-        Z0_XP_alice_s = XP_alice_s[np.isin(XP_alice_s - 1, Z0_alice_s)]  # Indices where Z1Z0 was sent (index of Z0 used aka the higher index at which time we measure the X+ state)
+        Z0_alice_d = np.where((basis == 1) & (value == 1) & (decoy == 1))[0]  # Indices where Z0 was sent
+        XP_alice_d = np.where((basis == 0) & (decoy == 1))[0]  # Indices where XP was sent
+        Z0_XP_alice_d = XP_alice_d[np.isin(XP_alice_d - 1, Z0_alice_d)]  # Indices where Z1Z0 was sent (index of Z0 used aka the higher index at which time we measure the X+ state)
         has_0_short = np.where(np.any(detected_indices_x_det_x_basis == 0, axis=1))[0]
         has_0_long = get_original_indexing_x[has_0_short]
-        has_0_z0xp = np.intersect1d(has_0_long, Z0_XP_alice_s)
+        has_0_z0xp = np.intersect1d(has_0_long, Z0_XP_alice_d)
         ind_has_0_z0xp = len(np.where(has_0_z0xp)[0])
         
-        Z1_alice_s = np.where((basis == 1) & (value == 0) & (decoy == 1))[0]  # Indices where Z0 was sent
-        XP_Z1_alice_s = Z1_alice_s[np.isin(Z1_alice_s - 1, XP_alice_s)]  # Indices where Z1Z0 was sent (index of Z0 used aka the higher index at which time we measure the X+ state)
-        has_0_xpz1 = np.intersect1d(has_0_long, XP_Z1_alice_s)
+        Z1_alice_d = np.where((basis == 1) & (value == 0) & (decoy == 1))[0]  # Indices where Z1 was sent
+        XP_Z1_alice_d = Z1_alice_d[np.isin(Z1_alice_d - 1, XP_alice_d)]  # Indices where Z1Z0 was sent (index of Z0 used aka the higher index at which time we measure the X+ state)
+        has_0_xpz1 = np.intersect1d(has_0_long, XP_Z1_alice_d)
         ind_has_0_xpz1 = len(np.where(has_0_xpz1)[0])
 
-        X_P_calc_dec = (ind_has_0_xpz1 + ind_has_0_z0xp) / ( (1 / 4) * self.config.p_z_alice)
+        X_P_calc_dec = (ind_has_0_xpz1 + ind_has_0_z0xp) / ( (1 / 2) * self.config.p_z_bob * self.config.p_z_alice)
         print(f"X_P_calc_dec:{X_P_calc_dec}")
         print(f"X_P_calc_non_dec:{X_P_calc_non_dec}")
 
@@ -536,7 +551,7 @@ class SimulationHelper:
             has_0_long = has_0_long[:100]
             
         Saver.save_results_to_txt(  # Save the results to a text file
-            function_used = None,
+            function_used = "identify_x",
             n_samples=self.config.n_samples,
             seed=self.config.seed,
             non_signal_voltage=self.config.non_signal_voltage,
@@ -550,8 +565,11 @@ class SimulationHelper:
             XP_Z1_alice_s=XP_Z1_alice_s,
             has_0_short=has_0_short,
             has_0_long=has_0_long,
-            ind_has_0_z0xp=ind_has_0_z0xp)
-
+            ind_has_0_z0xp=ind_has_0_z0xp,
+            get_original_indexing_x=get_original_indexing_x,
+            get_original_indexing_z=get_original_indexing_z,
+            indices_x_long=indices_x_long,
+            indices_z_long=indices_z_long)
             
         return X_P_calc_non_dec, X_P_calc_dec, gain_X_non_dec, gain_X_dec
     

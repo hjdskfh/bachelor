@@ -1,3 +1,4 @@
+from codecs import lookup
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator
@@ -1241,10 +1242,10 @@ class SimulationManager:
             Z0_alice_s = np.where((basis == 1) & (value == 1) & (decoy == 0))[0]  # Indices where Z0 was sent
             XP_alice_s = np.where((basis == 0) & (decoy == 0))[0]  # Indices where XP was sent
             Z0_XP_alice_s = XP_alice_s[np.isin(XP_alice_s - 1, Z0_alice_s)]
-            print(f"len(Z0_alice_s): {len(Z0_alice_s)}, len(XP_alice_s): {len(XP_alice_s)}, len(Z0_XP_alice_s): {len(Z0_XP_alice_s)}")
+            print(f"manager len(Z0_alice_s): {len(Z0_alice_s)}, len(XP_alice_s): {len(XP_alice_s)}, len(Z0_XP_alice_s): {len(Z0_XP_alice_s)}")
             Z1_alice_s = np.where((basis == 1) & (value == 0) & (decoy == 1))[0]  # Indices where Z0 was sent
             XP_Z1_alice_s = Z1_alice_s[np.isin(Z1_alice_s - 1, XP_alice_s)]  # Indices where Z1Z0 was sent (index of Z0 used aka the higher index at which time we measure the X+ state)
-            print(f"len(Z1_alice_s): {len(Z1_alice_s)}, len(XP_Z1_alice_s): {len(XP_Z1_alice_s)}")
+            print(f"manager len(Z1_alice_s): {len(Z1_alice_s)}, len(XP_Z1_alice_s): {len(XP_Z1_alice_s)}")
             mean_photon_at_detector_of_Z0_XP_symbol_mean_photon_for_whole_symbol = mean_photon_at_x_detector[Z0_XP_alice_s]
             mean_of_Z0_XP = np.mean(mean_photon_at_detector_of_Z0_XP_symbol_mean_photon_for_whole_symbol)
 
@@ -1326,9 +1327,17 @@ class SimulationManager:
             calc_mean_photon_nr_detector_x=calc_mean_photon_nr_detector_x,
             mean_photon_at_detector_of_Z0_XP_symbol_mean_photon_for_whole_symbol=mean_photon_at_detector_of_Z0_XP_symbol_mean_photon_for_whole_symbol,
             mean_of_Z0_XP=mean_of_Z0_XP,
+            index_where_photons_det_z=index_where_photons_det_z,
+            index_where_photons_det_x=index_where_photons_det_x,
+            time_photons_det_x=time_photons_det_x.shape,
+            time_photons_det_z=time_photons_det_z.shape,
         )
         
-        return len_wrong_x_dec, len_wrong_x_non_dec, len_wrong_z_dec, len_wrong_z_non_dec, len_Z_checked_dec, len_Z_checked_non_dec, X_P_calc_non_dec, X_P_calc_dec
+        time_one_symbol = t[-1]
+        lookup_array = self.simulation_helper.create_all_symbol_combinations_for_hist()[3]
+        
+        return len_wrong_x_dec, len_wrong_x_non_dec, len_wrong_z_dec, len_wrong_z_non_dec, len_Z_checked_dec, len_Z_checked_non_dec, X_P_calc_non_dec, X_P_calc_dec, time_photons_det_x, time_photons_det_z, time_one_symbol, index_where_photons_det_z, index_where_photons_det_x, \
+                basis, value, decoy, lookup_array
         
 
     def run_simulation_repeat(self, save_output = False):

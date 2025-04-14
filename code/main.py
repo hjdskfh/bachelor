@@ -6,6 +6,7 @@ from config import SimulationConfig
 from simulationmanager import SimulationManager
 from simulationhelper import SimulationHelper
 from saver import Saver
+from dataprocessor import DataProcessor
 import numpy as np
 import psutil
 import threading
@@ -74,8 +75,22 @@ print(f"Execution time for reading: {execution_time_read:.9f} seconds for {confi
 # print(f"X_P_calc_non_dec: {X_P_calc_non_dec}, X_P_calc_dec: {X_P_calc_dec}")
 # simulation.run_DLI()
 # simulation.run_simulation_till_DLI()
-len_wrong_x_dec, len_wrong_x_non_dec, len_wrong_z_dec, len_wrong_z_non_dec, len_Z_checked_dec, len_Z_checked_non_dec, X_P_calc_non_dec, X_P_calc_dec = simulation.run_simulation_detection_tester()
+len_wrong_x_dec, len_wrong_x_non_dec, len_wrong_z_dec, len_wrong_z_non_dec, len_Z_checked_dec, len_Z_checked_non_dec, X_P_calc_non_dec, X_P_calc_dec, time_photons_det_x, time_photons_det_z, time_one_symbol, index_where_photons_det_z, index_where_photons_det_x, \
+                basis, value, decoy, lookup_array = simulation.run_simulation_detection_tester()
 # simulation.run_simulation_states()
+
+length_of_chain = 6 * 6 + 1
+bins_per_symbol_hist = 30
+amount_bins_hist = bins_per_symbol_hist * length_of_chain
+hist_z, hist_x = DataProcessor.update_histogram_batches_all_pairs(length_of_chain, time_one_symbol, time_photons_det_z, time_photons_det_x,
+                                                    index_where_photons_det_z, index_where_photons_det_x, amount_bins_hist,
+                                                    bins_per_symbol_hist, lookup_array, basis, value, decoy)
+
+Saver.save_results_to_txt(function_used = "hist_z",
+                          hist_z = hist_z)
+Saver.save_results_to_txt(function_used = "hist_x",
+                          hist_x = hist_x)
+                          
 
 end_time_simulation = time.time()  # Record end time for simulation
 execution_time_simulation = end_time_simulation - end_time_read  # Calculate execution time for simulation
