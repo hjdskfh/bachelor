@@ -378,24 +378,6 @@ class SimulationEngine:
 
 
         qber_z_dec, qber_z_non_dec, qber_x_dec, qber_x_non_dec, raw_key_rate, total_amount_detections = self.simulation_helper.classificator_qber_rkr(t, wrong_detections_z_dec, wrong_detections_z_non_dec, wrong_detections_x_dec, wrong_detections_x_non_dec, len_Z_checked_dec, len_Z_checked_non_dec, X_P_calc_non_dec, X_P_calc_dec)
-        
-        with np.printoptions(threshold=100):
-            Saver.save_results_to_txt(  # Save the results to a text file
-                function_used = "classificator_new",
-                n_samples=self.config.n_samples,
-                seed=self.config.seed,
-                non_signal_voltage=self.config.non_signal_voltage,
-                voltage_decoy=self.config.voltage_decoy, 
-                voltage=self.config.voltage, 
-                voltage_decoy_sup=self.config.voltage_decoy_sup, 
-                voltage_sup=self.config.voltage_sup,
-                p_indep_x_states_non_dec=self.config.p_indep_x_states_non_dec,
-                p_indep_x_states_dec=self.config.p_indep_x_states_dec,
-                time_photons_det_x=time_photons_det_x,
-                detected_indices_x=detected_indices_x.shape,
-                detected_indices_x_det_x_basis=detected_indices_x_det_x_basis
-                )
-    
 
         return p_vacuum_z, vacuum_indices_x_long, len_Z_checked_dec, len_Z_checked_non_dec, gain_Z_non_dec, gain_Z_dec, gain_X_non_dec, gain_X_dec, X_P_calc_non_dec, X_P_calc_dec, wrong_detections_z_dec, wrong_detections_z_non_dec, wrong_detections_x_dec, wrong_detections_x_non_dec, qber_z_dec, qber_z_non_dec, qber_x_dec, qber_x_non_dec, raw_key_rate, total_amount_detections
     

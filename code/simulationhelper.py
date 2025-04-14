@@ -379,7 +379,7 @@ class SimulationHelper:
         vacuum_indices_x_long = np.union1d(indices_x_no_photons_long, nothing_in_det_indices_long)
         get_original_indexing_x = index_where_photons_det_x[basis[index_where_photons_det_x] == 1]
 
-        with np.printoptions(threshold=100):
+        '''with np.printoptions(threshold=100):
             Saver.save_results_to_txt(  # Save the results to a text file
                 function_used = "sift_vac_x",
                 n_samples=self.config.n_samples,
@@ -395,7 +395,7 @@ class SimulationHelper:
                 detected_indices_x_det_x_basis = detected_indices_x_det_x_basis,
                 index_where_photons_det_x = index_where_photons_det_x,
                 detected_indices_x = detected_indices_x.shape
-                )
+                )'''
 
         # 1 or 2 signals in X basis
         sum_det_ind = np.sum(detected_indices_x >= 0, axis=1)

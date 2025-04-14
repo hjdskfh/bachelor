@@ -1284,7 +1284,7 @@ class SimulationManager:
         len_wrong_x_dec=len(wrong_detections_x_dec)
         len_wrong_x_non_dec=len(wrong_detections_x_non_dec)
         
-        function_name = inspect.currentframe().f_code.co_name
+        '''function_name = inspect.currentframe().f_code.co_name
         Saver.save_results_to_txt(  # Save the results to a text file
             function_used = function_name,
             n_samples=self.config.n_samples,
@@ -1331,7 +1331,7 @@ class SimulationManager:
             index_where_photons_det_x=index_where_photons_det_x,
             time_photons_det_x=time_photons_det_x.shape,
             time_photons_det_z=time_photons_det_z.shape,
-        )
+        )'''
         
         time_one_symbol = t[-1]
         lookup_array = self.simulation_helper.create_all_symbol_combinations_for_hist()[3]
