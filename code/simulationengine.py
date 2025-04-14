@@ -221,11 +221,11 @@ class SimulationEngine:
         dt_new = 1e-14
 
         tau = 2 / self.config.sampling_rate_FPGA  
-        # n_g = 2.05 # For calculatting path length difference
+        n_g = 2.05 # For calculatting path length difference
+        # n_g = 1
         # Assuming the group refractive index of the waveguide
-        # n_eff = 1.56 # Effective refractive index
-        n_eff = 1
-        n_g = 2.05
+        n_eff = 1.56 # Effective refractive index
+        
         delta_L = tau * constants.c / n_g
 
         for i in range(0, len(value), self.config.batchsize):
@@ -256,8 +256,8 @@ class SimulationEngine:
             # print(f"t_test:{t_test.shape}, t_test:{t_test[-1]}, t_new_all_sym:{t_new_all_sym.shape} t_new_all_sym: {t_new_all_sym[-1]}")
             
             f_0 = constants.c / peak_wavelength[i]
-            # n_eff = self.get_interpolated_value(peak_wavelength[i] * 1e9, 'wavelength_neff')
             
+            # n_eff = self.get_interpolated_value(peak_wavelength[i] * 1e9, 'wavelength_neff')
             # print(f"n_eff: {n_eff}, peak_wavelength[i]: {peak_wavelength[i]}, f_0: {f_0}, i: {i}, batchsize: {self.config.batchsize}")
 
             '''print(f"f_0: {f_0}, i: {i}, batchsize: {self.config.batchsize}, peak_wavelength[i]: {peak_wavelength[i]}")'''
@@ -295,7 +295,7 @@ class SimulationEngine:
 
             flattened_power_batch = signal_downsampled.reshape(self.config.batchsize, len(t))
             power_dampened[i:i + self.config.batchsize, :] = flattened_power_batch
-        return power_dampened, f_0, n_eff, n_g
+        return power_dampened, f_0
 
     
     def detector(self, t, norm_transmission, peak_wavelength, power_dampened, start_time=0):

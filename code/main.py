@@ -82,7 +82,14 @@ with np.printoptions(threshold=np.inf):
                           hist_x = hist_x,
                           hist_x_sum = np.sum(hist_x, axis=0),
                           time_photons_det_x = time_photons_det_x,
-                          index_where_photons_det_x = index_where_photons_det_x)'''
+                          index_where_photons_det_x = index_where_photons_det_x)
+    Saver.save_array_as_npz_data("histograms_random",
+                            bins_per_symbol_hist=bins_per_symbol_hist,
+                            final_time_one_symbol=final_time_one_symbol,
+                            global_histogram_counts_x=hist_x,
+                            global_histogram_counts_z=hist_z,
+                            final_lookup_array=lookup_array,
+                            total_symbols=total_symbols)'''
                           
 
 end_time_simulation = time.time()  # Record end time for simulation

@@ -967,19 +967,19 @@ class SimulationManager:
             
             original_power = power_dampened.reshape(-1).copy()
 
-            destructive_port, f_0, n_eff, n_g = self.simulation_engine.delay_line_interferometer(power_dampened, t, peak_wavelength, value)
+            destructive_port, f_0= self.simulation_engine.delay_line_interferometer(power_dampened, t, peak_wavelength, value)
             # print(f"shape destructive_port: {destructive_port.shape}")
             destructive_port = destructive_port.reshape(-1)
-            return chosen_voltage[0], peak_wavelength[0], destructive_port, original_power, t, n_eff, n_g
+            return chosen_voltage[0], peak_wavelength[0], destructive_port, original_power, t
         
-        # voltage_values = np.arange(-1.75, -1.65, 0.001)  # Example range of mean_voltage
-        voltage_values = np.arange(-1.75, -1.65, 0.002)
+        voltage_values = np.arange(-2, -1.65, 0.001)  # Example range of mean_voltage
+        # voltage_values = np.arange(-2.2, -0.2, 0.002)
         results = []
         wavelengths_nm = []
         
         for voltage in voltage_values:
             self.config.mean_voltage = voltage
-            chosen_voltage, peak_wavelength, destructive_port, original_power, t, n_eff, n_g = laser_till_dli(T1_dampening)
+            chosen_voltage, peak_wavelength, destructive_port, original_power, t= laser_till_dli(T1_dampening)
             # plt.plot(original_power, color = 'blue', label='Input Power')
             # # plt.plot(destructive_port, color = 'red', label='Destructive Port')
             # plt.show()
@@ -987,7 +987,6 @@ class SimulationManager:
                 "voltage": chosen_voltage,
                 "wavelength": peak_wavelength,
                 "destructive_port": destructive_port,
-                "n_eff": n_eff,
             })
             # print(f"chosen_voltage: {chosen_voltage}, peak_wavelength: {peak_wavelength}, destructive_port: {destructive_port[:5]}")
             # print(f" shape of destructive_port: {destructive_port.shape}, shape chosen_voltage: {chosen_voltage.shape}, shape peak_wavelength: {peak_wavelength.shape}")
@@ -1009,7 +1008,6 @@ class SimulationManager:
             print(f"Shape of r['destructive_port']: {np.shape(r['destructive_port'])}")
             print(f"Value at index {target_index}: {r['destructive_port'][target_index]}")'''
 
-        n_eff = np.array([r["n_eff"] for r in results])
         wavelengths_nm = np.array([r["wavelength"] for r in results])
         print(f"wavelengths_nm: {wavelengths_nm}")
         amplitudes_port1 = np.array([r["destructive_port"][target_index] for r in results])
@@ -1062,7 +1060,7 @@ class SimulationManager:
 
         # Plot peak_wavelength vs voltage
         plt.subplot(1, 2, 2)
-        plt.plot(voltage_values, wavelengths_nm, marker='x', color='orange', label = f"neff = {n_eff}, n_g = {n_g}")
+        plt.plot(voltage_values, wavelengths_nm, marker='x', color='orange')
         plt.xlabel("Mean Voltage (V)")
         plt.ylabel("Peak Wavelength (nm)")
         plt.title("Wavelength vs Mean Voltage")
