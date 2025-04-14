@@ -45,12 +45,9 @@ def run_parameter_sweep():
             mean_photon_nr_values, mean_photon_decoy_values, p_z_alice_values, p_decoy_values):
 
         # Create a SimulationConfig with fixed parameters in one long call.
-        config = SimulationConfig(database, seed=None, n_samples=total_symbols, n_pulses=4, batchsize=1000, mean_voltage=0.9825, mean_current=0.082111, voltage_amplitude=0.002, current_amplitude=0.0005,
-                p_z_alice=p_z_alice, p_decoy=p_decoy, p_z_bob=0.5, sampling_rate_FPGA=6.5e9, bandwidth=4e9, jitter=jitter, 
-                non_signal_voltage=-1.1, voltage_decoy=-0.1, voltage=-0.1, voltage_decoy_sup=-0.1, voltage_sup=-0.1,
+        config = SimulationConfig(database, n_samples=total_symbols, jitter=jitter, 
                 mean_photon_nr=mean_photon_nr, mean_photon_decoy=mean_photon_decoy, 
-                fiber_attenuation=-3, detector_efficiency=0.3, dark_count_frequency=10, detection_time=1e-10, detector_jitter=detector_jitter,
-                p_indep_x_states_non_dec=None, p_indep_x_states_dec=None,
+                detector_jitter=detector_jitter,
                 mlp=os.path.join(base_path, style_file), script_name = os.path.basename(__file__)
                 )
 

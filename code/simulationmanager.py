@@ -967,18 +967,19 @@ class SimulationManager:
             
             original_power = power_dampened.reshape(-1).copy()
 
-            destructive_port, f_0 = self.simulation_engine.delay_line_interferometer(power_dampened, t, peak_wavelength, value)
+            destructive_port, f_0, n_eff, n_g = self.simulation_engine.delay_line_interferometer(power_dampened, t, peak_wavelength, value)
             # print(f"shape destructive_port: {destructive_port.shape}")
             destructive_port = destructive_port.reshape(-1)
-            return chosen_voltage[0], peak_wavelength[0], destructive_port, original_power, t
+            return chosen_voltage[0], peak_wavelength[0], destructive_port, original_power, t, n_eff, n_g
         
-        voltage_values = np.arange(-1.75, -1.65, 0.001)  # Example range of mean_voltage
+        # voltage_values = np.arange(-1.75, -1.65, 0.001)  # Example range of mean_voltage
+        voltage_values = np.arange(-1.75, -1.65, 0.002)
         results = []
         wavelengths_nm = []
         
         for voltage in voltage_values:
             self.config.mean_voltage = voltage
-            chosen_voltage, peak_wavelength, destructive_port, original_power, t = laser_till_dli(T1_dampening)
+            chosen_voltage, peak_wavelength, destructive_port, original_power, t, n_eff, n_g = laser_till_dli(T1_dampening)
             # plt.plot(original_power, color = 'blue', label='Input Power')
             # # plt.plot(destructive_port, color = 'red', label='Destructive Port')
             # plt.show()
@@ -986,6 +987,7 @@ class SimulationManager:
                 "voltage": chosen_voltage,
                 "wavelength": peak_wavelength,
                 "destructive_port": destructive_port,
+                "n_eff": n_eff,
             })
             # print(f"chosen_voltage: {chosen_voltage}, peak_wavelength: {peak_wavelength}, destructive_port: {destructive_port[:5]}")
             # print(f" shape of destructive_port: {destructive_port.shape}, shape chosen_voltage: {chosen_voltage.shape}, shape peak_wavelength: {peak_wavelength.shape}")
@@ -1002,12 +1004,12 @@ class SimulationManager:
         target_time_ns = 1/6.5 * 3  # 1/6.5 is one pulse then multiply by how manyth pulse you want to see
         target_index = np.argmin(np.abs(t_all_symbols * 1e9 - target_time_ns))
         print(f"target_time_ns:{target_time_ns}, target_index: {target_index}, len(t_all_symbols): {len(t_all_symbols)}, len(t): {len(t)}")
-        target_index = 10500
 
         '''for r in results:
             print(f"Shape of r['destructive_port']: {np.shape(r['destructive_port'])}")
             print(f"Value at index {target_index}: {r['destructive_port'][target_index]}")'''
 
+        n_eff = np.array([r["n_eff"] for r in results])
         wavelengths_nm = np.array([r["wavelength"] for r in results])
         print(f"wavelengths_nm: {wavelengths_nm}")
         amplitudes_port1 = np.array([r["destructive_port"][target_index] for r in results])
@@ -1060,11 +1062,12 @@ class SimulationManager:
 
         # Plot peak_wavelength vs voltage
         plt.subplot(1, 2, 2)
-        plt.plot(voltage_values, wavelengths_nm, marker='x', color='orange')
+        plt.plot(voltage_values, wavelengths_nm, marker='x', color='orange', label = f"neff = {n_eff}, n_g = {n_g}")
         plt.xlabel("Mean Voltage (V)")
         plt.ylabel("Peak Wavelength (nm)")
         plt.title("Wavelength vs Mean Voltage")
         plt.grid(True)
+        plt.legend()
 
         plt.tight_layout()
         Saver.save_plot("DLI_power_wavelength_vs_voltage")
@@ -1178,7 +1181,7 @@ class SimulationManager:
         start_time = time.time()  # Record start time
         T1_dampening = self.simulation_engine.initialize()
         optical_power, peak_wavelength, chosen_voltage, chosen_current = self.simulation_engine.random_laser_output('current_power', 'voltage_shift', fixed = True)
-        
+        print(f"peak_wavelegth: {peak_wavelength[:10]}")
         # Generate Alice's choices
         basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=np.array([1,0,1]), value=np.array([1,-1, 0]), decoy=np.array([0,0,0]))
         # basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=np.array([0,1]), value=np.array([-1, 0]), decoy=np.array([0,0]))
@@ -1215,8 +1218,8 @@ class SimulationManager:
         # self.plotter.plot_power(t, power_dampened, amount_symbols_in_plot=20, where_plot_1='bob basis X')
 
         #plot
-        amount_symbols_in_first_part = 20
-        first_power = power_dampened[:amount_symbols_in_first_part].copy()
+        # amount_symbols_in_first_part = 20
+        # first_power = power_dampened[:amount_symbols_in_first_part].copy()
         '''print("len(t):", len(t))
         print("first_power.shape:", first_power.shape)
         print("expected shape:", (amount_symbols_in_first_part, len(t)))
@@ -1228,8 +1231,8 @@ class SimulationManager:
         mean_photon_after_dli = self.simulation_helper.calculate_mean_photon_number(power_dampened, peak_wavelength, t)[:20]
 
         # plot
-        assert power_dampened.shape[1] == len(t), f"Mismatch: power_dampened has {power_dampened.shape[1]} samples per symbol, t has {len(t)}!"
-        self.plotter.plot_power(t, power_dampened, amount_symbols_in_plot=amount_symbols_in_first_part, where_plot_1='before DLI',  shortened_first_power=first_power, where_plot_2='after DLI,', title_rest='- in fft, mean_volt: ' + str("{:.4f}".format(self.config.mean_voltage)) + ' voltage: ' + str("{:.4f}".format(chosen_voltage[0])) + ' V and ' + str("{:.8f}".format(peak_wavelength[0])))
+        # assert power_dampened.shape[1] == len(t), f"Mismatch: power_dampened has {power_dampened.shape[1]} samples per symbol, t has {len(t)}!"
+        # self.plotter.plot_power(t, power_dampened, amount_symbols_in_plot=amount_symbols_in_first_part, where_plot_1='before DLI',  shortened_first_power=first_power, where_plot_2='after DLI,', title_rest='- in fft, mean_volt: ' + str("{:.4f}".format(self.config.mean_voltage)) + ' voltage: ' + str("{:.4f}".format(chosen_voltage[0])) + ' V and ' + str("{:.8f}".format(peak_wavelength[0])))
         
         # plt.plot(first_power.reshape(-1) * 1e3, color='blue', label='0', linestyle='-', marker='o', markersize=1)
         # Saver.save_plot(f"power_before_DLI_in_mW_outside")

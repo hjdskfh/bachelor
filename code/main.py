@@ -37,21 +37,8 @@ style_file = "Presentation_style_1_adjusted_no_grid.mplstyle"
 base_path = os.path.dirname(os.path.abspath(__file__))
 
 #create simulation mean current 0.08 , mena_voltage = 0.98 weil aus voltage_sweep, 0.9835 # mean voltage mit skript 1.6094623981710416 rausbekommen
-config = SimulationConfig(database, seed=None, n_samples=1000, n_pulses=4, batchsize=1000, mean_voltage=-1.708, mean_current=0.082111, voltage_amplitude=0.002, current_amplitude=0.0005,
-                p_z_alice=0.5,
-                p_decoy= 0.1,
-                p_z_bob=0.5, 
-                sampling_rate_FPGA=6.5e9, bandwidth=5e9, #4e9,
-                jitter=jitter, 
-                non_signal_voltage=-1.2, voltage_decoy=-0.2, voltage=-0.2, voltage_decoy_sup=-0.2, voltage_sup=-0.2,
-                mean_photon_nr= 0.7,
-                mean_photon_decoy= 0.1,
-                fiber_attenuation=-3, 
-                detector_efficiency= 0.3, 
-                dark_count_frequency=10, detection_time=1e-10, detector_jitter=detector_jitter,
-                p_indep_x_states_non_dec=None, p_indep_x_states_dec=None,
-                mlp=os.path.join(base_path, style_file), script_name = os.path.basename(__file__)
-                )
+config = SimulationConfig(database, n_samples=7, batchsize=7, jitter=jitter, 
+                          detector_jitter=detector_jitter, mlp=os.path.join(base_path, style_file), script_name = os.path.basename(__file__))
 simulation = SimulationManager(config)
 
 # Convert the config object to a dictionary
@@ -73,13 +60,13 @@ print(f"Execution time for reading: {execution_time_read:.9f} seconds for {confi
 # print(f"len_wrong_x_dec: {len_wrong_x_dec}, len_wrong_x_non_dec: {len_wrong_x_non_dec}, len_wrong_z_dec: {len_wrong_z_dec}, len_wrong_z_non_dec: {len_wrong_z_non_dec}")
 # print(f"len_Z_checked_dec: {len_Z_checked_dec}, len_Z_checked_non_dec: {len_Z_checked_non_dec}")
 # print(f"X_P_calc_non_dec: {X_P_calc_non_dec}, X_P_calc_dec: {X_P_calc_dec}")
-# simulation.run_DLI()
+simulation.run_DLI()
 # simulation.run_simulation_till_DLI()
-len_wrong_x_dec, len_wrong_x_non_dec, len_wrong_z_dec, len_wrong_z_non_dec, len_Z_checked_dec, len_Z_checked_non_dec, X_P_calc_non_dec, X_P_calc_dec, time_photons_det_x, time_photons_det_z, time_one_symbol, index_where_photons_det_z, index_where_photons_det_x, \
-                basis, value, decoy, lookup_array = simulation.run_simulation_detection_tester()
+# len_wrong_x_dec, len_wrong_x_non_dec, len_wrong_z_dec, len_wrong_z_non_dec, len_Z_checked_dec, len_Z_checked_non_dec, X_P_calc_non_dec, X_P_calc_dec, time_photons_det_x, time_photons_det_z, time_one_symbol, index_where_photons_det_z, index_where_photons_det_x, \
+#                 basis, value, decoy, lookup_array = simulation.run_simulation_detection_tester()
 # simulation.run_simulation_states()
 
-length_of_chain = 6 * 6 + 1
+'''length_of_chain = 6 * 6 + 1
 bins_per_symbol_hist = 30
 amount_bins_hist = bins_per_symbol_hist * length_of_chain
 hist_z, hist_x = DataProcessor.update_histogram_batches_all_pairs(length_of_chain, time_one_symbol, time_photons_det_z, time_photons_det_x,
@@ -95,7 +82,7 @@ with np.printoptions(threshold=np.inf):
                           hist_x = hist_x,
                           hist_x_sum = np.sum(hist_x, axis=0),
                           time_photons_det_x = time_photons_det_x,
-                          index_where_photons_det_x = index_where_photons_det_x)
+                          index_where_photons_det_x = index_where_photons_det_x)'''
                           
 
 end_time_simulation = time.time()  # Record end time for simulation

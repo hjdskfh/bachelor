@@ -1,13 +1,13 @@
 import numpy as np
 
 class SimulationConfig:
-    def __init__(self, data, round = 1, seed = None, n_samples=10000, n_pulses=4, batchsize = 1000, mean_voltage=1.0, mean_current=0.08, voltage_amplitude=0.050, current_amplitude = 0.02,
-                 p_z_alice=0.5, p_decoy=0.1, p_z_bob = 0.85, sampling_rate_FPGA=6.75e9, bandwidth = 4e9, jitter=1e-11, non_signal_voltage = -1, voltage_decoy=0,
-                 voltage=0, voltage_decoy_sup=0, voltage_sup=0, 
+    def __init__(self, data, round = 1, seed = None, n_samples=20000, n_pulses=4, batchsize = 1000, mean_voltage=-1.708, mean_current=0.082111, voltage_amplitude=0.002, current_amplitude = 0.0005,
+                 p_z_alice=0.5, p_decoy=0.1, p_z_bob = 0.5, sampling_rate_FPGA=6.5e9, bandwidth = 4e9, jitter=1e-11, non_signal_voltage = -1.2, voltage_decoy=-0.2,
+                 voltage=-0.2, voltage_decoy_sup=-0.2, voltage_sup=-0.2, 
                  mean_photon_nr=0.7, mean_photon_decoy=0.1, 
-                 fiber_attenuation = -3, detector_efficiency = 0.3, dark_count_frequency = 100, detection_time = 1e-9, detector_jitter = 100e-12, 
-                 p_indep_x_states_non_dec=None, p_indep_x_states_dec=None,
-                 mlp = None, script_name = None, job_id = None
+                 fiber_attenuation = -3, detector_efficiency = 0.3, dark_count_frequency = 10, detection_time = 1e-10, detector_jitter = 1e-10, 
+                 mlp = "C:\\Users\\leavi\\bachelor\\code\\Presentation_style_1_adjusted_no_grid.mplstyle", 
+                 script_name = None, job_id = None
                  ):
         # Input data
         self.data = data
@@ -59,10 +59,6 @@ class SimulationConfig:
         self.dark_count_frequency = dark_count_frequency #Hz
         self.detection_time = detection_time #s
         self.detector_jitter = detector_jitter #s
-
-        # p_indep_x_states_dec aus vorherigen runs
-        self.p_indep_x_states_non_dec=p_indep_x_states_non_dec
-        self.p_indep_x_states_dec=p_indep_x_states_dec
 
         # mlp-style
         self.mlp = mlp

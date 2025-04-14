@@ -64,12 +64,9 @@ base_path = os.path.dirname(os.path.abspath(__file__))
 
 best_batchsize = Saver.find_best_batchsize(length_of_chain, n_rep)
 
-config = SimulationConfig(database, seed=None, n_samples=int(length_of_chain*n_rep), n_pulses=4, batchsize=best_batchsize, mean_voltage=-1.708, mean_current=0.080, voltage_amplitude=0.050, current_amplitude=0.0005,
-                p_z_alice=0.5, p_decoy=0.1, p_z_bob=0.5, sampling_rate_FPGA=6.5e9, bandwidth=4e9, jitter=jitter, 
-                non_signal_voltage=-1.1, voltage_decoy=-0.1, voltage=-0.1, voltage_decoy_sup=-0.1, voltage_sup=-0.1,
-                mean_photon_nr=0.7, mean_photon_decoy=0.1, 
-                fiber_attenuation=-3, detector_efficiency=0.3, dark_count_frequency=10, detection_time=1e-10, detector_jitter=detector_jitter,
-                mlp=os.path.join(base_path, style_file), script_name = os.path.basename(__file__), job_id=job_id
+config = SimulationConfig(database, n_samples=int(length_of_chain*n_rep), batchsize=best_batchsize, 
+                 jitter=jitter, detector_jitter=detector_jitter,
+                mlp=os.path.join(base_path, style_file), script_name=os.path.basename(__file__), job_id=job_id
                 )
 simulation = SimulationManager(config)
 
@@ -85,16 +82,10 @@ print(f"Execution time for reading: {execution_time_read:.9f} seconds for {confi
 def run_simulation_and_update_hist(i, length_of_chain, n_rep, base_path, style_file, database, jitter,
                                    detector_jitter, best_batchsize, bins_per_symbol, amount_bins):
     # Create the simulation config locally
-    config = SimulationConfig(
-        database, seed=None, n_samples=int(length_of_chain * n_rep), n_pulses=4, batchsize=best_batchsize, 
-        mean_voltage=-1.708, mean_current=0.080, voltage_amplitude=0.02, current_amplitude=0.0005,
-        p_z_alice=0.5, p_decoy=0.1, p_z_bob=0.5,
-        sampling_rate_FPGA=6.5e9, bandwidth=4e9, jitter=jitter,
-        non_signal_voltage=-1.1, voltage_decoy=-0.1, voltage=-0.1, voltage_decoy_sup=-0.1, voltage_sup=-0.1, 
-        mean_photon_nr=0.7, mean_photon_decoy=0.1, fiber_attenuation=-3,
-        detector_efficiency=0.3, dark_count_frequency=10, detection_time=1e-10, detector_jitter=detector_jitter, 
-        mlp=os.path.join(base_path, style_file), script_name=os.path.basename(__file__), job_id=job_id
-    )
+    config = SimulationConfig(database, n_samples=int(length_of_chain*n_rep), batchsize=best_batchsize, 
+                 jitter=jitter, detector_jitter=detector_jitter,
+                mlp=os.path.join(base_path, style_file), script_name=os.path.basename(__file__), job_id=job_id
+                )
     simulation = SimulationManager(config)
 
     # Run one simulation

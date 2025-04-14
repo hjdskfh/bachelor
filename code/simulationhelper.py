@@ -463,7 +463,7 @@ class SimulationHelper:
     def classificator_identify_x(self, mask_x_short, mask_z_short, detected_indices_x_det_x_basis, detected_indices_z_det_z_basis, basis, value, decoy, indices_x_long, get_original_indexing_x, get_original_indexing_z):
         # X basis
         # empty late in x basis
-        print(f"detected_indices_x_det_x_basis: {detected_indices_x_det_x_basis}")
+        # print(f"detected_indices_x_det_x_basis: {detected_indices_x_det_x_basis}")
         one_in_x_short = np.where(np.any(detected_indices_x_det_x_basis == 1, axis=1))[0]
         one_in_x_long = get_original_indexing_x[one_in_x_short]
         all_ind = np.arange(self.config.n_samples)
@@ -477,7 +477,7 @@ class SimulationHelper:
             X_P_prime_checked_long = np.intersect1d(no_one_in_x_long, no_zero_or_one_in_z_long)
         else:
             X_P_prime_checked_long = no_one_in_x_long
-        print(f"X_P_prime_checked_long part: {X_P_prime_checked_long[:10]}")
+        # print(f"X_P_prime_checked_long part: {X_P_prime_checked_long[:10]}")
 
         # decoy or not
         ind_sent_non_dec_long = np.where((decoy == 0))[0]
@@ -551,7 +551,7 @@ class SimulationHelper:
         if len(has_0_long) > 100:
             has_0_long = has_0_long[:100]
 
-        with np.printoptions(threshold=100):  
+        '''with np.printoptions(threshold=100):  
             Saver.save_results_to_txt(  # Save the results to a text file
                 function_used = "identify_x",
                 n_samples=self.config.n_samples,
@@ -570,7 +570,7 @@ class SimulationHelper:
                 ind_has_0_z0xp=ind_has_0_z0xp,
                 get_original_indexing_x=get_original_indexing_x,
                 get_original_indexing_z=get_original_indexing_z,
-                indices_x_long=indices_x_long)
+                indices_x_long=indices_x_long)'''
             
         return X_P_calc_non_dec, X_P_calc_dec, gain_X_non_dec, gain_X_dec
     
