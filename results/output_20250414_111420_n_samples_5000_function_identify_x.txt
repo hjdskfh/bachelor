@@ -1,0 +1,20 @@
+function_used: identify_x
+n_samples: 5000
+seed: 56879
+non_signal_voltage: -1.2
+voltage_decoy: -0.745242926478386
+voltage: -0.2
+voltage_decoy_sup: -0.8355372935533523
+voltage_sup: -0.4324394613504409
+p_indep_x_states_non_dec: None
+p_indep_x_states_dec: None
+Z0_XP_alice_s: [   1    4    7 ... 4993 4996 4999]
+XP_Z1_alice_s: [   2    5    8 ... 4991 4994 4997]
+has_0_short: [5]
+has_0_long: [338]
+ind_has_0_z0xp: 0
+get_original_indexing_x: [  45  185  188  201  209  338  452  455  623  647  656  737  762  861
+ 1049 1097 1185 1305 1442 1505 1808 1913 2036 2115 2141 2766 2873 3038
+ 3044 3354 3408 3764 4028 4032 4379 4547 4601 4607 4625 4911]
+get_original_indexing_z: [  26   33   44 ... 4905 4907 4911]
+indices_x_long: [   1    4    7 ... 4993 4996 4999]

@@ -393,7 +393,8 @@ class SimulationHelper:
                 p_indep_x_states_dec=self.config.p_indep_x_states_dec,
                 get_original_indexing_x = get_original_indexing_x,
                 detected_indices_x_det_x_basis = detected_indices_x_det_x_basis,
-                detected_indices_x = detected_indices_x
+                index_where_photons_det_x = index_where_photons_det_x,
+                detected_indices_x = detected_indices_x.shape
                 )
 
         # 1 or 2 signals in X basis
@@ -549,27 +550,27 @@ class SimulationHelper:
             has_0_short = has_0_short[:100]
         if len(has_0_long) > 100:
             has_0_long = has_0_long[:100]
-            
-        Saver.save_results_to_txt(  # Save the results to a text file
-            function_used = "identify_x",
-            n_samples=self.config.n_samples,
-            seed=self.config.seed,
-            non_signal_voltage=self.config.non_signal_voltage,
-            voltage_decoy=self.config.voltage_decoy, 
-            voltage=self.config.voltage, 
-            voltage_decoy_sup=self.config.voltage_decoy_sup, 
-            voltage_sup=self.config.voltage_sup,
-            p_indep_x_states_non_dec=self.config.p_indep_x_states_non_dec,
-            p_indep_x_states_dec=self.config.p_indep_x_states_dec,
-            Z0_XP_alice_s=Z0_XP_alice_s,
-            XP_Z1_alice_s=XP_Z1_alice_s,
-            has_0_short=has_0_short,
-            has_0_long=has_0_long,
-            ind_has_0_z0xp=ind_has_0_z0xp,
-            get_original_indexing_x=get_original_indexing_x,
-            get_original_indexing_z=get_original_indexing_z,
-            indices_x_long=indices_x_long,
-            indices_z_long=indices_z_long)
+
+        with np.printoptions(threshold=100):  
+            Saver.save_results_to_txt(  # Save the results to a text file
+                function_used = "identify_x",
+                n_samples=self.config.n_samples,
+                seed=self.config.seed,
+                non_signal_voltage=self.config.non_signal_voltage,
+                voltage_decoy=self.config.voltage_decoy, 
+                voltage=self.config.voltage, 
+                voltage_decoy_sup=self.config.voltage_decoy_sup, 
+                voltage_sup=self.config.voltage_sup,
+                p_indep_x_states_non_dec=self.config.p_indep_x_states_non_dec,
+                p_indep_x_states_dec=self.config.p_indep_x_states_dec,
+                Z0_XP_alice_s=Z0_XP_alice_s,
+                XP_Z1_alice_s=XP_Z1_alice_s,
+                has_0_short=has_0_short,
+                has_0_long=has_0_long,
+                ind_has_0_z0xp=ind_has_0_z0xp,
+                get_original_indexing_x=get_original_indexing_x,
+                get_original_indexing_z=get_original_indexing_z,
+                indices_x_long=indices_x_long)
             
         return X_P_calc_non_dec, X_P_calc_dec, gain_X_non_dec, gain_X_dec
     

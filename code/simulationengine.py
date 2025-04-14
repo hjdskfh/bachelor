@@ -392,11 +392,8 @@ class SimulationEngine:
                 p_indep_x_states_non_dec=self.config.p_indep_x_states_non_dec,
                 p_indep_x_states_dec=self.config.p_indep_x_states_dec,
                 time_photons_det_x=time_photons_det_x,
-                time_photons_det_z=time_photons_det_z, 
-                detected_indices_x=detected_indices_x,
-                detected_indices_z=detected_indices_z,
-                detected_indices_x_det_x_basis=detected_indices_x_det_x_basis,
-                detected_indices_z_det_z_basis=detected_indices_z_det_z_basis
+                detected_indices_x=detected_indices_x.shape,
+                detected_indices_x_det_x_basis=detected_indices_x_det_x_basis
                 )
     
 

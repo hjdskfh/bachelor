@@ -37,7 +37,7 @@ style_file = "Presentation_style_1_adjusted_no_grid.mplstyle"
 base_path = os.path.dirname(os.path.abspath(__file__))
 
 #create simulation mean current 0.08 , mena_voltage = 0.98 weil aus voltage_sweep, 0.9835 # mean voltage mit skript 1.6094623981710416 rausbekommen
-config = SimulationConfig(database, seed=None, n_samples=20000, n_pulses=4, batchsize=1000, mean_voltage=-1.708, mean_current=0.082111, voltage_amplitude=0.002, current_amplitude=0.0005,
+config = SimulationConfig(database, seed=None, n_samples=1000, n_pulses=4, batchsize=1000, mean_voltage=-1.708, mean_current=0.082111, voltage_amplitude=0.002, current_amplitude=0.0005,
                 p_z_alice=0.5,
                 p_decoy= 0.1,
                 p_z_bob=0.5, 
@@ -85,11 +85,17 @@ amount_bins_hist = bins_per_symbol_hist * length_of_chain
 hist_z, hist_x = DataProcessor.update_histogram_batches_all_pairs(length_of_chain, time_one_symbol, time_photons_det_z, time_photons_det_x,
                                                     index_where_photons_det_z, index_where_photons_det_x, amount_bins_hist,
                                                     bins_per_symbol_hist, lookup_array, basis, value, decoy)
-
-Saver.save_results_to_txt(function_used = "hist_z",
-                          hist_z = hist_z)
-Saver.save_results_to_txt(function_used = "hist_x",
-                          hist_x = hist_x)
+with np.printoptions(threshold=np.inf):
+    Saver.save_results_to_txt(function_used = "hist_z",
+                            hist_z = hist_z,
+                            hist_z_sum = np.sum(hist_z, axis=0),
+                            time_photons_det_z = time_photons_det_z,
+                            index_where_photons_det_z = index_where_photons_det_z)
+    Saver.save_results_to_txt(function_used = "hist_x",
+                          hist_x = hist_x,
+                          hist_x_sum = np.sum(hist_x, axis=0),
+                          time_photons_det_x = time_photons_det_x,
+                          index_where_photons_det_x = index_where_photons_det_x)
                           
 
 end_time_simulation = time.time()  # Record end time for simulation

@@ -1,3 +1,4 @@
+from matplotlib.pylab import f
 import matplotlib.pyplot as plt
 from pathlib import Path
 from matplotlib.ticker import MaxNLocator
@@ -107,6 +108,7 @@ class DataProcessor:
         pairs = np.column_stack((lookup_arr[:-1], lookup_arr[1:]))
         # Get the unique pairs (each row is a unique pair)
         unique_pairs = np.unique(pairs, axis=0)
+        print(f"unique_pairs: {unique_pairs}")
         
         pair_indices_dict = {}
         for pair in unique_pairs:
@@ -155,6 +157,8 @@ class DataProcessor:
             (1, 0, 1): "Z1*",  # or "Z1_decoy"
             (0, -1, 1): "X+*",  # or "X+_decoy"
         }
+        assert len(time_photons_det_x) == len(index_where_photons_det_x), f"Length mismatch: {len(time_photons_det_x)} vs {len(index_where_photons_det_x)}"
+        assert len(time_photons_det_z) == len(index_where_photons_det_z), f"Length mismatch: {len(time_photons_det_z)} vs {len(index_where_photons_det_z)}"
 
         local_histogram_counts_x = np.zeros(amount_bins_hist, dtype=int)
         local_histogram_counts_z = np.zeros(amount_bins_hist, dtype=int)
@@ -164,40 +168,46 @@ class DataProcessor:
         
         # Get dictionary mapping each adjacent pair (for one chain) to the positions where they occur.
         pair_indices_dict = DataProcessor.get_all_pair_indices(lookup_arr)
-        
-        def process(idx_left, idx_right, index_where_photons_det, time_photons_det, local_histogram_counts):
-            if idx_left > 0 and idx_right < length_of_chain - 1:
-                # looked at index is second symbol:
-                pair_key = (raw_symbol_lookup[(basis[idx_left], value[idx_left], decoy[idx_left])], 
-                            raw_symbol_lookup[(basis[idx_right], value[idx_right], decoy[idx_right])])
-                # print(f"pair_key:{pair_key}")
-                # print(f"pair_indices_dict:{pair_indices_dict}")
-                #if pair_key in pair_indices_dict:  
-                position_brujin_left = pair_indices_dict[pair_key].item()
-                
-                # Process the first symbol of the pair:
-                if idx_left in index_where_photons_det:
-                    inds_first = np.where(index_where_photons_det == idx_left)[0]
-                    valid_times_first = time_photons_det[inds_first]
-                    valid_times_first = valid_times_first[~np.isnan(valid_times_first)]
-                    bin_indices_first = np.digitize(valid_times_first, bins_arr) - 1
-                    # Update histogram: position = pos (for first symbol)
-                    for b in bin_indices_first:
-                        if 0 <= b < bins_per_symbol:
-                            overall_bin = position_brujin_left * bins_per_symbol + b
-                            local_histogram_counts[overall_bin] += 1
+        print(f"pair_indices_dict: {pair_indices_dict}")
 
-                # Process the second symbol of the pair:
-                if idx_right in index_where_photons_det:
-                    inds_first = np.where(index_where_photons_det == idx_right)[0]
-                    valid_times_first = time_photons_det[inds_first]
-                    valid_times_first = valid_times_first[~np.isnan(valid_times_first)]
-                    bin_indices_first = np.digitize(valid_times_first, bins_arr) - 1
-                    # Update histogram: position = pos (for first symbol)
-                    for b in bin_indices_first:
-                        if 0 <= b < bins_per_symbol:
-                            overall_bin = (position_brujin_left + 1) * bins_per_symbol + b
-                            local_histogram_counts[overall_bin] += 1
+        def process(idx_left, idx_right, index_where_photons_det, time_photons_det, local_histogram_counts):
+        
+            # looked at index is second symbol:
+            pair_key = (raw_symbol_lookup[(basis[idx_left], value[idx_left], decoy[idx_left])], 
+                        raw_symbol_lookup[(basis[idx_right], value[idx_right], decoy[idx_right])])
+            print(f"pair_key: {pair_key}")
+            position_brujin_left = pair_indices_dict[pair_key].item()
+            print(f"position_brujin_left: {position_brujin_left}")
+            
+            # Process the first symbol of the pair:
+            if idx_left in index_where_photons_det:
+                print(f"idx_left in index_where_photons_det: {idx_left}")
+                inds_first = np.where(index_where_photons_det == idx_left)[0]
+                valid_times_first = time_photons_det[inds_first]
+                print(f"valid_times_first: {valid_times_first}")
+                valid_times_first = valid_times_first[~np.isnan(valid_times_first)]
+                print(f"valid_times_first without nan: {valid_times_first}")
+                bin_indices_first = np.digitize(valid_times_first, bins_arr) - 1
+                # Update histogram: position = pos (for first symbol)
+                for b in bin_indices_first:
+                    if 0 <= b < bins_per_symbol:
+                        overall_bin = position_brujin_left * bins_per_symbol + b
+                        local_histogram_counts[overall_bin] += 1
+
+            # Process the second symbol of the pair:
+            if idx_right in index_where_photons_det:
+                print(f"idx_right in index_where_photons_det: {idx_right}")
+                inds_first = np.where(index_where_photons_det == idx_right)[0]
+                valid_times_first = time_photons_det[inds_first]
+                print(f"valid_times_first: {valid_times_first}")
+                valid_times_first = valid_times_first[~np.isnan(valid_times_first)]
+                print(f"valid_times_first without nan: {valid_times_first}")
+                bin_indices_first = np.digitize(valid_times_first, bins_arr) - 1
+                # Update histogram: position = pos (for first symbol)
+                for b in bin_indices_first:
+                    if 0 <= b < bins_per_symbol:
+                        overall_bin = (position_brujin_left + 1) * bins_per_symbol + b
+                        local_histogram_counts[overall_bin] += 1
 
         # Process each chain (repetition)
         for idx_where_z in index_where_photons_det_z:
