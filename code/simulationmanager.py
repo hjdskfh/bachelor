@@ -51,7 +51,7 @@ class SimulationManager:
             basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=state["basis"], value=state["value"], decoy=state["decoy"])
 
             signals, t, square_signals = self.simulation_engine.signal_bandwidth_jitter(basis, value, decoy)
-            power_dampened, norm_transmission, calc_mean_photon_nr, energy_per_pulse = self.simulation_engine.eam_transmission(signals, optical_power, T1_dampening, peak_wavelength, t)
+            power_dampened, calc_mean_photon_nr, energy_per_pulse = self.simulation_engine.eam_transmission(signals, optical_power, T1_dampening, peak_wavelength, t)
             
             return state, t, signals, power_dampened, square_signals
 
@@ -140,32 +140,26 @@ class SimulationManager:
 
             signals, t, jitter_shifts = self.simulation_engine.signal_bandwidth_jitter(basis, value, decoy)
             Saver.memory_usage("before eam " + str(time.time()))
-            power_dampened, transmission, calc_mean_photon_nr, energy_per_pulse = self.simulation_engine.eam_transmission(signals, optical_power, T1_dampening, peak_wavelength, t)
+            power_dampened, calc_mean_photon_nr, energy_per_pulse = self.simulation_engine.eam_transmission(signals, optical_power, T1_dampening, peak_wavelength, t)
             Saver.memory_usage("before fiber " + str(time.time()))
             power_dampened = self.simulation_engine.fiber_attenuation(power_dampened)
             Saver.memory_usage("before basis " + str(time.time()))
             power_dampened_x, power_dampened_z = self.simulation_engine.basis_selection_bob(power_dampened)
             Saver.memory_usage("before DLI " + str(time.time()))
 
+            start_time = 0
+
             # path for X basis
             power_dampened_x = self.simulation_engine.delay_line_interferometer(power_dampened_x, t, peak_wavelength)
             Saver.memory_usage("before choose x " + str(time.time()))
-            wavelength_photons_x, time_photons_x, nr_photons_x, index_where_photons_x, all_time_max_nr_photons_x, sum_nr_photons_at_chosen_x = self.simulation_engine.choose_photons(power_dampened_x, 
-                                                                                                                                                                                                            transmission, t, 
-                                                                                                                                                                                                            peak_wavelength, 
-                                                                                                                                                                                                            calc_mean_photon_nr, 
-                                                                                                                                                                                                            energy_per_pulse, 
+            wavelength_photons_x, time_photons_x, nr_photons_x, index_where_photons_x, all_time_max_nr_photons_x, sum_nr_photons_at_chosen_x = self.simulation_engine.choose_photons(t, power_dampened, peak_wavelength, start_time, 
                                                                                                                                                                                                             fixed_nr_photons=None)
             time_photons_det_x, wavelength_photons_det_x, nr_photons_det_x, index_where_photons_det_x = self.simulation_engine.detector(t, wavelength_photons_x, 
                                                                                                                                 time_photons_x, nr_photons_x, 
                                                                                                                                 index_where_photons_x, 
                                                                                                                                 all_time_max_nr_photons_x)
             # path fo Z basis
-            wavelength_photons_z, time_photons_z, nr_photons_z, index_where_photons_z, all_time_max_nr_photons_z, sum_nr_photons_at_chosen_z = self.simulation_engine.choose_photons(power_dampened_z, 
-                                                                                                                                                                                              transmission, t, 
-                                                                                                                                                                                              peak_wavelength, 
-                                                                                                                                                                                              calc_mean_photon_nr, 
-                                                                                                                                                                                              energy_per_pulse, 
+            wavelength_photons_z, time_photons_z, nr_photons_z, index_where_photons_z, all_time_max_nr_photons_z, sum_nr_photons_at_chosen_z = self.simulation_engine.choose_photons(t, power_dampened, peak_wavelength, start_time,
                                                                                                                                                                                               fixed_nr_photons=None)
             time_photons_det_z, wavelength_photons_det_z, nr_photons_det_z, index_where_photons_det_z = self.simulation_engine.detector(t, wavelength_photons_z, 
                                                                                                                                 time_photons_z, nr_photons_z, 
@@ -255,11 +249,11 @@ class SimulationManager:
                     
                     # Simulate signal and transmission
                     signals, t, jitter_shifts = self.simulation_engine.signal_bandwidth_jitter(basis, value, decoy)
-                    power_dampened, transmission = self.simulation_engine.eam_transmission(signals, optical_power, T1_dampening)
+                    power_dampened = self.simulation_engine.eam_transmission(signals, optical_power, T1_dampening)
                     power_dampened = self.simulation_engine.fiber_attenuation(power_dampened)
+                    start_time = 0
 
-                    calc_mean_photon_nr, wavelength_photons, time_photons, nr_photons, index_where_photons, all_time_max_nr_photons, sum_nr_photons_at_chosen = self.simulation_engine.choose_photons(power_dampened, transmission, 
-                                                                                                                                                                                t_jitter, peak_wavelength)
+                    calc_mean_photon_nr, wavelength_photons, time_photons, nr_photons, index_where_photons, all_time_max_nr_photons, sum_nr_photons_at_chosen = self.simulation_engine.choose_photons(t, power_dampened, peak_wavelength, start_time)
             
                     mean_of_mean_photon[i] = calc_mean_photon_nr
 
@@ -300,7 +294,7 @@ class SimulationManager:
         # Simulate signal and transmission
         signals, t, _ = self.simulation_engine.signal_bandwidth_jitter(basis, value, decoy)
         Saver.memory_usage("After signal bandwidth jitter")
-        power_dampened, transmission, calc_mean_photon_nr, energy_per_pulse = self.simulation_engine.eam_transmission(signals, optical_power, T1_dampening, peak_wavelength, t)
+        power_dampened, calc_mean_photon_nr, energy_per_pulse = self.simulation_engine.eam_transmission(signals, optical_power, T1_dampening, peak_wavelength, t)
         Saver.memory_usage("After eam transmission")
         power_dampened = self.simulation_engine.fiber_attenuation(power_dampened)
         Saver.memory_usage("After fiber attenuation")
@@ -311,9 +305,8 @@ class SimulationManager:
         
         power_dampened = self.simulation_engine.delay_line_interferometer(power_dampened, t, peak_wavelength)
         Saver.memory_usage("After DLI")
-        calc_mean_photon_nr, wavelength_photons, time_photons, nr_photons, index_where_photons, all_time_max_nr_photons, sum_nr_photons_at_chosen = self.simulation_engine.choose_photons(transmission, t, 
-                                                                                                                                                        calc_mean_photon_nr, 
-                                                                                                                                                        energy_per_pulse, 
+        start_time = 0
+        calc_mean_photon_nr, wavelength_photons, time_photons, nr_photons, index_where_photons, all_time_max_nr_photons, sum_nr_photons_at_chosen = self.simulation_engine.choose_photons(t, power_dampened, peak_wavelength, start_time,
                                                                                                                                                         fixed_nr_photons=None)
         Saver.memory_usage("After choose photons")
         time_photons_det, wavelength_photons_det, nr_photons_det, index_where_photons_det = self.simulation_engine.detector(t, wavelength_photons, time_photons, 
@@ -466,7 +459,7 @@ class SimulationManager:
 
         time_simulating_signal = time.time() - start_time
         # Saver.memory_usage("before eam: " + str("{:.3f}".format(time_simulating_signal)))
-        power_dampened, norm_transmission,  calc_mean_photon_nr_eam, _ = self.simulation_engine.eam_transmission(signals, optical_power, T1_dampening, peak_wavelength, t)
+        power_dampened, calc_mean_photon_nr_eam, _ = self.simulation_engine.eam_transmission(signals, optical_power, T1_dampening, peak_wavelength, t)
 
         # plot so I can delete
         # self.plotter.plot_and_delete_mean_photon_histogram(calc_mean_photon_nr_eam, target_mean_photon_nr = np.array([self.config.mean_photon_nr, self.config.mean_photon_decoy]), 
@@ -485,7 +478,7 @@ class SimulationManager:
         # Saver.memory_usage("before detector z: " + str("{:.3f}".format(time.time() - start_time)))
         power_dampened = power_dampened * self.config.p_z_bob
         time_photons_det_z, wavelength_photons_det_z, nr_photons_det_z, index_where_photons_det_z, \
-        calc_mean_photon_nr_detector_z, dark_count_times_z, num_dark_counts_z = self.simulation_engine.detector(t, norm_transmission, peak_wavelength, power_dampened, start_time)
+        calc_mean_photon_nr_detector_z, dark_count_times_z, num_dark_counts_z = self.simulation_engine.detector(t, peak_wavelength, power_dampened, start_time)
         power_dampened = power_dampened / self.config.p_z_bob
         # Saver.memory_usage("before classificator: " + str("{:.3f}".format(time.time() - start_time)))
 
@@ -516,7 +509,7 @@ class SimulationManager:
         # Saver.save_plot(f"power_before_DLI_in_mW_outside")
 
         # Saver.memory_usage("before detector x: " + str(time.time() - start_time))
-        time_photons_det_x, wavelength_photons_det_x, nr_photons_det_x, index_where_photons_det_x, calc_mean_photon_nr_detector_x, dark_count_times_x, num_dark_counts_x = self.simulation_engine.detector(t, norm_transmission, peak_wavelength, power_dampened, start_time)        
+        time_photons_det_x, wavelength_photons_det_x, nr_photons_det_x, index_where_photons_det_x, calc_mean_photon_nr_detector_x, dark_count_times_x, num_dark_counts_x = self.simulation_engine.detector(t, peak_wavelength, power_dampened, start_time)        
         np.set_printoptions(threshold=np.inf)  # disable truncation
         print(f"calc_mean_photon_nr_detector_x part: {calc_mean_photon_nr_detector_x[:10]}")
         print(f"calc_mean_photon_nr_detector_z part: {calc_mean_photon_nr_detector_z[:10]}")
@@ -645,7 +638,7 @@ class SimulationManager:
         plt.xlabel('Time (ns)')
         Saver.save_plot(f"signal_after_bandwidth")'''
 
-        power_dampened, norm_transmission,  calc_mean_photon_nr_eam, _ = self.simulation_engine.eam_transmission(signals, optical_power, T1_dampening, peak_wavelength, t)
+        power_dampened, calc_mean_photon_nr_eam, _ = self.simulation_engine.eam_transmission(signals, optical_power, T1_dampening, peak_wavelength, t)
         # self.plotter.plot_power(t, power_dampened, amount_symbols_in_plot=10, where_plot_1='after EAM')
 
         power_dampened = self.simulation_engine.fiber_attenuation(power_dampened)
@@ -656,7 +649,7 @@ class SimulationManager:
         #plot
         amount_symbols_in_first_part = 6
         shift_DLI = 0
-        first_power = power_dampened[shift_DLI:shift_DLI + amount_symbols_in_first_part]
+        first_power = power_dampened[shift_DLI:shift_DLI + amount_symbols_in_first_part].copy()
 
         # DLI
         power_dampened, f_0 = self.simulation_engine.delay_line_interferometer(power_dampened, t, peak_wavelength, value)
@@ -690,7 +683,7 @@ class SimulationManager:
             basis, value, decoy = self.simulation_engine.generate_alice_choices(basis = 0, value = -1, decoy = 0)
 
             signals, t, _ = self.simulation_engine.signal_bandwidth_jitter(basis, value, decoy)
-            power_dampened, norm_transmission,  calc_mean_photon_nr_eam, _ = self.simulation_engine.eam_transmission(signals, optical_power, T1_dampening, peak_wavelength, t)
+            power_dampened, calc_mean_photon_nr_eam, _ = self.simulation_engine.eam_transmission(signals, optical_power, T1_dampening, peak_wavelength, t)
             
             return state, power_dampened
 
@@ -714,11 +707,11 @@ class SimulationManager:
                     
                     # Simulate signal and transmission
                     signals, t, jitter_shifts = self.simulation_engine.signal_bandwidth_jitter(basis, value, decoy)
-                    power_dampened, transmission = self.simulation_engine.eam_transmission(signals, optical_power, T1_dampening)
+                    power_dampened = self.simulation_engine.eam_transmission(signals, optical_power, T1_dampening)
                     power_dampened = self.simulation_engine.fiber_attenuation(power_dampened)
+                    start_time = 0
 
-                    calc_mean_photon_nr, wavelength_photons, time_photons, nr_photons, index_where_photons, all_time_max_nr_photons, sum_nr_photons_at_chosen = self.simulation_engine.choose_photons(power_dampened, transmission, 
-                                                                                                                                                                                t_jitter, peak_wavelength)
+                    calc_mean_photon_nr, wavelength_photons, time_photons, nr_photons, index_where_photons, all_time_max_nr_photons, sum_nr_photons_at_chosen = self.simulation_engine.choose_photons(t, power_dampened, peak_wavelength, start_time)
             
                     mean_of_mean_photon[i] = calc_mean_photon_nr
 
@@ -762,7 +755,7 @@ class SimulationManager:
 
         time_simulating_signal = time.time() - start_time
         Saver.memory_usage("before eam: " + str("{:.3f}".format(time_simulating_signal)))
-        power_dampened, norm_transmission,  calc_mean_photon_nr_eam, _ = self.simulation_engine.eam_transmission(signals, optical_power, T1_dampening, peak_wavelength, t)
+        power_dampened, calc_mean_photon_nr_eam, _ = self.simulation_engine.eam_transmission(signals, optical_power, T1_dampening, peak_wavelength, t)
 
         time_eam = time.time() - start_time
         Saver.memory_usage("before fiber: " + str("{:.3f}".format(time_eam)))
@@ -773,7 +766,7 @@ class SimulationManager:
         # first Z basis bc no interference
         Saver.memory_usage("before detector z: " + str("{:.3f}".format(time.time() - start_time)))
         power_dampened = power_dampened * self.config.p_z_bob
-        time_photons_det_z, wavelength_photons_det_z, nr_photons_det_z, index_where_photons_det_z, calc_mean_photon_nr_detector_z, dark_count_times_z, num_dark_counts_z = self.simulation_engine.detector(t, norm_transmission, peak_wavelength, power_dampened, start_time)
+        time_photons_det_z, wavelength_photons_det_z, nr_photons_det_z, index_where_photons_det_z, calc_mean_photon_nr_detector_z, dark_count_times_z, num_dark_counts_z = self.simulation_engine.detector(t, peak_wavelength, power_dampened, start_time)
         power_dampened = power_dampened / self.config.p_z_bob
         Saver.memory_usage("before classificator: " + str("{:.3f}".format(time.time() - start_time)))
 
@@ -783,7 +776,7 @@ class SimulationManager:
 
         #plot
         amount_symbols_in_first_part = 10
-        first_power = power_dampened[:amount_symbols_in_first_part]
+        first_power = power_dampened[:amount_symbols_in_first_part].copy()
 
         # DLI
         power_dampened, phase_shift = self.simulation_engine.delay_line_interferometer(power_dampened, t, peak_wavelength)
@@ -793,7 +786,7 @@ class SimulationManager:
         self.plotter.plot_power(t, power_dampened, amount_symbols_in_plot=amount_symbols_in_first_part, where_plot_1='before DLI',  shortened_first_power=first_power, where_plot_2='after DLI erster port,', title_rest='+ omega 0 for current ' + str(self.config.mean_current) + ' mA')
 
         Saver.memory_usage("before detector x: " + str(time.time() - start_time))
-        time_photons_det_x, wavelength_photons_det_x, nr_photons_det_x, index_where_photons_det_x, calc_mean_photon_nr_detector_x, dark_count_times_x, num_dark_counts_x = self.simulation_engine.detector(t, norm_transmission, peak_wavelength, power_dampened, start_time)        
+        time_photons_det_x, wavelength_photons_det_x, nr_photons_det_x, index_where_photons_det_x, calc_mean_photon_nr_detector_x, dark_count_times_x, num_dark_counts_x = self.simulation_engine.detector(t, peak_wavelength, power_dampened, start_time)        
         
         # get results for both detectors
         len_wrong_detections_z, len_wrong_detections_x, total_amount_detections, amount_Z_detections, amount_XP_detections, qber, phase_error_rate, raw_key_rate, gain_XP_norm, gain_XP_dec, gain_Z_norm, gain_Z_dec, detected_indices_x_dec, detected_indices_x_norm, detected_indices_z_dec, detected_indices_z_norm = self.simulation_engine.classificator(t, time_photons_det_x, index_where_photons_det_x, 
@@ -877,7 +870,7 @@ class SimulationManager:
 
         time_simulating_signal = time.time() - start_time
         Saver.memory_usage("before eam: " + str("{:.3f}".format(time_simulating_signal)))
-        power_dampened, norm_transmission,  calc_mean_photon_nr_eam, _ = self.simulation_engine.eam_transmission(signals, optical_power, T1_dampening, peak_wavelength, t)
+        power_dampened, calc_mean_photon_nr_eam, _ = self.simulation_engine.eam_transmission(signals, optical_power, T1_dampening, peak_wavelength, t)
 
         # plot so I can delete
         # self.plotter.plot_and_delete_mean_photon_histogram(calc_mean_photon_nr_eam, target_mean_photon_nr = np.array([self.config.mean_photon_nr, self.config.mean_photon_decoy]), 
@@ -895,7 +888,7 @@ class SimulationManager:
         # first Z basis bc no interference
         Saver.memory_usage("before detector z: " + str("{:.3f}".format(time.time() - start_time)))
         power_dampened = power_dampened * self.config.p_z_bob
-        time_photons_det_z, wavelength_photons_det_z, nr_photons_det_z, index_where_photons_det_z, calc_mean_photon_nr_detector_z, dark_count_times_z, num_dark_counts_z = self.simulation_engine.detector(t, norm_transmission, peak_wavelength, power_dampened, start_time)
+        time_photons_det_z, wavelength_photons_det_z, nr_photons_det_z, index_where_photons_det_z, calc_mean_photon_nr_detector_z, dark_count_times_z, num_dark_counts_z = self.simulation_engine.detector(t, peak_wavelength, power_dampened, start_time)
         power_dampened = power_dampened / self.config.p_z_bob
         Saver.memory_usage("before classificator: " + str("{:.3f}".format(time.time() - start_time)))
 
@@ -905,9 +898,9 @@ class SimulationManager:
 
         #plot
         first_power = None
-        if random.random() < 0.01:
+        if random.random() < 1:
             amount_symbols_in_first_part = 10
-            first_power = power_dampened[:amount_symbols_in_first_part]
+            first_power = power_dampened[:amount_symbols_in_first_part].copy()
 
         # DLI
         power_dampened, _ = self.simulation_engine.delay_line_interferometer(power_dampened, t, peak_wavelength, value)
@@ -917,7 +910,7 @@ class SimulationManager:
             self.plotter.plot_power(t, power_dampened, amount_symbols_in_plot=amount_symbols_in_first_part, where_plot_1='before DLI',  shortened_first_power=first_power, where_plot_2='after DLI erster port,', title_rest='+ omega 0 for current ' + str(self.config.mean_current) + ' mA')
 
         Saver.memory_usage("before detector x: " + str(time.time() - start_time))
-        time_photons_det_x, wavelength_photons_det_x, nr_photons_det_x, index_where_photons_det_x, calc_mean_photon_nr_detector_x, dark_count_times_x, num_dark_counts_x = self.simulation_engine.detector(t, norm_transmission, peak_wavelength, power_dampened, start_time)        
+        time_photons_det_x, wavelength_photons_det_x, nr_photons_det_x, index_where_photons_det_x, calc_mean_photon_nr_detector_x, dark_count_times_x, num_dark_counts_x = self.simulation_engine.detector(t, peak_wavelength, power_dampened, start_time)        
 
         # self.plotter.plot_and_delete_photon_time_histogram(time_photons_det_x, time_photons_det_z)   
 
@@ -942,7 +935,7 @@ class SimulationManager:
             p_indep_x_states_non_dec=self.config.p_indep_x_states_non_dec,
             p_indep_x_states_dec=self.config.p_indep_x_states_dec)'''
         
-        return time_photons_det_x, time_photons_det_z, index_where_photons_det_x, index_where_photons_det_z, t[-1], lookup_arr
+        return time_photons_det_x, time_photons_det_z, index_where_photons_det_x, index_where_photons_det_z, t[-1], lookup_arr, basis, value, decoy
 
     def run_DLI(self):
         #need low n_samples and same batchsize!
@@ -954,7 +947,7 @@ class SimulationManager:
             # basis, value, decoy = self.simulation_engine.generate_alice_choices(basis = np.array([0, 0, 0, 1, 1]), value = np.array([-1, -1, -1, 1, 1]), decoy = np.array([0, 0, 0, 0, 0]))
             signals, t, _ = self.simulation_engine.signal_bandwidth_jitter(basis, value, decoy)
 
-            power_dampened, norm_transmission,  calc_mean_photon_nr_eam, _ = self.simulation_engine.eam_transmission(signals, optical_power, T1_dampening, peak_wavelength, t)
+            power_dampened, calc_mean_photon_nr_eam, _ = self.simulation_engine.eam_transmission(signals, optical_power, T1_dampening, peak_wavelength, t)
             
             '''dt_original = t[1]-t[0]
             num_points = signals.reshape(-1).size 
@@ -1091,7 +1084,7 @@ class SimulationManager:
 
         time_simulating_signal = time.time() - start_time
         Saver.memory_usage("before eam: " + str("{:.3f}".format(time_simulating_signal)))
-        power_dampened, norm_transmission,  calc_mean_photon_nr_eam, _ = self.simulation_engine.eam_transmission(signals, optical_power, T1_dampening, peak_wavelength, t)
+        power_dampened, calc_mean_photon_nr_eam, _ = self.simulation_engine.eam_transmission(signals, optical_power, T1_dampening, peak_wavelength, t)
 
         # plot so I can delete
         # self.plotter.plot_and_delete_mean_photon_histogram(calc_mean_photon_nr_eam, target_mean_photon_nr = np.array([self.config.mean_photon_nr, self.config.mean_photon_decoy]), 
@@ -1109,7 +1102,7 @@ class SimulationManager:
         # first Z basis bc no interference
         Saver.memory_usage("before detector z: " + str("{:.3f}".format(time.time() - start_time)))
         power_dampened = power_dampened * self.config.p_z_bob
-        time_photons_det_z, wavelength_photons_det_z, nr_photons_det_z, index_where_photons_det_z, calc_mean_photon_nr_detector_z, dark_count_times_z, num_dark_counts_z = self.simulation_engine.detector(t, norm_transmission, peak_wavelength, power_dampened, start_time)
+        time_photons_det_z, wavelength_photons_det_z, nr_photons_det_z, index_where_photons_det_z, calc_mean_photon_nr_detector_z, dark_count_times_z, num_dark_counts_z = self.simulation_engine.detector(t, peak_wavelength, power_dampened, start_time)
         power_dampened = power_dampened / self.config.p_z_bob
         Saver.memory_usage("before classificator: " + str("{:.3f}".format(time.time() - start_time)))
 
@@ -1121,7 +1114,7 @@ class SimulationManager:
         first_power = None
         if random.random() < 0.01:
             amount_symbols_in_first_part = 10
-            first_power = power_dampened[:amount_symbols_in_first_part]
+            first_power = power_dampened[:amount_symbols_in_first_part].copy()
 
         # DLI
         power_dampened, phase_shift = self.simulation_engine.delay_line_interferometer(power_dampened, t, peak_wavelength, value)
@@ -1131,7 +1124,7 @@ class SimulationManager:
             self.plotter.plot_power(t, power_dampened, amount_symbols_in_plot=amount_symbols_in_first_part, where_plot_1='before DLI',  shortened_first_power=first_power, where_plot_2='after DLI erster port,', title_rest='+ omega 0 for current ' + str(self.config.mean_current) + ' mA')
 
         Saver.memory_usage("before detector x: " + str(time.time() - start_time))
-        time_photons_det_x, wavelength_photons_det_x, nr_photons_det_x, index_where_photons_det_x, calc_mean_photon_nr_detector_x, dark_count_times_x, num_dark_counts_x = self.simulation_engine.detector(t, norm_transmission, peak_wavelength, power_dampened, start_time)        
+        time_photons_det_x, wavelength_photons_det_x, nr_photons_det_x, index_where_photons_det_x, calc_mean_photon_nr_detector_x, dark_count_times_x, num_dark_counts_x = self.simulation_engine.detector(t, peak_wavelength, power_dampened, start_time)        
 
         # self.plotter.plot_and_delete_photon_time_histogram(time_photons_det_x, time_photons_det_z)   
 
@@ -1196,7 +1189,7 @@ class SimulationManager:
         # Simulate signal and transmission
         signals, t, _ = self.simulation_engine.signal_bandwidth_jitter(basis, value, decoy)
 
-        power_dampened, norm_transmission,  calc_mean_photon_nr_eam, _ = self.simulation_engine.eam_transmission(signals, optical_power, T1_dampening, peak_wavelength, t)
+        power_dampened, calc_mean_photon_nr_eam, _ = self.simulation_engine.eam_transmission(signals, optical_power, T1_dampening, peak_wavelength, t)
         # print(f"mean_photon_nr after EAM: {self.simulation_helper.calculate_mean_photon_number(power_dampened, peak_wavelength, t)[:20]}")
         mean_photon_after_eam = self.simulation_helper.calculate_mean_photon_number(power_dampened, peak_wavelength, t)[:20]
         
@@ -1208,7 +1201,7 @@ class SimulationManager:
         # first Z basis bc no interference
         power_dampened = power_dampened * self.config.p_z_bob
         time_photons_det_z, wavelength_photons_det_z, nr_photons_det_z, index_where_photons_det_z, \
-        calc_mean_photon_nr_detector_z, dark_count_times_z, num_dark_counts_z = self.simulation_engine.detector(t, norm_transmission, peak_wavelength, power_dampened, start_time)
+        calc_mean_photon_nr_detector_z, dark_count_times_z, num_dark_counts_z = self.simulation_engine.detector(t, peak_wavelength, power_dampened, start_time)
         power_dampened = power_dampened / self.config.p_z_bob
 
         # self.plotter.plot_power(t, power_dampened, amount_symbols_in_plot=20, where_plot_1='after Z det')
@@ -1242,7 +1235,7 @@ class SimulationManager:
         mean_photon_at_x_detector = self.simulation_helper.calculate_mean_photon_number(power_dampened, peak_wavelength, t)
         print(f"len(mean_photon_at_x_detector): {len(mean_photon_at_x_detector)}")
         # Saver.memory_usage("before detector x: " + str(time.time() - start_time))
-        time_photons_det_x, wavelength_photons_det_x, nr_photons_det_x, index_where_photons_det_x, calc_mean_photon_nr_detector_x, dark_count_times_x, num_dark_counts_x = self.simulation_engine.detector(t, norm_transmission, peak_wavelength, power_dampened, start_time)        
+        time_photons_det_x, wavelength_photons_det_x, nr_photons_det_x, index_where_photons_det_x, calc_mean_photon_nr_detector_x, dark_count_times_x, num_dark_counts_x = self.simulation_engine.detector(t, peak_wavelength, power_dampened, start_time)        
         # print(f"calc_mean_photon_nr_detector_x: {calc_mean_photon_nr_detector_x[:20]}")
         with np.printoptions(threshold=100):
             Z0_alice_s = np.where((basis == 1) & (value == 1) & (decoy == 0))[0]  # Indices where Z0 was sent
@@ -1369,7 +1362,7 @@ class SimulationManager:
 
         time_simulating_signal = time.time() - start_time
         # Saver.memory_usage("before eam: " + str("{:.3f}".format(time_simulating_signal)))
-        power_dampened, norm_transmission,  calc_mean_photon_nr_eam, _ = self.simulation_engine.eam_transmission(signals, optical_power, T1_dampening, peak_wavelength, t)
+        power_dampened, calc_mean_photon_nr_eam, _ = self.simulation_engine.eam_transmission(signals, optical_power, T1_dampening, peak_wavelength, t)
 
         # plot so I can delete
         # self.plotter.plot_and_delete_mean_photon_histogram(calc_mean_photon_nr_eam, target_mean_photon_nr = np.array([self.config.mean_photon_nr, self.config.mean_photon_decoy]), 
@@ -1388,7 +1381,7 @@ class SimulationManager:
         # Saver.memory_usage("before detector z: " + str("{:.3f}".format(time.time() - start_time)))
         power_dampened = power_dampened * self.config.p_z_bob
         time_photons_det_z, wavelength_photons_det_z, nr_photons_det_z, index_where_photons_det_z, \
-        calc_mean_photon_nr_detector_z, dark_count_times_z, num_dark_counts_z = self.simulation_engine.detector(t, norm_transmission, peak_wavelength, power_dampened, start_time)
+        calc_mean_photon_nr_detector_z, dark_count_times_z, num_dark_counts_z = self.simulation_engine.detector(t, peak_wavelength, power_dampened, start_time)
         power_dampened = power_dampened / self.config.p_z_bob
         # Saver.memory_usage("before classificator: " + str("{:.3f}".format(time.time() - start_time)))
 
@@ -1415,7 +1408,7 @@ class SimulationManager:
         # Saver.save_plot(f"power_before_DLI_in_mW_outside")
 
         # Saver.memory_usage("before detector x: " + str(time.time() - start_time))
-        time_photons_det_x, wavelength_photons_det_x, nr_photons_det_x, index_where_photons_det_x, calc_mean_photon_nr_detector_x, dark_count_times_x, num_dark_counts_x = self.simulation_engine.detector(t, norm_transmission, peak_wavelength, power_dampened, start_time)        
+        time_photons_det_x, wavelength_photons_det_x, nr_photons_det_x, index_where_photons_det_x, calc_mean_photon_nr_detector_x, dark_count_times_x, num_dark_counts_x = self.simulation_engine.detector(t, peak_wavelength, power_dampened, start_time)        
         # np.set_printoptions(threshold=np.inf)  # disable truncation
         # print(f"calc_mean_photon_nr_detector_x part: {calc_mean_photon_nr_detector_x[:10]}")
         # print(f"calc_mean_photon_nr_detector_z part: {calc_mean_photon_nr_detector_z[:10]}")

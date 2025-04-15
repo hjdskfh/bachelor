@@ -90,7 +90,7 @@ def run_simulation_and_update_hist(i, length_of_chain, n_rep, base_path, style_f
 
     # Run one simulation
     time_photons_det_x, time_photons_det_z, index_where_photons_det_x, index_where_photons_det_z, \
-        time_one_symbol, lookup_arr = simulation.run_simulation_hist_final()
+        time_one_symbol, lookup_arr, _, _, _ = simulation.run_simulation_hist_final()
 
     # Compute local histograms
     local_hist_x, local_hist_z = DataProcessor.update_histogram_batches(length_of_chain,

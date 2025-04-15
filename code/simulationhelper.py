@@ -1,4 +1,5 @@
-from matplotlib.pylab import f
+from matplotlib.pylab import f, norm
+from matplotlib import pyplot as plt
 import numpy as np
 from scipy.fftpack import fft, ifft, fftfreq
 from scipy.interpolate import interp1d
@@ -225,13 +226,12 @@ class SimulationHelper:
 
     # ========== Detector Helper ==========
 
-    def choose_photons(self, norm_transmission, t, power_dampened, peak_wavelength, start_time, fixed_nr_photons=None):
+    def choose_photons(self, t, power_dampened, peak_wavelength, start_time, fixed_nr_photons=None):
         """Calculate and choose photons based on the transmission and jitter."""
         # Calculate the mean photon number
         energy_per_pulse = np.trapz(power_dampened, t, axis=1)
         # delete power_dampened
-        del power_dampened
-        gc.collect()
+        
         energy_one_photon = constants.h * constants.c / peak_wavelength
         calc_mean_photon_nr_detector = energy_per_pulse / energy_one_photon
         # Use Poisson distribution to get the number of photons
@@ -250,18 +250,21 @@ class SimulationHelper:
         nr_photons = nr_photons[non_zero_photons] #delete rows where number of photons is 0
 
         Saver.memory_usage("in choose photon after pre-allocate arrays")
-
         # Generate the photon properties for each sample with non-zero photons
         for i, idx in enumerate(index_where_photons):
             photon_count = nr_photons[i]
             energy_per_photon[i, :photon_count] = energy_one_photon[idx]
             wavelength_photons[i, :photon_count] = peak_wavelength[idx]
-            time_photons[i, :photon_count] = self.config.rng.choice(t, size=photon_count, p=norm_transmission[idx]) #t ist konstant
-            '''if np.any(wavelength_photons[i] > 1.6e-6):
-                print(f"wavelength_photons: {wavelength_photons[i]}")
-                print(f"energy_per_photon: {energy_per_photon[i]}")
-                print(f"energy_per_pulse: {energy_per_pulse[idx]}")'''
-                
+
+            norm_prob_time_symbol = np.divide(power_dampened[idx], power_dampened[idx].sum())
+            print(f"norm_prob_time_symbol: {norm_prob_time_symbol.sum()}")
+            plt.plot(t, norm_prob_time_symbol, label=f"Symbol {idx}")
+            plt.show()
+
+            time_photons[i, :photon_count] = self.config.rng.choice(t, size=photon_count, p=norm_prob_time_symbol) #t ist konstant
+        
+        del power_dampened
+        gc.collect()
 
         return wavelength_photons, time_photons, nr_photons, index_where_photons, all_time_max_nr_photons, calc_mean_photon_nr_detector
 

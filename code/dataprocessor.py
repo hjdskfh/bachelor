@@ -87,7 +87,14 @@ class DataProcessor:
             if i < amount_of_symbols_incl_start_and_end:
                 x_mid = i * time_one_symbol + time_one_symbol / 2
                 symbol = lookup_arr[start_symbol + i]
-                y_max = max(max(histogram_counts_x), max(histogram_counts_z))
+                if leave_x == False and leave_z == False:
+                    y_max = max(max(histogram_counts_x), max(histogram_counts_z))
+                elif leave_x == False:
+                    y_max = max(histogram_counts_x)
+                elif leave_z == False:
+                    y_max = max(histogram_counts_z)
+                else:
+                    y_max = 1  # Default value if neither histogram is plotted
                 basis = symbol[0]  # assuming symbol is like 'X0' or 'Z1'
                 color = 'green' if basis == 'X' else 'purple'
 
@@ -95,7 +102,7 @@ class DataProcessor:
 
         plt.xlabel("Time ")
         plt.ylabel("Cumulative Counts")
-        plt.title(f"Cumulative Histogram for {lookup_arr[start_symbol:end_symbol + 1]} for {total_symbols} {name} symbols")
+        plt.title(f"Cumulative Histogram for {start_symbol} to {end_symbol} for {total_symbols} {name} symbols")
         plt.legend()
         plt.tight_layout()
         Saver.save_plot(f"hist_symbols_{start_symbol}_to_{end_symbol}")
@@ -177,7 +184,7 @@ class DataProcessor:
         # print(f"pair_indices_dict: {pair_indices_dict}")
 
         def process(idx_left, idx_right, index_where_photons_det, time_photons_det, local_histogram_counts):
-        
+            
             # looked at index is second symbol:
             pair_key = (raw_symbol_lookup[(basis[idx_left], value[idx_left], decoy[idx_left])], 
                         raw_symbol_lookup[(basis[idx_right], value[idx_right], decoy[idx_right])])
@@ -186,7 +193,7 @@ class DataProcessor:
             # print(f"position_brujin_left: {position_brujin_left}")
             
             # Process the first symbol of the pair:
-            if idx_left in index_where_photons_det:
+            if idx_left >= 0 and idx_left in index_where_photons_det:	
                 # print(f"idx_left in index_where_photons_det: {idx_left}")
                 inds_first = np.where(index_where_photons_det == idx_left)[0]
                 valid_times_first = time_photons_det[inds_first]
@@ -201,7 +208,7 @@ class DataProcessor:
                         local_histogram_counts[overall_bin] += 1
 
             # Process the second symbol of the pair:
-            if idx_right in index_where_photons_det:
+            if idx_right < len(basis) and idx_right in index_where_photons_det:
                 # print(f"idx_right in index_where_photons_det: {idx_right}")
                 inds_first = np.where(index_where_photons_det == idx_right)[0]
                 valid_times_first = time_photons_det[inds_first]
@@ -216,6 +223,7 @@ class DataProcessor:
                         local_histogram_counts[overall_bin] += 1
 
         # Process each chain (repetition)
+        print(f"index_where_photons_det_z max: {index_where_photons_det_z.max()}, index_where_photons_det_x max: {index_where_photons_det_x.max()}")
         for idx_where_z in index_where_photons_det_z:
             idx_before_z = idx_where_z - 1
             idx_after_z = idx_where_z + 1

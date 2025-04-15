@@ -209,7 +209,7 @@ class SimulationEngine:
         # Normalize the transmission values
         norm_transmission = np.divide(transmission, transmission.sum(axis=1, keepdims=True), out=transmission)
 
-        return power_dampened, norm_transmission, calc_mean_photon_nr, energy_per_pulse # leave these and recalculate them in detector
+        return power_dampened, calc_mean_photon_nr, energy_per_pulse # leave these and recalculate them in detector
     
     def fiber_attenuation(self, power_dampened):    
         """Apply fiber attenuation to the power."""
@@ -298,10 +298,10 @@ class SimulationEngine:
         return power_dampened, f_0
 
     
-    def detector(self, t, norm_transmission, peak_wavelength, power_dampened, start_time=0):
+    def detector(self, t, peak_wavelength, power_dampened, start_time=0):
         """Simulate the detector process."""
         # choose photons
-        wavelength_photons, time_photons, nr_photons, index_where_photons, all_time_max_nr_photons, calc_mean_photon_nr_detector = self.simulation_helper.choose_photons(norm_transmission, t, power_dampened, peak_wavelength, start_time, fixed_nr_photons=None)
+        wavelength_photons, time_photons, nr_photons, index_where_photons, all_time_max_nr_photons, calc_mean_photon_nr_detector = self.simulation_helper.choose_photons(t, power_dampened, peak_wavelength, start_time, fixed_nr_photons=None)
         Saver.memory_usage("after choose: " + str(time.time() - start_time))
 
         # Will the photons pass the detection efficiency?

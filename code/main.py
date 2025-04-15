@@ -37,7 +37,7 @@ style_file = "Presentation_style_1_adjusted_no_grid.mplstyle"
 base_path = os.path.dirname(os.path.abspath(__file__))
 
 #create simulation mean current 0.08 , mena_voltage = 0.98 weil aus voltage_sweep, 0.9835 # mean voltage mit skript 1.6094623981710416 rausbekommen
-config = SimulationConfig(database, n_samples=40000, batchsize=1000, jitter=jitter, 
+config = SimulationConfig(database, n_samples=10000, batchsize=100, jitter=jitter, 
                           detector_jitter=detector_jitter, mlp=os.path.join(base_path, style_file), script_name = os.path.basename(__file__))
 simulation = SimulationManager(config)
 
@@ -62,9 +62,10 @@ print(f"Execution time for reading: {execution_time_read:.9f} seconds for {confi
 # print(f"X_P_calc_non_dec: {X_P_calc_non_dec}, X_P_calc_dec: {X_P_calc_dec}")
 # simulation.run_DLI()
 # simulation.run_simulation_till_DLI()
-len_wrong_x_dec, len_wrong_x_non_dec, len_wrong_z_dec, len_wrong_z_non_dec, len_Z_checked_dec, len_Z_checked_non_dec, X_P_calc_non_dec, X_P_calc_dec, time_photons_det_x, time_photons_det_z, time_one_symbol, index_where_photons_det_z, index_where_photons_det_x, \
-                basis, value, decoy, lookup_array = simulation.run_simulation_detection_tester()
+# len_wrong_x_dec, len_wrong_x_non_dec, len_wrong_z_dec, len_wrong_z_non_dec, len_Z_checked_dec, len_Z_checked_non_dec, X_P_calc_non_dec, X_P_calc_dec, time_photons_det_x, time_photons_det_z, time_one_symbol, index_where_photons_det_z, index_where_photons_det_x, \
+#                 basis, value, decoy, lookup_array = simulation.run_simulation_detection_tester()
 # simulation.run_simulation_states()
+time_photons_det_x, time_photons_det_z, index_where_photons_det_x, index_where_photons_det_z, time_one_symbol, lookup_array, basis, value, decoy = simulation.run_simulation_hist_final()
 
 length_of_chain = 6 * 6 + 1
 bins_per_symbol_hist = 30
@@ -90,6 +91,10 @@ with np.printoptions(threshold=np.inf):
                             global_histogram_counts_z=hist_z,
                             final_lookup_array=lookup_array,
                             total_symbols=config.n_samples)
+    
+DataProcessor.plot_histogram_batch(bins_per_symbol_hist, time_one_symbol,
+                           hist_x, hist_z,
+                           lookup_array, config.n_samples, start_symbol=3, end_symbol=10, name="fixed")
                           
 
 end_time_simulation = time.time()  # Record end time for simulation
