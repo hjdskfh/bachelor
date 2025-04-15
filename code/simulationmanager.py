@@ -1208,14 +1208,17 @@ class SimulationManager:
 
         # path for X basis
         power_dampened = power_dampened * (1 - self.config.p_z_bob)
-        # print(f"mean_photon_nr after basis choice: {self.simulation_helper.calculate_mean_photon_number(power_dampened, peak_wavelength, t)[:20]}")
+        print(f"mean_photon_nr after basis choice: {self.simulation_helper.calculate_mean_photon_number(power_dampened, peak_wavelength, t)[:20]}")
         mean_photon_after_basis_choice = self.simulation_helper.calculate_mean_photon_number(power_dampened, peak_wavelength, t)[:20]
 
         # self.plotter.plot_power(t, power_dampened, amount_symbols_in_plot=20, where_plot_1='bob basis X')
 
         #plot
-        amount_symbols_in_first_part = 20
-        first_power = power_dampened[:amount_symbols_in_first_part].copy()
+
+        first_power = None
+        if random.random() < 0.01:
+            amount_symbols_in_first_part = 10
+            first_power = power_dampened[:amount_symbols_in_first_part].copy()
         '''print("len(t):", len(t))
         print("first_power.shape:", first_power.shape)
         print("expected shape:", (amount_symbols_in_first_part, len(t)))
@@ -1227,9 +1230,9 @@ class SimulationManager:
         mean_photon_after_dli = self.simulation_helper.calculate_mean_photon_number(power_dampened, peak_wavelength, t)[:20]
 
         # plot
-        assert power_dampened.shape[1] == len(t), f"Mismatch: power_dampened has {power_dampened.shape[1]} samples per symbol, t has {len(t)}!"
-        self.plotter.plot_power(t, power_dampened, amount_symbols_in_plot=amount_symbols_in_first_part, where_plot_1='before DLI',  shortened_first_power=first_power, where_plot_2='after DLI,', title_rest='- in fft, mean_volt: ' + str("{:.4f}".format(self.config.mean_voltage)) + ' voltage: ' + str("{:.4f}".format(chosen_voltage[0])) + ' V and ' + str("{:.8f}".format(peak_wavelength[0])))
-        
+        if first_power is not None:
+            self.plotter.plot_power(t, power_dampened, amount_symbols_in_plot=amount_symbols_in_first_part, where_plot_1='hist random before DLI',  shortened_first_power=first_power, where_plot_2='after DLI erster port,', title_rest='+ omega 0 for current ' + str(self.config.mean_current) + ' mA')
+
         # plt.plot(first_power.reshape(-1) * 1e3, color='blue', label='0', linestyle='-', marker='o', markersize=1)
         # Saver.save_plot(f"power_before_DLI_in_mW_outside")
         mean_photon_at_x_detector = self.simulation_helper.calculate_mean_photon_number(power_dampened, peak_wavelength, t)

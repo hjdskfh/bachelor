@@ -257,7 +257,7 @@ class SimulationHelper:
             wavelength_photons[i, :photon_count] = peak_wavelength[idx]
 
             norm_prob_time_symbol = np.divide(power_dampened[idx], power_dampened[idx].sum())
-            print(f"norm_prob_time_symbol: {norm_prob_time_symbol.sum()}")
+            # print(f"norm_prob_time_symbol: {norm_prob_time_symbol.sum()}")
             plt.plot(t, norm_prob_time_symbol, label=f"Symbol {idx}")
             plt.show()
 
