@@ -189,12 +189,12 @@ class DataProcessor:
                 # looked at index is second symbol:
                 pair_key = (raw_symbol_lookup[(basis[idx_left], value[idx_left], decoy[idx_left])], 
                             raw_symbol_lookup[(basis[idx_right], value[idx_right], decoy[idx_right])])
-                # print(f"pair_key: {pair_key}")
+                # print(f"pair_key:   {pair_key}")
                 position_brujin_left = pair_indices_dict[pair_key].item()
                 # print(f"position_brujin_left: {position_brujin_left}")
             
-            # Process the first symbol of the pair:
-            if idx_left in index_where_photons_det:	
+                # Process the first symbol of the pair:
+                assert idx_left in index_where_photons_det, f"idx_left {idx_left} not in index_where_photons_det"
                 # print(f"idx_left in index_where_photons_det: {idx_left}")
                 inds_first = np.where(index_where_photons_det == idx_left)[0]
                 valid_times_first = time_photons_det[inds_first]
@@ -208,8 +208,8 @@ class DataProcessor:
                         overall_bin = position_brujin_left * bins_per_symbol + b
                         local_histogram_counts[overall_bin] += 1
 
-            # Process the second symbol of the pair:
-            if idx_right in index_where_photons_det:
+                # Process the second symbol of the pair:
+                assert idx_right in index_where_photons_det, f"idx_right {idx_right} not in index_where_photons_det"
                 # print(f"idx_right in index_where_photons_det: {idx_right}")
                 inds_first = np.where(index_where_photons_det == idx_right)[0]
                 valid_times_first = time_photons_det[inds_first]

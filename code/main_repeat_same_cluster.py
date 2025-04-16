@@ -38,13 +38,13 @@ n_samples_set = 20000
 # To be safe, use up to ~75% of 256 GB → ~192 GB usable.
 # Maximum concurrent simulations ≈ 192 / 6 ≈ 32.
 # Here we choose a conservative maximum number of parallel tasks.
-max_concurrent_tasks = 16
+max_concurrent_tasks = 12
 
 # How many simulations per batch (each batch runs sequentially inside one task)
 simulations_in_batch = 2  # adjust this to increase per-task workload
 
 # Total number of batches to run (total simulations = simulations_in_batch * total_batches)
-total_batches = 100  # e.g., total simulations = 2 * 50 = 100  # 340 circa 4,5 stunden mit 2 sim per batch
+total_batches = 600  # e.g., total simulations = 2 * 50 = 100  # 340 circa 4,5 stunden mit 2 sim per batch
 
 # Define file name
 style_file = "Presentation_style_1_adjusted_no_grid.mplstyle"
@@ -69,11 +69,8 @@ print(f"Execution time for reading: {execution_time_read:.9f} seconds for {confi
 def run_simulation_and_update_hist(i, base_path, style_file, database, jitter,
                                    detector_jitter, n_samples_set):
     # Create the simulation config locally
-    config = SimulationConfig(database, seed=None, n_samples=n_samples_set, n_pulses=4, batchsize=1000, mean_voltage=-1.708, mean_current=0.080, voltage_amplitude=0.02, current_amplitude=0.0005,
-                p_z_alice=0.5, p_decoy=0.1, p_z_bob=0.5, sampling_rate_FPGA=6.5e9, bandwidth=4e9, jitter=jitter, 
-                non_signal_voltage=-1.1, voltage_decoy=-0.1, voltage=-0.1, voltage_decoy_sup=-0.1, voltage_sup=-0.1,
-                mean_photon_nr=0.7, mean_photon_decoy=0.1, 
-                fiber_attenuation=-3, detector_efficiency=0.3, dark_count_frequency=10, detection_time=1e-10, detector_jitter=detector_jitter,
+    config = SimulationConfig(database, seed=None, n_samples=n_samples_set,
+                jitter=jitter, detector_jitter=detector_jitter,
                 mlp=os.path.join(base_path, style_file), script_name = os.path.basename(__file__), job_id=job_id
                 )
     simulation = SimulationManager(config)

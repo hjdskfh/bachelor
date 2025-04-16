@@ -1249,7 +1249,10 @@ class SimulationManager:
             XP_Z1_alice_s = Z1_alice_s[np.isin(Z1_alice_s - 1, XP_alice_s)]  # Indices where Z1Z0 was sent (index of Z0 used aka the higher index at which time we measure the X+ state)
             print(f"manager len(Z1_alice_s): {len(Z1_alice_s)}, len(XP_Z1_alice_s): {len(XP_Z1_alice_s)}")
             mean_photon_at_detector_of_Z0_XP_symbol_mean_photon_for_whole_symbol = mean_photon_at_x_detector[Z0_XP_alice_s]
-            mean_of_Z0_XP = np.mean(mean_photon_at_detector_of_Z0_XP_symbol_mean_photon_for_whole_symbol)
+            if Z0_XP_alice_s.size > 0:
+                mean_of_Z0_XP = np.mean(mean_photon_at_detector_of_Z0_XP_symbol_mean_photon_for_whole_symbol)
+            else:
+                mean_of_Z0_XP = 0
 
             print(f"nr_photons: {len(nr_photons_det_x)}")
 
