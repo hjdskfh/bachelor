@@ -258,8 +258,8 @@ class SimulationHelper:
 
             norm_prob_time_symbol = np.divide(power_dampened[idx], power_dampened[idx].sum())
             # print(f"norm_prob_time_symbol: {norm_prob_time_symbol.sum()}")
-            plt.plot(t, norm_prob_time_symbol, label=f"Symbol {idx}")
-            plt.show()
+            # plt.plot(t, norm_prob_time_symbol, label=f"Symbol {idx}")
+            # plt.show()
 
             time_photons[i, :photon_count] = self.config.rng.choice(t, size=photon_count, p=norm_prob_time_symbol) #t ist konstant
         

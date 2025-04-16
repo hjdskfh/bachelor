@@ -37,7 +37,7 @@ class Plotter:
             # Flatten and concatenate all elements
             return np.concatenate([arr.flatten() for arr in data])
     
-    def plot_power(self, t, second_power, amount_symbols_in_plot=4, where_plot_1=None, shortened_first_power=None, where_plot_2=None, title_rest=None, shift=0, is_DLI=False):	
+    def plot_power(self, t, second_power, amount_symbols_in_plot=4, is_title=True, where_plot_1=None, shortened_first_power=None, where_plot_2=None, title_rest=None, shift=0):	
         step_size = t[1] - t[0]
         # Calculate the new length
         new_length = len(t) * amount_symbols_in_plot
@@ -48,13 +48,16 @@ class Plotter:
         plt.figure(figsize=(8, 6))
        
         if shortened_first_power is None:
-            plt.plot(t_plot1 * 1e9, second_part * 1e3, label = where_plot_1)
-            plt.title(f"Power {where_plot_1} over {self.config.n_samples} Iterations")
+            plt.plot(t_plot1 * 1e9, second_part * 1e3, label = "power " + str(where_plot_1))
+            if is_title == True:
+                plt.title(f"Power {where_plot_1} over {self.config.n_samples} Iterations")
         else:
             shortened_first_power = shortened_first_power.reshape(-1)
-            plt.plot(t_plot1 * 1e9, shortened_first_power * 1e3, label=where_plot_1)
-            plt.plot(t_plot1 * 1e9, second_part * 1e3, label=where_plot_2)
-            plt.title(f"Power {title_rest} over {amount_symbols_in_plot} Symbols")
+            plt.plot(t_plot1 * 1e9, shortened_first_power * 1e3, label="power " + str(where_plot_1))
+            plt.plot(t_plot1 * 1e9, second_part * 1e3, label="power " + str(where_plot_2))  
+            if is_title == True:
+                plt.title(f"Power {where_plot_1} and {where_plot_2} over {self.config.n_samples} Iterations")
+                plt.title(f"Power {title_rest} over {amount_symbols_in_plot} Symbols")
         
         plt.ylabel('Power (mW)')
         plt.xlabel('Time (ns)')
