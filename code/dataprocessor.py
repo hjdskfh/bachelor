@@ -194,34 +194,34 @@ class DataProcessor:
                 # print(f"position_brujin_left: {position_brujin_left}")
             
                 # Process the first symbol of the pair:
-                assert idx_left in index_where_photons_det, f"idx_left {idx_left} not in index_where_photons_det"
-                # print(f"idx_left in index_where_photons_det: {idx_left}")
-                inds_first = np.where(index_where_photons_det == idx_left)[0]
-                valid_times_first = time_photons_det[inds_first]
-                # print(f"valid_times_first: {valid_times_first}")
-                valid_times_first = valid_times_first[~np.isnan(valid_times_first)]
-                # print(f"valid_times_first without nan: {valid_times_first}")
-                bin_indices_first = np.digitize(valid_times_first, bins_arr) - 1
-                # Update histogram: position = pos (for first symbol)
-                for b in bin_indices_first:
-                    if 0 <= b < bins_per_symbol:
-                        overall_bin = position_brujin_left * bins_per_symbol + b
-                        local_histogram_counts[overall_bin] += 1
+                if idx_left in index_where_photons_det:
+                    # print(f"idx_left in index_where_photons_det: {idx_left}")
+                    inds_first = np.where(index_where_photons_det == idx_left)[0]
+                    valid_times_first = time_photons_det[inds_first]
+                    # print(f"valid_times_first: {valid_times_first}")
+                    valid_times_first = valid_times_first[~np.isnan(valid_times_first)]
+                    # print(f"valid_times_first without nan: {valid_times_first}")
+                    bin_indices_first = np.digitize(valid_times_first, bins_arr) - 1
+                    # Update histogram: position = pos (for first symbol)
+                    for b in bin_indices_first:
+                        if 0 <= b < bins_per_symbol:
+                            overall_bin = position_brujin_left * bins_per_symbol + b
+                            local_histogram_counts[overall_bin] += 1
 
                 # Process the second symbol of the pair:
-                assert idx_right in index_where_photons_det, f"idx_right {idx_right} not in index_where_photons_det"
-                # print(f"idx_right in index_where_photons_det: {idx_right}")
-                inds_first = np.where(index_where_photons_det == idx_right)[0]
-                valid_times_first = time_photons_det[inds_first]
-                # print(f"valid_times_first: {valid_times_first}")
-                valid_times_first = valid_times_first[~np.isnan(valid_times_first)]
-                # print(f"valid_times_first without nan: {valid_times_first}")
-                bin_indices_first = np.digitize(valid_times_first, bins_arr) - 1
-                # Update histogram: position = pos (for first symbol)
-                for b in bin_indices_first:
-                    if 0 <= b < bins_per_symbol:
-                        overall_bin = (position_brujin_left + 1) * bins_per_symbol + b
-                        local_histogram_counts[overall_bin] += 1
+                if idx_right in index_where_photons_det:
+                    # print(f"idx_right in index_where_photons_det: {idx_right}")
+                    inds_first = np.where(index_where_photons_det == idx_right)[0]
+                    valid_times_first = time_photons_det[inds_first]
+                    # print(f"valid_times_first: {valid_times_first}")
+                    valid_times_first = valid_times_first[~np.isnan(valid_times_first)]
+                    # print(f"valid_times_first without nan: {valid_times_first}")
+                    bin_indices_first = np.digitize(valid_times_first, bins_arr) - 1
+                    # Update histogram: position = pos (for first symbol)
+                    for b in bin_indices_first:
+                        if 0 <= b < bins_per_symbol:
+                            overall_bin = (position_brujin_left + 1) * bins_per_symbol + b
+                            local_histogram_counts[overall_bin] += 1
 
         # Process each chain (repetition)
         print(f"index_where_photons_det_z max: {index_where_photons_det_z.max()}, index_where_photons_det_x max: {index_where_photons_det_x.max()}")
@@ -277,7 +277,7 @@ class DataProcessor:
         )
     
     def calc_SKR(self, len_wrong_x_dec, len_wrong_x_non_dec, len_wrong_z_dec, len_wrong_z_non_dec, 
-                 len_Z_checked_dec, len_Z_checked_non_dec, X_P_calc_non_dec, X_P_calc_dec, total_symbols):
+                 len_Z_checked_dec, len_Z_checked_non_dec, X_P_calc_dec, X_P_calc_non_dec, total_symbols):
         block_size = None  
         #factor to get up to a billion symbols
         if len_Z_checked_non_dec != 0:

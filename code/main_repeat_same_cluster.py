@@ -143,20 +143,19 @@ for len_wrong_x_dec, len_wrong_x_non_dec, len_wrong_z_dec, len_wrong_z_non_dec, 
     global_X_P_calc_non_dec += X_P_calc_non_dec
     global_X_P_calc_dec += X_P_calc_dec
 
-print(f"global_len_wrong_x_dec: {global_len_wrong_x_dec}")
-print(f"global_len_wrong_x_non_dec: {global_len_wrong_x_non_dec}")
-print(f"global_len_wrong_z_dec: {global_len_wrong_z_dec}")
-print(f"global_len_wrong_z_non_dec: {global_len_wrong_z_non_dec}")
-print(f"global_len_Z_checked_dec: {global_len_Z_checked_dec}")
-print(f"global_len_Z_checked_non_dec: {global_len_Z_checked_non_dec}")
-print(f"global_X_P_calc_non_dec: {global_X_P_calc_non_dec}")
-print(f"global_X_P_calc_dec: {global_X_P_calc_dec}")
-
 total_symbols = n_samples_set * simulations_in_batch * total_batches
 
 Saver.save_results_to_txt(global_len_wrong_x_dec=global_len_wrong_x_dec, global_len_wrong_x_non_dec=global_len_wrong_x_non_dec, global_len_wrong_z_dec=global_len_wrong_z_dec,
                         global_len_wrong_z_non_dec=global_len_wrong_z_non_dec, global_len_Z_checked_dec=global_len_Z_checked_dec, global_len_Z_checked_non_dec=global_len_Z_checked_non_dec,
                         global_X_P_calc_dec=global_X_P_calc_dec, global_X_P_calc_non_dec=global_X_P_calc_non_dec, total_symbols=total_symbols)
+
+Saver.save_array_as_npz_data("counts_repeat",
+                        global_len_wrong_x_dec=global_len_wrong_x_dec, global_len_wrong_x_non_dec=global_len_wrong_x_non_dec,
+                        global_len_wrong_z_dec=global_len_wrong_z_dec, global_len_wrong_z_non_dec=global_len_wrong_z_non_dec,
+                        global_len_Z_checked_dec=global_len_Z_checked_dec, global_len_Z_checked_non_dec=global_len_Z_checked_non_dec,
+                        global_X_P_calc_dec=global_X_P_calc_dec, global_X_P_calc_non_dec=global_X_P_calc_non_dec,
+                        total_symbols=total_symbols
+                        )
 
 # --- Timing ---
 end_time_simulation = time.time()

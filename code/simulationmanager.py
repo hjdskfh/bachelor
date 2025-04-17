@@ -880,7 +880,7 @@ class SimulationManager:
 
         #plot
         first_power = None
-        if random.random() < 1:
+        if random.random() < 0.01:
             amount_symbols_in_first_part = 10
             first_power = power_dampened[:amount_symbols_in_first_part].copy()
 
