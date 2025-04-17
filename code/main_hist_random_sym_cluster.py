@@ -99,11 +99,11 @@ if __name__ == '__main__':
     Saver.save_to_json(config_params)
 
 
-    max_concurrent_tasks = 16
+    max_concurrent_tasks = 12
     # How many simulations per batch (each batch runs sequentially inside one task)
     simulations_in_batch = 2  # adjust this to increase per-task workload
     # Total number of batches to run (total simulations = simulations_in_batch * total_batches)
-    total_batches = 20 # e.g., total simulations = 2 * 50 = 100  # 340 circa 4,5 stunden mit 2 sim per batch
+    total_batches = 200 # e.g., total simulations = 2 * 50 = 100  # 340 circa 4,5 stunden mit 2 sim per batch
 
     length_of_chain = 6*6 + 1
     bins_per_symbol_hist = 30
