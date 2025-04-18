@@ -445,7 +445,6 @@ class SimulationHelper:
             detected_indices_x_det_x_basis[row, :] = -1
             detected_indices_x_det_x_basis[row, selected_index] = detected_indices_x_det_x_basis[row, selected_index]
 
-
         vacuum_indices_x_long = np.union1d(indices_x_no_photons_long, nothing_in_det_indices_long)
         get_original_indexing_x = index_where_photons_det_x[basis[index_where_photons_det_x] == 1]
 

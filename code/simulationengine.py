@@ -365,7 +365,7 @@ class SimulationEngine:
         indices_z_long, mask_z_short, get_original_indexing_z = self.simulation_helper.classificator_sift_z_vacuum(basis, detected_indices_z, index_where_photons_det_z)
         detected_indices_x_det_x_basis, total_sift_x_basis_long, vacuum_indices_x_long, \
         indices_x_long, mask_x_short, get_original_indexing_x = self.simulation_helper.classificator_sift_x_vacuum(basis, detected_indices_x, index_where_photons_det_x)
-        with np.printoptions(threshold=np.inf):
+        '''with np.printoptions(threshold=np.inf):
             print(f"time_photons_det_x part: {time_photons_det_x[:10]}")
             len(f"time_photons_det_x: {len(time_photons_det_x)}")
             print(f"detected_indices_x part: {detected_indices_x[:10]}")
@@ -373,7 +373,7 @@ class SimulationEngine:
             print("index_where_photons_det_x part: ", index_where_photons_det_x[:10])
             print(f"detected_indices_x_det_x_basis: {detected_indices_x_det_x_basis}")
             print(f"get_original_indexing_x part: {get_original_indexing_x[:10]}")
-            print(f"XP_alice_s part {np.where((basis == 0) & (decoy == 1))[0][:10]}")
+            print(f"XP_alice_s part {np.where((basis == 0) & (decoy == 1))[0][:10]}")'''
         gain_Z_non_dec, gain_Z_dec, len_Z_checked_dec, len_Z_checked_non_dec = self.simulation_helper.classificator_identify_z(mask_x_short, value, total_sift_z_basis_short, 
                                                                                                                                detected_indices_x_det_x_basis, index_where_photons_det_z, decoy, indices_z_long, get_original_indexing_z, get_original_indexing_x)
 
