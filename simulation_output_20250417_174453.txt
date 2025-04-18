@@ -1,0 +1,74 @@
+[Before everything] Memory used: 125.28 MB
+Configuration saved to C:\Users\leavi\OneDrive\Dokumente\Uni\Semester 7\NeuMoQP\Programm\logs\simulation_config_20250417_174453.json
+Execution time for reading: 0.014737844 seconds for 100 samples
+seed: 846879
+T1_dampening at initialize end: 20.219802856445312
+voltage at initialize end: -0.2
+Voltage_decoy at initialize end: -0.7405843287706373
+Voltage_decoy_sup at initialize end: -0.8517826229333878
+Voltage_sup at initialize end: -0.44613102972507473
+peak_wavelegth: [1.55080661e-06 1.55080661e-06 1.55080661e-06 1.55080661e-06
+ 1.55080661e-06 1.55080661e-06 1.55080661e-06 1.55080661e-06
+ 1.55080661e-06 1.55080661e-06]
+basis: [0 0 1 0 0 1 0 0 1 0]
+value: [-1 -1  0 -1 -1  0 -1 -1  0 -1]
+decoy: [0 0 0 0 0 0 0 0 0 0]
+mean_photon_nr after fiber: [0.32954076 0.34826374 0.39397083 0.37486315 0.35633831 0.37035376
+ 0.36762546 0.34097028 0.36270239 0.33313244 0.32057283 0.37085355
+ 0.34636259 0.3290996  0.36672385 0.33743262 0.348995   0.34778605
+ 0.32629286 0.33359889]
+[in choose photon after pre-allocate arrays] Memory used: 151.52 MB
+[after choose: 2.9417760372161865] Memory used: 151.52 MB
+[before detection time:2.9420883655548096] Memory used: 151.52 MB
+[before jitter detector: 2.9423766136169434] Memory used: 151.52 MB
+[before darkcount: 2.9425859451293945] Memory used: 151.53 MB
+Rows with all NaN in time_photons_det: 0
+mean_photon_nr after basis choice: [0.16477038 0.17413187 0.19698541 0.18743158 0.17816916 0.18517688
+ 0.18381273 0.17048514 0.1813512  0.16656622 0.16028641 0.18542678
+ 0.1731813  0.1645498  0.18336193 0.16871631 0.1744975  0.17389302
+ 0.16314643 0.16679945]
+len(mean_photon_at_x_detector): 100
+[in choose photon after pre-allocate arrays] Memory used: 166.07 MB
+[after choose: 5.203650712966919] Memory used: 166.07 MB
+[before detection time:5.203889608383179] Memory used: 166.07 MB
+[before jitter detector: 5.204005002975464] Memory used: 166.07 MB
+[before darkcount: 5.204102039337158] Memory used: 166.07 MB
+Rows with all NaN in time_photons_det: 0
+calc_mean_photon_nr_detector_x: [0.02129107 0.00021303 0.04878724 0.00490311 0.00015223 0.04586292
+ 0.00359005 0.00056364 0.04670414 0.00406016 0.00024608 0.04605195
+ 0.0033965  0.00022844 0.04434054 0.00492545 0.00017772 0.04333583
+ 0.00319693 0.00040975]
+len(calc_mean_photon_x_det):100
+manager len(Z0_alice_s): 0, len(XP_alice_s): 67, len(Z0_XP_alice_s): 0
+manager len(Z1_alice_s): 0, len(XP_Z1_alice_s): 0
+second_xp_mwan_photon_at_x_dec: [0.02129107 0.04878724 0.00015223 0.00359005 0.04670414 0.00024608
+ 0.0033965  0.04434054 0.00017772 0.00319693 0.04275989 0.00042039
+ 0.00347088 0.04636775 0.00020644 0.00453057 0.04319852 0.00014735
+ 0.00411157 0.04525812 0.00027106 0.0038526  0.03975437 0.00026959
+ 0.00382256 0.03963788 0.00099561 0.00362372 0.04190657 0.00065622
+ 0.0025071  0.0474097  0.00050519 0.00402588 0.04439752 0.00017775
+ 0.00318141 0.04548508 0.00024761 0.00305963 0.04477649 0.00033623
+ 0.00306324 0.04685795 0.00039424 0.00192403 0.04049621 0.00016019
+ 0.00413085 0.04402914]
+mean of second_xp_mean..:0.016686191227519753
+nr_photons: 0
+time_photons_det_x part: []
+detected_indices_x part: []
+detected_indices_x shape: (0, 0)
+index_where_photons_det_x part:  []
+detected_indices_x_det_x_basis: []
+get_original_indexing_x part: []
+XP_alice_s part []
+Z0_XP_alice_s_part: []
+has_0_short: []
+has_0_long: []
+ind_has_0_z0xp: 0
+ind_has_0_xpz1: 0
+ind_has_0_z0xp: 0
+X_P_calc_dec:0.0
+X_P_calc_non_dec:0.0
+Returning: 0.0, 0.0, 0.0, -999
+Basis Array (sample): [1 1 1 1 0 1 1 1 1 1]
+Value Array (sample): [ 1  1  0  1 -1  1  1  1  0  1]
+Decoy Array (sample): [0 0 0 0 0 0 1 0 1 0]
+Execution time for simulation: 5.208988428 seconds for 100 samples

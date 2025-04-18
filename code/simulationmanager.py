@@ -1164,12 +1164,16 @@ class SimulationManager:
         print(f"peak_wavelegth: {peak_wavelength[:10]}")
         # Generate Alice's choices
         # basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=np.array([1,0,1]), value=np.array([1,-1, 0]), decoy=np.array([0,0,0]))
-        basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=np.array([0,1]), value=np.array([-1, 0]), decoy=np.array([0,0]))
+        basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=np.array([0,0,1]), value=np.array([-1,-1,0]), decoy=np.array([1,1,1]))
+        # basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=np.array([0,1]), value=np.array([-1, 0]), decoy=np.array([0,0]))
+        # basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=np.array([0,1]), value=np.array([-1, 1]), decoy=np.array([0,0]))
         # basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=np.array([0]), value=np.array([-1]), decoy=np.array([0]))
         # basis, value, decoy = self.simulation_engine.generate_alice_choices()
         # basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=np.array([1, 0, 0, 1, 1, 0, 0, 1]), value=np.array([1, -1, -1, 0, 1, -1, -1, 0]), decoy=np.array([0, 0, 0, 0, 1, 1, 1, 1]))
 
-
+        print(f"basis: {basis[:10]}")
+        print(f"value: {value[:10]}")
+        print(f"decoy: {decoy[:10]}")
         # Simulate signal and transmission
         signals, t, _ = self.simulation_engine.signal_bandwidth_jitter(basis, value, decoy)
 
@@ -1200,7 +1204,7 @@ class SimulationManager:
         #plot
 
         first_power = None
-        if random.random() < 0.01:
+        if random.random() < 1:
             amount_symbols_in_first_part = 10
             first_power = power_dampened[:amount_symbols_in_first_part].copy()
         '''print("len(t):", len(t))
@@ -1223,7 +1227,8 @@ class SimulationManager:
         print(f"len(mean_photon_at_x_detector): {len(mean_photon_at_x_detector)}")
         # Saver.memory_usage("before detector x: " + str(time.time() - start_time))
         time_photons_det_x, wavelength_photons_det_x, nr_photons_det_x, index_where_photons_det_x, calc_mean_photon_nr_detector_x, dark_count_times_x, num_dark_counts_x = self.simulation_engine.detector(t, peak_wavelength, power_dampened, start_time)        
-        # print(f"calc_mean_photon_nr_detector_x: {calc_mean_photon_nr_detector_x[:20]}")
+        print(f"calc_mean_photon_nr_detector_x: {calc_mean_photon_nr_detector_x[:20]}")
+        print(f"len(calc_mean_photon_x_det):{len(calc_mean_photon_nr_detector_x)}")
         with np.printoptions(threshold=100):
             Z0_alice_s = np.where((basis == 1) & (value == 1) & (decoy == 0))[0]  # Indices where Z0 was sent
             XP_alice_s = np.where((basis == 0) & (decoy == 0))[0]  # Indices where XP was sent
@@ -1237,6 +1242,10 @@ class SimulationManager:
                 mean_of_Z0_XP = np.mean(mean_photon_at_detector_of_Z0_XP_symbol_mean_photon_for_whole_symbol)
             else:
                 mean_of_Z0_XP = 0
+
+            second_xp_mean_photon_at_x_detector = mean_photon_at_x_detector[1::3]
+            print(f"second_xp_mwan_photon_at_x_dec: {second_xp_mean_photon_at_x_detector}")
+            print(f"mean of second_xp_mean..:{np.mean(second_xp_mean_photon_at_x_detector)}")
 
             print(f"nr_photons: {len(nr_photons_det_x)}")
 

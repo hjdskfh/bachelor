@@ -1,0 +1,56 @@
+[Before everything] Memory used: 123.61 MB
+Configuration saved to C:\Users\leavi\OneDrive\Dokumente\Uni\Semester 7\NeuMoQP\Programm\logs\simulation_config_20250417_171548.json
+Execution time for reading: 0.014646292 seconds for 100 samples
+seed: 138258
+T1_dampening at initialize end: 20.219802856445312
+voltage at initialize end: -0.2
+Voltage_decoy at initialize end: -0.7405843287706373
+Voltage_decoy_sup at initialize end: -0.8517826229333878
+Voltage_sup at initialize end: -0.44613102972507473
+peak_wavelegth: [1.55080661e-06 1.55080661e-06 1.55080661e-06 1.55080661e-06
+ 1.55080661e-06 1.55080661e-06 1.55080661e-06 1.55080661e-06
+ 1.55080661e-06 1.55080661e-06]
+mean_photon_nr after fiber: [0.37614625 0.34042372 0.37640901 0.35819658 0.32857291 0.34081552
+ 0.36472643 0.31344254 0.37242468 0.36343671 0.34577326 0.37353048
+ 0.35624539 0.33572738 0.39860296 0.34777709 0.34002616 0.39799004
+ 0.36601971 0.33725221]
+[in choose photon after pre-allocate arrays] Memory used: 150.79 MB
+[after choose: 2.9175288677215576] Memory used: 150.79 MB
+[before detection time:2.917834520339966] Memory used: 150.79 MB
+[before jitter detector: 2.918059825897217] Memory used: 150.79 MB
+[before darkcount: 2.9182028770446777] Memory used: 150.80 MB
+Rows with all NaN in time_photons_det: 0
+mean_photon_nr after basis choice: [0.18807313 0.17021186 0.18820451 0.17909829 0.16428646 0.17040776
+ 0.18236322 0.15672127 0.18621234 0.18171836 0.17288663 0.18676524
+ 0.1781227  0.16786369 0.19930148 0.17388854 0.17001308 0.19899502
+ 0.18300986 0.1686261 ]
+len(mean_photon_at_x_detector): 100
+[in choose photon after pre-allocate arrays] Memory used: 165.88 MB
+[after choose: 5.512294054031372] Memory used: 165.88 MB
+[before detection time:5.512582778930664] Memory used: 165.88 MB
+[before jitter detector: 5.512740135192871] Memory used: 165.88 MB
+[before darkcount: 5.512908220291138] Memory used: 165.88 MB
+Rows with all NaN in time_photons_det: 0
+manager len(Z0_alice_s): 0, len(XP_alice_s): 67, len(Z0_XP_alice_s): 0
+manager len(Z1_alice_s): 0, len(XP_Z1_alice_s): 0
+nr_photons: 0
+time_photons_det_x part: []
+detected_indices_x part: []
+detected_indices_x shape: (0, 0)
+index_where_photons_det_x part:  []
+detected_indices_x_det_x_basis: []
+get_original_indexing_x part: []
+XP_alice_s part []
+Z0_XP_alice_s_part: []
+has_0_short: []
+has_0_long: []
+ind_has_0_z0xp: 0
+ind_has_0_xpz1: 0
+ind_has_0_z0xp: 0
+X_P_calc_dec:0.0
+X_P_calc_non_dec:0.0
+Returning: 0.0, 0.0, 0.0, -999
+Basis Array (sample): [1 1 1 1 0 1 1 1 1 1]
+Value Array (sample): [ 1  1  0  1 -1  1  1  1  0  1]
+Decoy Array (sample): [0 0 0 0 0 0 1 0 1 0]
+Execution time for simulation: 5.519012213 seconds for 100 samples
