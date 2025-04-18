@@ -577,23 +577,6 @@ class SimulationHelper:
             
         return X_P_calc_non_dec, X_P_calc_dec, gain_X_non_dec, gain_X_dec
     
-    def classificator_identify_x_calc_p_indep_states_x(self, mask_x_short, detected_indices_x_det_x_basis):
-        if mask_x_short.size == 0:
-            return 0, 0, 0
-        
-        # early bin gemessen jedes 2. symbol
-        ind_every_second_symbol = np.arange(1, 1 + 2 * self.config.n_samples, 2)
-        has_one_0_short = np.where(np.sum(detected_indices_x_det_x_basis == 0, axis=1) == 1)[0]
-
-        ind_has_one_0_long = mask_x_short[has_one_0_short]
-        ind_has_one_0_and_every_second_symbol = np.intersect1d(ind_has_one_0_long, ind_every_second_symbol)
-        len_ind_has_one_0_and_every_second_symbol = len(ind_has_one_0_and_every_second_symbol)
-        len_ind_every_second_symbol = len(ind_every_second_symbol)
-
-        # p_indep_x_states = len(ind_has_one_0_and_every_second_symbol) / (1/4 * self.config.p_z_alice)
-        p_indep_x_states = len_ind_has_one_0_and_every_second_symbol / (len_ind_every_second_symbol* 1/2)
-
-        return p_indep_x_states, len_ind_has_one_0_and_every_second_symbol, len_ind_every_second_symbol
     
     def classificator_errors(self, mask_x_short, mask_z_short, indices_z_long, indices_x_long, value, detected_indices_z_det_z_basis, detected_indices_x_det_x_basis, basis, decoy, get_original_indexing_x, get_original_indexing_z):
         wrong_detection_mask_z = np.zeros(len(basis), dtype=bool)
@@ -614,7 +597,7 @@ class SimulationHelper:
             has_sent_Z1_long = np.intersect1d(indices_z_long, np.where(value == 0)[0])
             has_0_and_z1_long = np.intersect1d(has_0_long, has_sent_Z1_long)
             wrong_detection_mask_z[np.where(has_0_and_z1_long)[0]] = True
-            #decoy
+            # filter out decoy cases
             wrong_detections_z = np.where(wrong_detection_mask_z)[0]
             ind_sent_dec_long = np.where((decoy == 1))[0]
             wrong_detections_z_dec = np.intersect1d(wrong_detections_z, ind_sent_dec_long)
@@ -626,8 +609,8 @@ class SimulationHelper:
 
         if wrong_detection_mask_x.size != 0:
             #Condition 6: Late detection in X+ after X+ sent
-            has_1_short = np.any(detected_indices_x_det_x_basis == 1, axis=1)
-            has_1_long = get_original_indexing_x[np.where(has_1_short)[0]]
+            has_1_short = np.where(np.any(detected_indices_x_det_x_basis == 1, axis=1))[0]
+            has_1_long = get_original_indexing_x[has_1_short]
             has_sent_xp_long = indices_x_long
             has_1_and_xp_long = np.intersect1d(has_1_long, has_sent_xp_long)
             wrong_detection_mask_x[np.where(has_1_and_xp_long)[0]] = True
