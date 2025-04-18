@@ -1,0 +1,36 @@
+[Before everything] Memory used: 122.42 MB
+Configuration saved to C:\Users\leavi\OneDrive\Dokumente\Uni\Semester 7\NeuMoQP\Programm\logs\simulation_config_20250418_130837.json
+Execution time for reading: 0.012080431 seconds for 100 samples
+seed: 836230
+T1_dampening at initialize end: 20.219802856445312
+voltage at initialize end: -0.2
+Voltage_decoy at initialize end: -0.7405843287706373
+Voltage_decoy_sup at initialize end: -0.8517826229333878
+Voltage_sup at initialize end: -0.44613102972507473
+Basis Array (sample): [1 1 1 1 0 1 1 1 1 1]
+Value Array (sample): [ 1  1  0  1 -1  1  1  1  0  1]
+Decoy Array (sample): [0 0 0 0 0 0 1 0 1 0]
+[before simulating signal: 1.965] Memory used: 125.65 MB
+[before eam: 2.092] Memory used: 141.45 MB
+[before fiber: 2.169] Memory used: 141.62 MB
+[before detector z: 2.170] Memory used: 141.62 MB
+[in choose photon after pre-allocate arrays] Memory used: 141.66 MB
+[after choose: 2.204036235809326] Memory used: 141.66 MB
+[before detection time:2.2042815685272217] Memory used: 141.66 MB
+[before jitter detector: 2.204432487487793] Memory used: 141.66 MB
+[before darkcount: 2.205352544784546] Memory used: 141.67 MB
+total darkcounts: 0
+[before classificator: 2.207] Memory used: 141.69 MB
+time_photons_det_z: [[1.5787609e-10]]
+time_photons_det_z shape: (1, 1)
+[before DLI: 2.207] Memory used: 141.69 MB
+[before detector x: 3.1897380352020264] Memory used: 143.93 MB
+[in choose photon after pre-allocate arrays] Memory used: 142.86 MB
+[after choose: 3.2242815494537354] Memory used: 142.86 MB
+[before detection time:3.2244873046875] Memory used: 142.86 MB
+[before jitter detector: 3.2245874404907227] Memory used: 142.86 MB
+[before darkcount: 3.2246639728546143] Memory used: 142.86 MB
+total darkcounts: 0
+time_photons_det_x: []
+time_photons_det_x shape: (0, 1)
+Execution time for simulation: 3.255218029 seconds for 100 samples

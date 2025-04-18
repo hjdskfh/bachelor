@@ -119,6 +119,33 @@ if __name__ == '__main__':
         ) for batch_id in range(total_batches)
     )
 
+    # PRINT RESULTS
+    # Unpack all components into separate lists
+    hist_x_list = []
+    hist_z_list = []
+    t_sym_list = []
+    lookup_array_list = []
+
+    for hist_x, hist_z, t_sym, lookup_array in results:
+        hist_x_list.append(hist_x)
+        hist_z_list.append(hist_z)
+        t_sym_list.append(t_sym)
+        lookup_array_list.append(lookup_array)
+
+    # Now save them — use object dtype if arrays are different shapes
+    np.savez("histograms_random_results.npz",
+            hist_x=np.array(hist_x_list, dtype=object),
+            hist_z=np.array(hist_z_list, dtype=object),
+            t_sym=np.array(t_sym_list, dtype=object),
+            lookup_array=np.array(lookup_array_list, dtype=object))
+
+    for hist_x, hist_z, t_sym, lookup_array in results:
+        global_histogram_counts_x += hist_x
+        global_histogram_counts_z += hist_z
+        final_time_one_symbol = t_sym
+        final_lookup_array = lookup_array
+
+
     global_histogram_counts_x = np.zeros(amount_bins_hist, dtype=int)
     global_histogram_counts_z = np.zeros(amount_bins_hist, dtype=int)
     final_time_one_symbol, final_lookup_array = None, None

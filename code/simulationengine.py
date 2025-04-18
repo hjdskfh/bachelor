@@ -342,8 +342,7 @@ class SimulationEngine:
         Saver.memory_usage("before darkcount: " + str(time.time() - start_time))
 
         # calculate darkcount
-        dark_count_times, num_dark_counts = self.simulation_helper.darkcount()
-        print(f"Rows with all NaN in time_photons_det: {np.isnan(time_photons_det).all(axis=1).sum()}")
+        dark_count_times, num_dark_counts = self.simulation_helper.darkcount(index_where_photons_det, time_photons_det)
 
         return time_photons_det, wavelength_photons_det, nr_photons_det, index_where_photons_det, calc_mean_photon_nr_detector, dark_count_times, num_dark_counts
     

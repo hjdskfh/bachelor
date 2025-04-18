@@ -95,7 +95,7 @@ with np.printoptions(threshold=np.inf):
     
 DataProcessor.plot_histogram_batch(bins_per_symbol_hist, time_one_symbol,
                            hist_x, hist_z,
-                           lookup_array, config.n_samples, start_symbol=3, end_symbol=10, name="fixed")
+                           lookup_array, config.n_samples, start_symbol=3, end_symbol=10, name="random")
                           
 
 end_time_simulation = time.time()  # Record end time for simulation

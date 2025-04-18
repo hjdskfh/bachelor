@@ -339,12 +339,46 @@ class SimulationHelper:
 
         return time_photons_det
     
-    def darkcount(self):
+    def darkcount(self, index_where_photons_det, time_photons_det):
         """Calculate the number of dark count photons detected."""
         pulse_duration = 1 / self.config.sampling_rate_FPGA
         symbol_duration = pulse_duration * self.config.n_pulses
-        num_dark_counts = self.config.rng.poisson(self.config.dark_count_frequency * symbol_duration, size=self.config.n_samples)
-        dark_count_times = [np.sort(self.config.rng.uniform(0, symbol_duration, count)) if count > 0 else np.empty(0) for count in num_dark_counts]
+        num_dark_counts = self.config.rng.poisson(self.config.dark_count_frequency / 2 * symbol_duration, size=self.config.n_samples)  # / 2 weil wird ja bei 2 detektoren
+        dark_count_times = [self.config.rng.uniform(0, symbol_duration, count) if count > 0 else np.empty(0) for count in num_dark_counts]
+        
+        num_columns = time_photons_det.shape[1]
+        new_rows = []
+        new_indices = []
+
+        for i, count in enumerate(num_dark_counts):
+            if count > 0:
+                if count > num_columns:
+                    count = num_columns
+                    dark_count_times[i] = dark_count_times[i][:count]
+                if i in index_where_photons_det:
+                    idx_short_i = np.where(index_where_photons_det == i)[0][0]
+                    time_photons_det[idx_short_i, -count:] = dark_count_times[i]
+                else:
+                    new_row = np.full((1, num_columns), np.nan)
+                    new_row[0, -count:] = dark_count_times[i]
+                    new_rows.append(new_row)
+                    new_indices.append(i)
+    
+        # Add all new rows to time_photons_det at once
+        if new_rows:
+            new_rows_array = np.vstack(new_rows)  # Stack all new rows into a single array
+            time_photons_det = np.vstack((time_photons_det, new_rows_array))
+
+        # Add all new indices to index_where_photons_det at once
+        if new_indices:
+            index_where_photons_det = np.concatenate((index_where_photons_det, new_indices))
+
+        # Sort index_where_photons_det and rearrange time_photons_det accordingly
+        sort_order = np.argsort(index_where_photons_det)
+        index_where_photons_det = index_where_photons_det[sort_order]
+        time_photons_det = time_photons_det[sort_order]
+
+        print(f"total darkcounts: {np.sum(num_dark_counts)}")
         return dark_count_times, num_dark_counts
 
     # ========== Classificator Helper ========== 
@@ -353,9 +387,25 @@ class SimulationHelper:
         # nur z basis sendung
         mask_z_short = basis[index_where_photons_det_z] == 1
         detected_indices_z_det_z_basis = detected_indices_z[mask_z_short]
-        early_indices_short = np.where(np.sum(detected_indices_z == 0, axis=1) == 1)[0]
-        late_indices_short = np.where(np.sum(detected_indices_z == 1, axis=1) == 1)[0]
-        total_sift_z_basis_short = np.union1d(early_indices_short, late_indices_short)                  
+        early_indices_short = np.where(np.sum(detected_indices_z == 0, axis=1) >= 1)[0]
+        late_indices_short = np.where(np.sum(detected_indices_z == 1, axis=1) >= 1)[0]
+        # assign random value to double counts
+        non_negative_counts = np.sum(detected_indices_z != -1, axis=1)
+        # Identify rows with more than one non-`-1` value
+        rows_with_multiple_detections = np.where(non_negative_counts > 1)[0]
+
+        # change detected_indices_z_det_z_basis to -1 except one for rows with multiple detections
+        for row in rows_with_multiple_detections:
+            non_negative_indices = np.where(detected_indices_z_det_z_basis[row] != -1)[0]
+            
+            # Randomly select one index to keep
+            selected_index = np.random.choice(non_negative_indices)
+            
+            # Set all other indices to -1
+            detected_indices_z_det_z_basis[row, :] = -1
+            detected_indices_z_det_z_basis[row, selected_index] = detected_indices_z_det_z_basis[row, selected_index]
+
+        total_sift_z_basis_short = np.union1d(np.union1d(early_indices_short, late_indices_short), rows_with_multiple_detections)                  
         get_original_indexing_z = index_where_photons_det_z[basis[index_where_photons_det_z] == 1]
 
         # get vacuums
@@ -379,6 +429,23 @@ class SimulationHelper:
         nothing_in_det_indices_long = index_where_photons_det_x[nothing_in_det_indices_short]
         full_range_array = np.arange(0, self.config.n_samples) 
         indices_x_no_photons_long = np.setdiff1d(full_range_array, index_where_photons_det_x)
+
+        # assign random value to double counts
+        non_negative_counts = np.sum(detected_indices_x_det_x_basis != -1, axis=1)
+        rows_with_multiple_detections = np.where(non_negative_counts > 1)[0]
+
+        # change detected_indices_z_det_z_basis to -1 except one for rows with multiple detections
+        for row in rows_with_multiple_detections:
+            non_negative_indices = np.where(detected_indices_x_det_x_basis[row] != -1)[0]
+            
+            # Randomly select one index to keep
+            selected_index = np.random.choice(non_negative_indices)
+            
+            # Set all other indices to -1
+            detected_indices_x_det_x_basis[row, :] = -1
+            detected_indices_x_det_x_basis[row, selected_index] = detected_indices_x_det_x_basis[row, selected_index]
+
+
         vacuum_indices_x_long = np.union1d(indices_x_no_photons_long, nothing_in_det_indices_long)
         get_original_indexing_x = index_where_photons_det_x[basis[index_where_photons_det_x] == 1]
 
