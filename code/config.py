@@ -2,10 +2,10 @@ import numpy as np
 
 class SimulationConfig:
     def __init__(self, data, round = 1, seed = None, n_samples=20000, n_pulses=4, batchsize = 1000, mean_voltage=-1.708, mean_current=0.082111, voltage_amplitude=0.002, current_amplitude = 0.0005,
-                 p_z_alice=0.5, p_decoy=0.1, p_z_bob = 0.5, sampling_rate_FPGA=6.5e9, bandwidth = 4e9, jitter=1e-11, non_signal_voltage = -1.2, voltage_decoy=-0.2,
+                 p_z_alice=0.5, p_decoy=0.1, p_z_bob = 0.5, sampling_rate_FPGA=6.5e9, bandwidth = 4e9, jitter=0, non_signal_voltage = -1.2, voltage_decoy=-0.2,
                  voltage=-0.2, voltage_decoy_sup=-0.2, voltage_sup=-0.2, 
                  mean_photon_nr=0.7, mean_photon_decoy=0.1, 
-                 fiber_attenuation = -3, detector_efficiency = 0.3, dark_count_frequency = 10, detection_time = 1e-10, detector_jitter = 1e-10, 
+                 fiber_attenuation = -3, detector_efficiency = 0.3, dark_count_frequency = 1000, detection_time = 1e-10, detector_jitter = 5e-12, 
                  mlp = "C:\\Users\\leavi\\bachelor\\code\\Presentation_style_1_adjusted_no_grid.mplstyle", 
                  script_name = None, job_id = None
                  ):

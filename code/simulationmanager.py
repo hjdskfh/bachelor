@@ -1089,6 +1089,8 @@ class SimulationManager:
         time_photons_det_z, wavelength_photons_det_z, nr_photons_det_z, index_where_photons_det_z, calc_mean_photon_nr_detector_z, dark_count_times_z, num_dark_counts_z = self.simulation_engine.detector(t, peak_wavelength, power_dampened, start_time)
         power_dampened = power_dampened / self.config.p_z_bob
         Saver.memory_usage("before classificator: " + str("{:.3f}".format(time.time() - start_time)))
+        print(f"time_photons_det_z: {time_photons_det_z[:20]}")
+        print(f"time_photons_det_z shape: {time_photons_det_z.shape}")
 
         # path for X basis
         Saver.memory_usage("before DLI: " + str("{:.3f}".format(time.time() - start_time)))
@@ -1109,7 +1111,8 @@ class SimulationManager:
 
         Saver.memory_usage("before detector x: " + str(time.time() - start_time))
         time_photons_det_x, wavelength_photons_det_x, nr_photons_det_x, index_where_photons_det_x, calc_mean_photon_nr_detector_x, dark_count_times_x, num_dark_counts_x = self.simulation_engine.detector(t, peak_wavelength, power_dampened, start_time)        
-
+        print(f"time_photons_det_x: {time_photons_det_x[:20]}")
+        print(f"time_photons_det_x shape: {time_photons_det_x.shape}")
         # self.plotter.plot_and_delete_photon_time_histogram(time_photons_det_x, time_photons_det_z)   
 
         # plot so I can delete
@@ -1341,11 +1344,9 @@ class SimulationManager:
         
         start_time = time.time()  # Record start time
         T1_dampening = self.simulation_engine.initialize()
-     
 
         optical_power, peak_wavelength, chosen_voltage, chosen_current = self.simulation_engine.random_laser_output('current_power', 'voltage_shift', fixed = True)
 
-    
         # Generate Alice's choices
         basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=np.array([0]), value=np.array([-1]), decoy=np.array([0]))
         # basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=np.array([1, 0, 0, 1, 1, 1, 1, 0, 0, 1]), value=np.array([1, -1, -1, 0, 0, 1, 1, -1, -1, 0]), decoy=np.array([0, 0, 0, 0, 0, 0, 1, 1, 1, 1]))
@@ -1353,9 +1354,9 @@ class SimulationManager:
         # basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=np.array([1,0,1]), value=np.array([1,-1, 0]), decoy=np.array([0,0,0]))
         # basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=np.array([0,1]), value=np.array([-1, 0]), decoy=np.array([0,0]))
         # basis, value, decoy = self.simulation_engine.generate_alice_choices()
-        print(f"basis: {basis[:10]}")
-        print(f"value: {value[:10]}")
-        print(f"decoy: {decoy[:10]}")
+        # print(f"basis: {basis[:10]}")
+        # print(f"value: {value[:10]}")
+        # print(f"decoy: {decoy[:10]}")
 
         # Simulate signal and transmission
         # Saver.memory_usage("before simulating signal: " + str("{:.3f}".format(time.time() - start_time)))

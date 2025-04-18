@@ -1,0 +1,45 @@
+[Before everything] Memory used: 122.61 MB
+Configuration saved to C:\Users\leavi\OneDrive\Dokumente\Uni\Semester 7\NeuMoQP\Programm\logs\simulation_config_20250418_104833.json
+Execution time for reading: 0.043122768 seconds for 100 samples
+seed: 90542
+T1_dampening at initialize end: 20.219802856445312
+voltage at initialize end: -0.2
+Voltage_decoy at initialize end: -0.7405843287706373
+Voltage_decoy_sup at initialize end: -0.8517826229333878
+Voltage_sup at initialize end: -0.44613102972507473
+Basis Array (sample): [1 1 1 1 0 1 1 1 1 1]
+Value Array (sample): [ 1  1  0  1 -1  1  1  1  0  1]
+Decoy Array (sample): [0 0 0 0 0 0 1 0 1 0]
+[before simulating signal: 1.966] Memory used: 125.77 MB
+[before eam: 2.092] Memory used: 142.81 MB
+[before fiber: 2.195] Memory used: 143.40 MB
+[before detector z: 2.197] Memory used: 143.40 MB
+[in choose photon after pre-allocate arrays] Memory used: 143.45 MB
+[after choose: 2.239703893661499] Memory used: 143.45 MB
+[before detection time:2.2401208877563477] Memory used: 143.45 MB
+[before jitter detector: 2.2408206462860107] Memory used: 143.45 MB
+[before darkcount: 2.2412211894989014] Memory used: 143.45 MB
+Rows with all NaN in time_photons_det: 0
+[before classificator: 2.243] Memory used: 143.47 MB
+time_photons_det_z: [[5.22699204e-10            nan]
+ [4.72784464e-10            nan]
+ [4.88682872e-10            nan]
+ [1.35641834e-10            nan]
+ [3.87723910e-10            nan]
+ [4.86330277e-10            nan]
+ [           nan 4.62936644e-10]
+ [4.32964948e-10            nan]
+ [1.22440242e-10            nan]
+ [4.76877682e-10            nan]]
+time_photons_det_z shape: (10, 2)
+[before DLI: 2.245] Memory used: 143.49 MB
+[before detector x: 3.443448305130005] Memory used: 143.53 MB
+[in choose photon after pre-allocate arrays] Memory used: 143.53 MB
+[after choose: 3.5216376781463623] Memory used: 143.53 MB
+[before detection time:3.5218732357025146] Memory used: 143.53 MB
+[before jitter detector: 3.521981954574585] Memory used: 143.53 MB
+[before darkcount: 3.5220787525177] Memory used: 143.53 MB
+Rows with all NaN in time_photons_det: 0
+time_photons_det_x: []
+time_photons_det_x shape: (0, 1)
+Execution time for simulation: 3.584323168 seconds for 100 samples
