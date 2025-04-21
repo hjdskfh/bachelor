@@ -46,6 +46,12 @@ def run_simulation_and_update_hist_all_pairs(i, n_samples_set, length_of_chain, 
                                                             index_where_photons_det_z, index_where_photons_det_x, amount_bins_hist,
                                                             bins_per_symbol, lookup_array, basis, value, decoy)
 
+    with np.printoptions(threshold=np.inf):
+        print("hist_x:", hist_x)
+        print("hist_z:", hist_z)
+        print("time_one_symbol:", time_one_symbol)
+        print("lookup_array:", lookup_array)
+
     return hist_x, hist_z, time_one_symbol, lookup_array
 
 def run_simulation_batch_all_pairs(batch_id, n_samples_set, length_of_chain, base_path, style_file, database, jitter,
@@ -138,13 +144,6 @@ if __name__ == '__main__':
             hist_z=np.array(hist_z_list, dtype=object),
             t_sym=np.array(t_sym_list, dtype=object),
             lookup_array=np.array(lookup_array_list, dtype=object))
-
-    for hist_x, hist_z, t_sym, lookup_array in results:
-        global_histogram_counts_x += hist_x
-        global_histogram_counts_z += hist_z
-        final_time_one_symbol = t_sym
-        final_lookup_array = lookup_array
-
 
     global_histogram_counts_x = np.zeros(amount_bins_hist, dtype=int)
     global_histogram_counts_z = np.zeros(amount_bins_hist, dtype=int)

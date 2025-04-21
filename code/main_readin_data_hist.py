@@ -15,7 +15,7 @@ import json
 # file_name = r'C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_13\20250413_150050_histograms_fixed.npz'
 # file_name = r'C:\Users\leavi\OneDrive\Dokumente\Uni\Semester 7\NeuMoQP\Programm\stuff_from_cluster\2025_04_13\random\20250413_172141_histograms_random.npz'
 # file_name = r'C:\Users\leavi\OneDrive\Dokumente\Uni\Semester 7\NeuMoQP\Programm\stuff_from_cluster\2025_04_13\fixed\20250413_173800_histograms_fixed.npz'
-file_name = r'C:\Users\leavi\OneDrive\Dokumente\Uni\Semester 7\NeuMoQP\Programm\stuff_from_cluster\2025_04_18\20250418_132813_unters_histograms_random_results.npz'
+file_name = r'C:\Users\leavi\OneDrive\Dokumente\Uni\Semester 7\NeuMoQP\Programm\stuff_from_cluster\2025_04_21\histograms_random_results.npz'
 # file_name = r'C:\Users\leavi\bachelor\results_data\20250414_154555_histograms_random.npz'
 # file_name = r'C:\Users\leavi\bachelor\results_data\20250415_112451_histograms_random.npz'
 
@@ -28,6 +28,17 @@ for key in data.keys():
     print(f"{key}")
 
 print(data)
+np.set_printoptions(threshold=np.inf)
+
+hist_x = data["hist_x"]
+hist_z = data["hist_z"]
+t_sym = data["t_sym"]
+lookup_array = data["lookup_array"]
+print(f"hist_x: {hist_x}")
+print(f"hist_z: {hist_z}")
+print(f"t_sym: {t_sym}")
+print(f"lookup_array: {lookup_array}")
+
 
 # bins_per_symbol_hist = data["bins_per_symbol_hist"]
 # final_time_one_symbol = data["final_time_one_symbol"]
