@@ -592,7 +592,7 @@ class SimulationHelper:
         has_0_xpz1 = np.intersect1d(has_0_long, XP_Z1_alice_d)
         ind_has_0_xpz1 = len(np.where(has_0_xpz1)[0])
 
-        X_P_calc_dec = (ind_has_0_xpz1 + ind_has_0_z0xp) / ( (1 / 2) * self.config.p_z_bob * self.config.p_z_alice)
+        X_P_calc_dec = (ind_has_0_xpz1 + ind_has_0_z0xp) / ( (1 / 4) * self.config.p_z_alice)
         print(f"X_P_calc_dec:{X_P_calc_dec}")
         print(f"X_P_calc_non_dec:{X_P_calc_non_dec}")
 
@@ -681,6 +681,25 @@ class SimulationHelper:
             has_1_and_xp_long = np.intersect1d(has_1_long, has_sent_xp_long)
             wrong_detection_mask_x[np.where(has_1_and_xp_long)[0]] = True
             wrong_detections_x = np.where(wrong_detection_mask_x)[0]
+
+            #Condition 7: Early detection in Z0 after Z1 sent (wrong detection), value 0 for Z0
+            Z1_alice_s = np.where((basis == 1) & (value == 0) & (decoy == 0))[0]  # Indices where Z1 was sent
+            Z0_alice_s = np.where((basis == 1) & (value == 1) & (decoy == 0))[0]  # Indices where Z0 was sent
+            Z1_Z0_alice_s = Z0_alice_s[np.isin(Z0_alice_s - 1, Z1_alice_s)]  # Indices where Z1Z0 was sent (index of Z0 used aka the higher index at which time we measure the X+ state)
+            Z1_alice_d = np.where((basis == 1) & (value == 0) & (decoy == 1))[0]  # Indices where Z1 was sent
+            Z0_alice_d = np.where((basis == 1) & (value == 1) & (decoy == 1))[0]  # Indices where Z0 was sent
+            Z1_Z0_alice_d = Z0_alice_d[np.isin(Z0_alice_d - 1, Z1_alice_d)]  # Indices where Z1Z0 was sent (index of Z0 used aka the higher index at which time we measure the X+ state)
+            
+            has_0_short = np.where(np.any(detected_indices_x_det_x_basis == 0, axis=1))[0]
+            has_0_long = get_original_indexing_x[has_0_short]
+            has_0_z1z0_s = np.intersect1d(has_0_long, Z1_Z0_alice_s)
+            wrong_detection_mask_x[np.where(has_0_z1z0_s)[0]] = True
+            wrong_detections_x = np.where(wrong_detection_mask_x)[0]
+
+            has_0_z1z0_d = np.intersect1d(has_0_long, Z1_Z0_alice_d)
+            wrong_detection_mask_x[np.where(has_0_z1z0_d)[0]] = True
+            wrong_detections_x = np.where(wrong_detection_mask_x)[0]
+                     
 
             # decoy and non-decoy
             wrong_detections_x_dec = np.intersect1d(wrong_detections_x, ind_sent_dec_long)

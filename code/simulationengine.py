@@ -257,8 +257,8 @@ class SimulationEngine:
             
             f_0 = constants.c / peak_wavelength[i]
             
-            # n_eff = self.get_interpolated_value(peak_wavelength[i] * 1e9, 'wavelength_neff')
-            # print(f"n_eff: {n_eff}, peak_wavelength[i]: {peak_wavelength[i]}, f_0: {f_0}, i: {i}, batchsize: {self.config.batchsize}")
+            n_eff_calculated = self.get_interpolated_value(peak_wavelength[i] * 1e9, 'wavelength_neff')
+            print(f"n_eff_calculated: {n_eff_calculated} normal {n_eff}, peak_wavelength[i]: {peak_wavelength[i]}, f_0: {f_0}, i: {i}, batchsize: {self.config.batchsize}")
 
             '''print(f"f_0: {f_0}, i: {i}, batchsize: {self.config.batchsize}, peak_wavelength[i]: {peak_wavelength[i]}")'''
 
