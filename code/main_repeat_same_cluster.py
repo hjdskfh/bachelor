@@ -42,7 +42,7 @@ max_concurrent_tasks = 12
 simulations_in_batch = 2  # adjust this to increase per-task workload
 
 # Total number of batches to run (total simulations = simulations_in_batch * total_batches)
-total_batches = 600  # e.g., total simulations = 2 * 50 = 100  # 340 circa 4,5 stunden mit 2 sim per batch
+total_batches = 700  # e.g., total simulations = 2 * 50 = 100  # 340 circa 4,5 stunden mit 2 sim per batch
 
 # Define file name
 style_file = "Presentation_style_1_adjusted_no_grid.mplstyle"

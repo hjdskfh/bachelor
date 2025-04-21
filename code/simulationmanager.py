@@ -1167,8 +1167,8 @@ class SimulationManager:
         print(f"peak_wavelegth: {peak_wavelength[:10]}")
         # Generate Alice's choices
         # basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=np.array([1,0,1]), value=np.array([1,-1, 0]), decoy=np.array([0,0,0]))
-        # basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=np.array([0,0,1]), value=np.array([-1,-1,0]), decoy=np.array([1,1,1]))
-        basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=np.array([0]), value=np.array([-1]), decoy=np.array([0]))
+        basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=np.array([0,0,1]), value=np.array([-1,-1,0]), decoy=np.array([0]))
+        # basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=np.array([0]), value=np.array([-1]), decoy=np.array([0]))
         # basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=np.array([0,1]), value=np.array([-1, 0]), decoy=np.array([0,0]))
         # basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=np.array([0,1]), value=np.array([-1, 1]), decoy=np.array([0,0]))
         # basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=np.array([0]), value=np.array([-1]), decoy=np.array([0]))

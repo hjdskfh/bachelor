@@ -1,0 +1,62 @@
+[Before everything] Memory used: 124.85 MB
+Configuration saved to C:\Users\leavi\OneDrive\Dokumente\Uni\Semester 7\NeuMoQP\Programm\logs\simulation_config_20250421_222118.json
+Execution time for reading: 0.015721798 seconds for 20 samples
+seed: 71665
+T1_dampening at initialize end: 20.219802856445312
+voltage at initialize end: -0.2
+Voltage_decoy at initialize end: -0.7405843287706373
+Voltage_decoy_sup at initialize end: -0.8517826229333878
+Voltage_sup at initialize end: -0.44613102972507473
+peak_wavelegth: [1.55080661e-06 1.55080661e-06 1.55080661e-06 1.55080661e-06
+ 1.55080661e-06 1.55080661e-06 1.55080661e-06 1.55080661e-06
+ 1.55080661e-06 1.55080661e-06]
+basis: [1 0 1 1 0 1 1 0 1 1]
+value: [ 1 -1  0  1 -1  0  1 -1  0  1]
+decoy: [0 0 0 0 0 0 0 0 0 0]
+mean_photon_nr after fiber: [0.35161588 0.31886784 0.36853234 0.36865416 0.31900588 0.36858731
+ 0.36855413 0.31920667 0.36882384 0.36886193 0.33395205 0.36898486
+ 0.36918293 0.31912156 0.36861489 0.36861489 0.31912156 0.36918293
+ 0.36898486 0.33395205]
+[in choose photon after pre-allocate arrays] Memory used: 137.01 MB
+[after choose: 1.9319016933441162] Memory used: 137.04 MB
+[before detection time:1.9321379661560059] Memory used: 137.04 MB
+[before jitter detector: 1.9322638511657715] Memory used: 137.04 MB
+[before darkcount: 1.932356595993042] Memory used: 137.04 MB
+total darkcounts: 0
+mean_photon_nr after basis choice: [0.17580794 0.15943392 0.18426617 0.18432708 0.15950294 0.18429366
+ 0.18427707 0.15960333 0.18441192 0.18443096 0.16697602 0.18449243
+ 0.18459146 0.15956078 0.18430745 0.18430745 0.15956078 0.18459146
+ 0.18449243 0.16697602]
+n_eff_calculated: 1.5543769411381918 normal 1.56, peak_wavelength[i]: 1.550806607348615e-06, f_0: 193313890061733.44, i: 0, batchsize: 10
+n_eff_calculated: 1.5543769411381918 normal 1.56, peak_wavelength[i]: 1.550806607348615e-06, f_0: 193313890061733.44, i: 10, batchsize: 10
+len(mean_photon_at_x_detector): 20
+[in choose photon after pre-allocate arrays] Memory used: 154.63 MB
+[after choose: 3.146576166152954] Memory used: 154.63 MB
+[before detection time:3.146791696548462] Memory used: 154.63 MB
+[before jitter detector: 3.1468958854675293] Memory used: 154.63 MB
+[before darkcount: 3.1469831466674805] Memory used: 154.63 MB
+total darkcounts: 0
+calc_mean_photon_nr_detector_x: [0.07191259 0.01255377 0.04510405 0.03192141 0.01260359 0.04507945
+ 0.03191631 0.01260772 0.04514022 0.03177422 0.02200894 0.04501986
+ 0.03198363 0.01260665 0.04508904 0.03192171 0.0126181  0.04514691
+ 0.03195491 0.01261237]
+len(calc_mean_photon_x_det):20
+manager len(Z0_alice_s): 7, len(XP_alice_s): 7, len(Z0_XP_alice_s): 7
+manager len(Z1_alice_s): 0, len(XP_Z1_alice_s): 0
+second_xp_mwan_photon_at_x_dec: [0.01255377 0.01260359 0.01260772 0.02200894 0.01260665 0.0126181
+ 0.01261237]
+mean of second_xp_mean..:0.013944446411892462
+nr_photons: 0
+Z0_XP_alice_s_part: [ 1  4  7 10 13 16 19]
+has_0_short: []
+has_0_long: []
+ind_has_0_z0xp: 0
+ind_has_0_xpz1: 0
+ind_has_0_z0xp: 0
+X_P_calc_dec:0.0
+X_P_calc_non_dec:0.0
+Returning: 0.0, 0.0, 0.0, -999
+Basis Array (sample): [1 1 1 1 0 1 1 1 1 1]
+Value Array (sample): [ 1  1  0  1 -1  1  1  1  0  1]
+Decoy Array (sample): [0 0 0 0 0 0 1 0 1 0]
+Execution time for simulation: 3.152056694 seconds for 20 samples
