@@ -26,7 +26,7 @@ database.add_data('data/voltage_shift_data.csv', 'Voltage (V)', 'Wavelength Shif
 database.add_data('data/eam_transmission_data.csv', 'Voltage (V)', 'Transmission', 11, 'eam_transmission') 
 database.add_data('data/wavelength_neff.csv', 'Wavelength (nm)', 'neff', 20, 'wavelength_neff')
 
-detector_jitter = 1e-11
+detector_jitter = 5e-12
 database.add_jitter(detector_jitter, 'detector')
 
 # Define file name

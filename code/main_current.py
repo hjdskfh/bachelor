@@ -21,8 +21,7 @@ database.add_data('data/voltage_shift_data.csv', 'Voltage (V)', 'Wavelength Shif
 database.add_data('data/eam_transmission_data.csv', 'Voltage (V)', 'Transmission', 11, 'eam_transmission') #modified,VZ geflippt von Spannungswerten
 database.add_data('data/wavelength_neff.csv', 'Wavelength (nm)', 'neff', 20, 'wavelength_neff')
 
-jitter = 0
-database.add_jitter(jitter, 'laser')
+
 detector_jitter = 1e-11
 database.add_jitter(detector_jitter, 'detector')
 
@@ -51,7 +50,7 @@ for idx, var_current in enumerate(arr_current):
         round_counter += 1
 
         #create simulation
-        config = SimulationConfig(database, round=round_counter, mean_current=var_current, jitter=jitter, detector_jitter=detector_jitter,
+        config = SimulationConfig(database, round=round_counter, mean_current=var_current, detector_jitter=detector_jitter,
                         mlp=os.path.join(base_path, style_file), script_name = os.path.basename(__file__)
                         )
         simulation = SimulationManager(config)

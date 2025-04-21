@@ -21,8 +21,7 @@ def run_parameter_sweep():
     database.add_data('data/wavelength_neff.csv', 'Wavelength (nm)', 'neff', 20, 'wavelength_neff')
 
     # Add jitter values.
-    jitter = 1e-11
-    database.add_jitter(jitter, 'laser')
+   
     detector_jitter = 1e-11
     database.add_jitter(detector_jitter, 'detector')
     total_symbols = 2000    # Total number of symbols to be processed.
@@ -45,7 +44,7 @@ def run_parameter_sweep():
             mean_photon_nr_values, mean_photon_decoy_values, p_z_alice_values, p_decoy_values):
 
         # Create a SimulationConfig with fixed parameters in one long call.
-        config = SimulationConfig(database, n_samples=total_symbols, jitter=jitter, 
+        config = SimulationConfig(database, n_samples=total_symbols, 
                 mean_photon_nr=mean_photon_nr, mean_photon_decoy=mean_photon_decoy, 
                 detector_jitter=detector_jitter,
                 mlp=os.path.join(base_path, style_file), script_name = os.path.basename(__file__)

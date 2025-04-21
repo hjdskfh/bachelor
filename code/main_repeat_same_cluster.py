@@ -26,9 +26,7 @@ database.add_data('data/eam_transmission_data.csv', 'Voltage (V)', 'Transmission
 database.add_data('data/wavelength_neff.csv', 'Wavelength (nm)', 'neff', 20, 'wavelength_neff')
 
 
-jitter = 1e-11
-database.add_jitter(jitter, 'laser')
-detector_jitter = 1e-11
+detector_jitter = 5e-12
 database.add_jitter(detector_jitter, 'detector')
 n_samples_set = 20000
 
@@ -52,7 +50,7 @@ style_file = "Presentation_style_1_adjusted_no_grid.mplstyle"
 base_path = os.path.dirname(os.path.abspath(__file__))
 
 config = SimulationConfig(database, n_samples=n_samples_set,
-                 jitter=jitter, detector_jitter=detector_jitter,
+                 detector_jitter=detector_jitter,
                 mlp=os.path.join(base_path, style_file), script_name = os.path.basename(__file__), job_id=job_id
                 )
 simulation = SimulationManager(config)
@@ -70,7 +68,7 @@ def run_simulation_and_update_hist(i, base_path, style_file, database, jitter,
                                    detector_jitter, n_samples_set):
     # Create the simulation config locally
     config = SimulationConfig(database, seed=None, n_samples=n_samples_set,
-                jitter=jitter, detector_jitter=detector_jitter,
+                detector_jitter=detector_jitter,
                 mlp=os.path.join(base_path, style_file), script_name = os.path.basename(__file__), job_id=job_id
                 )
     simulation = SimulationManager(config)

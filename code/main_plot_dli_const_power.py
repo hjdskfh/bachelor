@@ -11,8 +11,6 @@ import psutil
 import threading
 import os
 
-
-
 Saver.memory_usage("Before everything")
 
 #measure execution time
@@ -28,9 +26,7 @@ database.add_data('data/eam_transmission_data.csv', 'Voltage (V)', 'Transmission
 database.add_data('data/wavelength_neff.csv', 'Wavelength (nm)', 'neff', 20, 'wavelength_neff')
 
 
-jitter = 1e-11
-database.add_jitter(jitter, 'laser')
-detector_jitter = 1e-11
+detector_jitter = 5e-12
 database.add_jitter(detector_jitter, 'detector')
 
 # Define file name
@@ -39,7 +35,7 @@ style_file = "Presentation_style_1_adjusted_no_grid.mplstyle"
 base_path = os.path.dirname(os.path.abspath(__file__))
 
 #create simulation mean current 0.08 , mena_voltage = 0.98 weil aus voltage_sweep
-config = SimulationConfig(database, jitter=jitter, 
+config = SimulationConfig(database,
                  detector_jitter=detector_jitter,
                 mlp=os.path.join(base_path, style_file), script_name = os.path.basename(__file__)
                 )

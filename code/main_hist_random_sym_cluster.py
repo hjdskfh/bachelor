@@ -19,11 +19,11 @@ print(f"Running SLURM Job ID: {job_id}")
 os.environ["OMP_NUM_THREADS"] = "1"
 os.environ["MKL_NUM_THREADS"] = "1"
 
-def run_simulation_and_update_hist_all_pairs(i, n_samples_set, length_of_chain, base_path, style_file, database, jitter,
+def run_simulation_and_update_hist_all_pairs(i, n_samples_set, length_of_chain, base_path, style_file, database,
                                              detector_jitter, bins_per_symbol):
     config = SimulationConfig(
         database, n_samples=n_samples_set, 
-        jitter=jitter, detector_jitter=detector_jitter,
+        detector_jitter=detector_jitter,
         mlp=os.path.join(base_path, style_file), script_name=os.path.basename(__file__), job_id=job_id)
     
     simulation = SimulationManager(config)
@@ -54,7 +54,7 @@ def run_simulation_and_update_hist_all_pairs(i, n_samples_set, length_of_chain, 
 
     return hist_x, hist_z, time_one_symbol, lookup_array
 
-def run_simulation_batch_all_pairs(batch_id, n_samples_set, length_of_chain, base_path, style_file, database, jitter,
+def run_simulation_batch_all_pairs(batch_id, n_samples_set, length_of_chain, base_path, style_file, database,
                                    detector_jitter, bins_per_symbol, amount_bins):
     hist_total_x = np.zeros(amount_bins, dtype=int)
     hist_total_z = np.zeros(amount_bins, dtype=int)
@@ -63,7 +63,7 @@ def run_simulation_batch_all_pairs(batch_id, n_samples_set, length_of_chain, bas
 
     for j in range(simulations_in_batch):
         hist_x, hist_z, t_sym, lookup_array = run_simulation_and_update_hist_all_pairs(
-            j, n_samples_set, length_of_chain, base_path, style_file, database, jitter,
+            j, n_samples_set, length_of_chain, base_path, style_file, database,
             detector_jitter, bins_per_symbol
         )
         hist_total_x += hist_x
@@ -83,10 +83,8 @@ if __name__ == '__main__':
     database.add_data('data/eam_transmission_data.csv', 'Voltage (V)', 'Transmission', 11, 'eam_transmission')
     database.add_data('data/wavelength_neff.csv', 'Wavelength (nm)', 'neff', 20, 'wavelength_neff')
 
-    jitter = 1e-13
-    detector_jitter =  1-13
+    detector_jitter =  5e-12
     n_samples_set = 20000
-    database.add_jitter(jitter, 'laser')
     database.add_jitter(detector_jitter, 'detector')
 
     style_file = "Presentation_style_1_adjusted_no_grid.mplstyle"
@@ -95,7 +93,7 @@ if __name__ == '__main__':
 
     config = SimulationConfig(
         database, n_samples=n_samples_set, 
-        jitter=jitter, detector_jitter=detector_jitter,
+        detector_jitter=detector_jitter,
         mlp=os.path.join(base_path, style_file), script_name=os.path.basename(__file__), job_id=job_id
     )
     simulation = SimulationManager(config)
@@ -121,7 +119,7 @@ if __name__ == '__main__':
 
     results = Parallel(n_jobs=max_concurrent_tasks)(
         delayed(run_simulation_batch_all_pairs)( 
-            batch_id, n_samples_set, length_of_chain, base_path, style_file, database, jitter,
+            batch_id, n_samples_set, length_of_chain, base_path, style_file, database,
             detector_jitter, bins_per_symbol_hist, amount_bins_hist
         ) for batch_id in range(total_batches)
     )

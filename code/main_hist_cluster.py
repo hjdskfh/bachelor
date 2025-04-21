@@ -32,9 +32,8 @@ database.add_data('data/voltage_shift_data.csv', 'Voltage (V)', 'Wavelength Shif
 database.add_data('data/eam_transmission_data.csv', 'Voltage (V)', 'Transmission', 11, 'eam_transmission') 
 database.add_data('data/wavelength_neff.csv', 'Wavelength (nm)', 'neff', 20, 'wavelength_neff')
 
-jitter = 1e-11
-database.add_jitter(jitter, 'laser')
-detector_jitter = 1e-11
+
+detector_jitter = 5e-12
 database.add_jitter(detector_jitter, 'detector')
 
 
@@ -65,7 +64,7 @@ base_path = os.path.dirname(os.path.abspath(__file__))
 best_batchsize = Saver.find_best_batchsize(length_of_chain, n_rep)
 
 config = SimulationConfig(database, n_samples=int(length_of_chain*n_rep), batchsize=best_batchsize, 
-                 jitter=jitter, detector_jitter=detector_jitter,
+                  detector_jitter=detector_jitter,
                 mlp=os.path.join(base_path, style_file), script_name=os.path.basename(__file__), job_id=job_id
                 )
 simulation = SimulationManager(config)
@@ -83,7 +82,7 @@ def run_simulation_and_update_hist(i, length_of_chain, n_rep, base_path, style_f
                                    detector_jitter, best_batchsize, bins_per_symbol, amount_bins):
     # Create the simulation config locally
     config = SimulationConfig(database, n_samples=int(length_of_chain*n_rep), batchsize=best_batchsize, 
-                 jitter=jitter, detector_jitter=detector_jitter,
+                 detector_jitter=detector_jitter,
                 mlp=os.path.join(base_path, style_file), script_name=os.path.basename(__file__), job_id=job_id
                 )
     simulation = SimulationManager(config)

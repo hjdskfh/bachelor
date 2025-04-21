@@ -26,9 +26,8 @@ database.add_data('data/eam_transmission_data.csv', 'Voltage (V)', 'Transmission
 database.add_data('data/wavelength_neff.csv', 'Wavelength (nm)', 'neff', 20, 'wavelength_neff')
 
 
-jitter = 0
-database.add_jitter(jitter, 'laser')
-detector_jitter = 1e-11
+# Read in data
+detector_jitter = 5e-12
 database.add_jitter(detector_jitter, 'detector')
 n_samples_set = 20000
 
