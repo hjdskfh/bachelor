@@ -130,7 +130,7 @@ class SimulationEngine:
             flattened_signals_batch = signals_batch.reshape(-1)
             square_signals_batch = square_signals_batch.reshape(-1)
 
-            flattened_signals_batch = self.simulation_helper.apply_jitter_to_pulse(t, flattened_signals_batch, jitter_shifts[self.config.n_pulses * i:self.config.n_pulses *(i + self.config.batchsize)])
+            # flattened_signals_batch = self.simulation_helper.apply_jitter_to_pulse(t, flattened_signals_batch, jitter_shifts[self.config.n_pulses * i:self.config.n_pulses *(i + self.config.batchsize)])
 
             '''if i == 0:
                 amount_symbols_in_plot = 3
