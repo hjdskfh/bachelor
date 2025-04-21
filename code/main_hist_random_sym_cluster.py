@@ -83,8 +83,8 @@ if __name__ == '__main__':
     database.add_data('data/eam_transmission_data.csv', 'Voltage (V)', 'Transmission', 11, 'eam_transmission')
     database.add_data('data/wavelength_neff.csv', 'Wavelength (nm)', 'neff', 20, 'wavelength_neff')
 
-    jitter = 1e-11
-    detector_jitter =  1-11
+    jitter = 1e-13
+    detector_jitter =  1-13
     n_samples_set = 20000
     database.add_jitter(jitter, 'laser')
     database.add_jitter(detector_jitter, 'detector')
@@ -109,11 +109,12 @@ if __name__ == '__main__':
     # How many simulations per batch (each batch runs sequentially inside one task)
     simulations_in_batch = 2  # adjust this to increase per-task workload
     # Total number of batches to run (total simulations = simulations_in_batch * total_batches)
-    total_batches = 200 # e.g., total simulations = 2 * 50 = 100  # 340 circa 4,5 stunden mit 2 sim per batch
+    total_batches = 2 # e.g., total simulations = 2 * 50 = 100  # 340 circa 4,5 stunden mit 2 sim per batch
 
     length_of_chain = 6*6 + 1
     bins_per_symbol_hist = 30
     amount_bins_hist = bins_per_symbol_hist * length_of_chain
+    
 
     style_file = "Presentation_style_1_adjusted_no_grid.mplstyle"
     base_path = os.path.dirname(os.path.abspath(__file__))

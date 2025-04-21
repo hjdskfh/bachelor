@@ -113,7 +113,7 @@ class SimulationEngine:
     
     def signal_bandwidth_jitter(self, basis, values, decoy):
         pulse_heights = self.simulation_helper.get_pulse_height(basis, decoy)
-        jitter_shifts = self.simulation_helper.get_jitter('laser', size_jitter = self.config.n_samples * self.config.n_pulses)
+        # jitter_shifts = self.simulation_helper.get_jitter('laser', size_jitter = self.config.n_samples * self.config.n_pulses)
         pulse_duration = 1 / self.config.sampling_rate_FPGA
         sampling_rate_fft = 100e11
         t, square_signals = self.simulation_helper.generate_encoded_pulse(pulse_heights, pulse_duration, values, sampling_rate_fft)
