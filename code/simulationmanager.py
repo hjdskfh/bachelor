@@ -1521,11 +1521,11 @@ class SimulationManager:
         time_photons_det_z, wavelength_photons_det_z, nr_photons_det_z, index_where_photons_det_z, \
         calc_mean_photon_nr_detector_z, dark_count_times_z, num_dark_counts_z = self.simulation_engine.detector(t, peak_wavelength, power_dampened, start_time)
 
-        print(f"calc_mean_photon_nr_detector_z: {calc_mean_photon_nr_detector_z[:10]}")
+        print(f"calc_mean_photon_nr_detector_z: {calc_mean_photon_nr_detector_z}")
         print(f"nr_photons: {len(nr_photons_det_z)}")
         print(f"dark_count_times_z: {dark_count_times_z}")
         print(f"num_dark_counts_z: {num_dark_counts_z}")
         print(f"time_photons_det_z: {time_photons_det_z}")
         print(f"index_where_photons_det_z: {index_where_photons_det_z}")	
         print(f"wavelength_photons_det_z: {wavelength_photons_det_z}")
-        
+

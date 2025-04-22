@@ -1,0 +1,47 @@
+[Before everything] Memory used: 128.36 MB
+Configuration saved to C:\Users\leavi\bachelor\logs\simulation_config_20250422_112006.json
+Execution time for reading: 0.009042501 seconds for 20 samples
+seed: 374588
+T1_dampening at initialize end: 20.219802856445312
+voltage at initialize end: -0.2
+Voltage_decoy at initialize end: -0.7405843287706373
+Voltage_decoy_sup at initialize end: -0.8517826229333878
+Voltage_sup at initialize end: -0.44613102972507473
+signals: [[-1.26748609 -1.26704605 -1.26660468 ... -1.22904047 -1.22902472
+  -1.22900889]
+ [-1.22899296 -1.22897695 -1.22896084 ... -1.29888743 -1.29887944
+  -1.29886892]
+ [-1.29885588 -1.29884032 -1.29882224 ... -1.25831194 -1.25801177
+  -1.25771061]
+ ...
+ [-1.25457728 -1.25426978 -1.25396131 ... -1.29376888 -1.29362859
+  -1.29348608]
+ [-1.29334135 -1.29319441 -1.29304525 ... -1.25967364 -1.25923693
+  -1.25879895]
+ [-1.25835971 -1.2579192  -1.25747742 ... -1.26879821 -1.26836217
+  -1.2679248 ]]
+(20, 6152) (20, 6152)
+[-1.26748609 -1.26704605 -1.26660468 ... -1.2921429  -1.29214507
+ -1.2921453 ]
+calc_value: [0.17531589 0.18413568 0.18421012 0.16674063 0.16690056 0.18481186
+ 0.18461583 0.16993323 0.18215691 0.17566347 0.17476074 0.17731472
+ 0.18199521 0.02630993 0.17881019 0.16700511 0.17454773 0.1748945
+ 0.17511488 0.17523381]
+nr_photons: [0 1 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0]
+[in choose photon after pre-allocate arrays] Memory used: 138.36 MB
+[after choose: 1.6387746334075928] Memory used: 138.41 MB
+[before detection time:1.6389415264129639] Memory used: 138.41 MB
+[before jitter detector: 1.6390321254730225] Memory used: 138.41 MB
+[before darkcount: 1.6391189098358154] Memory used: 138.41 MB
+total darkcounts: 0
+calc_mean_photon_nr_detector_z: [0.17531589 0.18413568 0.18421012 0.16674063 0.16690056 0.18481186
+ 0.18461583 0.16993323 0.18215691 0.17566347 0.17476074 0.17731472
+ 0.18199521 0.02630993 0.17881019 0.16700511 0.17454773 0.1748945
+ 0.17511488 0.17523381]
+nr_photons: 0
+dark_count_times_z: [array([], dtype=float64), array([], dtype=float64), array([], dtype=float64), array([], dtype=float64), array([], dtype=float64), array([], dtype=float64), array([], dtype=float64), array([], dtype=float64), array([], dtype=float64), array([], dtype=float64), array([], dtype=float64), array([], dtype=float64), array([], dtype=float64), array([], dtype=float64), array([], dtype=float64), array([], dtype=float64), array([], dtype=float64), array([], dtype=float64), array([], dtype=float64), array([], dtype=float64)]
+num_dark_counts_z: [0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0]
+time_photons_det_z: []
+index_where_photons_det_z: []
+wavelength_photons_det_z: []
+Execution time for simulation: 1.639676332 seconds for 20 samples
