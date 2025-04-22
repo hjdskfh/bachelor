@@ -1253,6 +1253,7 @@ class SimulationManager:
             print(f"second xp nr photons: {nr_photons_det_x[1::3]}")
             if np.any(nr_photons_det_x[1::3] > 0):
                 print(f"nr_photons over 0 at index: {np.where(nr_photons_det_x[1::3] > 0)}")
+                print(f"sum of nr_photons bei zweiter xp: {np.sum(nr_photons_det_x[1::3] > 0)}")
 
             print(f"nr_photons: {len(nr_photons_det_x)}")
 
