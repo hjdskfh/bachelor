@@ -1233,7 +1233,7 @@ class SimulationManager:
         time_photons_det_x, wavelength_photons_det_x, nr_photons_det_x, index_where_photons_det_x, calc_mean_photon_nr_detector_x, dark_count_times_x, num_dark_counts_x = self.simulation_engine.detector(t, peak_wavelength, power_dampened, start_time)        
         print(f"calc_mean_photon_nr_detector_x: {calc_mean_photon_nr_detector_x[:20]}")
         print(f"len(calc_mean_photon_x_det):{len(calc_mean_photon_nr_detector_x)}")
-        with np.printoptions(threshold=100):
+        with np.printoptions(threshold=np.inf):
             Z0_alice_s = np.where((basis == 1) & (value == 1) & (decoy == 0))[0]  # Indices where Z0 was sent
             XP_alice_s = np.where((basis == 0) & (decoy == 0))[0]  # Indices where XP was sent
             Z0_XP_alice_s = XP_alice_s[np.isin(XP_alice_s - 1, Z0_alice_s)]
@@ -1250,6 +1250,9 @@ class SimulationManager:
             second_xp_mean_photon_at_x_detector = mean_photon_at_x_detector[1::3]
             print(f"second_xp_mwan_photon_at_x_dec: {second_xp_mean_photon_at_x_detector}")
             print(f"mean of second_xp_mean..:{np.mean(second_xp_mean_photon_at_x_detector)}")
+            print(f"second xp nr photons: {nr_photons_det_x[1::3]}")
+            if np.any(nr_photons_det_x[1::3] > 0):
+                print(f"nr_photons over 0 at index: {np.where(nr_photons_det_x[1::3] > 0)}")
 
             print(f"nr_photons: {len(nr_photons_det_x)}")
 
