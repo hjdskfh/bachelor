@@ -184,9 +184,17 @@ class SimulationEngine:
         # Create a mask where voltage_signal is less than 7.023775e-05 = x_max
         _, x_max = self.config.data.get_data_x_min_x_max('eam_transmission')            
         mask = voltage_signal < x_max
-        print(voltage_signal.shape, mask.shape)
-        print(voltage_signal[mask])
-
+        print(f"voltage_signal.shape, mask.shape: {voltage_signal.shape}, {mask.shape}")
+        print(f"voltage_signal[mask].shape: {voltage_signal[mask].shape}")
+        print(f"voltage_signal[mask]: {voltage_signal[mask]}")
+        print(f"voltage_signal[mask]:{voltage_signal[mask]}")
+        if voltage_signal[mask].size == 0:
+            raise ValueError("No valid values in voltage_signal[mask] for interpolation.")
+        
+        x_min, x_max = self.config.data.get_data_x_min_x_max('eam_transmission')
+        print(f"x_min: {x_min}, x_max: {x_max}")
+        print(f"voltage_signal[mask].min(): {voltage_signal[mask].min()}, voltage_signal[mask].max(): {voltage_signal[mask].max()}")
+        
         # Compute interpolated values only for the values that meet the condition (<x_max)
         interpolated_values = self.get_interpolated_value(voltage_signal[mask], 'eam_transmission')
 
