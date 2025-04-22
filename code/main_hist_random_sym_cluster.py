@@ -110,7 +110,7 @@ if __name__ == '__main__':
     total_batches = 600 # e.g., total simulations = 2 * 50 = 100  # 340 circa 4,5 stunden mit 2 sim per batch
 
     length_of_chain = 6*6 + 1
-    bins_per_symbol_hist = 30
+    bins_per_symbol_hist = 100
     amount_bins_hist = bins_per_symbol_hist * length_of_chain
     
 
