@@ -390,7 +390,7 @@ class SimulationHelper:
         early_indices_short = np.where(np.sum(detected_indices_z == 0, axis=1) >= 1)[0]
         late_indices_short = np.where(np.sum(detected_indices_z == 1, axis=1) >= 1)[0]
         # assign random value to double counts
-        non_negative_counts = np.sum(detected_indices_z != -1, axis=1)
+        non_negative_counts = np.sum(detected_indices_z_det_z_basis != -1, axis=1)
         # Identify rows with more than one non-`-1` value
         rows_with_multiple_detections = np.where(non_negative_counts > 1)[0]
 
@@ -754,7 +754,6 @@ class SimulationHelper:
 
         print(f"calc_value: {calc_value}")
         print(f"nr_photons: {nr_photons}")
-
         return nr_photons
     
 # --------- check mean photon number at different points -----------
