@@ -1257,7 +1257,6 @@ class SimulationManager:
             # Get the indices in index_where_photons where the condition is true
             indices_where_phot_at_second_xp_short = np.where(mask_short)[0]
             
-            print(f"second xp nr photons: {nr_photons_det_x}")
             if np.any(nr_photons_det_x > 0):
                 print(f"ind of nr_photons over 0: {np.intersect1d(index_where_photons_det_x, indices_where_second_xp)}")
                 print(f"nr_photons over 0 and second xp symbol: {nr_photons_det_x[indices_where_phot_at_second_xp_short]}")
