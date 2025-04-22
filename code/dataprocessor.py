@@ -1,3 +1,4 @@
+from re import M
 from matplotlib.pylab import f
 import matplotlib.pyplot as plt
 from pathlib import Path
@@ -343,16 +344,16 @@ class DataProcessor:
             # error_X_mus = y_0 * (e_0 - e_detector_X) + e_detector_X * gain_X_mus
             # error_X_mud = y_0 * (e_0 - e_detector_X) + e_detector_X * gain_X_mud
 
-            error_Z_mus = len_wrong_z_non_dec * factor
-            error_Z_mud = len_wrong_z_dec * factor
-            error_X_mus = len_wrong_x_non_dec * factor
-            error_X_mud = len_wrong_x_dec * factor
-
             # # Compute total error events
-            m_Z_mus = p_Z * q_Z * p_mus * error_Z_mus * total_bit_sequence_length
-            m_Z_mud = p_Z * q_Z * p_mud * error_Z_mud * total_bit_sequence_length
-            m_X_mus = p_X * p_X * p_mus * error_X_mus * total_bit_sequence_length
-            m_X_mud = p_X * p_X * p_mud * error_X_mud * total_bit_sequence_length
+            # m_Z_mus = p_Z * q_Z * p_mus * error_Z_mus * total_bit_sequence_length
+            # m_Z_mud = p_Z * q_Z * p_mud * error_Z_mud * total_bit_sequence_length
+            # m_X_mus = p_X * p_X * p_mus * error_X_mus * total_bit_sequence_length
+            # m_X_mud = p_X * p_X * p_mud * error_X_mud * total_bit_sequence_length
+
+            m_Z_mus = len_wrong_z_non_dec * factor
+            m_Z_mud = len_wrong_z_dec * factor
+            m_X_mus = len_wrong_x_non_dec * factor
+            m_X_mud = len_wrong_x_dec * factor
             m_Z = m_Z_mus + m_Z_mud
             m_X = m_X_mus + m_X_mud
 
