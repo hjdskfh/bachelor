@@ -560,18 +560,17 @@ class SimulationHelper:
         Z0_alice_s = np.where((basis == 1) & (value == 1) & (decoy == 0))[0]  # Indices where Z0 was sent
         XP_alice_s = np.where((basis == 0) & (decoy == 0))[0]  # Indices where XP was sent
         Z0_XP_alice_s = XP_alice_s[np.isin(XP_alice_s - 1, Z0_alice_s)]  # Indices where Z1Z0 was sent (index of Z0 used aka the higher index at which time we measure the X+ state)
-        print(f"Z0_XP_alice_s: {Z0_XP_alice_s}")
         has_0_short = np.where(np.any(detected_indices_x_det_x_basis == 0, axis=1))[0]
-        print(f"has_0_short: {has_0_short}, shape: {has_0_short.shape}")
+        # print(f"has_0_short: {has_0_short}, shape: {has_0_short.shape}")
         if has_0_short.size == 0:
             print("Warning: has_0_short is empty.")
         if get_original_indexing_x.size == 0:
             print("Error: get_original_indexing_x is empty.")
-        print(f"get_original_indexing_x: {get_original_indexing_x}, shape: {get_original_indexing_x.shape}")
+        # print(f"get_original_indexing_x: {get_original_indexing_x}, shape: {get_original_indexing_x.shape}")
         if has_0_short.size > 0 and has_0_short.max() >= get_original_indexing_x.size:
             print("Error: Indices in has_0_short are out of bounds for get_original_indexing_x.")
         has_0_long = get_original_indexing_x[has_0_short]
-        print(f"has_0_long: {has_0_long}")
+        # print(f"has_0_long: {has_0_long}")
         has_0_z0xp = np.intersect1d(has_0_long, Z0_XP_alice_s)
         ind_has_0_z0xp = len(np.where(has_0_z0xp)[0])
         
@@ -579,11 +578,12 @@ class SimulationHelper:
         XP_Z1_alice_s = Z1_alice_s[np.isin(Z1_alice_s - 1, XP_alice_s)]  # Indices where Z1Z0 was sent (index of Z0 used aka the higher index at which time we measure the X+ state)
         has_0_xpz1 = np.intersect1d(has_0_long, XP_Z1_alice_s)
         ind_has_0_xpz1 = len(np.where(has_0_xpz1)[0])
-        print(f"ind_has_0_xpz1: {ind_has_0_xpz1}")
-        print(f"XP_Z1_alice_s: {XP_Z1_alice_s}")
+        print(f"ind_has_0_xpz1: {ind_has_0_xpz1}, shape: {ind_has_0_xpz1.shape}")
+        print(f"XP_Z1_alice_s: {XP_Z1_alice_s}, shape: {XP_Z1_alice_s.shape}")
 
-        print(f"ind_has_0_z0xp: {ind_has_0_z0xp}")
-        
+        print(f"ind_has_0_z0xp: {ind_has_0_z0xp}, shape: {ind_has_0_z0xp.shape}")
+        print(f"Z0_XP_alice_s: {Z0_XP_alice_s}, shape: {Z0_XP_alice_s.shape}")
+
         X_P_calc_non_dec = (ind_has_0_xpz1 + ind_has_0_z0xp) / ( (1 / 2) * self.config.p_z_bob * self.config.p_z_alice)
        
         # create signal Z0X+ and then X+Z1
@@ -621,7 +621,7 @@ class SimulationHelper:
             gain_X_dec = X_P_calc_dec / len(ind_x_sent_dec_long)
         else:
             gain_X_dec = -999 #raise ValueError("No Z decoy sent detected")
-        print(f"Returning: {X_P_calc_non_dec}, {X_P_calc_dec}, {gain_X_non_dec}, {gain_X_dec}")
+        # print(f"Returning: {X_P_calc_non_dec}, {X_P_calc_dec}, {gain_X_non_dec}, {gain_X_dec}")
 
         if len(has_0_short) > 100:
             has_0_short = has_0_short[:100]
@@ -760,8 +760,6 @@ class SimulationHelper:
         # Use NumPy's built-in Poisson sampler
         nr_photons = self.config.rng.poisson(calc_value)
 
-        print(f"calc_value: {calc_value}")
-        print(f"nr_photons: {nr_photons}")
         return nr_photons
     
 # --------- check mean photon number at different points -----------
