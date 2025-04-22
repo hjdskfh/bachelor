@@ -11,6 +11,9 @@ import os
 import random
 import math
 from joblib import Parallel, delayed
+import functools
+
+print = functools.partial(print, flush=True)
 
 Saver.memory_usage("START of Simulation: Before everything")
 start_time = time.time()  # Record start time

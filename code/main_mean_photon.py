@@ -13,9 +13,10 @@ import threading
 import os
 import sys
 import datetime
+import functools
 
 timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-
+print = functools.partial(print, flush=True)
 
 Saver.memory_usage("Before everything")
 
