@@ -64,7 +64,7 @@ end_time_read = time.time()  # Record end time
 execution_time_read = end_time_read - start_time  # Calculate execution time for reading
 print(f"Execution time for reading: {execution_time_read:.9f} seconds for {config.n_samples} samples")
 
-def run_simulation_and_update_hist(i, base_path, style_file, database, jitter,
+def run_simulation_and_update_hist(i, base_path, style_file, database, 
                                    detector_jitter, n_samples_set):
     # Create the simulation config locally
     config = SimulationConfig(database, seed=None, n_samples=n_samples_set,
@@ -82,7 +82,7 @@ def run_simulation_and_update_hist(i, base_path, style_file, database, jitter,
     return len_wrong_x_dec, len_wrong_x_non_dec, len_wrong_z_dec, len_wrong_z_non_dec, len_Z_checked_dec, len_Z_checked_non_dec, X_P_calc_non_dec, X_P_calc_dec
 
 def run_simulation_batch(batch_id, base_path, style_file,
-                         database, jitter, detector_jitter, n_samples_set):
+                         database, detector_jitter, n_samples_set):
     """
     Run a batch of simulations sequentially and aggregate the local histograms.
     """
@@ -99,7 +99,7 @@ def run_simulation_batch(batch_id, base_path, style_file,
     for j in range(simulations_in_batch):
         # We pass a unique identifier if needed (here simply j)
         len_wrong_x_dec, len_wrong_x_non_dec, len_wrong_z_dec, len_wrong_z_non_dec, len_Z_checked_dec, len_Z_checked_non_dec, X_P_calc_non_dec, X_P_calc_dec = run_simulation_and_update_hist(
-            j, base_path, style_file, database, jitter, detector_jitter, n_samples_set)
+            j, base_path, style_file, database, detector_jitter, n_samples_set)
         
         total_len_wrong_x_dec += len_wrong_x_dec
         total_len_wrong_x_non_dec += len_wrong_x_non_dec
@@ -116,7 +116,7 @@ def run_simulation_batch(batch_id, base_path, style_file,
 
 results = Parallel(n_jobs=max_concurrent_tasks)(
     delayed(run_simulation_batch)(
-         batch_id, base_path, style_file, database, jitter, detector_jitter, n_samples_set
+         batch_id, base_path, style_file, database,detector_jitter, n_samples_set
     )
     for batch_id in range(total_batches)
 )
