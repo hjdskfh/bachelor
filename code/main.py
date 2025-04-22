@@ -75,8 +75,8 @@ with open(output_file, "w") as f:
     #                 basis, value, decoy, lookup_array = simulation.run_simulation_detection_tester()
     # simulation.run_simulation_states()
     # time_photons_det_x, time_photons_det_z, index_where_photons_det_x, index_where_photons_det_z, time_one_symbol, lookup_array, basis, value, decoy = simulation.run_simulation_hist_final()
-    time_one_symbol, time_photons_det_z, time_photons_det_x, index_where_photons_det_z, index_where_photons_det_x, lookup_array, basis, value, decoy = simulation.run_simulation_hist_pick_symbols()
-
+    # time_one_symbol, time_photons_det_z, time_photons_det_x, index_where_photons_det_z, index_where_photons_det_x, lookup_array, basis, value, decoy = simulation.run_simulation_hist_pick_symbols()
+    simulation.run_simulation_detector()
 
 
     end_time_simulation = time.time()  # Record end time for simulation

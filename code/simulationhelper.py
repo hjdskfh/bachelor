@@ -747,23 +747,14 @@ class SimulationHelper:
 
     def poisson_distr(self, calc_value):
         """Calculate the number of photons based on a Poisson distribution."""
-        #print(f"np.any(array < 0): {np.isnan(calc_value < 0)}")
-        #print(f"np.any(np.isnan(array)):{np.any(np.isnan(calc_value))}")
-        # print(f"calc_value: {calc_value}")
-        upper_bounds = (calc_value + 5 * np.sqrt(calc_value)).astype(int) # shape: (n_samples,)
-        max_upper_bound = upper_bounds.max()
-        x = np.arange(0, max_upper_bound + 1)
-        probabilities_array_poisson = np.exp(-calc_value[:, None]) * (calc_value[:, None] ** x) / factorial(x) #shape: (n_samples, max_upper_bound + 1)
-        # Normalize the probabilities for every row
-        probabilities_array_poisson /= probabilities_array_poisson.sum(axis=1, keepdims=True)
-        # Step 1: Compute cumulative probabilities
-        cumulative_probabilities = np.cumsum(probabilities_array_poisson, axis=1) #shape: (n_samples, max_upper_bound + 1)
-        # Step 2: Generate random values
-        random_values = self.config.rng.random(size=probabilities_array_poisson.shape[0]) # shape: (n_samples,)
-        # Step 3: Find indices using searchsorted
-        sampled_indices = (cumulative_probabilities.T < random_values).sum(axis=0) #cumulative_probabilities.T < random_values boolean  matrix False or True 
-        # Step 4: Map indices to x values
-        nr_photons = x[sampled_indices]
+        assert np.all(calc_value >= 0), "calc_value must be non-negative."
+    
+        # Use NumPy's built-in Poisson sampler
+        nr_photons = self.config.rng.poisson(calc_value)
+
+        print(f"calc_value: {calc_value}")
+        print(f"nr_photons: {nr_photons}")
+
         return nr_photons
     
 # --------- check mean photon number at different points -----------

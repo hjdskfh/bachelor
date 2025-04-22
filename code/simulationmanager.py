@@ -1498,4 +1498,34 @@ class SimulationManager:
             )
         
         return len_wrong_x_dec, len_wrong_x_non_dec, len_wrong_z_dec, len_wrong_z_non_dec, len_Z_checked_dec, len_Z_checked_non_dec, X_P_calc_non_dec, X_P_calc_dec
+    
+    def run_simulation_detector(self):
+        start_time = time.time()  # Record start time
+        T1_dampening = self.simulation_engine.initialize()
+
+        optical_power, peak_wavelength, chosen_voltage, chosen_current = self.simulation_engine.random_laser_output('current_power', 'voltage_shift', fixed = True)
+
+        # Generate Alice's choices
+        basis, value, decoy = self.simulation_engine.generate_alice_choices()
+
+        # Simulate signal and transmission
+        signals, t, _ = self.simulation_engine.signal_bandwidth_jitter(basis, value, decoy)
+        print((f"signals: {signals[:10]}"))  # Check the first 10 values
+
+        power_dampened, calc_mean_photon_nr_eam, _ = self.simulation_engine.eam_transmission(signals, optical_power, T1_dampening, peak_wavelength, t)
+
+        power_dampened = self.simulation_engine.fiber_attenuation(power_dampened)
+
+        power_dampened = power_dampened * self.config.p_z_bob
+
+        time_photons_det_z, wavelength_photons_det_z, nr_photons_det_z, index_where_photons_det_z, \
+        calc_mean_photon_nr_detector_z, dark_count_times_z, num_dark_counts_z = self.simulation_engine.detector(t, peak_wavelength, power_dampened, start_time)
+
+        print(f"calc_mean_photon_nr_detector_z: {calc_mean_photon_nr_detector_z[:10]}")
+        print(f"nr_photons: {len(nr_photons_det_z)}")
+        print(f"dark_count_times_z: {dark_count_times_z}")
+        print(f"num_dark_counts_z: {num_dark_counts_z}")
+        print(f"time_photons_det_z: {time_photons_det_z}")
+        print(f"index_where_photons_det_z: {index_where_photons_det_z}")	
+        print(f"wavelength_photons_det_z: {wavelength_photons_det_z}")
         

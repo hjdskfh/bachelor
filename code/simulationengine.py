@@ -22,11 +22,7 @@ class SimulationEngine:
 
     def get_interpolated_value(self, x_data, name, inverse_flag=False):
         # Otherwise, use the regular spline
-       
-
         tck = self.config.data.get_data(x_data, name, inverse=inverse_flag)
-        print("tck:", tck)
-        print("x_data:", x_data)
         if inverse_flag:
             return tck(x_data)
         return splev(x_data, tck)  # Interpolate with the regular spline
