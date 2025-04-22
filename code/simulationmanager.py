@@ -1250,10 +1250,18 @@ class SimulationManager:
             second_xp_mean_photon_at_x_detector = mean_photon_at_x_detector[1::3]
             print(f"second_xp_mwan_photon_at_x_dec: {second_xp_mean_photon_at_x_detector}")
             print(f"mean of second_xp_mean..:{np.mean(second_xp_mean_photon_at_x_detector)}")
-            print(f"second xp nr photons: {nr_photons_det_x[1::3]}")
-            if np.any(nr_photons_det_x[1::3] > 0):
-                print(f"nr_photons over 0 at index: {np.where(nr_photons_det_x[1::3] > 0)}")
-                print(f"sum of nr_photons bei zweiter xp: {np.sum(nr_photons_det_x[1::3] > 0)}")
+            indices_where_second_xp = np.arange(1, self.config.n_samples, 3)
+            # Check which values in index_where_photons_det_x   are in indices_where_second_xp
+            mask_short = np.isin(index_where_photons_det_x, indices_where_second_xp)
+
+            # Get the indices in index_where_photons where the condition is true
+            indices_where_phot_at_second_xp_short = np.where(mask_short)[0]
+            
+            print(f"second xp nr photons: {nr_photons_det_x}")
+            if np.any(nr_photons_det_x > 0):
+                print(f"ind of nr_photons over 0: {np.intersect1d(index_where_photons_det_x, indices_where_second_xp)}")
+                print(f"nr_photons over 0 and second xp symbol: {nr_photons_det_x[indices_where_phot_at_second_xp_short]}")
+                print(f"sum of nr_photons bei zweiter xp: {np.sum(nr_photons_det_x[indices_where_phot_at_second_xp_short])}")
 
             print(f"nr_photons: {len(nr_photons_det_x)}")
 
