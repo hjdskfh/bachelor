@@ -562,7 +562,14 @@ class SimulationHelper:
         Z0_XP_alice_s = XP_alice_s[np.isin(XP_alice_s - 1, Z0_alice_s)]  # Indices where Z1Z0 was sent (index of Z0 used aka the higher index at which time we measure the X+ state)
         print(f"Z0_XP_alice_s_part: {Z0_XP_alice_s[:10]}")
         has_0_short = np.where(np.any(detected_indices_x_det_x_basis == 0, axis=1))[0]
-        print(f"has_0_short: {has_0_short}")
+        print(f"has_0_short: {has_0_short}, shape: {has_0_short.shape}")
+        if has_0_short.size == 0:
+            print("Warning: has_0_short is empty.")
+        if get_original_indexing_x.size == 0:
+            print("Error: get_original_indexing_x is empty.")
+        print(f"get_original_indexing_x: {get_original_indexing_x}, shape: {get_original_indexing_x.shape}")
+        if has_0_short.size > 0 and has_0_short.max() >= get_original_indexing_x.size:
+            print("Error: Indices in has_0_short are out of bounds for get_original_indexing_x.")
         has_0_long = get_original_indexing_x[has_0_short]
         print(f"has_0_long: {has_0_long}")
         has_0_z0xp = np.intersect1d(has_0_long, Z0_XP_alice_s)
