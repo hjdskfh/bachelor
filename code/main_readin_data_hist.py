@@ -15,9 +15,11 @@ import json
 # file_name = r'C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_13\20250413_150050_histograms_fixed.npz'
 # file_name = r'C:\Users\leavi\OneDrive\Dokumente\Uni\Semester 7\NeuMoQP\Programm\stuff_from_cluster\2025_04_13\random\20250413_172141_histograms_random.npz'
 # file_name = r'C:\Users\leavi\OneDrive\Dokumente\Uni\Semester 7\NeuMoQP\Programm\stuff_from_cluster\2025_04_13\fixed\20250413_173800_histograms_fixed.npz'
-file_name = r'C:\Users\leavi\OneDrive\Dokumente\Uni\Semester 7\NeuMoQP\Programm\stuff_from_cluster\2025_04_21\histograms_random_results_later.npz'
+# file_name = r'C:\Users\leavi\OneDrive\Dokumente\Uni\Semester 7\NeuMoQP\Programm\stuff_from_cluster\2025_04_21\histograms_random_results_later.npz'
 # file_name = r'C:\Users\leavi\bachelor\results_data\20250414_154555_histograms_random.npz'
 # file_name = r'C:\Users\leavi\bachelor\results_data\20250415_112451_histograms_random.npz'
+# file_name = r'C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_23\hist_rand\20250423_041529_histograms_random.npz'
+file_name = r'C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_18\20250417_160300_histograms_fixed.npz'
 
 if os.path.exists(file_name):
     print("File exists!")
@@ -30,22 +32,22 @@ for key in data.keys():
 print(data)
 np.set_printoptions(threshold=np.inf)
 
-hist_x = data["hist_x"]
-hist_z = data["hist_z"]
-t_sym = data["t_sym"]
-lookup_array = data["lookup_array"]
-print(f"hist_x: {hist_x}")
-print(f"hist_z: {hist_z}")
-print(f"t_sym: {t_sym}")
-print(f"lookup_array: {lookup_array}")
+# hist_x = data["hist_x"]
+# hist_z = data["hist_z"]
+# t_sym = data["t_sym"]
+# lookup_array = data["lookup_array"]
+# print(f"hist_x: {hist_x}")
+# print(f"hist_z: {hist_z}")
+# print(f"t_sym: {t_sym}")
+# print(f"lookup_array: {lookup_array}")
 
 
-# bins_per_symbol_hist = data["bins_per_symbol_hist"]
-# final_time_one_symbol = data["final_time_one_symbol"]
-# global_histogram_counts_x = data["global_histogram_counts_x"]
-# global_histogram_counts_z = data["global_histogram_counts_z"]
-# final_lookup_array = data["final_lookup_array"]
-# total_symbols = data["total_symbols"]
+bins_per_symbol_hist = data["bins_per_symbol_hist"]
+final_time_one_symbol = data["final_time_one_symbol"]
+global_histogram_counts_x = data["global_histogram_counts_x"]
+global_histogram_counts_z = data["global_histogram_counts_z"]
+final_lookup_array = data["final_lookup_array"]
+total_symbols = data["total_symbols"]
 # total_symbols = data["total_samples"]
 
 # # global_histogram_counts_z = np.empty_like(global_histogram_counts_z)
@@ -53,9 +55,9 @@ print(f"lookup_array: {lookup_array}")
 # print(f"global_histogram_counts_x: {global_histogram_counts_x}")
 # print(f"global_histogram_counts_z: {global_histogram_counts_z}")
 
-# DataProcessor.plot_histogram_batch(bins_per_symbol_hist, final_time_one_symbol,
-#                             global_histogram_counts_x, global_histogram_counts_z,
-#                             final_lookup_array, total_symbols, start_symbol=0, end_symbol=36, name="random")
+DataProcessor.plot_histogram_batch(bins_per_symbol_hist, final_time_one_symbol,
+                            global_histogram_counts_x, global_histogram_counts_z,
+                            final_lookup_array, total_symbols, start_symbol=0, end_symbol=4, name="random")
 
 
 # len_wrong_x_dec = data["global_len_wrong_x_dec"]
@@ -93,10 +95,12 @@ print(f"lookup_array: {lookup_array}")
 #     X_P_calc_dec = 2152 * factor
 #     X_P_calc_non_dec = 35200 * factor
 #     total_symbols = 24000000 * factor
+#     gain_Z_mus = 
+#     gain_Z_mud = 
 
 
     
 #     skr = data_processor.calc_SKR(len_wrong_x_dec, len_wrong_x_non_dec, len_wrong_z_dec, len_wrong_z_non_dec, 
-#                     len_Z_checked_dec, len_Z_checked_non_dec, X_P_calc_dec, X_P_calc_non_dec, total_symbols)
+#                     len_Z_checked_dec, len_Z_checked_non_dec, X_P_calc_dec, X_P_calc_non_dec, total_symbols, gain_Z_mus, gain_Z_mud)
 
 #     print(f"SKR: {skr} for factor {factor}")

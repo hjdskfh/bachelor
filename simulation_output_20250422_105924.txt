@@ -1,3 +1,0 @@
-[Before everything] Memory used: 128.89 MB
-Configuration saved to C:\Users\leavi\bachelor\logs\simulation_config_20250422_105924.json
-Execution time for reading: 0.025681734 seconds for 20 samples

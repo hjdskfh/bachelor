@@ -578,10 +578,10 @@ class SimulationHelper:
         XP_Z1_alice_s = Z1_alice_s[np.isin(Z1_alice_s - 1, XP_alice_s)]  # Indices where Z1Z0 was sent (index of Z0 used aka the higher index at which time we measure the X+ state)
         has_0_xpz1 = np.intersect1d(has_0_long, XP_Z1_alice_s)
         ind_has_0_xpz1 = len(np.where(has_0_xpz1)[0])
-        print(f"ind_has_0_xpz1: {ind_has_0_xpz1}, shape: {ind_has_0_xpz1.shape}")
+        print(f"ind_has_0_xpz1: {ind_has_0_xpz1}")
         print(f"XP_Z1_alice_s: {XP_Z1_alice_s}, shape: {XP_Z1_alice_s.shape}")
 
-        print(f"ind_has_0_z0xp: {ind_has_0_z0xp}, shape: {ind_has_0_z0xp.shape}")
+        print(f"ind_has_0_z0xp: {ind_has_0_z0xp}")
         print(f"Z0_XP_alice_s: {Z0_XP_alice_s}, shape: {Z0_XP_alice_s.shape}")
 
         X_P_calc_non_dec = (ind_has_0_xpz1 + ind_has_0_z0xp) / ( (1 / 2) * self.config.p_z_bob * self.config.p_z_alice)

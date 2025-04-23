@@ -69,9 +69,20 @@ class DataProcessor:
 
     @staticmethod
     def plot_histogram_batch(bins_per_symbol, time_one_symbol, histogram_counts_x, histogram_counts_z, lookup_arr, total_symbols, start_symbol=3, end_symbol=10, name=' ', leave_x = False, leave_z = False):
-        assert 0 <= start_symbol <= end_symbol <= 64
+        assert 0 <= start_symbol <= end_symbol <= 36
+        def normalize_histogram(histogram_counts, slice_start, slice_end, bins_per_symbol):
+            # Get the maximum value in the specified slice
+            max_in_slice = np.max(histogram_counts[slice_start * bins_per_symbol:(slice_end + 1) * bins_per_symbol]) if np.max(histogram_counts[slice_start * bins_per_symbol:(slice_end + 1) * bins_per_symbol]) > 0 else 1
+            # Normalize the entire histogram using the maximum value in the slice
+            normalized_histogram = histogram_counts / max_in_slice
+            return normalized_histogram
+        
         amount_of_symbols_incl_start_and_end = end_symbol - start_symbol + 1
         bins = np.linspace(0, amount_of_symbols_incl_start_and_end * time_one_symbol, bins_per_symbol * amount_of_symbols_incl_start_and_end + 1)    
+        
+        # Normalize histogram counts so the highest peak is at 1
+        histogram_counts_x = normalize_histogram(histogram_counts_x, start_symbol, end_symbol +1, bins_per_symbol)
+        histogram_counts_z = normalize_histogram(histogram_counts_z, start_symbol, end_symbol +1, bins_per_symbol)
 
         plt.figure(figsize=(10, 6))
         # Plot as bar chart; you can also use plt.hist with precomputed counts.
@@ -278,7 +289,7 @@ class DataProcessor:
         )
     
     def calc_SKR(self, len_wrong_x_dec, len_wrong_x_non_dec, len_wrong_z_dec, len_wrong_z_non_dec, 
-                 len_Z_checked_dec, len_Z_checked_non_dec, X_P_calc_dec, X_P_calc_non_dec, total_symbols):
+                 len_Z_checked_dec, len_Z_checked_non_dec, X_P_calc_dec, X_P_calc_non_dec, total_symbols, gain_Z_mus, gain_Z_mud):
         block_size = None  
         #factor to get up to a billion symbols
         if len_Z_checked_non_dec != 0:
@@ -291,15 +302,11 @@ class DataProcessor:
         channel_attenuation_Z = 26  # Channel transmittance [dB], can be derived from the loss coefficient alpha measured in dB/km and the length of the fiber l in km, alpha = 0.21
         channel_attenuation_X = 26
         q_Z = self.config.p_z_bob  # Bob chooses a basis Z and X with probabilities qz
-        e_detector_Z = (
-            3.3 / 100
-        )  # e_detector, characterizes the alignment and stability, characterizes the alignment and stability, assume constant
-        e_detector_X = 3.3 / 100
-        e_0 = 1 / 2  # error rate of the background, will assume that the background is random
-        epsilon_sec = 1e-10  # It's called a "epsilon_sec-secret"
+       
+        epsilon_sec = 1e-10  # 
         epsilon_cor = 1e-15  # Secret key are identical except of probability epsilon_cor
-        repetition_rate = 1e9  # Pulse (symbol) repetition rate
-        fEC = 1.22  # Error correction effciency
+        repetition_rate = self.config.sampling_rate_FPGA * self.config.n_pulses  # Pulse (symbol) repetition rate
+        fEC = 1.19  # Error correction effciency
         epsilon_1 = epsilon_sec / 19
 
         def calculate_skr(params, total_bit_sequence_length):
@@ -309,12 +316,12 @@ class DataProcessor:
             q_X = 1 - q_Z
 
             # Compute gain
-            eta_ch_Z = np.power(10, -channel_attenuation_Z / 10)
-            eta_ch_X = np.power(10, -channel_attenuation_X / 10)
-            gain_Z_mus = 1 - (1 - y_0) * np.exp(-1 * mus * eta_bob * eta_ch_Z)
-            gain_Z_mud = 1 - (1 - y_0) * np.exp(-1 * mud * eta_bob * eta_ch_Z)
-            gain_X_mus = 1 - (1 - y_0) * np.exp(-1 * mus * eta_bob * eta_ch_X)
-            gain_X_mud = 1 - (1 - y_0) * np.exp(-1 * mud * eta_bob * eta_ch_X)
+            # eta_ch_Z = np.power(10, -channel_attenuation_Z / 10)
+            # eta_ch_X = np.power(10, -channel_attenuation_X / 10)
+            # gain_Z_mus = 1 - (1 - y_0) * np.exp(-1 * mus * eta_bob * eta_ch_Z)
+            # gain_Z_mud = 1 - (1 - y_0) * np.exp(-1 * mud * eta_bob * eta_ch_Z)
+            # gain_X_mus = 1 - (1 - y_0) * np.exp(-1 * mus * eta_bob * eta_ch_X)
+            # gain_X_mud = 1 - (1 - y_0) * np.exp(-1 * mud * eta_bob * eta_ch_X)
 
             # Recalucalte total_bit_sequence_length to match desired nZ
             if block_size is not None:

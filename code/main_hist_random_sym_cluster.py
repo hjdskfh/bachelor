@@ -107,10 +107,10 @@ if __name__ == '__main__':
     # How many simulations per batch (each batch runs sequentially inside one task)
     simulations_in_batch = 2  # adjust this to increase per-task workload
     # Total number of batches to run (total simulations = simulations_in_batch * total_batches)
-    total_batches = 600 # e.g., total simulations = 2 * 50 = 100  # 340 circa 4,5 stunden mit 2 sim per batch
+    total_batches = 600 # e.g., total simulations = 2 * 50 = 100  # 340 circa 4,5 stunden mit 2 sim per batch, 800 10 stunden
 
     length_of_chain = 6*6 + 1
-    bins_per_symbol_hist = 100
+    bins_per_symbol_hist = 120
     amount_bins_hist = bins_per_symbol_hist * length_of_chain
     
 
