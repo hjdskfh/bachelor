@@ -584,7 +584,7 @@ class SimulationHelper:
         print(f"ind_has_0_z0xp: {ind_has_0_z0xp}")
         print(f"Z0_XP_alice_s: {Z0_XP_alice_s}, shape: {Z0_XP_alice_s.shape}")
 
-        X_P_calc_non_dec = (ind_has_0_xpz1 + ind_has_0_z0xp) / ( (1 / 2) * self.config.p_z_bob * self.config.p_z_alice)
+        X_P_calc_non_dec = (ind_has_0_xpz1 + ind_has_0_z0xp) / ( (1 / 4) * self.config.p_z_alice)
        
         # create signal Z0X+ and then X+Z1
         Z0_alice_d = np.where((basis == 1) & (value == 1) & (decoy == 1))[0]  # Indices where Z0 was sent
@@ -600,7 +600,7 @@ class SimulationHelper:
         has_0_xpz1 = np.intersect1d(has_0_long, XP_Z1_alice_d)
         ind_has_0_xpz1 = len(np.where(has_0_xpz1)[0])
 
-        X_P_calc_dec = (ind_has_0_xpz1 + ind_has_0_z0xp) / ( (1 / 2) * self.config.p_z_bob * self.config.p_z_alice)
+        X_P_calc_dec = (ind_has_0_xpz1 + ind_has_0_z0xp) / ( (1 / 4) * self.config.p_z_alice)
         print(f"X_P_calc_dec:{X_P_calc_dec}")
         print(f"X_P_calc_non_dec:{X_P_calc_non_dec}")
 
