@@ -20,18 +20,18 @@ import json
 # file_name = r'C:\Users\leavi\bachelor\results_data\20250415_112451_histograms_random.npz'
 # file_name = r'C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_23\hist_rand\20250423_041529_histograms_random.npz'
 # file_name = r'C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_18\20250417_160300_histograms_fixed.npz'
-file_name = r'C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_23\20250423_110610_histograms_random.npz'
+# file_name = r'C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_23\20250423_110610_histograms_random.npz'
 
-if os.path.exists(file_name):
-    print("File exists!")
-else:
-    print("File does not exist!")
-data = np.load(file_name, allow_pickle=True)
-for key in data.keys():
-    print(f"{key}")
+# if os.path.exists(file_name):
+#     print("File exists!")
+# else:
+#     print("File does not exist!")
+# data = np.load(file_name, allow_pickle=True)
+# for key in data.keys():
+#     print(f"{key}")
 
-print(data)
-np.set_printoptions(threshold=np.inf)
+# print(data)
+# np.set_printoptions(threshold=np.inf)
 
 # hist_x = data["hist_x"]
 # hist_z = data["hist_z"]
@@ -43,22 +43,22 @@ np.set_printoptions(threshold=np.inf)
 # print(f"lookup_array: {lookup_array}")
 
 
-bins_per_symbol_hist = data["bins_per_symbol_hist"]
-final_time_one_symbol = data["final_time_one_symbol"]
-global_histogram_counts_x = data["global_histogram_counts_x"]
-global_histogram_counts_z = data["global_histogram_counts_z"]
-# final_lookup_array = data["final_lookup_array"]
-total_symbols = data["total_symbols"]
-# total_symbols = data["total_samples"]
-final_combined_list_array = data["final_combined_list_array"]
+# bins_per_symbol_hist = data["bins_per_symbol_hist"]
+# final_time_one_symbol = data["final_time_one_symbol"]
+# global_histogram_counts_x = data["global_histogram_counts_x"]
+# global_histogram_counts_z = data["global_histogram_counts_z"]
+# # final_lookup_array = data["final_lookup_array"]
+# total_symbols = data["total_symbols"]
+# # total_symbols = data["total_samples"]
+# final_combined_list_array = data["final_combined_list_array"]
 
 # DataProcessor.plot_histogram_batch(bins_per_symbol_hist, final_time_one_symbol,
 #                             global_histogram_counts_x, global_histogram_counts_z,
 #                             final_lookup_array, total_symbols, start_symbol=0, end_symbol=4, name="random")
 
-DataProcessor.plot_histogram_batch_random(bins_per_symbol_hist, final_time_one_symbol,
-                            global_histogram_counts_x, global_histogram_counts_z,
-                            final_combined_list_array, total_symbols, start_pair=0, end_pair=4, name="random")
+# DataProcessor.plot_histogram_batch_random(bins_per_symbol_hist, final_time_one_symbol,
+#                             global_histogram_counts_x, global_histogram_counts_z,
+#                             final_combined_list_array, total_symbols, start_pair=0, end_pair=4, name="random")
 
 # len_wrong_x_dec = data["global_len_wrong_x_dec"]
 # len_wrong_x_non_dec = data["global_len_wrong_x_non_dec"]
@@ -70,37 +70,34 @@ DataProcessor.plot_histogram_batch_random(bins_per_symbol_hist, final_time_one_s
 # X_P_calc_non_dec = data["global_X_P_calc_non_dec"]
 # total_symbols = data["total_symbols"]
 
-# config = SimulationConfig(None)
-# data_processor = DataProcessor(config)
-# json_filepath = r"c:\Users\leavi\bachelor\stuff_from_cluster\2025_04_17\repeat\simulation_config_20250416_104314.json"
+config = SimulationConfig(None)
+data_processor = DataProcessor(config)
+json_filepath = r"C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_23\repeat\simulation_config_20250423_133838.json.json"
 
-# # Load the JSON file
-# with open(json_filepath, 'r') as file:
-#     config_loaded = json.load(file)
+# Load the JSON file
+with open(json_filepath, 'r') as file:
+    config_loaded = json.load(file)
 
-# config.mean_photon_nr = config_loaded["mean_photon_nr"]
-# config.mean_photon_decoy = config_loaded["mean_photon_decoy"]
-# config.p_decoy = config_loaded["p_decoy"]
-# config.p_z_alice = config_loaded["p_z_alice"]
+config.mean_photon_nr = config_loaded["mean_photon_nr"]
+config.mean_photon_decoy = config_loaded["mean_photon_decoy"]
+config.p_decoy = config_loaded["p_decoy"]
+config.p_z_alice = config_loaded["p_z_alice"]
 
-# factor_arr = np.array([1, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000, 1000000000])
-# for factor in factor_arr:
+factor_arr = np.array([1, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000, 1000000000])
+for factor in factor_arr:
         
-#     len_wrong_x_dec = 0 * factor
-#     len_wrong_x_non_dec = 0 * factor
-#     len_wrong_z_dec = 5430 * factor
-#     len_wrong_z_non_dec = 7906 * factor
-#     len_Z_checked_dec = 52238 * factor
-#     len_Z_checked_non_dec = 310049 * factor
-#     X_P_calc_dec = 2152 * factor
-#     X_P_calc_non_dec = 35200 * factor
-#     total_symbols = 24000000 * factor
-#     gain_Z_mus = 
-#     gain_Z_mud = 
-
+    len_wrong_x_dec = 20 * factor
+    len_wrong_x_non_dec = 212 * factor
+    len_wrong_z_dec = 224 * factor
+    len_wrong_z_non_dec = 1951 * factor
+    len_Z_checked_dec = 1619 * factor
+    len_Z_checked_non_dec = 95060 * factor
+    X_P_calc_dec = 24 * factor
+    X_P_calc_non_dec = 5232 * factor
+    total_symbols = 4000000 * factor
 
     
-#     skr = data_processor.calc_SKR(len_wrong_x_dec, len_wrong_x_non_dec, len_wrong_z_dec, len_wrong_z_non_dec, 
-#                     len_Z_checked_dec, len_Z_checked_non_dec, X_P_calc_dec, X_P_calc_non_dec, total_symbols, gain_Z_mus, gain_Z_mud)
+    skr = data_processor.calc_SKR(len_wrong_x_dec, len_wrong_x_non_dec, len_wrong_z_dec, len_wrong_z_non_dec, 
+                    len_Z_checked_dec, len_Z_checked_non_dec, X_P_calc_dec, X_P_calc_non_dec, total_symbols)
 
-#     print(f"SKR: {skr} for factor {factor}")
+    print(f"SKR: {skr} for factor {factor}")

@@ -6,6 +6,7 @@ import os
 import sys
 from pathlib import Path
 import datetime
+from scipy import constants
 
 
 # Define DLI function
@@ -31,7 +32,9 @@ def delay_line_interferometer(P_in, dt, tau, delta_L, f0,  n_eff, splitting_rati
     # Time array
     t = np.arange(len(P_in)) * dt
     # print(f"shape t: {t.shape}")
-    
+    plt.plot(P_in, label='Input Power')
+    plt.legend()
+    plt.show()
     # Input optical field (assuming carrier frequency)
     E0 = np.sqrt(P_in)
     E_in = E0 * np.exp(1j * 2 * np.pi * f0 * t)
@@ -39,23 +42,25 @@ def delay_line_interferometer(P_in, dt, tau, delta_L, f0,  n_eff, splitting_rati
     # Interpolate for delayed version
     interp_real = interp1d(t, np.real(E_in), bounds_error=False, fill_value=0.0)
     interp_imag = interp1d(t, np.imag(E_in), bounds_error=False, fill_value=0.0)
+   
     E_in_delayed = interp_real(t - tau) + 1j * interp_imag(t - tau)
     # print(f"shape E_in_delayed: {E_in_delayed.shape}")
 
     # Phase shift from path length difference
     phi = 2 * np.pi * f0 * n_eff * delta_L / c
+    print(f"phi: {phi} rad")
     E_in_delayed *= np.exp(1j * phi)
 
     # Ideal 50/50 coupler outputs
-    E_out1 = splitting_ratio * (E_in - E_in_delayed)
-    E_out2 = (1-splitting_ratio)*1j * (E_in + E_in_delayed)
+    E_out1 = (E_in - E_in_delayed) * splitting_ratio
+    E_out2 = 1j * (E_in + E_in_delayed) * (1-splitting_ratio)
 
     return np.abs(E_out1)**2, np.abs(E_out2)**2, t
 
 start_time = time.time()
 
 # Signal and simulation setup
-bit_sequence = "1010001010101000101000101000101010100010100"
+bit_sequence =  "1010001000101000101000101000101010100010" #100
 bit_rate = 6.5e9 
 sample_rate = 1 / 1e-14  # too low relults in poor visibility? maybe only with square pulses
 dt = 1e-14
@@ -80,11 +85,13 @@ t = np.arange(len(P_in)) * dt
 
 # Delay and path length
 tau = 2 / bit_rate  # Should be 1/bit_rate but that doesn make sense???
+print(f"tau: {tau} s")
 n_g = 2.05 # For calculatting path length difference
 # Assuming thegroup refractive index of the waveguide
 n_eff = 1.56 # Effective refractive index
 c = 3e8
 delta_L = tau * c / n_g
+print(f"delta L: {delta_L:.6f} m")
 
 # print(f"Path length difference (delta_L): {delta_L:.6f} m")
 
@@ -97,6 +104,7 @@ frequencies = c / wavelengths  # convert to optical frequencies
 # Run simulation over swept wavelengths
 results = []
 for f0 in frequencies:
+    print(f"len(P_in): {len(P_in)}")
     P1, P2, _ = delay_line_interferometer(P_in, dt, tau, delta_L, f0, n_eff)
     results.append((f0, P1, P2))
 
@@ -169,6 +177,7 @@ idx_mid = np.argmin(np.abs(wavelengths_nm - lambda_mid))
 selected_indices = [idx_max, idx_min, idx_mid]
 selected_labels = ["Max", "Min", "Mid"]
 selected_data = [results[i] for i in selected_indices]
+print(f"Selected data: {selected_data}")
 selected_wavelengths = [wavelengths_nm[i] for i in selected_indices]
 
 end_time = time.time()
@@ -187,7 +196,9 @@ for i, (label, (f0, P1, P2), wavelength) in enumerate(zip(selected_labels, selec
     plt.legend()
     plt.grid(True)
     print(f"{label} Interference Case @ {wavelength:.5f} nm")
-
+    if i == 1:
+        power_destr = P1
+        wavelength_destr = wavelength * 1e-9
 plt.tight_layout()
 # Get the script's parent directory (the directory where the script is located)
 script_dir = Path(__file__).parent
@@ -212,3 +223,23 @@ plt.savefig(filepath)
 
 # Close the plot to free up memory
 plt.close()
+
+len_power_destr = len(power_destr)
+ind_after = int(len_power_destr // 11 * 1.5)
+power_1_symbol = power_destr[0:ind_after]
+plt.plot(t[0:ind_after] * 1e9, power_1_symbol, label='Power Port 1', linestyle='--')
+plt.plot(t[0:len_power_destr//11] * 1e9, P_in[0:len_power_destr//11], label='Input Power')
+plt.show()
+energy_sym_destr = np.trapz(power_1_symbol, t[0:ind_after])
+energy_sym_before = np.trapz(P_in[0:len_power_destr//11], t[0:len_power_destr//11])
+print(f"Energy per symbol before DLI: {energy_sym_before:.2e} J")
+print(f"Energy per symbol destr: {energy_sym_destr: .2e} J")
+energy_one_photon = constants.h * constants.c / wavelength_destr
+print(f"Energy per photon: {energy_one_photon:.2e} J")
+mpn_before = energy_sym_before / energy_one_photon
+mpn_destr = energy_sym_destr / energy_one_photon
+print(f"Mean photon number before DLI: {mpn_before:.2e}")
+print(f"Mean photon number: {mpn_destr:.2e}")
+loss_factor = energy_sym_destr / energy_sym_before
+print(f"Loss factor: {loss_factor:.2e}")
+    

@@ -386,7 +386,7 @@ class DataProcessor:
         )
     
     def calc_SKR(self, len_wrong_x_dec, len_wrong_x_non_dec, len_wrong_z_dec, len_wrong_z_non_dec, 
-                 len_Z_checked_dec, len_Z_checked_non_dec, X_P_calc_dec, X_P_calc_non_dec, total_symbols, gain_Z_mus, gain_Z_mud):
+                 len_Z_checked_dec, len_Z_checked_non_dec, X_P_calc_dec, X_P_calc_non_dec, total_symbols):
         block_size = None  
         #factor to get up to a billion symbols
         if len_Z_checked_non_dec != 0:
@@ -400,7 +400,7 @@ class DataProcessor:
         channel_attenuation_X = 26
         q_Z = self.config.p_z_bob  # Bob chooses a basis Z and X with probabilities qz
        
-        epsilon_sec = 1e-10  # 
+        epsilon_sec = 1e-9  # 
         epsilon_cor = 1e-15  # Secret key are identical except of probability epsilon_cor
         repetition_rate = self.config.sampling_rate_FPGA * self.config.n_pulses  # Pulse (symbol) repetition rate
         fEC = 1.19  # Error correction effciency
@@ -421,10 +421,10 @@ class DataProcessor:
             # gain_X_mud = 1 - (1 - y_0) * np.exp(-1 * mud * eta_bob * eta_ch_X)
 
             # Recalucalte total_bit_sequence_length to match desired nZ
-            if block_size is not None:
-                total_bit_sequence_length = block_size / (
-                    p_Z * (p_mus * gain_Z_mus + p_mud * gain_Z_mud)
-                )
+            # if block_size is not None:
+            #     total_bit_sequence_length = block_size / (
+            #         p_Z * (p_mus * gain_Z_mus + p_mud * gain_Z_mud)
+            #     )
 
             # Compute total detection events
             # n_Z_mus = p_Z * q_Z * p_mus * gain_Z_mus * total_bit_sequence_length
@@ -435,7 +435,6 @@ class DataProcessor:
             # n_X = n_X_mus + n_X_mud
 
             n_Z_mus = len_Z_checked_non_dec * factor
-            print(f"n_Z_mus: {n_Z_mus}")
             n_Z_mud = len_Z_checked_dec * factor
             n_X_mus = X_P_calc_non_dec * factor
             n_X_mud = X_P_calc_dec * factor

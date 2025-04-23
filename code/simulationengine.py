@@ -184,16 +184,16 @@ class SimulationEngine:
         # Create a mask where voltage_signal is less than 7.023775e-05 = x_max
         _, x_max = self.config.data.get_data_x_min_x_max('eam_transmission')            
         mask = voltage_signal < x_max
-        print(f"voltage_signal.shape, mask.shape: {voltage_signal.shape}, {mask.shape}")
-        print(f"voltage_signal[mask].shape: {voltage_signal[mask].shape}")
-        print(f"voltage_signal[mask]: {voltage_signal[mask]}")
-        print(f"voltage_signal[mask]:{voltage_signal[mask]}")
+        # print(f"voltage_signal.shape, mask.shape: {voltage_signal.shape}, {mask.shape}")
+        # print(f"voltage_signal[mask].shape: {voltage_signal[mask].shape}")
+        # print(f"voltage_signal[mask]: {voltage_signal[mask]}")
+        # print(f"voltage_signal[mask]:{voltage_signal[mask]}")
         if voltage_signal[mask].size == 0:
             raise ValueError("No valid values in voltage_signal[mask] for interpolation.")
         
         x_min, x_max = self.config.data.get_data_x_min_x_max('eam_transmission')
-        print(f"x_min: {x_min}, x_max: {x_max}")
-        print(f"voltage_signal[mask].min(): {voltage_signal[mask].min()}, voltage_signal[mask].max(): {voltage_signal[mask].max()}")
+        # print(f"x_min: {x_min}, x_max: {x_max}")
+        # print(f"voltage_signal[mask].min(): {voltage_signal[mask].min()}, voltage_signal[mask].max(): {voltage_signal[mask].max()}")
         
         # Compute interpolated values only for the values that meet the condition (<x_max)
         interpolated_values = self.get_interpolated_value(voltage_signal[mask], 'eam_transmission')
@@ -235,12 +235,81 @@ class SimulationEngine:
         # n_g = 1
         # Assuming the group refractive index of the waveguide
         n_eff = 1.56 # Effective refractive index
-        
+        # print(f"c:{constants.c}")
         delta_L = tau * constants.c / n_g
+        # print(f"delta_L: {delta_L:.6f} m")
+        # print(f"tau: {tau} s")
+        
 
         for i in range(0, len(value), self.config.batchsize):
 
             power_dampened_batch = power_dampened[i:i + self.config.batchsize, :]
+            # print(f"powerbatch size: {len(power_dampened_batch)}")
+            flattened_power_batch = power_dampened_batch.reshape(-1)
+            # print(f"flattened_power_batch: {flattened_power_batch.shape}, power_dampened_batch: {power_dampened_batch.shape}, t: {t.shape}")
+
+            dt_original = t[1] - t[0] # t[-1]-t[0] / len(t) # t[-1] - t[0] # 1 
+            num_points = flattened_power_batch.size 
+            # print(f"num_points:{num_points}")
+            np.set_printoptions(threshold=100)
+
+            t_original_all_sym = np.arange(t[0], t[0] + num_points * dt_original, dt_original)     
+            # print(f"t_original_all_sym: {t_original_all_sym.shape}, t: {t.shape}, step t_original: {t_original_all_sym[1]-t_original_all_sym[0]}, t step:{t[1]-t[0]}, t_original_all_sym[-1]: {t_original_all_sym[-1]}")       
+            # print(f"t_original_all_sym[:-100]: {t_original_all_sym[-10:]}")
+
+            # calculate new time axis
+            t_new_all_sym = np.arange(t_original_all_sym[0], t_original_all_sym[-1], dt_new)
+            # print(f"t_new_all_sym: {t_new_all_sym[-10:]}, t_new_all_sym.shape: {t_new_all_sym.shape}, t_new_all_sym[-1]: {t_new_all_sym[-1]}")
+            # hinzugefügt + dt_new*self.config.batchsize
+
+            # Resample the data using np.interp (linear interpolation)
+            flattened_power_batch_resampled = np.interp(t_new_all_sym, t_original_all_sym, flattened_power_batch)
+        
+            flattened_power_batch_resampled_copy = flattened_power_batch_resampled.copy()
+            # plt.plot(flattened_power_batch_resampled_copy[:len(t)*100], color = 'green', label = 'after resample')
+            # plt.show()
+            # t_test ist gleich wie das t das in der Funktion gemacht wird
+            t_test = np.arange(len(flattened_power_batch_resampled)) * dt_new
+            # print(f"t_test:{t_test.shape}, t_test:{t_test[-1]}, t_new_all_sym:{t_new_all_sym.shape} t_new_all_sym: {t_new_all_sym[-1]}")
+            
+            f_0 = constants.c / peak_wavelength[i]
+            
+            # n_eff_calculated = self.get_interpolated_value(peak_wavelength[i] * 1e9, 'wavelength_neff')
+            # print(f"n_eff_calculated: {n_eff_calculated} normal {n_eff}, peak_wavelength[i]: {peak_wavelength[i]}, f_0: {f_0}, i: {i}, batchsize: {self.config.batchsize}")
+
+            # print(f"len(flattened_power_batch): {len(flattened_power_batch_resampled)}")
+            power_1, power_2, _ = self.simulation_helper.DLI(flattened_power_batch_resampled, dt_new, tau, delta_L, f_0,  n_eff)
+            plt.plot(power_1[:len(t)*100], label = 'after DLI 1')
+            plt.plot(power_2[:len(t)*100], label = 'after DLI 2')
+            plt.legend()
+            plt.show()
+            # Use interpolation to compute signal values at new time points
+            signal_downsampled = np.interp(t_original_all_sym, t_new_all_sym, power_1)
+            plt.plot(signal_downsampled)
+            plt.show()
+            flattened_power_batch = signal_downsampled.reshape(self.config.batchsize, len(t))
+            power_dampened[i:i + self.config.batchsize, :] = flattened_power_batch
+        return power_dampened, f_0
+
+    def delay_line_interferometer_new(self, power_dampened, t, peak_wavelength, value):
+        dt_new = 1e-14
+        tau = 2 / self.config.sampling_rate_FPGA  
+        n_g = 2.05 # For calculatting path length difference
+        # Assuming the group refractive index of the waveguide
+        n_eff = 1.56 # Effective refractive index
+        delta_L = tau * constants.c / n_g
+        overlap_symbols = 1
+        save_overlap_symbols = np.empty(overlap_symbols*len(t))
+
+        for i in range(0, len(value), self.config.batchsize):
+            # print(f"beginning i: {i}, batchsize: {self.config.batchsize}, len(value): {len(value)}, overlap_symbols: {overlap_symbols}")
+            #  Determine the start and end indices for the current batch, including overlap
+            start_index = i 
+            end_index = i + self.config.batchsize if i + self.config.batchsize >= len(value) else i + self.config.batchsize + overlap_symbols
+            amount_symbols_in_batch = end_index - start_index
+            # print(f"start_index: {start_index}, end_index: {end_index}, amount_symbols_in_batch: {amount_symbols_in_batch}")
+
+            power_dampened_batch = power_dampened[start_index:end_index, :]
             flattened_power_batch = power_dampened_batch.reshape(-1)
             # print(f"flattened_power_batch: {flattened_power_batch.shape}, power_dampened_batch: {power_dampened_batch.shape}, t: {t.shape}")
 
@@ -260,23 +329,22 @@ class SimulationEngine:
             plt.show()'''
             
             flattened_power_batch_resampled_copy = flattened_power_batch_resampled.copy()
+            # plt.plot(flattened_power_batch_resampled[:len(t)*100], color = 'green', label = 'after resample')
+            # plt.show()
 
             # t_test ist gleich wie das t das in der Funktion gemacht wird
             t_test = np.arange(len(flattened_power_batch_resampled)) * dt_new
             # print(f"t_test:{t_test.shape}, t_test:{t_test[-1]}, t_new_all_sym:{t_new_all_sym.shape} t_new_all_sym: {t_new_all_sym[-1]}")
             
             f_0 = constants.c / peak_wavelength[i]
-            
-            n_eff_calculated = self.get_interpolated_value(peak_wavelength[i] * 1e9, 'wavelength_neff')
-            # print(f"n_eff_calculated: {n_eff_calculated} normal {n_eff}, peak_wavelength[i]: {peak_wavelength[i]}, f_0: {f_0}, i: {i}, batchsize: {self.config.batchsize}")
-
             '''print(f"f_0: {f_0}, i: {i}, batchsize: {self.config.batchsize}, peak_wavelength[i]: {peak_wavelength[i]}")'''
 
             power_1, power_2, _ = self.simulation_helper.DLI(flattened_power_batch_resampled, dt_new, tau, delta_L, f_0,  n_eff)
-            '''plt.plot(power_1[:len(t)], label = 'after DLI 1')
-            plt.plot(power_2[:len(t)], label = 'after DLI 2')
-            plt.legend()
-            Saver.save_plot(f"power_after_DLI_{i // self.config.batchsize}")'''
+            # plt.plot(power_1[:len(t)*100], label = 'after DLI 1')
+            # plt.plot(power_2[:len(t)*100], label = 'after DLI 2')
+            # plt.legend()
+            # plt.show()
+            # Saver.save_plot(f"power_after_DLI_{i // self.config.batchsize}")
             
             '''# plot von power_1 und power_2
             fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 6))
@@ -299,14 +367,30 @@ class SimulationEngine:
 
             # Use interpolation to compute signal values at new time points
             signal_downsampled = np.interp(t_original_all_sym, t_new_all_sym, power_1)
-            '''plt.plot(signal_downsampled[:len(t)*100], label = 'after DLI 1')
-            plt.plot(power_1[:len(t)*100], color = 'green', label = 'after DLI 1')
+            '''plt.plot(signal_downsampled, label = 'after DLI 1')
+            # plt.plot(power_1[:len(t)*100], color = 'green', label = 'after DLI 1')
             plt.show()'''
 
-            flattened_power_batch = signal_downsampled.reshape(self.config.batchsize, len(t))
-            power_dampened[i:i + self.config.batchsize, :] = flattened_power_batch
-        return power_dampened, f_0
+            flattened_power_batch = signal_downsampled.reshape(amount_symbols_in_batch, len(t))
+            
+            if i == 0:
+                save_overlap_symbols = flattened_power_batch[-overlap_symbols:].copy() # the last overlap symbols
+                flattened_power_batch = flattened_power_batch[:-overlap_symbols]
+                power_dampened[i: i + self.config.batchsize, :] = flattened_power_batch
+            elif i + self.config.batchsize == len(value):
+                power_dampened[i:i + overlap_symbols, :] = save_overlap_symbols # old overlap symbol
+                save_overlap_symbols = flattened_power_batch[-overlap_symbols:].copy() # last symbols save for overlap
+                # no overlap symbol for the next batch, bc it is the last one
+                flattened_power_batch = flattened_power_batch[overlap_symbols:] # everything but the first symbols
+                power_dampened[i + overlap_symbols: i + self.config.batchsize, :] = flattened_power_batch
+            else:
+                power_dampened[i:i + overlap_symbols, :] = save_overlap_symbols # old overlap symbol
+                save_overlap_symbols = flattened_power_batch[-overlap_symbols:].copy() # last symbols save for overlap
 
+                flattened_power_batch = flattened_power_batch[overlap_symbols:-overlap_symbols] # everything but the first and last overlap symbols
+                power_dampened[i + overlap_symbols: i + self.config.batchsize, :] = flattened_power_batch
+           
+        return power_dampened, f_0
     
     def detector(self, t, peak_wavelength, power_dampened, start_time=0):
         """Simulate the detector process."""

@@ -107,10 +107,10 @@ if __name__ == '__main__':
     # How many simulations per batch (each batch runs sequentially inside one task)
     simulations_in_batch = 2  # adjust this to increase per-task workload
     # Total number of batches to run (total simulations = simulations_in_batch * total_batches)
-    total_batches = 600 # e.g., total simulations = 2 * 50 = 100  # 340 circa 4,5 stunden mit 2 sim per batch, 800 10 stunden
+    total_batches = 800 # e.g., total simulations = 2 * 50 = 100  # 340 circa 4,5 stunden mit 2 sim per batch, 800 10 stunden
 
     length_of_chain = 6*6*2
-    bins_per_symbol_hist = 120
+    bins_per_symbol_hist = 100
     amount_bins_hist = bins_per_symbol_hist * length_of_chain
     
 
@@ -155,10 +155,10 @@ if __name__ == '__main__':
         final_combined_list_array = combined_list
 
     total_symbols = n_samples_set * simulations_in_batch * total_batches
-
-    DataProcessor.plot_histogram_batch(bins_per_symbol_hist, final_time_one_symbol,
-                               global_histogram_counts_x, global_histogram_counts_z,
-                               final_combined_list_array, total_symbols, start_symbol=3, end_symbol=10, name="random")
+    
+    DataProcessor.plot_histogram_batch_random(bins_per_symbol_hist, final_time_one_symbol,
+                            global_histogram_counts_x, global_histogram_counts_z,
+                            final_combined_list_array, total_symbols, start_pair=0, end_pair=4, name="random")
 
     Saver.save_array_as_npz_data("histograms_random_end",
                             bins_per_symbol_hist=bins_per_symbol_hist,

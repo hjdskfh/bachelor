@@ -1,0 +1,60 @@
+function_used: run_simulation_detection_tester
+n_samples: 20
+seed: 496504
+non_signal_voltage: -1.2
+voltage_decoy: -0.7405843287706373
+voltage: -0.2
+voltage_decoy_sup: -0.8517826229333878
+voltage_sup: -0.44613102972507473
+p_indep_x_states_non_dec: None
+p_indep_x_states_dec: None
+p_vacuum_z: 0.95
+len_vacuum_indices_x_long: 19
+len_Z_checked_dec: 0
+len_Z_checked_non_dec: 1
+XP_calc_non_dec: 0.0
+XP_calc_dec: 0.0
+gain_Z_non_dec: 0.05
+gain_Z_dec: -999
+gain_X_non_dec: -999
+gain_X_dec: -999
+wrong_detections_z_dec: []
+wrong_detections_z_non_dec: []
+wrong_detections_x_dec: []
+wrong_detections_x_non_dec: []
+len_wrong_z_dec: 0
+len_wrong_z_non_dec: 0
+len_wrong_x_dec: 0
+len_wrong_x_non_dec: 0
+qber_z_dec: -999
+qber_z_non_dec: 0.0
+qber_x_dec: -999
+qber_x_non_dec: -999
+raw_key_rate: 81287595.51292473
+total_amount_detections: 1.0
+mean_photon_after_eam: [0.70008279 0.70008279 0.70008279 0.70008279 0.70008279 0.70008279
+ 0.70008279 0.70008279 0.70008279 0.70008279 0.70008279 0.70008279
+ 0.70008279 0.70008279 0.70008279 0.70008279 0.70008279 0.70008279
+ 0.70008279 0.70008279]
+mean_photon_after_fiber: [0.35087256 0.35087256 0.35087256 0.35087256 0.35087256 0.35087256
+ 0.35087256 0.35087256 0.35087256 0.35087256 0.35087256 0.35087256
+ 0.35087256 0.35087256 0.35087256 0.35087256 0.35087256 0.35087256
+ 0.35087256 0.35087256]
+mean_photon_after_basis_choice: [0.17543628 0.17543628 0.17543628 0.17543628 0.17543628 0.17543628
+ 0.17543628 0.17543628 0.17543628 0.17543628 0.17543628 0.17543628
+ 0.17543628 0.17543628 0.17543628 0.17543628 0.17543628 0.17543628
+ 0.17543628 0.17543628]
+mean_photon_after_dli: [0.07142161 0.05988661 0.05988661 0.05988661 0.05988661 0.05988661
+ 0.05988661 0.05988661 0.05988661 0.05988661 0.05988661 0.05988661
+ 0.05988661 0.05988661 0.05988661 0.05988661 0.05988661 0.05988661
+ 0.05988661 0.05988661]
+calc_mean_photon_nr_detector_x: [0.21426483 0.17965983 0.17965983 0.17965983 0.17965983 0.17965983
+ 0.17965983 0.17965983 0.17965983 0.17965983 0.17965983 0.17965983
+ 0.17965983 0.17965983 0.17965983 0.17965983 0.17965983 0.17965983
+ 0.17965983 0.17965983]
+mean_photon_at_detector_of_Z0_XP_symbol_mean_photon_for_whole_symbol: []
+mean_of_Z0_XP: 0
+index_where_photons_det_z: [6]
+index_where_photons_det_x: [19]
+time_photons_det_x: (1, 2)
+time_photons_det_z: (1, 1)

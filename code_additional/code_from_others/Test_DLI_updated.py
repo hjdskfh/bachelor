@@ -39,8 +39,8 @@ def delay_line_interferometer(P_in, dt, tau, delta_L, f0,  n_eff, splitting_rati
     E_in_delayed *= np.exp(1j * phi)
 
     # Ideal 50/50 coupler outputs
-    E_out1 = splitting_ratio * (E_in - E_in_delayed)
-    E_out2 = (1-splitting_ratio)*1j * (E_in + E_in_delayed)
+    E_out1 = (E_in - E_in_delayed) * splitting_ratio
+    E_out2 = 1j * (E_in + E_in_delayed) * (1-splitting_ratio)
 
     return np.abs(E_out1)**2, np.abs(E_out2)**2, t
 
@@ -78,7 +78,7 @@ print(f"Path length difference (delta_L): {delta_L:.6f} m")
 
 # Wavelength sweep setup
 lambda0 = 1550e-9  # 1550 nm
-delta_lambda = 1e-10  # ±500 pm
+delta_lambda = 2e-10  # ±500 pm
 wavelengths = np.linspace(lambda0 - delta_lambda / 2, lambda0 + delta_lambda / 2, 100)
 frequencies = c / wavelengths  # convert to optical frequencies
 
@@ -106,7 +106,7 @@ visibilities = []
 wavelengths_nm = []
 
 # Find the index corresponding to 1 ns
-target_time_ns = ((3.5)/bit_rate) * 1e9  
+target_time_ns = ((3.7)/bit_rate) * 1e9  
 target_index = np.argmin(np.abs(t * 1e9 - target_time_ns))
 print(target_time_ns)
 
@@ -155,6 +155,7 @@ idx_mid = np.argmin(np.abs(wavelengths_nm - lambda_mid))
 selected_indices = [idx_max, idx_min, idx_mid]
 selected_labels = ["Max", "Min", "Mid"]
 selected_data = [results[i] for i in selected_indices]
+print(f"Selected data: {selected_data}")
 selected_wavelengths = [wavelengths_nm[i] for i in selected_indices]
 
 # Step 3: Plot input, port 1, and port 2 over time for each selected wavelength

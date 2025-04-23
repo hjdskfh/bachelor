@@ -45,14 +45,14 @@ max_concurrent_tasks = 12
 simulations_in_batch = 2  # adjust this to increase per-task workload
 
 # Total number of batches to run (total simulations = simulations_in_batch * total_batches)
-total_batches = 700  # e.g., total simulations = 2 * 50 = 100  # 340 circa 4,5 stunden mit 2 sim per batch
+total_batches = 800  # e.g., total simulations = 2 * 50 = 100  # 340 circa 4,5 stunden mit 2 sim per batch
 
 # Define file name
 style_file = "Presentation_style_1_adjusted_no_grid.mplstyle"
 
 base_path = os.path.dirname(os.path.abspath(__file__))
 
-config = SimulationConfig(database, n_samples=n_samples_set,
+config = SimulationConfig(database, n_samples=n_samples_set, p_z_alice=0.95, p_decoy=0.19, mean_photon_nr=0.182, mean_photon_decoy=0.182,
                  detector_jitter=detector_jitter,
                 mlp=os.path.join(base_path, style_file), script_name = os.path.basename(__file__), job_id=job_id
                 )

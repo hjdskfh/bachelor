@@ -1167,7 +1167,8 @@ class SimulationManager:
         print(f"peak_wavelegth: {peak_wavelength[:10]}")
         # Generate Alice's choices
         # basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=np.array([1,0,1]), value=np.array([1,-1, 0]), decoy=np.array([0,0,0]))
-        basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=np.array([0,0,1]), value=np.array([-1,-1,0]), decoy=np.array([0]))
+        # basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=np.array([0,0,1]), value=np.array([-1,-1,0]), decoy=np.array([0]))
+        basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=np.array([1]), value=np.array([1]), decoy=np.array([0]))
         # basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=np.array([0]), value=np.array([-1]), decoy=np.array([0]))
         # basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=np.array([0,1]), value=np.array([-1, 0]), decoy=np.array([0,0]))
         # basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=np.array([0,1]), value=np.array([-1, 1]), decoy=np.array([0,0]))
@@ -1209,7 +1210,7 @@ class SimulationManager:
 
         first_power = None
         if random.random() < 1:
-            amount_symbols_in_first_part = 10
+            amount_symbols_in_first_part = 20
             first_power = power_dampened[:amount_symbols_in_first_part].copy()
         '''print("len(t):", len(t))
         print("first_power.shape:", first_power.shape)
@@ -1218,8 +1219,10 @@ class SimulationManager:
 
         # DLI
         power_dampened, f_0 = self.simulation_engine.delay_line_interferometer(power_dampened, t, peak_wavelength, value)
-        # print(f"mean_photon_nr after DLI: {self.simulation_helper.calculate_mean_photon_number(power_dampened, peak_wavelength, t)[:20]}")
+        print(f"mean_photon_nr after DLI: {self.simulation_helper.calculate_mean_photon_number(power_dampened, peak_wavelength, t)[:20]}")
         mean_photon_after_dli = self.simulation_helper.calculate_mean_photon_number(power_dampened, peak_wavelength, t)[:20]
+        print(f"mean_photon_nr after multiply: {self.simulation_helper.calculate_mean_photon_number(power_dampened, peak_wavelength, t)[:20]}")
+
 
         # plot
         if first_power is not None:
@@ -1472,7 +1475,7 @@ class SimulationManager:
                                 wrong_detections_x_non_dec=wrong_detections_x_non_dec,
                                 )'''
 
-        if save_output == True:
+        '''if save_output == True:
             function_name = inspect.currentframe().f_code.co_name
             Saver.save_results_to_txt(  # Save the results to a text file
                 function_used = function_name,
@@ -1508,7 +1511,7 @@ class SimulationManager:
                 raw_key_rate=raw_key_rate,
                 total_amount_detections=total_amount_detections,
                 execution_time_run=execution_time_run
-            )
+            )'''
         
         return len_wrong_x_dec, len_wrong_x_non_dec, len_wrong_z_dec, len_wrong_z_non_dec, len_Z_checked_dec, len_Z_checked_non_dec, X_P_calc_non_dec, X_P_calc_dec
     
