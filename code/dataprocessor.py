@@ -144,6 +144,36 @@ class DataProcessor:
         return pair_indices_dict
 
 
+    def create_pair_mapping(raw_symbol_lookup):
+        """
+        Create all possible pairs from the raw_symbol_lookup dictionary and store them sequentially.
+        Each pair is assigned a unique position in a combined list.
+
+        Parameters:
+        - raw_symbol_lookup: dict
+            A dictionary mapping tuples to symbol strings (e.g., {(1, 1, 0): "Z0", ...}).
+
+        Returns:
+        - pair_mapping: dict
+            A dictionary where keys are pairs (e.g., ('Z0', 'Z1')) and values are their positions in the combined list.
+        - combined_list: list
+            A list where all pairs are stored sequentially.
+        """
+        # Extract all symbols from the raw_symbol_lookup
+        symbols = list(raw_symbol_lookup.values())
+
+        # Generate all possible pairs
+        all_pairs = [(a, b) for a in symbols for b in symbols]
+
+        # Create a mapping of pairs to their positions
+        pair_mapping = {pair: idx for idx, pair in enumerate(all_pairs)}
+
+        # Create a combined list where all pairs are stored sequentially
+        combined_list = [pair for pair in all_pairs]
+
+        return pair_mapping, combined_list
+
+
     def update_histogram_batches_all_pairs(length_of_chain, time_one_symbol, time_photons_det_z, time_photons_det_x,
                                         index_where_photons_det_z, index_where_photons_det_x, amount_bins_hist,
                                         bins_per_symbol, lookup_arr, basis, value, decoy):
@@ -185,6 +215,7 @@ class DataProcessor:
         assert len(time_photons_det_x) == len(index_where_photons_det_x), f"Length mismatch: {len(time_photons_det_x)} vs {len(index_where_photons_det_x)}"
         assert len(time_photons_det_z) == len(index_where_photons_det_z), f"Length mismatch: {len(time_photons_det_z)} vs {len(index_where_photons_det_z)}"
 
+
         local_histogram_counts_x = np.zeros(amount_bins_hist, dtype=int)
         local_histogram_counts_z = np.zeros(amount_bins_hist, dtype=int)
         
@@ -192,8 +223,10 @@ class DataProcessor:
         bins_arr = np.linspace(0, time_one_symbol, bins_per_symbol + 1)
         
         # Get dictionary mapping each adjacent pair (for one chain) to the positions where they occur.
-        pair_indices_dict = DataProcessor.get_all_pair_indices(lookup_arr)
-        # print(f"pair_indices_dict: {pair_indices_dict}")
+        # pair_indices_dict = DataProcessor.get_all_pair_indices(lookup_arr)
+        pair_mapping, combined_list = DataProcessor.create_pair_mapping(raw_symbol_lookup)
+
+
 
         def process(idx_left, idx_right, index_where_photons_det, time_photons_det, local_histogram_counts):
             
@@ -202,7 +235,7 @@ class DataProcessor:
                 pair_key = (raw_symbol_lookup[(basis[idx_left], value[idx_left], decoy[idx_left])], 
                             raw_symbol_lookup[(basis[idx_right], value[idx_right], decoy[idx_right])])
                 # print(f"pair_key:   {pair_key}")
-                position_brujin_left = pair_indices_dict[pair_key].item()
+                position_pair = pair_mapping[pair_key].item()
                 # print(f"position_brujin_left: {position_brujin_left}")
             
                 # Process the first symbol of the pair:
@@ -217,7 +250,7 @@ class DataProcessor:
                     # Update histogram: position = pos (for first symbol)
                     for b in bin_indices_first:
                         if 0 <= b < bins_per_symbol:
-                            overall_bin = position_brujin_left * bins_per_symbol + b
+                            overall_bin = (2 * position_pair) * bins_per_symbol + b
                             local_histogram_counts[overall_bin] += 1
 
                 # Process the second symbol of the pair:
@@ -232,7 +265,7 @@ class DataProcessor:
                     # Update histogram: position = pos (for first symbol)
                     for b in bin_indices_first:
                         if 0 <= b < bins_per_symbol:
-                            overall_bin = (position_brujin_left + 1) * bins_per_symbol + b
+                            overall_bin = (2 * position_pair + 1) * bins_per_symbol + b
                             local_histogram_counts[overall_bin] += 1
 
         # Process each chain (repetition)
