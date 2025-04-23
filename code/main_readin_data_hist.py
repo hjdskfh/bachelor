@@ -19,7 +19,8 @@ import json
 # file_name = r'C:\Users\leavi\bachelor\results_data\20250414_154555_histograms_random.npz'
 # file_name = r'C:\Users\leavi\bachelor\results_data\20250415_112451_histograms_random.npz'
 # file_name = r'C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_23\hist_rand\20250423_041529_histograms_random.npz'
-file_name = r'C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_18\20250417_160300_histograms_fixed.npz'
+# file_name = r'C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_18\20250417_160300_histograms_fixed.npz'
+file_name = r'C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_23\histograms_random_results_vllt_nach_umstellen.npz'
 
 if os.path.exists(file_name):
     print("File exists!")
@@ -51,14 +52,9 @@ total_symbols = data["total_symbols"]
 # total_symbols = data["total_samples"]
 final_combined_list_array = data["final_combined_list_array"]
 
-# # global_histogram_counts_z = np.empty_like(global_histogram_counts_z)
-# np.set_printoptions(threshold=1000000)
-# print(f"global_histogram_counts_x: {global_histogram_counts_x}")
-# print(f"global_histogram_counts_z: {global_histogram_counts_z}")
-
-DataProcessor.plot_histogram_batch(bins_per_symbol_hist, final_time_one_symbol,
-                            global_histogram_counts_x, global_histogram_counts_z,
-                            final_lookup_array, total_symbols, start_symbol=0, end_symbol=4, name="random")
+# DataProcessor.plot_histogram_batch(bins_per_symbol_hist, final_time_one_symbol,
+#                             global_histogram_counts_x, global_histogram_counts_z,
+#                             final_lookup_array, total_symbols, start_symbol=0, end_symbol=4, name="random")
 
 DataProcessor.plot_histogram_batch_random(bins_per_symbol_hist, final_time_one_symbol,
                             global_histogram_counts_x, global_histogram_counts_z,

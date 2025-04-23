@@ -138,7 +138,7 @@ if __name__ == '__main__':
         combined_list_list.append(lookup_array)
 
     # Now save them — use object dtype if arrays are different shapes
-    np.savez("histograms_random_results.npz",
+    np.savez("histograms_random_results_middle.npz",
             hist_x=np.array(hist_x_list, dtype=object),
             hist_z=np.array(hist_z_list, dtype=object),
             t_sym=np.array(t_sym_list, dtype=object),
@@ -160,7 +160,7 @@ if __name__ == '__main__':
                                global_histogram_counts_x, global_histogram_counts_z,
                                final_combined_list_array, total_symbols, start_symbol=3, end_symbol=10, name="random")
 
-    Saver.save_array_as_npz_data("histograms_random",
+    Saver.save_array_as_npz_data("histograms_random_end",
                             bins_per_symbol_hist=bins_per_symbol_hist,
                             final_time_one_symbol=final_time_one_symbol,
                             global_histogram_counts_x=global_histogram_counts_x,
