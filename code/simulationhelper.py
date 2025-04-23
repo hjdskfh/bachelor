@@ -600,7 +600,7 @@ class SimulationHelper:
         has_0_xpz1 = np.intersect1d(has_0_long, XP_Z1_alice_d)
         ind_has_0_xpz1 = len(np.where(has_0_xpz1)[0])
 
-        X_P_calc_dec = (ind_has_0_xpz1 + ind_has_0_z0xp) / ( (1 / 4) * self.config.p_z_alice)
+        X_P_calc_dec = (ind_has_0_xpz1 + ind_has_0_z0xp) / ( (1 / 2) * self.config.p_z_bob * self.config.p_z_alice)
         print(f"X_P_calc_dec:{X_P_calc_dec}")
         print(f"X_P_calc_non_dec:{X_P_calc_non_dec}")
 
