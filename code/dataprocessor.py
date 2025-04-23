@@ -1,4 +1,5 @@
 from re import M
+from tracemalloc import start
 from matplotlib.pylab import f
 import matplotlib.pyplot as plt
 from pathlib import Path
@@ -300,29 +301,41 @@ class DataProcessor:
             # Normalize the entire histogram using the maximum value in the slice
             normalized_histogram = histogram_counts / max_in_slice
             return normalized_histogram
-        
+       
         amount_of_pairs_incl_start_and_end = end_pair - start_pair + 1
-        bins = np.linspace(0, amount_of_pairs_incl_start_and_end * time_one_symbol, bins_per_symbol * amount_of_pairs_incl_start_and_end + 1)    
+        amount_symbols = 2*amount_of_pairs_incl_start_and_end
+
+        start_symbol = start_pair * 2
+        end_symbol = end_pair * 2 + 1
+        
+        
+        bins = np.linspace(0, amount_symbols * time_one_symbol, bins_per_symbol * amount_symbols + 1)    
         
         # Normalize histogram counts so the highest peak is at 1
-        histogram_counts_x = normalize_histogram(histogram_counts_x, start_pair, end_pair + 1, bins_per_symbol)
-        histogram_counts_z = normalize_histogram(histogram_counts_z, start_pair, end_pair + 1, bins_per_symbol)
+        histogram_counts_x = normalize_histogram(histogram_counts_x, start_symbol, end_symbol + 1, bins_per_symbol)
+        histogram_counts_z = normalize_histogram(histogram_counts_z, start_symbol, end_symbol + 1, bins_per_symbol)
 
         plt.figure(figsize=(10, 6))
         # Plot as bar chart; you can also use plt.hist with precomputed counts.
         width = (bins[1] - bins[0])
         if leave_x == False:
-            plt.bar(bins[:-1], histogram_counts_x[(2 * start_pair) * bins_per_symbol :((2 * end_pair) + 1) * bins_per_symbol], width=width, alpha=0.6, label='X basis', color='blue')
+            plt.bar(bins[:-1], histogram_counts_x[(start_symbol) * bins_per_symbol :((end_symbol) + 1) * bins_per_symbol], width=width, alpha=0.6, label='X basis', color='blue')
         if leave_z == False:
-            plt.bar(bins[:-1], histogram_counts_z[(2 * start_pair) * bins_per_symbol :((2 * end_pair) + 1) * bins_per_symbol], width=width, alpha=0.6, label='Z basis', color='red')
+            plt.bar(bins[:-1], histogram_counts_z[(start_symbol) * bins_per_symbol :((end_symbol) + 1) * bins_per_symbol], width=width, alpha=0.6, label='Z basis', color='red')
 
-        for i in range(2 * amount_of_pairs_incl_start_and_end):
+        for i in range(amount_symbols):
             plt.axvline(x=i * time_one_symbol, color='grey', linestyle='--', linewidth=1)
 
             # Place the symbol halfway between this line and the next
-            if i < 2 * amount_of_pairs_incl_start_and_end:
+            if i < amount_symbols:
                 x_mid = i * time_one_symbol + time_one_symbol / 2
-                symbol = combined_list[start_pair * 2 + i]
+                symbol_index = (start_symbol + i) // 2
+                if (start_symbol + i)  % 2 == 0:
+                    symbol = combined_list[symbol_index][0]
+                else:
+                    symbol = combined_list[symbol_index][1]
+                print(f"symbol: {symbol}")
+
                 if leave_x == False and leave_z == False:
                     y_max = max(max(histogram_counts_x), max(histogram_counts_z))
                 elif leave_x == False:
