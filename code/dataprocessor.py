@@ -227,7 +227,6 @@ class DataProcessor:
         pair_mapping, combined_list = DataProcessor.create_pair_mapping(raw_symbol_lookup)
 
 
-
         def process(idx_left, idx_right, index_where_photons_det, time_photons_det, local_histogram_counts):
             
             if idx_left >= 0 and idx_right < len(basis):
@@ -235,7 +234,7 @@ class DataProcessor:
                 pair_key = (raw_symbol_lookup[(basis[idx_left], value[idx_left], decoy[idx_left])], 
                             raw_symbol_lookup[(basis[idx_right], value[idx_right], decoy[idx_right])])
                 # print(f"pair_key:   {pair_key}")
-                position_pair = pair_mapping[pair_key].item()
+                position_pair = pair_mapping.get(pair_key, -1)
                 # print(f"position_brujin_left: {position_brujin_left}")
             
                 # Process the first symbol of the pair:
@@ -291,7 +290,59 @@ class DataProcessor:
             process(idx_where_x, idx_after_x, index_where_photons_det_x, time_photons_det_x, local_histogram_counts_x)
 
         
-        return local_histogram_counts_z, local_histogram_counts_x
+        return local_histogram_counts_z, local_histogram_counts_x, combined_list
+    
+    def plot_histogram_batch_random(bins_per_symbol, time_one_symbol, histogram_counts_x, histogram_counts_z, combined_list, total_symbols, start_pair=3, end_pair=10, name=' ', leave_x = False, leave_z = False):
+        assert 0 <= start_pair <= end_pair <= 36
+        def normalize_histogram(histogram_counts, slice_start, slice_end, bins_per_symbol):
+            # Get the maximum value in the specified slice
+            max_in_slice = np.max(histogram_counts[slice_start * bins_per_symbol:(slice_end + 1) * bins_per_symbol]) if np.max(histogram_counts[slice_start * bins_per_symbol:(slice_end + 1) * bins_per_symbol]) > 0 else 1
+            # Normalize the entire histogram using the maximum value in the slice
+            normalized_histogram = histogram_counts / max_in_slice
+            return normalized_histogram
+        
+        amount_of_pairs_incl_start_and_end = end_pair - start_pair + 1
+        bins = np.linspace(0, amount_of_pairs_incl_start_and_end * time_one_symbol, bins_per_symbol * amount_of_pairs_incl_start_and_end + 1)    
+        
+        # Normalize histogram counts so the highest peak is at 1
+        histogram_counts_x = normalize_histogram(histogram_counts_x, start_pair, end_pair + 1, bins_per_symbol)
+        histogram_counts_z = normalize_histogram(histogram_counts_z, start_pair, end_pair + 1, bins_per_symbol)
+
+        plt.figure(figsize=(10, 6))
+        # Plot as bar chart; you can also use plt.hist with precomputed counts.
+        width = (bins[1] - bins[0])
+        if leave_x == False:
+            plt.bar(bins[:-1], histogram_counts_x[(2 * start_pair) * bins_per_symbol :((2 * end_pair) + 1) * bins_per_symbol], width=width, alpha=0.6, label='X basis', color='blue')
+        if leave_z == False:
+            plt.bar(bins[:-1], histogram_counts_z[(2 * start_pair) * bins_per_symbol :((2 * end_pair) + 1) * bins_per_symbol], width=width, alpha=0.6, label='Z basis', color='red')
+
+        for i in range(2 * amount_of_pairs_incl_start_and_end):
+            plt.axvline(x=i * time_one_symbol, color='grey', linestyle='--', linewidth=1)
+
+            # Place the symbol halfway between this line and the next
+            if i < 2 * amount_of_pairs_incl_start_and_end:
+                x_mid = i * time_one_symbol + time_one_symbol / 2
+                symbol = combined_list[start_pair * 2 + i]
+                if leave_x == False and leave_z == False:
+                    y_max = max(max(histogram_counts_x), max(histogram_counts_z))
+                elif leave_x == False:
+                    y_max = max(histogram_counts_x)
+                elif leave_z == False:
+                    y_max = max(histogram_counts_z)
+                else:
+                    y_max = 1  # Default value if neither histogram is plotted
+                basis = symbol[0]  # assuming symbol is like 'X0' or 'Z1'
+                color = 'green' if basis == 'X' else 'purple'
+
+                plt.text(x_mid, y_max * 0.9, symbol, ha='center', va='bottom', fontsize=14, color=color, fontweight='bold')
+
+        plt.xlabel("Time ")
+        plt.ylabel("Cumulative Counts")
+        plt.title(f"Cumulative Histogram for {start_pair} to {end_pair} for {total_symbols} {name} symbols")
+        plt.legend()
+        plt.tight_layout()
+        Saver.save_plot(f"hist_symbols_{start_pair}_to_{end_pair}")
+
     #  -------SKR ------
     # Entropy function
     @staticmethod

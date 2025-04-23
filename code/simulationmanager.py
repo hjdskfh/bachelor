@@ -1251,12 +1251,14 @@ class SimulationManager:
             print(f"second_xp_mwan_photon_at_x_dec: {second_xp_mean_photon_at_x_detector}")
             print(f"mean of second_xp_mean..:{np.mean(second_xp_mean_photon_at_x_detector)}")
             indices_where_second_xp = np.arange(1, self.config.n_samples, 3)
+            print(f"indices_where_second_xp: {indices_where_second_xp}")
+
             # Check which values in index_where_photons_det_x   are in indices_where_second_xp
             mask_short = np.isin(index_where_photons_det_x, indices_where_second_xp)
-
+            print(f"mask_short: {mask_short}")
             # Get the indices in index_where_photons where the condition is true
             indices_where_phot_at_second_xp_short = np.where(mask_short)[0]
-            
+            print(f"indices_where_phot_at_second_xp_short: {indices_where_phot_at_second_xp_short}")
             if np.any(nr_photons_det_x > 0):
                 print(f"ind of nr_photons over 0: {np.intersect1d(index_where_photons_det_x, indices_where_second_xp)}")
                 print(f"nr_photons over 0 and second xp symbol: {nr_photons_det_x[indices_where_phot_at_second_xp_short]}")

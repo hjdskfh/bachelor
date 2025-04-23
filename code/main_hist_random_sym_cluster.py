@@ -42,7 +42,7 @@ def run_simulation_and_update_hist_all_pairs(i, n_samples_set, length_of_chain, 
     decoy = data["decoy"]
     lookup_array = data["lookup_array"]'''
     
-    hist_z, hist_x = DataProcessor.update_histogram_batches_all_pairs(length_of_chain, time_one_symbol, time_photons_det_z, time_photons_det_x,
+    hist_z, hist_x, combined_list = DataProcessor.update_histogram_batches_all_pairs(length_of_chain, time_one_symbol, time_photons_det_z, time_photons_det_x,
                                                             index_where_photons_det_z, index_where_photons_det_x, amount_bins_hist,
                                                             bins_per_symbol, lookup_array, basis, value, decoy)
 
@@ -50,28 +50,28 @@ def run_simulation_and_update_hist_all_pairs(i, n_samples_set, length_of_chain, 
         print("hist_x:", hist_x)
         print("hist_z:", hist_z)
         print("time_one_symbol:", time_one_symbol)
-        print("lookup_array:", lookup_array)
+        print("combined_list:", combined_list)
 
-    return hist_x, hist_z, time_one_symbol, lookup_array
+    return hist_x, hist_z, time_one_symbol, combined_list
 
 def run_simulation_batch_all_pairs(batch_id, n_samples_set, length_of_chain, base_path, style_file, database,
                                    detector_jitter, bins_per_symbol, amount_bins):
     hist_total_x = np.zeros(amount_bins, dtype=int)
     hist_total_z = np.zeros(amount_bins, dtype=int)
     t_sym_final = None
-    lookup_array_final = None
+    combined_list_final = None
 
     for j in range(simulations_in_batch):
-        hist_x, hist_z, t_sym, lookup_array = run_simulation_and_update_hist_all_pairs(
+        hist_x, hist_z, t_sym, combined_list = run_simulation_and_update_hist_all_pairs(
             j, n_samples_set, length_of_chain, base_path, style_file, database,
             detector_jitter, bins_per_symbol
         )
         hist_total_x += hist_x
         hist_total_z += hist_z
         t_sym_final = t_sym
-        lookup_array_final = lookup_array
+        combined_list_final = combined_list
 
-    return hist_total_x, hist_total_z, t_sym_final, lookup_array_final
+    return hist_total_x, hist_total_z, t_sym_final, combined_list_final
 
 if __name__ == '__main__':
     Saver.memory_usage("START of Simulation: Before everything")
@@ -129,43 +129,43 @@ if __name__ == '__main__':
     hist_x_list = []
     hist_z_list = []
     t_sym_list = []
-    lookup_array_list = []
+    combined_list_list = []
 
     for hist_x, hist_z, t_sym, lookup_array in results:
         hist_x_list.append(hist_x)
         hist_z_list.append(hist_z)
         t_sym_list.append(t_sym)
-        lookup_array_list.append(lookup_array)
+        combined_list_list.append(lookup_array)
 
     # Now save them — use object dtype if arrays are different shapes
     np.savez("histograms_random_results.npz",
             hist_x=np.array(hist_x_list, dtype=object),
             hist_z=np.array(hist_z_list, dtype=object),
             t_sym=np.array(t_sym_list, dtype=object),
-            lookup_array=np.array(lookup_array_list, dtype=object))
+            combined_list=np.array(combined_list_list, dtype=object))
 
     global_histogram_counts_x = np.zeros(amount_bins_hist, dtype=int)
     global_histogram_counts_z = np.zeros(amount_bins_hist, dtype=int)
-    final_time_one_symbol, final_lookup_array = None, None
+    final_time_one_symbol, final_combined_list_array = None, None
 
-    for hist_x, hist_z, t_sym, lookup_array in results:
+    for hist_x, hist_z, t_sym, combined_list in results:
         global_histogram_counts_x += hist_x
         global_histogram_counts_z += hist_z
         final_time_one_symbol = t_sym
-        final_lookup_array = lookup_array
+        final_combined_list_array = combined_list
 
     total_symbols = n_samples_set * simulations_in_batch * total_batches
 
     DataProcessor.plot_histogram_batch(bins_per_symbol_hist, final_time_one_symbol,
                                global_histogram_counts_x, global_histogram_counts_z,
-                               final_lookup_array, total_symbols, start_symbol=3, end_symbol=10, name="random")
+                               final_combined_list_array, total_symbols, start_symbol=3, end_symbol=10, name="random")
 
     Saver.save_array_as_npz_data("histograms_random",
                             bins_per_symbol_hist=bins_per_symbol_hist,
                             final_time_one_symbol=final_time_one_symbol,
                             global_histogram_counts_x=global_histogram_counts_x,
                             global_histogram_counts_z=global_histogram_counts_z,
-                            final_lookup_array=final_lookup_array,
+                            final_combined_list_array=final_combined_list_array,
                             total_symbols=total_symbols)
 
     print(f"Execution time for simulation: {time.time() - start_time:.9f} seconds")

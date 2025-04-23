@@ -49,6 +49,7 @@ global_histogram_counts_z = data["global_histogram_counts_z"]
 final_lookup_array = data["final_lookup_array"]
 total_symbols = data["total_symbols"]
 # total_symbols = data["total_samples"]
+final_combined_list_array = data["final_combined_list_array"]
 
 # # global_histogram_counts_z = np.empty_like(global_histogram_counts_z)
 # np.set_printoptions(threshold=1000000)
@@ -59,6 +60,9 @@ DataProcessor.plot_histogram_batch(bins_per_symbol_hist, final_time_one_symbol,
                             global_histogram_counts_x, global_histogram_counts_z,
                             final_lookup_array, total_symbols, start_symbol=0, end_symbol=4, name="random")
 
+DataProcessor.plot_histogram_batch_random(bins_per_symbol_hist, final_time_one_symbol,
+                            global_histogram_counts_x, global_histogram_counts_z,
+                            final_combined_list_array, total_symbols, start_pair=0, end_pair=4, name="random")
 
 # len_wrong_x_dec = data["global_len_wrong_x_dec"]
 # len_wrong_x_non_dec = data["global_len_wrong_x_non_dec"]
