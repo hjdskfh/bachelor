@@ -1375,11 +1375,11 @@ class SimulationManager:
         # print(f"decoy: {decoy[:10]}")
 
         # Simulate signal and transmission
-        # Saver.memory_usage("before simulating signal: " + str("{:.3f}".format(time.time() - start_time)))
+        Saver.memory_usage("before simulating signal: " + str("{:.3f}".format(time.time() - start_time)))
         signals, t, _ = self.simulation_engine.signal_bandwidth_jitter(basis, value, decoy)
 
         time_simulating_signal = time.time() - start_time
-        # Saver.memory_usage("before eam: " + str("{:.3f}".format(time_simulating_signal)))
+        Saver.memory_usage("before eam: " + str("{:.3f}".format(time_simulating_signal)))
         power_dampened, calc_mean_photon_nr_eam, _ = self.simulation_engine.eam_transmission(signals, optical_power, T1_dampening, peak_wavelength, t)
 
         # plot so I can delete
@@ -1390,13 +1390,13 @@ class SimulationManager:
         # self.plotter.plot_power(t, power_dampened, amount_symbols_in_plot=5, where_plot_1='after EAM')
 
         time_eam = time.time() - start_time
-        # Saver.memory_usage("before fiber: " + str("{:.3f}".format(time_eam)))
+        Saver.memory_usage("before fiber: " + str("{:.3f}".format(time_eam)))
         power_dampened = self.simulation_engine.fiber_attenuation(power_dampened)
         
         # self.plotter.plot_power(t, power_dampened, amount_symbols_in_plot=20, where_plot_1='after fiber')
 
         # first Z basis bc no interference
-        # Saver.memory_usage("before detector z: " + str("{:.3f}".format(time.time() - start_time)))
+        Saver.memory_usage("before detector z: " + str("{:.3f}".format(time.time() - start_time)))
         power_dampened = power_dampened * self.config.p_z_bob
         time_photons_det_z, wavelength_photons_det_z, nr_photons_det_z, index_where_photons_det_z, \
         calc_mean_photon_nr_detector_z, dark_count_times_z, num_dark_counts_z = self.simulation_engine.detector(t, peak_wavelength, power_dampened, start_time)
@@ -1406,7 +1406,7 @@ class SimulationManager:
         # self.plotter.plot_power(t, power_dampened, amount_symbols_in_plot=20, where_plot_1='after Z det')
 
         # path for X basis
-        # Saver.memory_usage("before DLI: " + str("{:.3f}".format(time.time() - start_time)))
+        Saver.memory_usage("before DLI: " + str("{:.3f}".format(time.time() - start_time)))
         power_dampened = power_dampened * (1 - self.config.p_z_bob)
 
         # self.plotter.plot_power(t, power_dampened, amount_symbols_in_plot=20, where_plot_1='bob basis X')
@@ -1425,7 +1425,7 @@ class SimulationManager:
         # plt.plot(first_power.reshape(-1) * 1e3, color='blue', label='0', linestyle='-', marker='o', markersize=1)
         # Saver.save_plot(f"power_before_DLI_in_mW_outside")
 
-        # Saver.memory_usage("before detector x: " + str(time.time() - start_time))
+        Saver.memory_usage("before detector x: " + str(time.time() - start_time))
         time_photons_det_x, wavelength_photons_det_x, nr_photons_det_x, index_where_photons_det_x, calc_mean_photon_nr_detector_x, dark_count_times_x, num_dark_counts_x = self.simulation_engine.detector(t, peak_wavelength, power_dampened, start_time)        
         # np.set_printoptions(threshold=np.inf)  # disable truncation
         # print(f"calc_mean_photon_nr_detector_x part: {calc_mean_photon_nr_detector_x[:10]}")

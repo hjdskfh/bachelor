@@ -1,0 +1,20 @@
+[Before everything] Memory used: 126.84 MB
+Configuration saved to C:\Users\leavi\bachelor\logs\simulation_config_20250424_092641.json
+Execution time for reading: 0.008003712 seconds for 20000 samples
+seed: 995705
+T1_dampening at initialize end: 77.76756286621094
+voltage at initialize end: -0.2
+Voltage_decoy at initialize end: -0.19999960958957663
+Voltage_decoy_sup at initialize end: -0.44613378345966337
+Voltage_sup at initialize end: -0.44613378345966337
+[before simulating signal: 1.496] Memory used: 130.04 MB
+[before eam: 52.798] Memory used: 3416.22 MB
+[before fiber: 61.227] Memory used: 3416.17 MB
+[before detector z: 61.429] Memory used: 3416.17 MB
+[in choose photon after pre-allocate arrays] Memory used: 3416.20 MB
+[after choose: 62.40970730781555] Memory used: 3416.20 MB
+[before detection time:62.40992522239685] Memory used: 3416.21 MB
+[before jitter detector: 62.41054701805115] Memory used: 3416.25 MB
+[before darkcount: 62.41071081161499] Memory used: 3416.26 MB
+total darkcounts: 0
+[before DLI: 62.622] Memory used: 3418.79 MB

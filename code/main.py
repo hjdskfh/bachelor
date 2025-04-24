@@ -46,7 +46,7 @@ with open(output_file, "w") as f:
     base_path = os.path.dirname(os.path.abspath(__file__))
 
     #create simulation mean current 0.08 , mena_voltage = 0.98 weil aus voltage_sweep, 0.9835 # mean voltage mit skript 1.6094623981710416 rausbekommen
-    config = SimulationConfig(database, n_samples=40, batchsize=10, p_decoy=0.5,
+    config = SimulationConfig(database, n_samples=20000, batchsize=10000, p_z_alice=0.95, p_decoy=0.19, mean_photon_nr=0.182, mean_photon_decoy=0.1,
                             detector_jitter=detector_jitter, mlp=os.path.join(base_path, style_file), script_name = os.path.basename(__file__))
     simulation = SimulationManager(config)
 
@@ -77,6 +77,7 @@ with open(output_file, "w") as f:
     # time_photons_det_x, time_photons_det_z, index_where_photons_det_x, index_where_photons_det_z, time_one_symbol, lookup_array, basis, value, decoy = simulation.run_simulation_hist_final()
     # time_one_symbol, time_photons_det_z, time_photons_det_x, index_where_photons_det_z, index_where_photons_det_x, lookup_array, basis, value, decoy = simulation.run_simulation_hist_pick_symbols()
     # simulation.run_simulation_detector()
+    len_wrong_x_dec, len_wrong_x_non_dec, len_wrong_z_dec, len_wrong_z_non_dec, len_Z_checked_dec, len_Z_checked_non_dec, X_P_calc_non_dec, X_P_calc_dec = simulation.run_simulation_repeat(save_output = False)
 
 
     end_time_simulation = time.time()  # Record end time for simulation

@@ -10,8 +10,9 @@ import pandas as pd
 import os
 import math
 from joblib import Parallel, delayed
+import functools
 
-
+print = functools.partial(print, flush=True)
 job_id = os.getenv("SLURM_JOB_ID")
 print(f"Running SLURM Job ID: {job_id}")
 
@@ -22,7 +23,7 @@ os.environ["MKL_NUM_THREADS"] = "1"
 def run_simulation_and_update_hist_all_pairs(i, n_samples_set, length_of_chain, base_path, style_file, database,
                                              detector_jitter, bins_per_symbol):
     config = SimulationConfig(
-        database, n_samples=n_samples_set, 
+        database, n_samples=n_samples_set,
         detector_jitter=detector_jitter,
         mlp=os.path.join(base_path, style_file), script_name=os.path.basename(__file__), job_id=job_id)
     
@@ -92,7 +93,7 @@ if __name__ == '__main__':
     base_path = os.path.dirname(os.path.abspath(__file__))
 
     config = SimulationConfig(
-        database, n_samples=n_samples_set, 
+        database, n_samples=n_samples_set,
         detector_jitter=detector_jitter,
         mlp=os.path.join(base_path, style_file), script_name=os.path.basename(__file__), job_id=job_id
     )
@@ -103,11 +104,11 @@ if __name__ == '__main__':
     Saver.save_to_json(config_params)
 
 
-    max_concurrent_tasks = 12
+    max_concurrent_tasks = 2
     # How many simulations per batch (each batch runs sequentially inside one task)
     simulations_in_batch = 2  # adjust this to increase per-task workload
     # Total number of batches to run (total simulations = simulations_in_batch * total_batches)
-    total_batches = 800 # e.g., total simulations = 2 * 50 = 100  # 340 circa 4,5 stunden mit 2 sim per batch, 800 10 stunden
+    total_batches = 100 # e.g., total simulations = 2 * 50 = 100  # 340 circa 4,5 stunden mit 2 sim per batch, 800 10 stunden
 
     length_of_chain = 6*6*2
     bins_per_symbol_hist = 100
