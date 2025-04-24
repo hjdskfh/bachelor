@@ -7,6 +7,7 @@ import time
 import inspect
 import gc
 import random
+from scipy.signal import find_peaks
 
 from saver import Saver
 from simulationengine import SimulationEngine
@@ -44,11 +45,81 @@ class SimulationManager:
             power_dampened, calc_mean_photon_nr, energy_per_pulse = self.simulation_engine.eam_transmission(signals, optical_power, T1_dampening, peak_wavelength, t)
             
             return state, t, signals, power_dampened, square_signals
+        
+        def find_fwhm_index(x, y, value = 0):
+            print(f"value: {value}")
+            x = np.array(x)
+            y = np.array(y)
 
+            # Find all peaks
+            peaks, _ = find_peaks(y)
+            if len(peaks) == 0:
+                raise ValueError("No peaks found in the data.")
+
+            # Select the first peak
+            if value == 0:
+                peak_idx = peaks[1]
+            else:
+                peak_idx = peaks[0]
+            peak_value = y[peak_idx]
+            half_max = peak_value / 2.0
+
+            # Find the index where the signal crosses half-max on the left
+            left_idx = None
+            for i in range(peak_idx - 1, -1, -1):
+                if y[i] < half_max:
+                    left_idx = i
+                    break
+
+            # Find the index where the signal crosses half-max on the right
+            right_idx = None
+            for i in range(peak_idx + 1, len(y)):
+                if y[i] < half_max:
+                    right_idx = i
+                    break
+
+            # Ensure both indices are found
+            if left_idx is None or right_idx is None:
+                raise ValueError("Could not find both left and right indices for FWHM.")
+
+            # Calculate the FWHM
+            fwhm = x[right_idx] - x[left_idx]
+            return fwhm, x[left_idx], x[right_idx]
+        
+        def find_fwhm_index_old(x, y):
+            x = np.array(x)
+            y = np.array(y)
+
+            # Get the half-maximum value
+            max_val = np.max(y)
+            half_max = max_val / 2.0
+
+            # Find the index of the closest value to half-max on the left
+            left_idx = np.argmin(np.abs(y[:len(y)//2] - half_max))  # Only search left of the peak
+            left_x = x[left_idx]
+            
+            # Find the index of the closest value to half-max on the right
+            right_idx = np.argmin(np.abs(y[len(y)//2:] - half_max)) #+ len(y)//2  # Only search right of the peak
+            right_x = x[right_idx]
+            # peak_idx = np.argmin(np.abs(y[len(y)//2:] - half_max)) #+ len(y)//2  # Only search right of the peak
+            # right_idx = left_idx + 2 *(peak_idx - left_idx)
+            # right_x = x[right_idx]
+            # peak_x = x[peak_idx]
+            
+            # Calculate the FWHM (difference in x)
+            fwhm = right_x - left_x
+            
+            return fwhm, right_x, left_x#, peak_x
+        
         # Plotting results sequentially to avoid threading issues with Matplotlib
         for state in states:
             state, t, signals, power_dampened, square_signals = process_state(state)
             chosen_index = 10
+
+            fwhm, left_x, right_x = find_fwhm_index(t, power_dampened[chosen_index], state["value"])
+            print(f"len(t): {len(t)}, len(power_dampened): {len(power_dampened[chosen_index])}, chosen_index: {chosen_index}")
+            print(f"FWHM for {state['title']}: {fwhm} ns, left indices: {left_x}, right indices: {right_x}")
+            
             fig, ax = plt.subplots(figsize=(8, 5))
 
             # Plot voltage (left y-axis)
@@ -82,6 +153,8 @@ class SimulationManager:
 
             # Plot transmission (right y-axis)
             ax2.plot(t * 1e9, power_dampened[chosen_index], color='red', label='Laser Pulse')
+            plt.axvline(left_x * 1e9, color='grey', linestyle='--', label=f'x1 = {left_x:.2e}')
+            plt.axvline(right_x * 1e9, color='grey', linestyle='--', label=f'x2 = {right_x:.2e} with FWHM = {fwhm:.2e}')
             ax2.set_ylabel('Transmission', color='red')
             ax2.tick_params(axis='y', labelcolor='red')
 
@@ -951,8 +1024,8 @@ class SimulationManager:
             destructive_port = destructive_port.reshape(-1)
             return chosen_voltage[0], peak_wavelength[0], destructive_port, original_power, t
         
-        voltage_values = np.arange(-2, -1.65, 0.001)  # Example range of mean_voltage
-        # voltage_values = np.arange(-2.2, -0.2, 0.002)
+        #voltage_values = np.arange(-1.73, -1.67, 0.001)  # Example range of mean_voltage
+        voltage_values = np.arange(-1.75, -1.3, 0.007)
         results = []
         wavelengths_nm = []
         
@@ -1166,9 +1239,9 @@ class SimulationManager:
         optical_power, peak_wavelength, chosen_voltage, chosen_current = self.simulation_engine.random_laser_output('current_power', 'voltage_shift', fixed = True)
         print(f"peak_wavelegth: {peak_wavelength[:10]}")
         # Generate Alice's choices
-        # basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=np.array([1,0,1]), value=np.array([1,-1, 0]), decoy=np.array([0,0,0]))
+        basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=np.array([1,0,1]), value=np.array([1,-1, 0]), decoy=np.array([0,0,0]))
         # basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=np.array([0,0,1]), value=np.array([-1,-1,0]), decoy=np.array([0]))
-        basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=np.array([1]), value=np.array([1]), decoy=np.array([0]))
+        # basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=np.array([1]), value=np.array([1]), decoy=np.array([0]))
         # basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=np.array([0]), value=np.array([-1]), decoy=np.array([0]))
         # basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=np.array([0,1]), value=np.array([-1, 0]), decoy=np.array([0,0]))
         # basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=np.array([0,1]), value=np.array([-1, 1]), decoy=np.array([0,0]))
@@ -1368,7 +1441,7 @@ class SimulationManager:
         # basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=np.array([1, 0, 0, 1, 1, 1, 1, 0, 0, 1]), value=np.array([1, -1, -1, 0, 0, 1, 1, -1, -1, 0]), decoy=np.array([0, 0, 0, 0, 0, 0, 1, 1, 1, 1]))
         # basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=np.array([1, 0, 0, 1, 1, 0, 0, 1]), value=np.array([1, -1, -1, 0, 1, -1, -1, 0]), decoy=np.array([0, 0, 0, 0, 1, 1, 1, 1]))
         # basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=np.array([1,0,1]), value=np.array([1,-1, 0]), decoy=np.array([0,0,0]))
-        # basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=np.array([0,1]), value=np.array([-1, 0]), decoy=np.array([0,0]))
+        # basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=np.array([1]), value=np.array([1]), decoy=np.array([0]))
         basis, value, decoy = self.simulation_engine.generate_alice_choices()
         # print(f"basis: {basis[:10]}")
         # print(f"value: {value[:10]}")
@@ -1412,15 +1485,15 @@ class SimulationManager:
         # self.plotter.plot_power(t, power_dampened, amount_symbols_in_plot=20, where_plot_1='bob basis X')
 
         #plot
-        '''amount_symbols_in_first_part = 30
-        first_power = power_dampened[:amount_symbols_in_first_part].copy()'''
+        amount_symbols_in_first_part = 10
+        first_power = power_dampened[:amount_symbols_in_first_part].copy()
 
         # DLI
         power_dampened, f_0 = self.simulation_engine.delay_line_interferometer(power_dampened, t, peak_wavelength, value)
 
         # plot
-        '''assert power_dampened.shape[1] == len(t), f"Mismatch: power_dampened has {power_dampened.shape[1]} samples per symbol, t has {len(t)}!"
-        self.plotter.plot_power(t, power_dampened, amount_symbols_in_plot=amount_symbols_in_first_part, where_plot_1='before DLI',  shortened_first_power=first_power, where_plot_2='after DLI,', title_rest='- in fft, mean_volt: ' + str("{:.4f}".format(self.config.mean_voltage)) + ' voltage: ' + str("{:.4f}".format(chosen_voltage[0])) + ' V and ' + str("{:.8f}".format(peak_wavelength[0])))'''
+        assert power_dampened.shape[1] == len(t), f"Mismatch: power_dampened has {power_dampened.shape[1]} samples per symbol, t has {len(t)}!"
+        self.plotter.plot_power(t, power_dampened, amount_symbols_in_plot=amount_symbols_in_first_part, where_plot_1='before DLI',  shortened_first_power=first_power, where_plot_2='after DLI,', title_rest='- in fft, mean_volt: ' + str("{:.4f}".format(self.config.mean_voltage)) + ' voltage: ' + str("{:.4f}".format(chosen_voltage[0])) + ' V and ' + str("{:.8f}".format(peak_wavelength[0])))
         
         # plt.plot(first_power.reshape(-1) * 1e3, color='blue', label='0', linestyle='-', marker='o', markersize=1)
         # Saver.save_plot(f"power_before_DLI_in_mW_outside")

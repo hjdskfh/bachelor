@@ -1,9 +1,9 @@
 {
     "round": 1,
-    "seed": 34240,
+    "seed": 937112,
     "n_samples": 20000,
     "n_pulses": 4,
-    "batchsize": 10000,
+    "batchsize": 1000,
     "mean_voltage": -1.708,
     "mean_current": 0.082111,
     "voltage_amplitude": 0.002,
@@ -20,13 +20,14 @@
     "voltage_decoy_sup": -0.2,
     "voltage_sup": -0.2,
     "mean_photon_nr": 0.182,
-    "mean_photon_decoy": 0.182,
+    "mean_photon_decoy": 0.1,
     "fiber_attenuation": -3,
     "detector_efficiency": 0.3,
     "dark_count_frequency": 1000,
     "detection_time": 1e-10,
-    "detector_jitter": 1e-11,
-    "mlp": "C:\\Users\\leavi\\bachelor\\code\\Presentation_style_1_adjusted_no_grid.mplstyle",
-    "script_name": "main.py",
-    "job_id": null
+    "detector_jitter": 5e-12,
+    "mlp": "/wang/users/leavic98/cluster_home/NeuMoQP/Programm/bachelor/code/Presentation_style_1_adjusted_no_grid.mplstyle",
+    "script_name": "main_repeat_same_cluster.py",
+    "job_id": "6746116"
+
 }

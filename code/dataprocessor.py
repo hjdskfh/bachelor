@@ -1,3 +1,4 @@
+from math import comb
 from re import M
 from tracemalloc import start
 from matplotlib.pylab import f
@@ -171,6 +172,7 @@ class DataProcessor:
 
         # Create a combined list where all pairs are stored sequentially
         combined_list = [pair for pair in all_pairs]
+        
 
         return pair_mapping, combined_list
 
@@ -293,14 +295,16 @@ class DataProcessor:
         
         return local_histogram_counts_z, local_histogram_counts_x, combined_list
     
-    def plot_histogram_batch_random(bins_per_symbol, time_one_symbol, histogram_counts_x, histogram_counts_z, combined_list, total_symbols, start_pair=3, end_pair=10, name=' ', leave_x = False, leave_z = False):
-        assert 0 <= start_pair <= end_pair <= 36
+    def plot_histogram_batch_random(bins_per_symbol, time_one_symbol, histogram_counts_x, histogram_counts_z, combined_list, total_symbols, start_pair=3, end_pair=10, name=' ', leave_x = False, leave_z = False, p_decoy = None):
+        assert 0 <= start_pair <= end_pair <= 35
         def normalize_histogram(histogram_counts, slice_start, slice_end, bins_per_symbol):
             # Get the maximum value in the specified slice
             max_in_slice = np.max(histogram_counts[slice_start * bins_per_symbol:(slice_end + 1) * bins_per_symbol]) if np.max(histogram_counts[slice_start * bins_per_symbol:(slice_end + 1) * bins_per_symbol]) > 0 else 1
             # Normalize the entire histogram using the maximum value in the slice
             normalized_histogram = histogram_counts / max_in_slice
             return normalized_histogram
+        
+        print(f"combined_list: {combined_list}")
        
         amount_of_pairs_incl_start_and_end = end_pair - start_pair + 1
         amount_symbols = 2*amount_of_pairs_incl_start_and_end
@@ -312,22 +316,26 @@ class DataProcessor:
         bins = np.linspace(0, amount_symbols * time_one_symbol, bins_per_symbol * amount_symbols + 1)    
         
         # Normalize histogram counts so the highest peak is at 1
-        histogram_counts_x = normalize_histogram(histogram_counts_x, start_symbol, end_symbol + 1, bins_per_symbol)
-        histogram_counts_z = normalize_histogram(histogram_counts_z, start_symbol, end_symbol + 1, bins_per_symbol)
+        norm_histogram_counts_x = normalize_histogram(histogram_counts_x, start_symbol, end_symbol + 1, bins_per_symbol)
+        norm_histogram_counts_z = normalize_histogram(histogram_counts_z, start_symbol, end_symbol + 1, bins_per_symbol)
 
         plt.figure(figsize=(10, 6))
         # Plot as bar chart; you can also use plt.hist with precomputed counts.
         width = (bins[1] - bins[0])
         if leave_x == False:
-            plt.bar(bins[:-1], histogram_counts_x[(start_symbol) * bins_per_symbol :((end_symbol) + 1) * bins_per_symbol], width=width, alpha=0.6, label='X basis', color='blue')
+            plt.bar(bins[:-1], norm_histogram_counts_x[(start_symbol) * bins_per_symbol :((end_symbol) + 1) * bins_per_symbol], width=width, alpha=0.6, label='X basis', color='blue')
         if leave_z == False:
-            plt.bar(bins[:-1], histogram_counts_z[(start_symbol) * bins_per_symbol :((end_symbol) + 1) * bins_per_symbol], width=width, alpha=0.6, label='Z basis', color='red')
+            plt.bar(bins[:-1], norm_histogram_counts_z[(start_symbol) * bins_per_symbol :((end_symbol) + 1) * bins_per_symbol], width=width, alpha=0.6, label='Z basis', color='red')
 
         for i in range(amount_symbols):
-            plt.axvline(x=i * time_one_symbol, color='grey', linestyle='--', linewidth=1)
+            if (start_symbol + i) % 2 == 0:
+                plt.axvline(x=i * time_one_symbol, color='grey', linestyle='--', linewidth=3)
+            else:
+                plt.axvline(x=i * time_one_symbol, color='grey', linestyle='--', linewidth=1)
 
             # Place the symbol halfway between this line and the next
             if i < amount_symbols:
+                print(f"blub")
                 x_mid = i * time_one_symbol + time_one_symbol / 2
                 symbol_index = (start_symbol + i) // 2
                 if (start_symbol + i)  % 2 == 0:
@@ -337,17 +345,19 @@ class DataProcessor:
                 print(f"symbol: {symbol}")
 
                 if leave_x == False and leave_z == False:
-                    y_max = max(max(histogram_counts_x), max(histogram_counts_z))
+                    y_max = max(max(norm_histogram_counts_x), max(norm_histogram_counts_z))
                 elif leave_x == False:
-                    y_max = max(histogram_counts_x)
+                    y_max = max(norm_histogram_counts_x)
                 elif leave_z == False:
-                    y_max = max(histogram_counts_z)
+                    y_max = max(norm_histogram_counts_z)
                 else:
                     y_max = 1  # Default value if neither histogram is plotted
                 basis = symbol[0]  # assuming symbol is like 'X0' or 'Z1'
                 color = 'green' if basis == 'X' else 'purple'
-
+                print(f"blub2")
                 plt.text(x_mid, y_max * 0.9, symbol, ha='center', va='bottom', fontsize=14, color=color, fontweight='bold')
+        
+        plt.axvline(x=amount_symbols * time_one_symbol, color='grey', linestyle='--', linewidth=3)
 
         plt.xlabel("Time ")
         plt.ylabel("Cumulative Counts")

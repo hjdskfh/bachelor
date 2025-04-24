@@ -1,0 +1,172 @@
+[Before everything] Memory used: 144.05 MB
+Configuration saved to C:\Users\leavi\bachelor\logs\simulation_config_20250424_204404.json
+Execution time for reading: 0.017449617 seconds for 20 samples
+Error: The difference between non_signal_voltage and voltage is not 1
+seed: 815567
+T1_dampening at initialize end: 19.582748413085938
+voltage at initialize end: 0.2
+Voltage_decoy at initialize end: -0.93721704185009
+Voltage_decoy_sup at initialize end: -1.0828578025102618
+Voltage_sup at initialize end: -0.2262116879224777
+f_0: 193309301331660.88, i: 0, batchsize: 10, peak_wavelength[i]: 1.5508434200258472e-06
+f_0: 193309301331660.88, i: 10, batchsize: 10, peak_wavelength[i]: 1.5508434200258472e-06
+f_0: 193310071273131.25, i: 0, batchsize: 10, peak_wavelength[i]: 1.5508372431171363e-06
+f_0: 193310071273131.25, i: 10, batchsize: 10, peak_wavelength[i]: 1.5508372431171363e-06
+f_0: 193310839173479.1, i: 0, batchsize: 10, peak_wavelength[i]: 1.550831082632481e-06
+f_0: 193310839173479.1, i: 10, batchsize: 10, peak_wavelength[i]: 1.550831082632481e-06
+f_0: 193311605017609.16, i: 0, batchsize: 10, peak_wavelength[i]: 1.5508249386925905e-06
+f_0: 193311605017609.16, i: 10, batchsize: 10, peak_wavelength[i]: 1.5508249386925905e-06
+f_0: 193312368790425.62, i: 0, batchsize: 10, peak_wavelength[i]: 1.5508188114181761e-06
+f_0: 193312368790425.62, i: 10, batchsize: 10, peak_wavelength[i]: 1.5508188114181761e-06
+f_0: 193313130476832.53, i: 0, batchsize: 10, peak_wavelength[i]: 1.5508127009299475e-06
+f_0: 193313130476832.53, i: 10, batchsize: 10, peak_wavelength[i]: 1.5508127009299475e-06
+f_0: 193313890061733.44, i: 0, batchsize: 10, peak_wavelength[i]: 1.550806607348615e-06
+f_0: 193313890061733.44, i: 10, batchsize: 10, peak_wavelength[i]: 1.550806607348615e-06
+f_0: 193314647530031.7, i: 0, batchsize: 10, peak_wavelength[i]: 1.550800530794889e-06
+f_0: 193314647530031.7, i: 10, batchsize: 10, peak_wavelength[i]: 1.550800530794889e-06
+f_0: 193315402866630.16, i: 0, batchsize: 10, peak_wavelength[i]: 1.5507944713894795e-06
+f_0: 193315402866630.16, i: 10, batchsize: 10, peak_wavelength[i]: 1.5507944713894795e-06
+f_0: 193316156056431.56, i: 0, batchsize: 10, peak_wavelength[i]: 1.5507884292530967e-06
+f_0: 193316156056431.56, i: 10, batchsize: 10, peak_wavelength[i]: 1.5507884292530967e-06
+f_0: 193316907084338.1, i: 0, batchsize: 10, peak_wavelength[i]: 1.5507824045064511e-06
+f_0: 193316907084338.1, i: 10, batchsize: 10, peak_wavelength[i]: 1.5507824045064511e-06
+f_0: 193317655935251.75, i: 0, batchsize: 10, peak_wavelength[i]: 1.5507763972702527e-06
+f_0: 193317655935251.75, i: 10, batchsize: 10, peak_wavelength[i]: 1.5507763972702527e-06
+f_0: 193318402594074.25, i: 0, batchsize: 10, peak_wavelength[i]: 1.5507704076652116e-06
+f_0: 193318402594074.25, i: 10, batchsize: 10, peak_wavelength[i]: 1.5507704076652116e-06
+f_0: 193319147045706.84, i: 0, batchsize: 10, peak_wavelength[i]: 1.550764435812038e-06
+f_0: 193319147045706.84, i: 10, batchsize: 10, peak_wavelength[i]: 1.550764435812038e-06
+f_0: 193319889275050.53, i: 0, batchsize: 10, peak_wavelength[i]: 1.5507584818314428e-06
+f_0: 193319889275050.53, i: 10, batchsize: 10, peak_wavelength[i]: 1.5507584818314428e-06
+f_0: 193320629267006.12, i: 0, batchsize: 10, peak_wavelength[i]: 1.5507525458441354e-06
+f_0: 193320629267006.12, i: 10, batchsize: 10, peak_wavelength[i]: 1.5507525458441354e-06
+f_0: 193321367006473.94, i: 0, batchsize: 10, peak_wavelength[i]: 1.5507466279708263e-06
+f_0: 193321367006473.94, i: 10, batchsize: 10, peak_wavelength[i]: 1.5507466279708263e-06
+f_0: 193322102478354.06, i: 0, batchsize: 10, peak_wavelength[i]: 1.550740728332226e-06
+f_0: 193322102478354.06, i: 10, batchsize: 10, peak_wavelength[i]: 1.550740728332226e-06
+f_0: 193322835667546.34, i: 0, batchsize: 10, peak_wavelength[i]: 1.5507348470490444e-06
+f_0: 193322835667546.34, i: 10, batchsize: 10, peak_wavelength[i]: 1.5507348470490444e-06
+f_0: 193323566558950.25, i: 0, batchsize: 10, peak_wavelength[i]: 1.5507289842419917e-06
+f_0: 193323566558950.25, i: 10, batchsize: 10, peak_wavelength[i]: 1.5507289842419917e-06
+f_0: 193324295137465.06, i: 0, batchsize: 10, peak_wavelength[i]: 1.550723140031778e-06
+f_0: 193324295137465.06, i: 10, batchsize: 10, peak_wavelength[i]: 1.550723140031778e-06
+f_0: 193325021387989.56, i: 0, batchsize: 10, peak_wavelength[i]: 1.5507173145391142e-06
+f_0: 193325021387989.56, i: 10, batchsize: 10, peak_wavelength[i]: 1.5507173145391142e-06
+f_0: 193325745295422.5, i: 0, batchsize: 10, peak_wavelength[i]: 1.55071150788471e-06
+f_0: 193325745295422.5, i: 10, batchsize: 10, peak_wavelength[i]: 1.55071150788471e-06
+f_0: 193326466844662.22, i: 0, batchsize: 10, peak_wavelength[i]: 1.5507057201892755e-06
+f_0: 193326466844662.22, i: 10, batchsize: 10, peak_wavelength[i]: 1.5507057201892755e-06
+f_0: 193327186020606.75, i: 0, batchsize: 10, peak_wavelength[i]: 1.550699951573521e-06
+f_0: 193327186020606.75, i: 10, batchsize: 10, peak_wavelength[i]: 1.550699951573521e-06
+f_0: 193327902808153.94, i: 0, batchsize: 10, peak_wavelength[i]: 1.5506942021581571e-06
+f_0: 193327902808153.94, i: 10, batchsize: 10, peak_wavelength[i]: 1.5506942021581571e-06
+f_0: 193328617192201.25, i: 0, batchsize: 10, peak_wavelength[i]: 1.5506884720638937e-06
+f_0: 193328617192201.25, i: 10, batchsize: 10, peak_wavelength[i]: 1.5506884720638937e-06
+f_0: 193329329157646.06, i: 0, batchsize: 10, peak_wavelength[i]: 1.550682761411441e-06
+f_0: 193329329157646.06, i: 10, batchsize: 10, peak_wavelength[i]: 1.550682761411441e-06
+f_0: 193330038689385.25, i: 0, batchsize: 10, peak_wavelength[i]: 1.5506770703215094e-06
+f_0: 193330038689385.25, i: 10, batchsize: 10, peak_wavelength[i]: 1.5506770703215094e-06
+f_0: 193330745772315.66, i: 0, batchsize: 10, peak_wavelength[i]: 1.550671398914809e-06
+f_0: 193330745772315.66, i: 10, batchsize: 10, peak_wavelength[i]: 1.550671398914809e-06
+f_0: 193331450391333.7, i: 0, batchsize: 10, peak_wavelength[i]: 1.55066574731205e-06
+f_0: 193331450391333.7, i: 10, batchsize: 10, peak_wavelength[i]: 1.55066574731205e-06
+f_0: 193332152531335.66, i: 0, batchsize: 10, peak_wavelength[i]: 1.5506601156339426e-06
+f_0: 193332152531335.66, i: 10, batchsize: 10, peak_wavelength[i]: 1.5506601156339426e-06
+f_0: 193332852177217.53, i: 0, batchsize: 10, peak_wavelength[i]: 1.550654504001197e-06
+f_0: 193332852177217.53, i: 10, batchsize: 10, peak_wavelength[i]: 1.550654504001197e-06
+f_0: 193333549313874.97, i: 0, batchsize: 10, peak_wavelength[i]: 1.550648912534524e-06
+f_0: 193333549313874.97, i: 10, batchsize: 10, peak_wavelength[i]: 1.550648912534524e-06
+f_0: 193334243926203.62, i: 0, batchsize: 10, peak_wavelength[i]: 1.5506433413546328e-06
+f_0: 193334243926203.62, i: 10, batchsize: 10, peak_wavelength[i]: 1.5506433413546328e-06
+f_0: 193334935999098.66, i: 0, batchsize: 10, peak_wavelength[i]: 1.5506377905822342e-06
+f_0: 193334935999098.66, i: 10, batchsize: 10, peak_wavelength[i]: 1.5506377905822342e-06
+f_0: 193335625517452.03, i: 0, batchsize: 10, peak_wavelength[i]: 1.5506322603380633e-06
+f_0: 193335625517452.03, i: 10, batchsize: 10, peak_wavelength[i]: 1.5506322603380633e-06
+f_0: 193336312465887.97, i: 0, batchsize: 10, peak_wavelength[i]: 1.5506267507450005e-06
+f_0: 193336312465887.97, i: 10, batchsize: 10, peak_wavelength[i]: 1.5506267507450005e-06
+f_0: 193336996828558.9, i: 0, batchsize: 10, peak_wavelength[i]: 1.5506212619297082e-06
+f_0: 193336996828558.9, i: 10, batchsize: 10, peak_wavelength[i]: 1.5506212619297082e-06
+f_0: 193337678589569.1, i: 0, batchsize: 10, peak_wavelength[i]: 1.5506157940192333e-06
+f_0: 193337678589569.1, i: 10, batchsize: 10, peak_wavelength[i]: 1.5506157940192333e-06
+f_0: 193338357733022.62, i: 0, batchsize: 10, peak_wavelength[i]: 1.5506103471406223e-06
+f_0: 193338357733022.62, i: 10, batchsize: 10, peak_wavelength[i]: 1.5506103471406223e-06
+f_0: 193339034243023.12, i: 0, batchsize: 10, peak_wavelength[i]: 1.5506049214209228e-06
+f_0: 193339034243023.12, i: 10, batchsize: 10, peak_wavelength[i]: 1.5506049214209228e-06
+f_0: 193339708103674.3, i: 0, batchsize: 10, peak_wavelength[i]: 1.5505995169871813e-06
+f_0: 193339708103674.3, i: 10, batchsize: 10, peak_wavelength[i]: 1.5505995169871813e-06
+f_0: 193340379299079.44, i: 0, batchsize: 10, peak_wavelength[i]: 1.5505941339664447e-06
+f_0: 193340379299079.44, i: 10, batchsize: 10, peak_wavelength[i]: 1.5505941339664447e-06
+f_0: 193341047813341.6, i: 0, batchsize: 10, peak_wavelength[i]: 1.5505887724857602e-06
+f_0: 193341047813341.6, i: 10, batchsize: 10, peak_wavelength[i]: 1.5505887724857602e-06
+f_0: 193341713630563.7, i: 0, batchsize: 10, peak_wavelength[i]: 1.5505834326721745e-06
+f_0: 193341713630563.7, i: 10, batchsize: 10, peak_wavelength[i]: 1.5505834326721745e-06
+f_0: 193342376734848.4, i: 0, batchsize: 10, peak_wavelength[i]: 1.5505781146527346e-06
+f_0: 193342376734848.4, i: 10, batchsize: 10, peak_wavelength[i]: 1.5505781146527346e-06
+f_0: 193343037110298.25, i: 0, batchsize: 10, peak_wavelength[i]: 1.5505728185544874e-06
+f_0: 193343037110298.25, i: 10, batchsize: 10, peak_wavelength[i]: 1.5505728185544874e-06
+f_0: 193343694741015.47, i: 0, batchsize: 10, peak_wavelength[i]: 1.5505675445044795e-06
+f_0: 193343694741015.47, i: 10, batchsize: 10, peak_wavelength[i]: 1.5505675445044795e-06
+f_0: 193344349611102.1, i: 0, batchsize: 10, peak_wavelength[i]: 1.5505622926297584e-06
+f_0: 193344349611102.1, i: 10, batchsize: 10, peak_wavelength[i]: 1.5505622926297584e-06
+f_0: 193345001704660.03, i: 0, batchsize: 10, peak_wavelength[i]: 1.5505570630573708e-06
+f_0: 193345001704660.03, i: 10, batchsize: 10, peak_wavelength[i]: 1.5505570630573708e-06
+f_0: 193345651005790.97, i: 0, batchsize: 10, peak_wavelength[i]: 1.5505518559143636e-06
+f_0: 193345651005790.97, i: 10, batchsize: 10, peak_wavelength[i]: 1.5505518559143636e-06
+f_0: 193346297498596.4, i: 0, batchsize: 10, peak_wavelength[i]: 1.5505466713277833e-06
+f_0: 193346297498596.4, i: 10, batchsize: 10, peak_wavelength[i]: 1.5505466713277833e-06
+f_0: 193346941167177.66, i: 0, batchsize: 10, peak_wavelength[i]: 1.5505415094246777e-06
+f_0: 193346941167177.66, i: 10, batchsize: 10, peak_wavelength[i]: 1.5505415094246777e-06
+f_0: 193347581995635.88, i: 0, batchsize: 10, peak_wavelength[i]: 1.550536370332093e-06
+f_0: 193347581995635.88, i: 10, batchsize: 10, peak_wavelength[i]: 1.550536370332093e-06
+f_0: 193348219968072.06, i: 0, batchsize: 10, peak_wavelength[i]: 1.5505312541770764e-06
+f_0: 193348219968072.06, i: 10, batchsize: 10, peak_wavelength[i]: 1.5505312541770764e-06
+f_0: 193348855068586.94, i: 0, batchsize: 10, peak_wavelength[i]: 1.550526161086675e-06
+f_0: 193348855068586.94, i: 10, batchsize: 10, peak_wavelength[i]: 1.550526161086675e-06
+f_0: 193349487281281.25, i: 0, batchsize: 10, peak_wavelength[i]: 1.5505210911879352e-06
+f_0: 193349487281281.25, i: 10, batchsize: 10, peak_wavelength[i]: 1.5505210911879352e-06
+f_0: 193350116590255.44, i: 0, batchsize: 10, peak_wavelength[i]: 1.5505160446079043e-06
+f_0: 193350116590255.44, i: 10, batchsize: 10, peak_wavelength[i]: 1.5505160446079043e-06
+f_0: 193350742979609.8, i: 0, batchsize: 10, peak_wavelength[i]: 1.5505110214736294e-06
+f_0: 193350742979609.8, i: 10, batchsize: 10, peak_wavelength[i]: 1.5505110214736294e-06
+f_0: 193351366433444.66, i: 0, batchsize: 10, peak_wavelength[i]: 1.5505060219121568e-06
+f_0: 193351366433444.66, i: 10, batchsize: 10, peak_wavelength[i]: 1.5505060219121568e-06
+f_0: 193351986935859.94, i: 0, batchsize: 10, peak_wavelength[i]: 1.550501046050534e-06
+f_0: 193351986935859.94, i: 10, batchsize: 10, peak_wavelength[i]: 1.550501046050534e-06
+f_0: 193352604470955.6, i: 0, batchsize: 10, peak_wavelength[i]: 1.5504960940158076e-06
+f_0: 193352604470955.6, i: 10, batchsize: 10, peak_wavelength[i]: 1.5504960940158076e-06
+f_0: 193353219022831.38, i: 0, batchsize: 10, peak_wavelength[i]: 1.5504911659350247e-06
+f_0: 193353219022831.38, i: 10, batchsize: 10, peak_wavelength[i]: 1.5504911659350247e-06
+f_0: 193353830575586.94, i: 0, batchsize: 10, peak_wavelength[i]: 1.5504862619352322e-06
+f_0: 193353830575586.94, i: 10, batchsize: 10, peak_wavelength[i]: 1.5504862619352322e-06
+t: [0.e+00 1.e-13 2.e-13 3.e-13 4.e-13] with 20 samples
+t_all_symbols: [0.e+00 1.e-13 2.e-13 3.e-13 4.e-13] with 20 samples
+shape of t: (6152,)
+target_time_ns:0.46153846153846156, target_index: 4615, len(t_all_symbols): 123040, len(t): 6152
+wavelengths_nm: [1.55084342e-06 1.55083724e-06 1.55083108e-06 1.55082494e-06
+ 1.55081881e-06 1.55081270e-06 1.55080661e-06 1.55080053e-06
+ 1.55079447e-06 1.55078843e-06 1.55078240e-06 1.55077640e-06
+ 1.55077041e-06 1.55076444e-06 1.55075848e-06 1.55075255e-06
+ 1.55074663e-06 1.55074073e-06 1.55073485e-06 1.55072898e-06
+ 1.55072314e-06 1.55071731e-06 1.55071151e-06 1.55070572e-06
+ 1.55069995e-06 1.55069420e-06 1.55068847e-06 1.55068276e-06
+ 1.55067707e-06 1.55067140e-06 1.55066575e-06 1.55066012e-06
+ 1.55065450e-06 1.55064891e-06 1.55064334e-06 1.55063779e-06
+ 1.55063226e-06 1.55062675e-06 1.55062126e-06 1.55061579e-06
+ 1.55061035e-06 1.55060492e-06 1.55059952e-06 1.55059413e-06
+ 1.55058877e-06 1.55058343e-06 1.55057811e-06 1.55057282e-06
+ 1.55056754e-06 1.55056229e-06 1.55055706e-06 1.55055186e-06
+ 1.55054667e-06 1.55054151e-06 1.55053637e-06 1.55053125e-06
+ 1.55052616e-06 1.55052109e-06 1.55051604e-06 1.55051102e-06
+ 1.55050602e-06 1.55050105e-06 1.55049609e-06 1.55049117e-06
+ 1.55048626e-06]
+wavelengths_nm shape: (65,)
+amplitudes_port1 shape: (65,)
+idx_max: 34, idx_min: 6
+selected_data: [{'voltage': np.float64(-1.5120000000000036), 'wavelength': np.float64(1.5506433413546328e-06), 'destructive_port': array([1.76685443e-11, 1.76685443e-11, 1.76685443e-11, ...,
+       1.65439810e-11, 1.65434725e-11, 1.65430497e-11], shape=(123040,))}, {'voltage': np.float64(-1.7080000000000006), 'wavelength': np.float64(1.550806607348615e-06), 'destructive_port': array([3.13797687e-14, 3.13797687e-14, 3.13797687e-14, ...,
+       4.02314566e-15, 4.02092693e-15, 4.01893506e-15], shape=(123040,))}, {'voltage': np.float64(-1.610000000000002), 'wavelength': np.float64(1.550723140031778e-06), 'destructive_port': array([8.26896292e-12, 8.26896292e-12, 8.26896292e-12, ...,
+       7.72914676e-12, 7.72890804e-12, 7.72870958e-12], shape=(123040,))}]
+1.5506433413546328e-06
+1.550806607348615e-06
+1.550723140031778e-06
+Execution time for simulation: 82.758105755 seconds for 20 samples

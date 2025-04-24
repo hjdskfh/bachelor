@@ -183,7 +183,7 @@ class SimulationHelper:
     
     # ========= Delay Line Interferometer Helpers ==========
 
-    def DLI(self, P_in, dt, tau, delta_L, f_0,  n_eff, splitting_ratio = 0.5):
+    def DLI(self, P_in, dt, tau, delta_L, f_0,  n_eff, splitting_ratio = 0.5, plot = False):
         """
         Simulates the behavior of a delay line interferometer (DLI), which is used to 
         measure phase differences between two optical signals.#
@@ -209,20 +209,48 @@ class SimulationHelper:
         E_in = E0 * np.exp(1j * 2 * np.pi * f_0 * t)
         # print(f"shape E_in: {E_in.shape}")
         # Interpolate for delayed version
-        interp_real = interp1d(t, np.real(E_in), bounds_error=False, fill_value=0.0)
-        interp_imag = interp1d(t, np.imag(E_in), bounds_error=False, fill_value=0.0)
-      
+        interp_real = interp1d(t, np.real(E_in),kind='cubic', fill_value="extrapolate")
+        interp_imag = interp1d(t, np.imag(E_in),kind='cubic', fill_value="extrapolate")
         E_in_delayed = interp_real(t - tau) + 1j * interp_imag(t - tau)
-        # print(f"shape E_in_delayed: {E_in_delayed.shape}")
+        
+        # #remove 
+        remove_samples = int(0.6e-9 / dt)
+        # E_in = E_in[remove_samples:]
+        # E_in_delayed = E_in_delayed[remove_samples:]
+        # t = t[remove_samples:]
 
+        #Plot the real and imaginary parts of the interpolated signal
+        if plot == True:
+            plt.figure(figsize=(10, 4))
+            plt.plot(t * 1e9, np.real(E_in), label="Real Part")
+            plt.plot(t * 1e9, np.imag(E_in), label="Imaginary Part")
+            plt.plot(t * 1e9, np.real(E_in_delayed), label="Real Part (Delayed)", linestyle='--')
+            plt.plot(t * 1e9, np.imag(E_in_delayed), label="Imaginary Part (Delayed)", linestyle='--')
         # Phase shift from path length difference
         phi = 2 * np.pi * f_0 * n_eff * delta_L / constants.c
-        # print(f"phi: {phi}")
         E_in_delayed *= np.exp(1j * phi)
 
-        # Ideal 50/50 coupler outputs
-        E_out1 = splitting_ratio * (E_in - E_in_delayed)
-        E_out2 = (1-splitting_ratio)*1j * (E_in + E_in_delayed)
+        # Interpolate for E_in and E_in_delayed to ensure alignment
+        interp_E_in_real = interp1d(t, np.real(E_in), kind='cubic', fill_value="extrapolate")
+        interp_E_in_imag = interp1d(t, np.imag(E_in), kind='cubic', fill_value="extrapolate")
+        interp_E_in_delayed_real = interp1d(t, np.real(E_in_delayed), kind='cubic', fill_value="extrapolate")
+        interp_E_in_delayed_imag = interp1d(t, np.imag(E_in_delayed), kind='cubic', fill_value="extrapolate")
+
+        # Recalculate aligned signals
+        E_in_aligned = interp_E_in_real(t) + 1j * interp_E_in_imag(t)
+        E_in_delayed_aligned = interp_E_in_delayed_real(t) + 1j * interp_E_in_delayed_imag(t)
+      
+        E_out1 = (E_in_aligned + E_in_delayed_aligned) / np.sqrt(2)
+        E_out2 = (E_in_aligned - E_in_delayed_aligned) / np.sqrt(2)
+
+        # Calculate outputs
+        E_out1 = np.sqrt(splitting_ratio) * (E_in_aligned - E_in_delayed_aligned)
+        E_out2 = np.sqrt(1 - splitting_ratio) * 1j * (E_in_aligned + E_in_delayed_aligned)
+
+        # remove samples 
+        E_out1 = E_out1[remove_samples:]
+        E_out2 = E_out2[remove_samples:]
+        t = t[remove_samples:]
 
         return np.abs(E_out1)**2, np.abs(E_out2)**2, t
 

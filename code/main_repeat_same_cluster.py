@@ -25,8 +25,9 @@ print(f"Running SLURM Job ID: {job_id}")
 database = DataManager()
 database.add_data('data/current_power_data.csv', 'Current (mA)', 'Optical Power (mW)', 9, 'current_power') 
 database.add_data('data/voltage_shift_data.csv', 'Voltage (V)', 'Wavelength Shift (nm)', 20, 'voltage_shift')
-database.add_data('data/eam_transmission_data.csv', 'Voltage (V)', 'Transmission', 11, 'eam_transmission') 
+# database.add_data('data/eam_transmission_data.csv', 'Voltage (V)', 'Transmission', 11, 'eam_transmission') 
 database.add_data('data/wavelength_neff.csv', 'Wavelength (nm)', 'neff', 20, 'wavelength_neff')
+database.add_data('data/eam_static_results_renormalized.csv', 'Voltage (V)', 'Transmission', 16, 'eam_transmission')
 
 
 detector_jitter = 5e-12
@@ -39,20 +40,20 @@ n_samples_set = 20000
 # To be safe, use up to ~75% of 256 GB → ~192 GB usable.
 # Maximum concurrent simulations ≈ 192 / 6 ≈ 32.
 # Here we choose a conservative maximum number of parallel tasks.
-max_concurrent_tasks = 2
+max_concurrent_tasks = 3
 
 # How many simulations per batch (each batch runs sequentially inside one task)
 simulations_in_batch = 2  # adjust this to increase per-task workload
 
 # Total number of batches to run (total simulations = simulations_in_batch * total_batches)
-total_batches = 100  # e.g., total simulations = 2 * 50 = 100  # 340 circa 4,5 stunden mit 2 sim per batch
+total_batches = 300  # e.g., total simulations = 2 * 50 = 100  # 340 circa 4,5 stunden mit 2 sim per batch
 
 # Define file name
 style_file = "Presentation_style_1_adjusted_no_grid.mplstyle"
 
 base_path = os.path.dirname(os.path.abspath(__file__))
 
-config = SimulationConfig(database, n_samples=n_samples_set, p_z_alice=0.95, p_decoy=0.19, mean_photon_nr=0.182, mean_photon_decoy=0.1,
+config = SimulationConfig(database, n_samples=n_samples_set, p_z_alice=0.5, p_decoy=0.5, mean_photon_nr=0.182, mean_photon_decoy=0.1,
                  detector_jitter=detector_jitter,
                 mlp=os.path.join(base_path, style_file), script_name = os.path.basename(__file__), job_id=job_id
                 )
@@ -70,7 +71,7 @@ print(f"Execution time for reading: {execution_time_read:.9f} seconds for {confi
 def run_simulation_and_update_hist(i, base_path, style_file, database, 
                                    detector_jitter, n_samples_set):
     # Create the simulation config locally
-    config = SimulationConfig(database, seed=None, n_samples=n_samples_set,  p_z_alice=0.95, p_decoy=0.19, mean_photon_nr=0.182, mean_photon_decoy=0.1,
+    config = SimulationConfig(database, seed=None, n_samples=n_samples_set, p_z_alice=0.5, p_decoy=0.5, mean_photon_nr=0.182, mean_photon_decoy=0.1,
                 detector_jitter=detector_jitter,
                 mlp=os.path.join(base_path, style_file), script_name = os.path.basename(__file__), job_id=job_id
                 )
@@ -146,7 +147,7 @@ for len_wrong_x_dec, len_wrong_x_non_dec, len_wrong_z_dec, len_wrong_z_non_dec, 
 
 total_symbols = n_samples_set * simulations_in_batch * total_batches
 
-Saver.save_results_to_txt(global_len_wrong_x_dec=global_len_wrong_x_dec, global_len_wrong_x_non_dec=global_len_wrong_x_non_dec, global_len_wrong_z_dec=global_len_wrong_z_dec,
+Saver.save_results_to_txt(function_used = "max_4_batch_100", global_len_wrong_x_dec=global_len_wrong_x_dec, global_len_wrong_x_non_dec=global_len_wrong_x_non_dec, global_len_wrong_z_dec=global_len_wrong_z_dec,
                         global_len_wrong_z_non_dec=global_len_wrong_z_non_dec, global_len_Z_checked_dec=global_len_Z_checked_dec, global_len_Z_checked_non_dec=global_len_Z_checked_non_dec,
                         global_X_P_calc_dec=global_X_P_calc_dec, global_X_P_calc_non_dec=global_X_P_calc_non_dec, total_symbols=total_symbols)
 
