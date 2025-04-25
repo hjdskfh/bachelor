@@ -205,12 +205,13 @@ class SimulationHelper:
         # print(f"shape t: {t.shape}")
         
         # Input optical field (assuming carrier frequency)
-        E0 = np.sqrt(P_in)
+        E0 = np.sqrt(P_in/2)
         E_in = E0 * np.exp(1j * 2 * np.pi * f_0 * t)
         # print(f"shape E_in: {E_in.shape}")
         # Interpolate for delayed version
         interp_real = interp1d(t, np.real(E_in),kind='cubic', fill_value="extrapolate")
         interp_imag = interp1d(t, np.imag(E_in),kind='cubic', fill_value="extrapolate")
+
         E_in_delayed = interp_real(t - tau) + 1j * interp_imag(t - tau)
         
         # #remove 
@@ -226,26 +227,29 @@ class SimulationHelper:
             plt.plot(t * 1e9, np.imag(E_in), label="Imaginary Part")
             plt.plot(t * 1e9, np.real(E_in_delayed), label="Real Part (Delayed)", linestyle='--')
             plt.plot(t * 1e9, np.imag(E_in_delayed), label="Imaginary Part (Delayed)", linestyle='--')
+            plt.xlim(2,6)
+            plt.ylim(-0.0001,0.0001)
+            plt.legend()
+            plt.show()
+            
         # Phase shift from path length difference
         phi = 2 * np.pi * f_0 * n_eff * delta_L / constants.c
         E_in_delayed *= np.exp(1j * phi)
 
         # Interpolate for E_in and E_in_delayed to ensure alignment
-        interp_E_in_real = interp1d(t, np.real(E_in), kind='cubic', fill_value="extrapolate")
-        interp_E_in_imag = interp1d(t, np.imag(E_in), kind='cubic', fill_value="extrapolate")
-        interp_E_in_delayed_real = interp1d(t, np.real(E_in_delayed), kind='cubic', fill_value="extrapolate")
-        interp_E_in_delayed_imag = interp1d(t, np.imag(E_in_delayed), kind='cubic', fill_value="extrapolate")
+        # interp_E_in_real = interp1d(t, np.real(E_in), kind='cubic', fill_value="extrapolate")
+        # interp_E_in_imag = interp1d(t, np.imag(E_in), kind='cubic', fill_value="extrapolate")
+        # interp_E_in_delayed_real = interp1d(t, np.real(E_in_delayed), kind='cubic', fill_value="extrapolate")
+        # interp_E_in_delayed_imag = interp1d(t, np.imag(E_in_delayed), kind='cubic', fill_value="extrapolate")
 
         # Recalculate aligned signals
-        E_in_aligned = interp_E_in_real(t) + 1j * interp_E_in_imag(t)
-        E_in_delayed_aligned = interp_E_in_delayed_real(t) + 1j * interp_E_in_delayed_imag(t)
+        # E_in_aligned = interp_E_in_real(t) + 1j * interp_E_in_imag(t)
+        # E_in_delayed_aligned = interp_E_in_delayed_real(t) + 1j * interp_E_in_delayed_imag(t)
       
-        E_out1 = (E_in_aligned + E_in_delayed_aligned) / np.sqrt(2)
-        E_out2 = (E_in_aligned - E_in_delayed_aligned) / np.sqrt(2)
 
         # Calculate outputs
-        E_out1 = np.sqrt(splitting_ratio) * (E_in_aligned - E_in_delayed_aligned)
-        E_out2 = np.sqrt(1 - splitting_ratio) * 1j * (E_in_aligned + E_in_delayed_aligned)
+        E_out1 = np.sqrt(splitting_ratio) * (E_in - E_in_delayed)
+        E_out2 = np.sqrt(1 - splitting_ratio) * 1j * (E_in + E_in_delayed)
 
         # remove samples 
         E_out1 = E_out1[remove_samples:]

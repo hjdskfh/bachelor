@@ -448,21 +448,6 @@ class SimulationManager:
         
         start_time = time.time()  # Record start time
         T1_dampening = self.simulation_engine.initialize()
-        '''if  self.config.p_indep_x_states_non_dec is None or self.config.p_indep_x_states_dec is None:
-            self.config.p_indep_x_states_non_dec, len_ind_has_one_0_and_every_second_symbol_non_dec, len_ind_every_second_symbol_non_dec = self.simulation_engine.find_p_indep_states_x_for_classifier(T1_dampening, simulation_length_factor=1000, is_decoy=False)
-            self.config.p_indep_x_states_dec, len_ind_has_one_0_and_every_second_symbol_dec, len_ind_every_second_symbol_dec = self.simulation_engine.find_p_indep_states_x_for_classifier(T1_dampening, simulation_length_factor=1000, is_decoy=True)
-            # print(f"len_ind_has_one_0_and_every_second_symbol_non_dec: {len_ind_has_one_0_and_every_second_symbol_non_dec}")
-            # print(f"len_ind_has_one_0_and_every_second_symbol_dec: {len_ind_has_one_0_and_every_second_symbol_dec}")
-            # print(f"len_ind_every_second_symbol_dec: {len_ind_every_second_symbol_dec}")
-            # print(f"len_ind_every_second_symbol_non_dec: {len_ind_every_second_symbol_non_dec}")
-        
-        else:
-            len_ind_has_one_0_and_every_second_symbol_non_dec = -999
-            len_ind_has_one_0_and_every_second_symbol_dec = -999
-            len_ind_every_second_symbol_dec = -999
-            len_ind_every_second_symbol_non_dec = -999
-        # print(f"p_indep_x_states_non_dec: {self.config.p_indep_x_states_non_dec}")
-        # print(f"p_indep_x_states_dec: {self.config.p_indep_x_states_dec}")'''
 
         optical_power, peak_wavelength, chosen_voltage, chosen_current = self.simulation_engine.random_laser_output('current_power', 'voltage_shift', fixed = True)
         # Create a histogram
@@ -474,13 +459,10 @@ class SimulationManager:
     
         # Generate Alice's choices
         # basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=np.array([1, 0, 0, 1, 1, 1, 1, 0, 0, 1]), value=np.array([1, -1, -1, 0, 0, 1, 1, -1, -1, 0]), decoy=np.array([0, 0, 0, 0, 0, 0, 1, 1, 1, 1]))
-        basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=np.array([1, 0, 0, 1, 1, 0, 0, 1]), value=np.array([1, -1, -1, 0, 1, -1, -1, 0]), decoy=np.array([0, 0, 0, 0, 1, 1, 1, 1]))
+        # basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=np.array([1, 0, 0, 1, 1, 0, 0, 1]), value=np.array([1, -1, -1, 0, 1, -1, -1, 0]), decoy=np.array([0, 0, 0, 0, 1, 1, 1, 1]))
         # basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=np.array([1,0,1]), value=np.array([1,-1, 0]), decoy=np.array([0,0,0]))
         # basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=np.array([0,1]), value=np.array([-1, 0]), decoy=np.array([0,0]))
-        # basis, value, decoy = self.simulation_engine.generate_alice_choices()
-        print(f"basis: {basis[:10]}")
-        print(f"value: {value[:10]}")
-        print(f"decoy: {decoy[:10]}")
+        basis, value, decoy = self.simulation_engine.generate_alice_choices()
 
         # Simulate signal and transmission
         # Saver.memory_usage("before simulating signal: " + str("{:.3f}".format(time.time() - start_time)))
@@ -550,10 +532,6 @@ class SimulationManager:
         #plot
         amount_symbols_in_first_part = 30
         first_power = power_dampened[:amount_symbols_in_first_part].copy()
-        '''print("len(t):", len(t))
-        print("first_power.shape:", first_power.shape)
-        print("expected shape:", (amount_symbols_in_first_part, len(t)))
-        print("power_dampened.shape:", power_dampened.shape)'''
 
         # DLI
         power_dampened, f_0 = self.simulation_engine.delay_line_interferometer(power_dampened, t, peak_wavelength, value)
@@ -567,10 +545,7 @@ class SimulationManager:
 
         # Saver.memory_usage("before detector x: " + str(time.time() - start_time))
         time_photons_det_x, wavelength_photons_det_x, nr_photons_det_x, index_where_photons_det_x, calc_mean_photon_nr_detector_x, dark_count_times_x, num_dark_counts_x = self.simulation_engine.detector(t, peak_wavelength, power_dampened, start_time)        
-        np.set_printoptions(threshold=np.inf)  # disable truncation
-        print(f"calc_mean_photon_nr_detector_x part: {calc_mean_photon_nr_detector_x[:10]}")
-        print(f"calc_mean_photon_nr_detector_z part: {calc_mean_photon_nr_detector_z[:10]}")
-        print(f"nr_photons: {len(nr_photons_det_x)} {len(nr_photons_det_z)}")
+      
         # plot so I can delete
         # self.plotter.plot_and_delete_mean_photon_histogram(calc_mean_photon_nr_detector_x, target_mean_photon_nr=None, type_photon_nr="Mean Photon Number at Detector X")
         # self.plotter.plot_and_delete_mean_photon_histogram(calc_mean_photon_nr_detector_z, target_mean_photon_nr=None, type_photon_nr="Mean Photon Number at Detector Z")
@@ -588,10 +563,6 @@ class SimulationManager:
         wrong_detections_x_non_dec, qber_z_dec, qber_z_non_dec, qber_x_dec, qber_x_non_dec, raw_key_rate, \
         total_amount_detections = self.simulation_engine.classificator_new(t, time_photons_det_x, index_where_photons_det_x, time_photons_det_z, index_where_photons_det_z, basis, value, decoy)
 
-        Z0_alice_s = np.where((basis == 1) & (value == 1) & (decoy == 1))[0]  # Indices where Z0 was sent
-        XP_alice_s = np.where((basis == 0) & (decoy == 1))[0]  # Indices where XP was sent
-        Z0_XP_alice_s = XP_alice_s[np.isin(XP_alice_s - 1, Z0_alice_s)]  # Indices where Z1Z0 was sent
-        print(f"calc_mean_photon_nr_detector_x bei index XP erste wenn Z0X+: {calc_mean_photon_nr_detector_x[Z0_XP_alice_s][:10]}")
         # plot so I can delete
         # self.plotter.plot_and_delete_photon_time_histogram(time_photons_det_x, time_photons_det_z)
 
@@ -661,7 +632,7 @@ class SimulationManager:
                 execution_time_run=execution_time_run
             )
         
-        return len_wrong_x_dec, len_wrong_x_non_dec, len_wrong_z_dec, len_wrong_z_non_dec, len_Z_checked_dec, len_Z_checked_non_dec, X_P_calc_non_dec, X_P_calc_dec
+        return len_wrong_x_dec, len_wrong_x_non_dec, len_wrong_z_dec, len_wrong_z_non_dec, len_Z_checked_dec, len_Z_checked_non_dec, X_P_calc_non_dec, X_P_calc_dec, gain_Z_non_dec, gain_Z_dec, gain_X_non_dec, gain_X_dec, qber_z_dec, qber_z_non_dec, qber_x_dec, qber_x_non_dec, raw_key_rate, total_amount_detections
         
     def run_simulation_till_DLI(self):
         start_time = time.time()  # Record start time
@@ -702,7 +673,7 @@ class SimulationManager:
         power_dampened = power_dampened * (1 - self.config.p_z_bob)
 
         #plot
-        amount_symbols_in_first_part = 6
+        amount_symbols_in_first_part = 20
         shift_DLI = 0
         first_power = power_dampened[shift_DLI:shift_DLI + amount_symbols_in_first_part].copy()
 
@@ -1025,7 +996,9 @@ class SimulationManager:
             return chosen_voltage[0], peak_wavelength[0], destructive_port, original_power, t
         
         #voltage_values = np.arange(-1.73, -1.67, 0.001)  # Example range of mean_voltage
-        voltage_values = np.arange(-1.75, -1.3, 0.007)
+        # voltage_values = np.arange(-1.712, -1.7031, 0.0003)
+        # voltage_values = np.arange(-1.77, -1.735, 0.0005)  # Example range of mean_voltage
+        voltage_values = np.arange(-1.77, -1.68, 0.002)  # Example range of mean_voltage
         results = []
         wavelengths_nm = []
         

@@ -20,6 +20,7 @@ log_file = f"simulation_tracking_{timestamp}.log"
 
 # Initialize cumulative totals
 cumulative_totals = {
+    "amount_run": 0,
     "len_wrong_x_dec": 0,
     "len_wrong_x_non_dec": 0,
     "len_wrong_z_dec": 0,
@@ -28,7 +29,18 @@ cumulative_totals = {
     "len_Z_checked_non_dec": 0,
     "X_P_calc_non_dec": 0.0,
     "X_P_calc_dec": 0.0,
-    "total_symbols": 0
+    "total_symbols": 0,
+    "gain_Z_non_dec": 0.0,
+    "gain_Z_dec": 0.0,
+    "gain_X_non_dec": 0.0,
+    "gain_X_dec": 0.0,
+    "qber_z_dec": 0.0,
+    "qber_z_non_dec": 0.0,
+    "qber_x_dec": 0.0,
+    "qber_x_non_dec": 0.0,
+    "total_amount_detections": 0,
+    "gain_and_qber_not_divided_by_amount_run!": 0.0
+
 }
 
 def log_simulation_results(results):
@@ -36,6 +48,7 @@ def log_simulation_results(results):
     global cumulative_totals
 
     # Update cumulative totals
+    cumulative_totals["amount_run"] += 1
     cumulative_totals["len_wrong_x_dec"] += results["len_wrong_x_dec"]
     cumulative_totals["len_wrong_x_non_dec"] += results["len_wrong_x_non_dec"]
     cumulative_totals["len_wrong_z_dec"] += results["len_wrong_z_dec"]
@@ -45,6 +58,16 @@ def log_simulation_results(results):
     cumulative_totals["X_P_calc_non_dec"] += results["X_P_calc_non_dec"]
     cumulative_totals["X_P_calc_dec"] += results["X_P_calc_dec"]
     cumulative_totals["total_symbols"] += results["total_symbols"]
+    cumulative_totals["gain_Z_non_dec"] += results["gain_Z_non_dec"]
+    cumulative_totals["gain_Z_dec"] += results["gain_Z_dec"]
+    cumulative_totals["gain_X_non_dec"] += results["gain_X_non_dec"]
+    cumulative_totals["gain_X_dec"] += results["gain_X_dec"]
+    cumulative_totals["qber_z_dec"] += results["qber_z_dec"]
+    cumulative_totals["qber_z_non_dec"] += results["qber_z_non_dec"]
+    cumulative_totals["qber_x_dec"] += results["qber_x_dec"]
+    cumulative_totals["qber_x_non_dec"] += results["qber_x_non_dec"]
+    cumulative_totals["total_amount_detections"] += results["total_amount_detections"]
+
 
     # Write results to the log file
     with open(log_file, 'a') as f:
@@ -85,7 +108,7 @@ for simulation_run in range(100):  # Replace with your actual simulation loop
     base_path = os.path.dirname(os.path.abspath(__file__))
 
     #create simulation mean current 0.08 , mena_voltage = 0.98 weil aus voltage_sweep, 0.9835 # mean voltage mit skript 1.6094623981710416 rausbekommen
-    config = SimulationConfig(database, n_samples=20000, batchsize=1000, 
+    config = SimulationConfig(database, n_samples=20000, batchsize=1000,  p_z_alice=0.5, p_decoy=0.5, mean_photon_nr=0.182, mean_photon_decoy=0.1,
                             detector_jitter=detector_jitter, mlp=os.path.join(base_path, style_file), script_name = os.path.basename(__file__))
     simulation = SimulationManager(config)
 
@@ -100,7 +123,7 @@ for simulation_run in range(100):  # Replace with your actual simulation loop
     execution_time_read = end_time_read - start_time  # Calculate execution time for reading
     print(f"Execution time for reading: {execution_time_read:.9f} seconds for {config.n_samples} samples")
 
-    len_wrong_x_dec, len_wrong_x_non_dec, len_wrong_z_dec, len_wrong_z_non_dec, len_Z_checked_dec, len_Z_checked_non_dec, X_P_calc_non_dec, X_P_calc_dec = simulation.run_simulation_repeat(save_output = False)
+    len_wrong_x_dec, len_wrong_x_non_dec, len_wrong_z_dec, len_wrong_z_non_dec, len_Z_checked_dec, len_Z_checked_non_dec, X_P_calc_non_dec, X_P_calc_dec, gain_Z_non_dec, gain_Z_dec, gain_X_non_dec, gain_X_dec, qber_z_dec, qber_z_non_dec, qber_x_dec, qber_x_non_dec, raw_key_rate, total_amount_detections = simulation.run_simulation_classificator()
     
     # Prepare results dictionary
     results = {
@@ -112,7 +135,16 @@ for simulation_run in range(100):  # Replace with your actual simulation loop
         "len_Z_checked_non_dec": len_Z_checked_non_dec,
         "X_P_calc_non_dec": X_P_calc_non_dec,
         "X_P_calc_dec": X_P_calc_dec,
-        "total_symbols": config.n_samples
+        "total_symbols": config.n_samples,
+        "gain_Z_non_dec": gain_Z_non_dec,
+        "gain_Z_dec": gain_Z_dec,
+        "gain_X_non_dec": gain_X_non_dec,
+        "gain_X_dec": gain_X_dec,
+        "qber_z_dec": qber_z_dec,
+        "qber_z_non_dec": qber_z_non_dec,
+        "qber_x_dec": qber_x_dec,
+        "qber_x_non_dec": qber_x_non_dec,
+        "total_amount_detections": total_amount_detections
     }
     
     # Log the results
