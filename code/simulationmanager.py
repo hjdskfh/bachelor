@@ -624,7 +624,7 @@ class SimulationManager:
         optical_power, peak_wavelength, chosen_voltage, chosen_current = self.simulation_engine.random_laser_output('current_power', 'voltage_shift', fixed = True)
 
         # Generate Alice's choices
-        basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=np.array([1,0,1]), value=np.array([1,-1, 0]), decoy=np.array([0,0,0]))
+        basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=np.array([1,0,1]), value=np.array([1,-1, 0]), decoy=np.array([0,0,0,1,1,1]))
 
         # basis, value, decoy = self.simulation_engine.generate_alice_choices()
 
@@ -1193,7 +1193,7 @@ class SimulationManager:
         optical_power, peak_wavelength, chosen_voltage, chosen_current = self.simulation_engine.random_laser_output('current_power', 'voltage_shift', fixed = True)
         print(f"peak_wavelegth: {peak_wavelength[:10]}")
         # Generate Alice's choices
-        basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=np.array([1,0,1]), value=np.array([1,-1, 0]), decoy=np.array([0,0,0]))
+        basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=np.array([1,0,1]), value=np.array([1,-1, 1]), decoy=np.array([0,1,0]))
         # basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=np.array([0,0,1]), value=np.array([-1,-1,0]), decoy=np.array([0]))
         # basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=np.array([1]), value=np.array([1]), decoy=np.array([0]))
         # basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=np.array([0]), value=np.array([-1]), decoy=np.array([0]))
@@ -1213,6 +1213,12 @@ class SimulationManager:
         # print(f"mean_photon_nr after EAM: {self.simulation_helper.calculate_mean_photon_number(power_dampened, peak_wavelength, t)[:20]}")
         mean_photon_after_eam = self.simulation_helper.calculate_mean_photon_number(power_dampened, peak_wavelength, t)[:20]
         
+        second_xp_mean_photon_after_eam_detector = mean_photon_after_eam[1::3]
+        print(f"second_xp_mwan_photon_after_eam_dec: {second_xp_mean_photon_after_eam_detector}")
+        print(f"mean of second_xp_mean..:{np.mean(second_xp_mean_photon_after_eam_detector)}")
+        indices_where_second_xp = np.arange(1, self.config.n_samples, 3)
+        print(f"indices_where_second_xp: {indices_where_second_xp}")
+        
         power_dampened = self.simulation_engine.fiber_attenuation(power_dampened)
         print(f"mean_photon_nr after fiber: {self.simulation_helper.calculate_mean_photon_number(power_dampened, peak_wavelength, t)[:20]}")
         mean_photon_after_fiber = self.simulation_helper.calculate_mean_photon_number(power_dampened, peak_wavelength, t)[:20]
@@ -1222,6 +1228,13 @@ class SimulationManager:
         power_dampened = power_dampened * self.config.p_z_bob
         time_photons_det_z, wavelength_photons_det_z, nr_photons_det_z, index_where_photons_det_z, \
         calc_mean_photon_nr_detector_z, dark_count_times_z, num_dark_counts_z = self.simulation_engine.detector(t, peak_wavelength, power_dampened, start_time)
+
+        second_xp_mean_photon_at_z_detector = calc_mean_photon_nr_detector_z[1::3]
+        print(f"second_xp_mwan_photon_at_z_dec: {second_xp_mean_photon_at_z_detector}")
+        print(f"mean of second_xp_mean..:{np.mean(second_xp_mean_photon_at_z_detector)}")
+        indices_where_second_xp = np.arange(1, self.config.n_samples, 3)
+        print(f"indices_where_second_xp: {indices_where_second_xp}")
+
         power_dampened = power_dampened / self.config.p_z_bob
 
         # self.plotter.plot_power(t, power_dampened, amount_symbols_in_plot=20, where_plot_1='after Z det')
