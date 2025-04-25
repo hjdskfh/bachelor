@@ -15,47 +15,6 @@ import json
 import re
 from collections import defaultdict
 
-def extract_last_cumulative_totals_old(log_file_path):
-    cumulative_totals = defaultdict(float)
-    constant_fields = {"p_z_alice", "p_decoy", "p_z_bob", "mu_signal", "mu_decoy"}
-
-    with open(log_file_path, 'r') as f:
-        lines = f.readlines()
-
-    in_cumulative = False
-    last_cumulative_data = {}
-
-    for line in lines:
-        if "Cumulative Totals:" in line:
-            in_cumulative = True
-            current_cumulative_data = {}
-
-        if in_cumulative:
-            if not line.strip() or re.match(r"\d{4}-\d{2}-\d{2}", line):  # End of the current section
-                if current_cumulative_data:
-                    last_cumulative_data = current_cumulative_data  # Save the last occurrence
-                in_cumulative = False
-
-            match = re.match(r"\s*(\w+):\s+([-+]?[0-9]*\.?[0-9]+)", line)
-            if match:
-                key, val = match.groups()
-                current_cumulative_data[key] = float(val)
-
-        # If the key belongs to the constant_fields group, take the first non-None value
-        for key in constant_fields:
-            if key in current_cumulative_data and current_cumulative_data[key] is not None:
-                if key not in last_cumulative_data:
-                    last_cumulative_data[key] = current_cumulative_data[key]
-
-    # Now process last_cumulative_data
-    for key, value in last_cumulative_data.items():
-        if key in constant_fields:
-            cumulative_totals[key] = value  # Just store the first non-None value
-        else:
-            cumulative_totals[key] += value  # Sum all non-constant fields
-
-    return dict(cumulative_totals)
-
 def extract_last_cumulative_totals(log_file_path):
     cumulative_totals = defaultdict(float)
     constant_fields = {"p_z_alice", "p_decoy", "p_z_bob", "mu_signal", "mu_decoy"}
@@ -148,31 +107,34 @@ with open(json_filepath, 'r') as file:
 
 log_files = ["simulation_tracking_20250425_120949.log", "simulation_tracking_20250425_120954.log", "simulation_tracking_20250425_120957.log"]
 cumulative_data = combine_cumulative_totals(log_files)
+# cumulative_data = extract_last_cumulative_totals("simulation_tracking_20250425_120949.log")
 
+n_Z_mus_in = cumulative_data["len_Z_checked_non_dec"]
+n_Z_mud_in = cumulative_data["len_Z_checked_dec"]
+n_X_mus_in = cumulative_data["len_wrong_x_non_dec"]
+n_X_mud_in = cumulative_data["len_wrong_x_dec"]
+m_Z_mus_in = cumulative_data["len_wrong_z_non_dec"]
+m_Z_mud_in = cumulative_data["len_wrong_z_dec"]
+m_X_mus_in = cumulative_data["X_P_calc_non_dec"]
+m_X_mud_in = cumulative_data["X_P_calc_dec"]
+total_symbols = cumulative_data["total_symbols"]
+print(f"n_Z_mus_in: {n_Z_mus_in}, n_Z_mud_in: {n_Z_mud_in}, n_X_mus_in: {n_X_mus_in}, n_X_mud_in: {n_X_mud_in}")
+print(f"m_Z_mus_in: {m_Z_mus_in}, m_Z_mud_in: {m_Z_mud_in}, m_X_mus_in: {m_X_mus_in}, m_X_mud_in: {m_X_mud_in}")
+print(f"total_symbols: {total_symbols}")
 
-# n_Z_mus_in = cumulative_data["len_Z_checked_non_dec"]
-# n_Z_mud_in = cumulative_data["len_Z_checked_dec"]
-# n_X_mus_in = cumulative_data["len_wrong_x_non_dec"]
-# n_X_mud_in = cumulative_data["len_wrong_x_dec"]
-# m_Z_mus_in = cumulative_data["len_wrong_z_non_dec"]
-# m_Z_mud_in = cumulative_data["len_wrong_z_dec"]
-# m_X_mus_in = cumulative_data["X_P_calc_non_dec"]
-# m_X_mud_in = cumulative_data["X_P_calc_dec"]
-# total_symbols = cumulative_data["total_symbols"]
+# m_X_mud_in = 1           # len_wrong_x_dec
+# m_X_mus_in = 4            # len_wrong_x_non_dec
 
-m_X_mud_in = 1           # len_wrong_x_dec
-m_X_mus_in = 4            # len_wrong_x_non_dec
+# m_Z_mud_in = 135          # len_wrong_z_dec
+# m_Z_mus_in = 141       # len_wrong_z_non_dec
 
-m_Z_mud_in = 135          # len_wrong_z_dec
-m_Z_mus_in = 141       # len_wrong_z_non_dec
+# n_Z_mud_in = 2539         # len_Z_checked_dec
+# n_Z_mus_in = 4920        # len_Z_checked_non_dec
 
-n_Z_mud_in = 2539         # len_Z_checked_dec
-n_Z_mus_in = 4920        # len_Z_checked_non_dec
+# n_X_mus_in = 96           # X_P_calc_dec
+# n_X_mud_in = 32           # X_P_calc_non_dec
 
-n_X_mus_in = 96           # X_P_calc_dec
-n_X_mud_in = 32           # X_P_calc_non_dec
-
-total_symbols = 1200000
+# total_symbols = 1200000
 
 manual_mpn_s = 0.182
 manual_mpn_d = 0.1
@@ -198,9 +160,10 @@ weighted_m_Z_mus = 4 * m_Z_mus_in * weight_Z * weight_s  # Z basis, signal
 weighted_m_Z_mud = 4 * m_Z_mud_in * weight_Z * weight_d  # Z basis, decoy
 weighted_m_X_mus = 4 * m_X_mus_in * weight_X * weight_s  # X basis, signal
 weighted_m_X_mud = 4 * m_X_mud_in * weight_X * weight_d  # X basis, decoy
-store_n_X_mus = weighted_n_X_mus
-weighted_n_X_mus = weighted_n_X_mud
-weighted_n_X_mud = store_n_X_mus
+
+# store_n_X_mus = weighted_n_X_mus
+# weighted_n_X_mus = weighted_n_X_mud
+# weighted_n_X_mud = store_n_X_mus
 # weighted_m_X_mus = 2.592            # weighted len_wrong_x_non_dec
 # weighted_m_X_mud = 0.152            # weighted len_wrong_x_dec
 
@@ -213,7 +176,9 @@ weighted_n_X_mud = store_n_X_mus
 # weighted_n_X_mus = 62.2             # weighted X_P_calc_non_dec
 # weighted_n_X_mud = 4.864            # weighted X_P_calc_dec
 
-total_symbols = 1200000    # weighted total_symbols
+# total_symbols = 1200000    # weighted total_symbols
+
+
 print(f"weighted_n_Z_mus: {weighted_n_Z_mus}, weighted_n_Z_mud: {weighted_n_Z_mud}, weighted_n_X_mus: {weighted_n_X_mus}, weighted_n_X_mud: {weighted_n_X_mud}")
 print(f"weighted_m_Z_mus: {weighted_m_Z_mus}, weighted_m_Z_mud: {weighted_m_Z_mud}, weighted_m_X_mus: {weighted_m_X_mus}, weighted_m_X_mud: {weighted_m_X_mud}")
 
@@ -227,7 +192,7 @@ if weighted_n_Z_mus != 0:
 else:
     factor = 1
 
-
+print(f"factor: {factor}")
 # funktionierte auch mit 10^6
 
 skr = data_processor.calc_SKR(  weighted_n_Z_mus,
