@@ -28,6 +28,7 @@ cumulative_totals = {
     "len_Z_checked_non_dec": 0,
     "X_P_calc_non_dec": 0.0,
     "X_P_calc_dec": 0.0,
+    "total_symbols": 0
 }
 
 def log_simulation_results(results):
@@ -43,6 +44,7 @@ def log_simulation_results(results):
     cumulative_totals["len_Z_checked_non_dec"] += results["len_Z_checked_non_dec"]
     cumulative_totals["X_P_calc_non_dec"] += results["X_P_calc_non_dec"]
     cumulative_totals["X_P_calc_dec"] += results["X_P_calc_dec"]
+    cumulative_totals["total_symbols"] += results["total_symbols"]
 
     # Write results to the log file
     with open(log_file, 'a') as f:
@@ -74,7 +76,7 @@ for simulation_run in range(100):  # Replace with your actual simulation loop
     database.add_data('data/eam_static_results_renormalized.csv', 'Voltage (V)', 'Transmission', 16, 'eam_transmission')
     database.add_data('data/wavelength_neff.csv', 'Wavelength (nm)', 'neff', 20, 'wavelength_neff')
 
-    detector_jitter = 1e-11
+    detector_jitter = 5e-12
     database.add_jitter(detector_jitter, 'detector')
 
     # Define file name
@@ -83,8 +85,7 @@ for simulation_run in range(100):  # Replace with your actual simulation loop
     base_path = os.path.dirname(os.path.abspath(__file__))
 
     #create simulation mean current 0.08 , mena_voltage = 0.98 weil aus voltage_sweep, 0.9835 # mean voltage mit skript 1.6094623981710416 rausbekommen
-    config = SimulationConfig(database, n_samples=20, batchsize=10, non_signal_voltage = -1.3, voltage_decoy=0.2,
-                    voltage=0.2, voltage_decoy_sup=0.2, voltage_sup=0.2, 
+    config = SimulationConfig(database, n_samples=20000, batchsize=1000, 
                             detector_jitter=detector_jitter, mlp=os.path.join(base_path, style_file), script_name = os.path.basename(__file__))
     simulation = SimulationManager(config)
 
@@ -111,6 +112,7 @@ for simulation_run in range(100):  # Replace with your actual simulation loop
         "len_Z_checked_non_dec": len_Z_checked_non_dec,
         "X_P_calc_non_dec": X_P_calc_non_dec,
         "X_P_calc_dec": X_P_calc_dec,
+        "total_symbols": config.n_samples
     }
     
     # Log the results
