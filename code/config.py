@@ -10,7 +10,7 @@ class SimulationConfig:
                  script_name = None, job_id = None
                  ):
         # Input data
-        self.data = data
+        self.data = data 
         self.round = round # count rounds where all setting are the same and eg p_indep_x is not needed
 
         # random generator / seed

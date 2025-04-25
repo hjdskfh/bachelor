@@ -13,6 +13,7 @@ import threading
 import os
 import sys
 import datetime
+import matplotlib.pyplot as plt
 
 timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
 
@@ -22,7 +23,7 @@ with open(output_file, "w") as f:
     original_stdout = sys.stdout  # Save the original stdout
     sys.stdout = f
     
-
+    plt.style.use("C:\\Users\\leavi\\bachelor\\code\\Presentation_style_1_adjusted_no_grid.mplstyle")
     Saver.memory_usage("Before everything")
 
     #measure execution time
@@ -47,7 +48,7 @@ with open(output_file, "w") as f:
     base_path = os.path.dirname(os.path.abspath(__file__))
 
     #create simulation mean current 0.08 , mena_voltage = 0.98 weil aus voltage_sweep, 0.9835 # mean voltage mit skript 1.6094623981710416 rausbekommen
-    config = SimulationConfig(database, n_samples=20, batchsize=10, mean_voltage = -1.745,
+    config = SimulationConfig(database, n_samples=200, batchsize=10, mean_voltage = -1.745, mean_photon_nr=0.01, mean_photon_decoy=0.005,
                             detector_jitter=detector_jitter, mlp=os.path.join(base_path, style_file), script_name = os.path.basename(__file__))
     simulation = SimulationManager(config)
 

@@ -1,9 +1,9 @@
-axes.titlesize : 14
-axes.labelsize : 11
+axes.titlesize : 16
+axes.labelsize : 14 # 16
 lines.linewidth : 3    # lines.marker : o
 lines.markersize : 4
-xtick.labelsize : 11
-ytick.labelsize : 11
+xtick.labelsize : 12 # 14
+ytick.labelsize : 12 # 14
 errorbar.capsize: 5
 figure.autolayout: True
 figure.dpi : 100
@@ -12,7 +12,7 @@ figure.frameon:     True
 # figure.raise_window : True
 
 legend.fancybox : True
-legend.fontsize : small
+legend.fontsize : 11
 xtick.bottom:        True
 xtick.labelbottom:   True
 xtick.major.size:    3.5
@@ -40,6 +40,7 @@ ytick.minor.visible: True
 axes.grid:          False   # display grid or not
 axes.grid.axis:     both    # which axis the grid should apply to
 axes.grid.which:    both   # grid lines at {major, minor, both} ticks
+
 grid.color:     "grey"  # grid color
 grid.linestyle: -          # solid
 grid.linewidth: 0.8        # in points

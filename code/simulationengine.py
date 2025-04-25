@@ -34,34 +34,42 @@ class SimulationEngine:
         'every batchsize values we get a new chosen value'
         # Generate a random time within the desired range
         times = self.config.rng.uniform(0, 10, self.config.n_samples // self.config.batchsize)
+        print(f"random_laser, fixed: {fixed}, times: {times}")
         # Use sinusoidal modulation for the entire array
         if fixed is None:
             chosen_voltage = self.config.mean_voltage + self.config.voltage_amplitude * np.sin(2 * np.pi * 1 * times)  # 50 mV passt
             chosen_current = ((self.config.mean_current) + self.config.current_amplitude * np.sin(2 * np.pi * 1 * times)) * 1e3
-            '''# plot sinuses
-            mean_voltage = 0.05  # 50 mV
-            voltage_amplitude = 0.02  # 20 mV
-            mean_current = 0.01  # 10 mA
-            current_amplitude = 0.005  # 5 mA
+            # # # plot sinuses
+            # mean_voltage = self.config.mean_voltage  # 50 mV
+            # voltage_amplitude = 0.01  # 20 mV
+            # mean_current = self.config.mean_current  # 10 mA
+            # current_amplitude = self.config.current_amplitude  # 5 mA
 
-            # Generate time values
-            times = np.linspace(0, 1, 1000)  # 1 second with 1000 points
+            # # Generate time values
+            # times = np.linspace(0, 1, 1000)  # 1 second with 1000 points
 
-            # Generate sinusoidal signals
-            chosen_voltage = mean_voltage + voltage_amplitude * np.sin(2 * np.pi * 1 * times)
-            chosen_current = (mean_current + current_amplitude * np.sin(2 * np.pi * 1 * times)) * 1e3  # Convert to mA
+            # # # Generate sinusoidal signals
+            # chosen_voltage = mean_voltage + voltage_amplitude * np.sin(2 * np.pi * 1 * times)
+            # chosen_current = (mean_current + current_amplitude * np.sin(2 * np.pi * 1 * times)) * 1e3  # Convert to mA
 
-            # Plot the signals
-            plt.figure(figsize=(10, 6))
-            plt.plot(times, chosen_voltage, label="Voltage (V)", color="blue")
-            plt.plot(times, chosen_current, label="Current (mA)", color="red")
-            plt.title("Sinusoidal Voltage and Current Signals")
-            plt.xlabel("Time (s)")
-            plt.ylabel("Amplitude")
-            plt.legend()
-            plt.grid(True)
-            plt.tight_layout()
-            plt.show()'''
+            # # Plot the signals
+            # plt.figure(figsize=(10, 6))
+            # plt.plot(times, chosen_voltage)
+            # plt.xlabel("Time (s)")
+            # plt.ylabel("Voltage (V)")
+            # plt.legend()
+            # plt.grid(True)
+            # plt.tight_layout()
+            # Saver.save_plot(f'sinus_voltage_data_plot.png')
+
+            # plt.figure(figsize=(10, 6))
+            # plt.plot(times, chosen_current)
+            # plt.xlabel("Time (s)")
+            # plt.ylabel("Current (mA)")
+            # plt.legend()
+            # plt.grid(True)
+            # plt.tight_layout()
+            # Saver.save_plot(f'sinus_current_data_plot.png')
         else:
             chosen_voltage = np.ones(self.config.n_samples // self.config.batchsize) * self.config.mean_voltage
             chosen_current = np.ones(self.config.n_samples // self.config.batchsize) * (self.config.mean_current) * 1e3
@@ -432,7 +440,7 @@ class SimulationEngine:
         print(f"seed: {self.config.seed}")
 
         # calculate T1 dampening 
-        lower_limit_t1, upper_limit_t1, tol_t1 = 0, 100, 1e-3
+        lower_limit_t1, upper_limit_t1, tol_t1 = 0, 100000, 1e-3
         T1_dampening = self.simulation_single.find_T1(lower_limit_t1, upper_limit_t1, tol_t1)
 
         # test

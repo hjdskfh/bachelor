@@ -85,55 +85,34 @@ class SimulationManager:
             # Calculate the FWHM
             fwhm = x[right_idx] - x[left_idx]
             return fwhm, x[left_idx], x[right_idx]
-        
-        def find_fwhm_index_old(x, y):
-            x = np.array(x)
-            y = np.array(y)
-
-            # Get the half-maximum value
-            max_val = np.max(y)
-            half_max = max_val / 2.0
-
-            # Find the index of the closest value to half-max on the left
-            left_idx = np.argmin(np.abs(y[:len(y)//2] - half_max))  # Only search left of the peak
-            left_x = x[left_idx]
-            
-            # Find the index of the closest value to half-max on the right
-            right_idx = np.argmin(np.abs(y[len(y)//2:] - half_max)) #+ len(y)//2  # Only search right of the peak
-            right_x = x[right_idx]
-            # peak_idx = np.argmin(np.abs(y[len(y)//2:] - half_max)) #+ len(y)//2  # Only search right of the peak
-            # right_idx = left_idx + 2 *(peak_idx - left_idx)
-            # right_x = x[right_idx]
-            # peak_x = x[peak_idx]
-            
-            # Calculate the FWHM (difference in x)
-            fwhm = right_x - left_x
-            
-            return fwhm, right_x, left_x#, peak_x
-        
+      
         # Plotting results sequentially to avoid threading issues with Matplotlib
         for state in states:
             state, t, signals, power_dampened, square_signals = process_state(state)
             chosen_index = 10
 
-            fwhm, left_x, right_x = find_fwhm_index(t, power_dampened[chosen_index], state["value"])
-            print(f"len(t): {len(t)}, len(power_dampened): {len(power_dampened[chosen_index])}, chosen_index: {chosen_index}")
-            print(f"FWHM for {state['title']}: {fwhm} ns, left indices: {left_x}, right indices: {right_x}")
+            # fwhm, left_x, right_x = find_fwhm_index(t, power_dampened[chosen_index], state["value"])
+            # print(f"len(t): {len(t)}, len(power_dampened): {len(power_dampened[chosen_index])}, chosen_index: {chosen_index}")
+            # print(f"FWHM for {state['title']}: {fwhm} ns, left indices: {left_x}, right indices: {right_x}")
             
             fig, ax = plt.subplots(figsize=(8, 5))
 
             # Plot voltage (left y-axis)
-            ax.plot(t * 1e9, signals[chosen_index], color='blue', label='Voltage Signal with Bandwidth')
+            ax.plot(t * 1e9, signals[chosen_index], color='green', label='Signal incl. BW')
             ax.set_ylabel('Voltage (V)')
 
             # Plot square signals (right y-axis)
-            ax.plot(t * 1e9, square_signals[chosen_index], color='green', label='Square Voltage Signal')
-            ax.set_ylabel('Voltage (V)')
-
+            ax.plot(t * 1e9, square_signals[chosen_index], color='blue', label='Square Signal')
+   
             # Titles and labels
-            ax.set_title(state["title"])
+            # ax.set_title(state["title"])
             ax.set_xlabel('Time (ns)')
-            ax.legend()
+            # Save or show the plot
+            lines, labels = ax.get_legend_handles_labels()  # Get handles and labels from the first axis
+            if state["basis"] == 0:
+                ax.legend(lines, labels, loc='upper center')  # Combine and add the legend
+            else:
+                ax.legend(lines, labels)
 
             # Save or show the plot
             Saver.save_plot(f"{state['title'].replace(' ', '_').replace(':', '').lower()}_voltage_and_square")
@@ -141,25 +120,25 @@ class SimulationManager:
             fig, ax = plt.subplots(figsize=(8, 5)) #8, 5
             ax2 = ax.twinx()  # Create a second y-axis
 
-            # Plot voltage (left y-axis)
-            ax.plot(t * 1e9, signals[chosen_index], color='blue', label='Signal incl. BW')
-            ax.set_ylabel('Voltage (V)', color='blue')
-            ax.tick_params(axis='y', labelcolor='blue')
+            # # Plot voltage (left y-axis)
+            # ax.plot(t * 1e9, signals[chosen_index], color='blue', label='Signal incl. BW')
+            # ax.set_ylabel('Voltage (V)', color='blue')
+            # ax.tick_params(axis='y', labelcolor='blue')
 
             # Plot square signals (right y-axis)
-            ax.plot(t * 1e9, square_signals[chosen_index], color='lightblue', label='Square Signal')
+            ax.plot(t * 1e9, square_signals[chosen_index], color='blue', label='Square Signal')
             ax.set_ylabel('Voltage (V)', color='blue')
             ax.tick_params(axis='y', labelcolor='blue')
 
             # Plot transmission (right y-axis)
             ax2.plot(t * 1e9, power_dampened[chosen_index], color='red', label='Laser Pulse')
-            plt.axvline(left_x * 1e9, color='grey', linestyle='--', label=f'x1 = {left_x:.2e}')
-            plt.axvline(right_x * 1e9, color='grey', linestyle='--', label=f'x2 = {right_x:.2e} with FWHM = {fwhm:.2e}')
+            # plt.axvline(left_x * 1e9, color='grey', linestyle='--', label=f'x1 = {left_x:.2e}')
+            # plt.axvline(right_x * 1e9, color='grey', linestyle='--', label=f'x2 = {right_x:.2e} with FWHM = {fwhm:.2e}')
             ax2.set_ylabel('Transmission', color='red')
             ax2.tick_params(axis='y', labelcolor='red')
 
             # Titles and labels
-            ax.set_title(state["title"])
+            #ax.set_title(state["title"])
             ax.set_xlabel('Time (ns)')
 
             # Save or show the plot
@@ -449,7 +428,7 @@ class SimulationManager:
         start_time = time.time()  # Record start time
         T1_dampening = self.simulation_engine.initialize()
 
-        optical_power, peak_wavelength, chosen_voltage, chosen_current = self.simulation_engine.random_laser_output('current_power', 'voltage_shift', fixed = True)
+        optical_power, peak_wavelength, chosen_voltage, chosen_current = self.simulation_engine.random_laser_output('current_power', 'voltage_shift')
         # Create a histogram
         '''plt.hist(peak_wavelength *1e9, bins=10)  # bins=10 is just an example; adjust as needed
         plt.xlabel('Peak Wavelength (nm)')
@@ -645,7 +624,9 @@ class SimulationManager:
         optical_power, peak_wavelength, chosen_voltage, chosen_current = self.simulation_engine.random_laser_output('current_power', 'voltage_shift', fixed = True)
 
         # Generate Alice's choices
-        basis, value, decoy = self.simulation_engine.generate_alice_choices()
+        basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=np.array([1,0,1]), value=np.array([1,-1, 0]), decoy=np.array([0,0,0]))
+
+        # basis, value, decoy = self.simulation_engine.generate_alice_choices()
 
         # Simulate signal and transmission
         signals, t, _ = self.simulation_engine.signal_bandwidth_jitter(basis, value, decoy)

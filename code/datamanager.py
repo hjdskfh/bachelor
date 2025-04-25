@@ -78,22 +78,21 @@ class DataManager:
             'x_max': x_max   # Store maximum x-value
             }
         
-        '''# Plot the data
-        title = ''
-        if name == 'voltage_shift':
-            title = 'Wavelength Shift depending on Voltage of Heater'
-        if name == 'current_power':
-            title = 'Optical Power depending on Current of Laser Diode'
-        if name == 'eam_transmission':
-            title = 'Optical Transmission depending on Voltage given to the EAM'
-        if name == 'wavelength_neff':
-            title = 'Effective Refractive Index in Fiber depending on Wavelength'
-        plt.plot(df[column1], df[column2], marker='o')
-        plt.xlabel(column1)
-        plt.ylabel(column2)
-        plt.title(f'{title}')
-        plt.grid(True)
-        Saver.save_plot(f'{name}_data_plot.png')'''
+        # # Plot the data
+        # title = ''
+        # if name == 'voltage_shift':
+        #     title = 'Wavelength Shift depending on Voltage of Heater'
+        # if name == 'current_power':
+        #     title = 'Optical Power depending on Current of Laser Diode'
+        # if name == 'eam_transmission':
+        #     title = 'Optical Transmission depending on Voltage given to the EAM'
+        # if name == 'wavelength_neff':
+        #     title = 'Effective Refractive Index in Fiber depending on Wavelength'
+        # plt.plot(df[column1], df[column2], marker='o')
+        # plt.xlabel(column1)
+        # plt.ylabel(column2)
+        # plt.grid(True)
+        # Saver.save_plot(f'{name}_data_plot.png')
     
     def add_jitter(self, jitter, name): #Gaussian
         # Calculate standard deviation based on FWHM

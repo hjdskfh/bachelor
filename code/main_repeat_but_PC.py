@@ -27,8 +27,8 @@ cumulative_totals = {
     "len_wrong_z_non_dec": 0,
     "len_Z_checked_dec": 0,
     "len_Z_checked_non_dec": 0,
-    "X_P_calc_non_dec": 0.0,
     "X_P_calc_dec": 0.0,
+    "X_P_calc_non_dec": 0.0,
     "total_symbols": 0,
     "gain_Z_non_dec": 0.0,
     "gain_Z_dec": 0.0,
@@ -39,6 +39,11 @@ cumulative_totals = {
     "qber_x_dec": 0.0,
     "qber_x_non_dec": 0.0,
     "total_amount_detections": 0,
+    "p_z_alice": 0.0,
+    "p_decoy": 0.0,
+    "p_z_bob": 0.0,
+    "mu_signal": 0.0,
+    "mu_decoy": 0.0,
     "gain_and_qber_not_divided_by_amount_run!": 0.0
 
 }
@@ -66,6 +71,11 @@ def log_simulation_results(results):
     cumulative_totals["qber_z_non_dec"] += results["qber_z_non_dec"]
     cumulative_totals["qber_x_dec"] += results["qber_x_dec"]
     cumulative_totals["qber_x_non_dec"] += results["qber_x_non_dec"]
+    cumulative_totals["p_z_alice"] = results["p_z_alice"]
+    cumulative_totals["p_decoy"] = results["p_decoy"]
+    cumulative_totals["p_z_bob"] = results["p_z_bob"]
+    cumulative_totals["mu_signal"] = results["mu_signal"]
+    cumulative_totals["mu_decoy"] = results["mu_decoy"]
     cumulative_totals["total_amount_detections"] += results["total_amount_detections"]
 
 
@@ -144,6 +154,11 @@ for simulation_run in range(100):  # Replace with your actual simulation loop
         "qber_z_non_dec": qber_z_non_dec,
         "qber_x_dec": qber_x_dec,
         "qber_x_non_dec": qber_x_non_dec,
+        "p_z_alice": config.p_z_alice,
+        "p_decoy": config.p_decoy,
+        "p_z_bob": config.p_z_bob,
+        "mu_signal": config.mean_photon_nr,
+        "mu_decoy": config.mean_photon_decoy,
         "total_amount_detections": total_amount_detections
     }
     

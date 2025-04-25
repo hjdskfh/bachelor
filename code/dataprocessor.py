@@ -395,15 +395,10 @@ class DataProcessor:
             * np.log((c + d) * 21**2 / (c * d * (1 - b) * a**2))
         )
     
-    def calc_SKR(self, len_wrong_x_dec, len_wrong_x_non_dec, len_wrong_z_dec, len_wrong_z_non_dec, 
-                 len_Z_checked_dec, len_Z_checked_non_dec, X_P_calc_dec, X_P_calc_non_dec, total_symbols):
+    def calc_SKR(self, n_Z_mus_in, n_Z_mud_in, n_X_mus_in, n_X_mud_in, m_Z_mus_in, m_Z_mud_in, m_X_mus_in, m_X_mud_in, total_symbols, factor):
         block_size = None  
-        #factor to get up to a billion symbols
-        if len_Z_checked_non_dec != 0:
-            factor = 1e9 / len_Z_checked_non_dec
-        else:
-            factor = 1
-        total_bit_sequence_length = total_symbols  # Number of detections in key generating basis
+        
+        total_bit_sequence_length = total_symbols * factor  # Number of detections in key generating basis
         eta_bob = 4.5 / 100  # Transmittance in Bob’s side, including internal transmittance of optical components and detector efficiency
         y_0 = 1.7e-6  # Background rate, which includes the detector dark count and other background contributions such as the stray light from timing pulses
         channel_attenuation_Z = 26  # Channel transmittance [dB], can be derived from the loss coefficient alpha measured in dB/km and the length of the fiber l in km, alpha = 0.21
@@ -412,7 +407,8 @@ class DataProcessor:
        
         epsilon_sec = 1e-9  # 
         epsilon_cor = 1e-15  # Secret key are identical except of probability epsilon_cor
-        repetition_rate = self.config.sampling_rate_FPGA * self.config.n_pulses  # Pulse (symbol) repetition rate
+        repetition_rate = self.config.sampling_rate_FPGA / self.config.n_pulses  # Pulse (symbol) repetition rate
+        print(f"self.config.sampling_rate_FPGA: {self.config.sampling_rate_FPGA}, self.config.n_pulses: {self.config.n_pulses}, repetition_rate: {repetition_rate}")	
         fEC = 1.19  # Error correction effciency
         epsilon_1 = epsilon_sec / 19
 
@@ -443,11 +439,11 @@ class DataProcessor:
             # n_X_mud = p_X * q_X * p_mud * gain_X_mud * total_bit_sequence_length
             # n_Z = n_Z_mus + n_Z_mud
             # n_X = n_X_mus + n_X_mud
-
-            n_Z_mus = len_Z_checked_non_dec * factor
-            n_Z_mud = len_Z_checked_dec * factor
-            n_X_mus = X_P_calc_non_dec * factor
-            n_X_mud = X_P_calc_dec * factor
+            print(f"factor: {factor}")
+            n_Z_mus = n_Z_mus_in * factor
+            n_Z_mud = n_Z_mud_in * factor
+            n_X_mus = n_X_mus_in * factor
+            n_X_mud = n_X_mud_in * factor
             n_Z = n_Z_mus + n_Z_mud
             n_X = n_X_mus + n_X_mud
 
@@ -463,10 +459,10 @@ class DataProcessor:
             # m_X_mus = p_X * p_X * p_mus * error_X_mus * total_bit_sequence_length
             # m_X_mud = p_X * p_X * p_mud * error_X_mud * total_bit_sequence_length
 
-            m_Z_mus = len_wrong_z_non_dec * factor
-            m_Z_mud = len_wrong_z_dec * factor
-            m_X_mus = len_wrong_x_non_dec * factor
-            m_X_mud = len_wrong_x_dec * factor
+            m_Z_mus = m_Z_mus_in * factor
+            m_Z_mud = m_Z_mud_in * factor
+            m_X_mus = n_X_mus_in * factor
+            m_X_mud = n_X_mud_in * factor
             m_Z = m_Z_mus + m_Z_mud
             m_X = m_X_mus + m_X_mud
 
@@ -515,6 +511,7 @@ class DataProcessor:
                     - (mus**2 - mud**2) / (mus**2 * tau_0) * s_u_X0
                 )
             )
+            # print(f"s_l_Z0: {s_l_Z0}, s_u_Z0: {s_u_Z0}, s_l_Z1: {s_l_Z1}, s_u_X0: {s_u_X0}, s_l_X1: {s_l_X1}")
             v_u_X1 = (
                 tau_1
                 / (mus - mud)
@@ -523,7 +520,9 @@ class DataProcessor:
                     - DataProcessor.n_finite_key_corrected("-", mud, p_mud, m_X_mud, m_X, epsilon_1)
                 )
             )
+            # print(f"v_u_X1: {v_u_X1}")
             phi_u_Z1 = v_u_X1 / s_l_X1 * DataProcessor.gamma(epsilon_sec, v_u_X1 / s_l_X1, s_l_Z1, s_l_X1)
+            # print(f"phi_u_Z1: {phi_u_Z1}")
 
             # Error correction term
             lambda_EC = n_Z * fEC * DataProcessor.entropy(m_Z / n_Z)
@@ -537,9 +536,12 @@ class DataProcessor:
                 - np.log2(2 / epsilon_cor)
             )
             skr = repetition_rate * secret_key_length / total_bit_sequence_length
+            print(f"skl: {skr}, secret_key_length: {secret_key_length}, total_bit_sequence_length: {total_bit_sequence_length}")
+            print(f"repetition_rate: {repetition_rate}")
             return skr
         
         initial_params = [self.config.mean_photon_nr, self.config.mean_photon_decoy, 1-self.config.p_decoy, self.config.p_z_alice]  # mus, mud, p_mus, p_Z
+        print(f"initial_params: {initial_params}")
         skr = calculate_skr(initial_params, total_bit_sequence_length)
         
         return skr
