@@ -162,7 +162,7 @@ if __name__ == '__main__':
                             global_histogram_counts_x, global_histogram_counts_z,
                             final_combined_list_array, total_symbols, start_pair=0, end_pair=4, name="random")
 
-    Saver.save_array_as_npz_data("histograms_random_end",
+    Saver.save_array_as_npz_data(f"histograms_random_con_{max_concurrent_tasks}_12_total_batches_{total_batches}_600_bins_{bins_per_symbol_hist}_80",
                             bins_per_symbol_hist=bins_per_symbol_hist,
                             final_time_one_symbol=final_time_one_symbol,
                             global_histogram_counts_x=global_histogram_counts_x,

@@ -156,8 +156,8 @@ weight_s = 1 - desired_p_decoy
 # Apply the weights accordingly
 weighted_n_Z_mus = 4 * n_Z_mus_in * weight_Z * weight_s  # Z basis, signal
 weighted_n_Z_mud = 4 * n_Z_mud_in * weight_Z * weight_d  # Z basis, decoy
-weighted_n_X_mus = 4 * n_X_mus_in * weight_X * weight_s  *1.2# X basis, signal
-weighted_n_X_mud = 4 * n_X_mud_in * weight_X * weight_d  # X basis, decoy
+weighted_n_X_mus = 4 * n_X_mus_in * weight_X * weight_s  # X basis, signal
+weighted_n_X_mud = 4 * n_X_mud_in * weight_X * weight_d  *1.04# X basis, decoy
 weighted_m_Z_mus = 4 * m_Z_mus_in * weight_Z * weight_s  # Z basis, signal
 weighted_m_Z_mud = 4 * m_Z_mud_in * weight_Z * weight_d  # Z basis, decoy
 weighted_m_X_mus = 4 * m_X_mus_in * weight_X * weight_s  # X basis, signal

@@ -134,7 +134,6 @@ results = Parallel(n_jobs=max_concurrent_tasks)(
          base_path,
          style_file,
          database,
-         jitter,
          detector_jitter,
          best_batchsize,
          bins_per_symbol_hist,
@@ -164,7 +163,7 @@ DataProcessor.plot_histogram_batch(bins_per_symbol_hist, final_time_one_symbol,
                            global_histogram_counts_x, global_histogram_counts_z,
                            final_lookup_arr, total_symbols, start_symbol=3, end_symbol=10, name="fixed")
 
-Saver.save_array_as_npz_data("histograms_fixed",
+Saver.save_array_as_npz_data(f"histograms_fixed_con_{max_concurrent_tasks}_12_total_batches_{total_batches}_600_bins_{bins_per_symbol_hist}_80",
                         bins_per_symbol_hist=bins_per_symbol_hist,
                         final_time_one_symbol=final_time_one_symbol,
                         global_histogram_counts_x=global_histogram_counts_x,

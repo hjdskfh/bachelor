@@ -46,9 +46,10 @@ with open(output_file, "w") as f:
     style_file = "Presentation_style_1_adjusted_no_grid.mplstyle"
 
     base_path = os.path.dirname(os.path.abspath(__file__))
+    print(f"Base path: {base_path}")
 
     #create simulation mean current 0.08 , mena_voltage = 0.98 weil aus voltage_sweep, 0.9835 # mean voltage mit skript 1.6094623981710416 rausbekommen
-    config = SimulationConfig(database, n_samples=200, batchsize=10, 
+    config = SimulationConfig(database, n_samples=200, batchsize=100, bandwidth=5e9,
                             detector_jitter=detector_jitter, mlp=os.path.join(base_path, style_file), script_name = os.path.basename(__file__))
     simulation = SimulationManager(config)
 

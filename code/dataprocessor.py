@@ -399,6 +399,153 @@ class DataProcessor:
         block_size = None  
         
         total_bit_sequence_length = total_symbols * factor  # Number of detections in key generating basis
+        q_Z = self.config.p_z_bob  # Bob chooses a basis Z and X with probabilities qz
+       
+        epsilon_sec = 1e-9  # 
+        epsilon_cor = 1e-15  # Secret key are identical except of probability epsilon_cor
+        repetition_rate = self.config.sampling_rate_FPGA / self.config.n_pulses  # Pulse (symbol) repetition rate
+        print(f"self.config.sampling_rate_FPGA: {self.config.sampling_rate_FPGA}, self.config.n_pulses: {self.config.n_pulses}, repetition_rate: {repetition_rate}")	
+        fEC = 1.19  # Error correction effciency
+        epsilon_1 = epsilon_sec / 19
+
+        def calculate_skr(params, total_bit_sequence_length):
+            mus, mud, p_mus, p_Z = params
+            p_mud = 1 - p_mus
+            p_X = 1 - p_Z
+            q_X = 1 - q_Z
+
+            # Compute gain
+            # eta_ch_Z = np.power(10, -channel_attenuation_Z / 10)
+            # eta_ch_X = np.power(10, -channel_attenuation_X / 10)
+            # gain_Z_mus = 1 - (1 - y_0) * np.exp(-1 * mus * eta_bob * eta_ch_Z)
+            # gain_Z_mud = 1 - (1 - y_0) * np.exp(-1 * mud * eta_bob * eta_ch_Z)
+            # gain_X_mus = 1 - (1 - y_0) * np.exp(-1 * mus * eta_bob * eta_ch_X)
+            # gain_X_mud = 1 - (1 - y_0) * np.exp(-1 * mud * eta_bob * eta_ch_X)
+
+            # Recalucalte total_bit_sequence_length to match desired nZ
+            # if block_size is not None:
+            #     total_bit_sequence_length = block_size / (
+            #         p_Z * (p_mus * gain_Z_mus + p_mud * gain_Z_mud)
+            #     )
+
+            # Compute total detection events
+            # n_Z_mus = p_Z * q_Z * p_mus * gain_Z_mus * total_bit_sequence_length
+            # n_Z_mud = p_Z * q_Z * p_mud * gain_Z_mud * total_bit_sequence_length
+            # n_X_mus = p_X * q_X * p_mus * gain_X_mus * total_bit_sequence_length
+            # n_X_mud = p_X * q_X * p_mud * gain_X_mud * total_bit_sequence_length
+            # n_Z = n_Z_mus + n_Z_mud
+            # n_X = n_X_mus + n_X_mud
+            print(f"factor: {factor}")
+            n_Z_mus = n_Z_mus_in * factor
+            n_Z_mud = n_Z_mud_in * factor
+            n_X_mus = n_X_mus_in * factor
+            n_X_mud = n_X_mud_in * factor
+            n_Z = n_Z_mus + n_Z_mud
+            n_X = n_X_mus + n_X_mud
+
+            # Compute error
+            # error_Z_mus = y_0 * (e_0 - e_detector_Z) + e_detector_Z * gain_Z_mus
+            # error_Z_mud = y_0 * (e_0 - e_detector_Z) + e_detector_Z * gain_Z_mud
+            # error_X_mus = y_0 * (e_0 - e_detector_X) + e_detector_X * gain_X_mus
+            # error_X_mud = y_0 * (e_0 - e_detector_X) + e_detector_X * gain_X_mud
+
+            # # Compute total error events
+            # m_Z_mus = p_Z * q_Z * p_mus * error_Z_mus * total_bit_sequence_length
+            # m_Z_mud = p_Z * q_Z * p_mud * error_Z_mud * total_bit_sequence_length
+            # m_X_mus = p_X * p_X * p_mus * error_X_mus * total_bit_sequence_length
+            # m_X_mud = p_X * p_X * p_mud * error_X_mud * total_bit_sequence_length
+
+            m_Z_mus = m_Z_mus_in * factor
+            m_Z_mud = m_Z_mud_in * factor
+            m_X_mus = m_X_mus_in * factor
+            m_X_mud = m_X_mud_in * factor
+            m_Z = m_Z_mus + m_Z_mud
+            m_X = m_X_mus + m_X_mud
+
+            # Probabilites sending vaccum and single photon states
+            tau_0 = p_mus * np.exp(-mus) + p_mud * np.exp(-mud)
+            tau_1 = p_mus * mus * np.exp(-mus) + p_mud * mud * np.exp(-mud)
+
+            # Compute finite-key security bounds
+            s_l_Z0 = (
+                tau_0
+                / (mus - mud)
+                * (
+                    mus * DataProcessor.n_finite_key_corrected("-", mud, p_mud, n_Z_mud, n_Z, epsilon_1)
+                    - mud * DataProcessor.n_finite_key_corrected("+", mus, p_mus, n_Z_mus, n_Z, epsilon_1)
+                )
+            )
+            s_u_Z0 = 2 * (
+                tau_0 * DataProcessor.n_finite_key_corrected("+", mus, p_mus, m_Z_mus, m_Z, epsilon_1) #warum signal?? in supplemetary A16 steht einfach nur k???
+                + np.sqrt(n_Z / 2 * np.log(1 / epsilon_1))  # und es sind verschiedene eplisons??
+            )
+            s_l_Z1 = (
+                tau_1
+                * mus
+                / (mud * (mus - mud))
+                * (
+                    DataProcessor.n_finite_key_corrected("-", mud, p_mud, n_Z_mud, n_Z, epsilon_1)
+                    - mud**2
+                    / mus**2
+                    * DataProcessor.n_finite_key_corrected("+", mus, p_mus, n_Z_mus, n_Z, epsilon_1)
+                    - (mus**2 - mud**2) / (mus**2 * tau_0) * s_u_Z0
+                )
+            )
+            s_u_X0 = 2 * (
+                tau_0 * DataProcessor.n_finite_key_corrected("+", mud, p_mud, m_X_mud, m_X, epsilon_1)
+                + np.sqrt(n_X / 2 * np.log(1 / epsilon_1))
+            )
+            s_l_X1 = (
+                tau_1
+                * mus
+                / (mud * (mus - mud))
+                * (
+                    DataProcessor.n_finite_key_corrected("-", mud, p_mud, n_X_mud, n_X, epsilon_1)
+                    - mud**2
+                    / mus**2
+                    * DataProcessor.n_finite_key_corrected("+", mus, p_mus, n_X_mus, n_X, epsilon_1)
+                    - (mus**2 - mud**2) / (mus**2 * tau_0) * s_u_X0
+                )
+            )
+            # print(f"s_l_Z0: {s_l_Z0}, s_u_Z0: {s_u_Z0}, s_l_Z1: {s_l_Z1}, s_u_X0: {s_u_X0}, s_l_X1: {s_l_X1}")
+            v_u_X1 = (
+                tau_1
+                / (mus - mud)
+                * (
+                    DataProcessor.n_finite_key_corrected("+", mus, p_mus, m_X_mus, m_X, epsilon_1)
+                    - DataProcessor.n_finite_key_corrected("-", mud, p_mud, m_X_mud, m_X, epsilon_1)
+                )
+            )
+            # print(f"v_u_X1: {v_u_X1}")
+            phi_u_Z1 = v_u_X1 / s_l_X1 * DataProcessor.gamma(epsilon_sec, v_u_X1 / s_l_X1, s_l_Z1, s_l_X1)
+            # print(f"phi_u_Z1: {phi_u_Z1}")
+
+            # Error correction term
+            lambda_EC = n_Z * fEC * DataProcessor.entropy(m_Z / n_Z)
+
+            # Compute secret key length
+            secret_key_length = (
+                s_l_Z0
+                + s_l_Z1 * (1 - DataProcessor.entropy(phi_u_Z1))
+                - lambda_EC
+                - 6 * np.log2(19 / epsilon_sec)
+                - np.log2(2 / epsilon_cor)
+            )
+            skr = repetition_rate * secret_key_length / total_bit_sequence_length
+            print(f"skl: {skr}, secret_key_length: {secret_key_length}, total_bit_sequence_length: {total_bit_sequence_length}")
+            print(f"repetition_rate: {repetition_rate}")
+            return skr
+        
+        initial_params = [self.config.mean_photon_nr, self.config.mean_photon_decoy, 1-self.config.p_decoy, self.config.p_z_alice]  # mus, mud, p_mus, p_Z
+        print(f"initial_params: {initial_params}")
+        skr = calculate_skr(initial_params, total_bit_sequence_length)
+        
+        return skr
+    
+    def calc_SKR_Simon(self, n_Z_mus_in, n_Z_mud_in, n_X_mus_in, n_X_mud_in, m_Z_mus_in, m_Z_mud_in, m_X_mus_in, m_X_mud_in, total_symbols, factor):
+        block_size = None  
+        
+        total_bit_sequence_length = total_symbols * factor  # Number of detections in key generating basis
         eta_bob = 4.5 / 100  # Transmittance in Bob’s side, including internal transmittance of optical components and detector efficiency
         y_0 = 1.7e-6  # Background rate, which includes the detector dark count and other background contributions such as the stray light from timing pulses
         channel_attenuation_Z = 26  # Channel transmittance [dB], can be derived from the loss coefficient alpha measured in dB/km and the length of the fiber l in km, alpha = 0.21
