@@ -99,25 +99,28 @@ def combine_cumulative_totals(log_files):
 
 config = SimulationConfig(None)
 data_processor = DataProcessor(config)
-json_filepath = r'C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_25\simfor_200000_batch_sims_simulation_config_20250425_120954.json.json'
+json_filepath = r'C:\Users\leavi\OneDrive\Dokumente\Uni\Semester 7\NeuMoQP\Programm\stuff_from_cluster\2025_04_26\simfor_200000_batch_sims_simulation_config_20250425_120954.json'
 # Load the JSON file
 with open(json_filepath, 'r') as file:
     config_loaded = json.load(file)
 
-
-log_files = ["simulation_tracking_20250425_120949.log", "simulation_tracking_20250425_120954.log", "simulation_tracking_20250425_120957.log"]
+file1 = r'C:\Users\leavi\OneDrive\Dokumente\Uni\Semester 7\NeuMoQP\Programm\stuff_from_cluster\2025_04_26\simulation_tracking_20250425_120949.log'
+file2 = r'C:\Users\leavi\OneDrive\Dokumente\Uni\Semester 7\NeuMoQP\Programm\stuff_from_cluster\2025_04_26\simulation_tracking_20250425_120954.log'
+file3 = r'C:\Users\leavi\OneDrive\Dokumente\Uni\Semester 7\NeuMoQP\Programm\stuff_from_cluster\2025_04_26\simulation_tracking_20250425_120957.log'
+log_files = [file1, file2, file3]
 cumulative_data = combine_cumulative_totals(log_files)
 # cumulative_data = extract_last_cumulative_totals("simulation_tracking_20250425_120949.log")
 
 n_Z_mus_in = cumulative_data["len_Z_checked_non_dec"]
 n_Z_mud_in = cumulative_data["len_Z_checked_dec"]
-n_X_mus_in = cumulative_data["len_wrong_x_non_dec"]
-n_X_mud_in = cumulative_data["len_wrong_x_dec"]
+n_X_mus_in = cumulative_data["X_P_calc_non_dec"]
+n_X_mud_in = cumulative_data["X_P_calc_dec"]
 m_Z_mus_in = cumulative_data["len_wrong_z_non_dec"]
 m_Z_mud_in = cumulative_data["len_wrong_z_dec"]
-m_X_mus_in = cumulative_data["X_P_calc_non_dec"]
-m_X_mud_in = cumulative_data["X_P_calc_dec"]
+m_X_mus_in = cumulative_data["len_wrong_x_non_dec"]
+m_X_mud_in = cumulative_data["len_wrong_x_dec"]
 total_symbols = cumulative_data["total_symbols"]
+
 print(f"n_Z_mus_in: {n_Z_mus_in}, n_Z_mud_in: {n_Z_mud_in}, n_X_mus_in: {n_X_mus_in}, n_X_mud_in: {n_X_mud_in}")
 print(f"m_Z_mus_in: {m_Z_mus_in}, m_Z_mud_in: {m_Z_mud_in}, m_X_mus_in: {m_X_mus_in}, m_X_mud_in: {m_X_mud_in}")
 print(f"total_symbols: {total_symbols}")
@@ -150,11 +153,10 @@ weight_X = 1 - desired_p_z_alice
 weight_d = desired_p_decoy
 weight_s = 1 - desired_p_decoy
 
-print(f"n_X_mus_in: {n_X_mus_in}, n_X_mud_in: {n_X_mud_in}, n_Z_mus_in: {n_Z_mus_in}, n_Z_mud_in: {n_Z_mud_in}")
 # Apply the weights accordingly
 weighted_n_Z_mus = 4 * n_Z_mus_in * weight_Z * weight_s  # Z basis, signal
 weighted_n_Z_mud = 4 * n_Z_mud_in * weight_Z * weight_d  # Z basis, decoy
-weighted_n_X_mus = 4 * n_X_mus_in * weight_X * weight_s  # X basis, signal
+weighted_n_X_mus = 4 * n_X_mus_in * weight_X * weight_s  *1.2# X basis, signal
 weighted_n_X_mud = 4 * n_X_mud_in * weight_X * weight_d  # X basis, decoy
 weighted_m_Z_mus = 4 * m_Z_mus_in * weight_Z * weight_s  # Z basis, signal
 weighted_m_Z_mud = 4 * m_Z_mud_in * weight_Z * weight_d  # Z basis, decoy
@@ -191,6 +193,7 @@ if weighted_n_Z_mus != 0:
     factor = 1e9 / weighted_n_Z_mus
 else:
     factor = 1
+# factor = 1
 
 print(f"factor: {factor}")
 # funktionierte auch mit 10^6

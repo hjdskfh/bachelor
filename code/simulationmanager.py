@@ -1497,23 +1497,22 @@ class SimulationManager:
         len_wrong_z_non_dec=len(wrong_detections_z_non_dec)
         len_wrong_x_dec=len(wrong_detections_x_dec)
         len_wrong_x_non_dec=len(wrong_detections_x_non_dec)
-
         '''Saver.save_arrays_to_csv('results', 
-                                p_vacuum_z=p_vacuum_z,
-                                len_vacuum_indices_x_long=len(vacuum_indices_x_long),
-                                len_Z_checked_dec=len_Z_checked_dec,
-                                len_Z_checked_non_dec=len_Z_checked_non_dec,
-                                XP_calc_non_dec=X_P_calc_non_dec,
-                                XP_calc_dec=X_P_calc_dec,
-                                gain_Z_non_dec=gain_Z_non_dec,
-                                gain_Z_dec=gain_Z_dec,
-                                gain_X_non_dec=gain_X_non_dec,
-                                gain_X_dec=gain_X_dec,
-                                wrong_detections_z_dec=wrong_detections_z_dec,
-                                wrong_detections_z_non_dec=wrong_detections_z_non_dec,
-                                wrong_detections_x_dec=wrong_detections_x_dec,
-                                wrong_detections_x_non_dec=wrong_detections_x_non_dec,
-                                )'''
+                                        p_vacuum_z=p_vacuum_z,
+                                        len_vacuum_indices_x_long=len(vacuum_indices_x_long),
+                                        len_Z_checked_dec=len_Z_checked_dec,
+                                        len_Z_checked_non_dec=len_Z_checked_non_dec,
+                                        XP_calc_non_dec=X_P_calc_non_dec,
+                                        XP_calc_dec=X_P_calc_dec,
+                                        gain_Z_non_dec=gain_Z_non_dec,
+                                        gain_Z_dec=gain_Z_dec,
+                                        gain_X_non_dec=gain_X_non_dec,
+                                        gain_X_dec=gain_X_dec,
+                                        wrong_detections_z_dec=wrong_detections_z_dec,
+                                        wrong_detections_z_non_dec=wrong_detections_z_non_dec,
+                                        wrong_detections_x_dec=wrong_detections_x_dec,
+                                        wrong_detections_x_non_dec=wrong_detections_x_non_dec,
+                                        )'''
 
         '''if save_output == True:
             function_name = inspect.currentframe().f_code.co_name
