@@ -239,14 +239,12 @@ class SimulationEngine:
         power_dampened = power_dampened * attenuation_factor
         return power_dampened
 
-    
-
     def delay_line_interferometer(self, power_dampened, t, peak_wavelength, value):
         dt_new = 1e-14
         tau = 2 / self.config.sampling_rate_FPGA  
         n_g = 2.05 # For calculatting path length difference
         # Assuming the group refractive index of the waveguide
-        n_eff = 1.54 # Effective refractive index
+        n_eff = 1.5543 # Effective refractive index
         delta_L = tau * constants.c / n_g
         overlap_symbols = 1
         save_overlap_symbols = np.empty(overlap_symbols*len(t))
@@ -288,8 +286,6 @@ class SimulationEngine:
             
             f_0 = constants.c / peak_wavelength[i]
             print(f"f_0: {f_0}, i: {i}, batchsize: {self.config.batchsize}, peak_wavelength[i]: {peak_wavelength[i]}")
-
-            n_eff = 1.5543
 
             power_1, power_2, t_upsampled = self.simulation_helper.DLI(flattened_power_batch_resampled, dt_new, tau, delta_L, f_0, n_eff, plot = False)
             # plt.plot(power_1[:len(t)*100], label = 'after DLI 1')
