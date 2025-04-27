@@ -1,0 +1,4 @@
+mpn_s: 0.15, mpn_d: 0.075, desired_p_decoy: 0.02, desired_p_z_alice: 0.74, factor_x_mud: 1, SKR: 399424.8332371817
+mpn_s: 0.15, mpn_d: 0.075, desired_p_decoy: 0.02, desired_p_z_alice: 0.76, factor_x_mud: 1, SKR: 355178.4396786006
+mpn_s: 0.15, mpn_d: 0.075, desired_p_decoy: 0.04, desired_p_z_alice: 0.92, factor_x_mud: 1, SKR: 1317847.0234248375
+mpn_s: 0.15, mpn_d: 0.075, desired_p_decoy: 0.06, desired_p_z_alice: 0.9600000000000001, factor_x_mud: 1, SKR: 1626040.689618324

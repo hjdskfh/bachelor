@@ -366,6 +366,27 @@ class DataProcessor:
         plt.tight_layout()
         Saver.save_plot(f"hist_symbols_{start_pair}_to_{end_pair}")
 
+    def combine_bins(histogram_counts, bins_per_symbol):
+        """
+        Combine every two adjacent bins into one, reducing the number of bins per symbol by half.
+
+        Parameters:
+        - histogram_counts: 1D numpy array of histogram counts.
+        - bins_per_symbol: int, the original number of bins per symbol.
+
+        Returns:
+        - combined_histogram: 1D numpy array with reduced bins per symbol.
+        """
+        assert bins_per_symbol % 2 == 0, "bins_per_symbol must be even to combine bins."
+
+        # Reshape the histogram to group every two bins together
+        reshaped = histogram_counts.reshape(-1, 2)
+
+        # Sum adjacent bins
+        combined_histogram = reshaped.sum(axis=1)
+
+        return combined_histogram, bins_per_symbol // 2
+
     #  -------SKR ------
     # Entropy function
     @staticmethod
@@ -404,7 +425,7 @@ class DataProcessor:
         epsilon_sec = 1e-9  # 
         epsilon_cor = 1e-15  # Secret key are identical except of probability epsilon_cor
         repetition_rate = self.config.sampling_rate_FPGA / self.config.n_pulses  # Pulse (symbol) repetition rate
-        print(f"self.config.sampling_rate_FPGA: {self.config.sampling_rate_FPGA}, self.config.n_pulses: {self.config.n_pulses}, repetition_rate: {repetition_rate}")	
+        # print(f"self.config.sampling_rate_FPGA: {self.config.sampling_rate_FPGA}, self.config.n_pulses: {self.config.n_pulses}, repetition_rate: {repetition_rate}")	
         fEC = 1.19  # Error correction effciency
         epsilon_1 = epsilon_sec / 19
 
@@ -435,7 +456,7 @@ class DataProcessor:
             # n_X_mud = p_X * q_X * p_mud * gain_X_mud * total_bit_sequence_length
             # n_Z = n_Z_mus + n_Z_mud
             # n_X = n_X_mus + n_X_mud
-            print(f"factor: {factor}")
+            # print(f"factor: {factor}")
             n_Z_mus = n_Z_mus_in * factor
             n_Z_mud = n_Z_mud_in * factor
             n_X_mus = n_X_mus_in * factor
@@ -532,12 +553,12 @@ class DataProcessor:
                 - np.log2(2 / epsilon_cor)
             )
             skr = repetition_rate * secret_key_length / total_bit_sequence_length
-            print(f"skl: {skr}, secret_key_length: {secret_key_length}, total_bit_sequence_length: {total_bit_sequence_length}")
-            print(f"repetition_rate: {repetition_rate}")
+            # print(f"skl: {skr}, secret_key_length: {secret_key_length}, total_bit_sequence_length: {total_bit_sequence_length}")
+            # print(f"repetition_rate: {repetition_rate}")
             return skr
         
         initial_params = [self.config.mean_photon_nr, self.config.mean_photon_decoy, 1-self.config.p_decoy, self.config.p_z_alice]  # mus, mud, p_mus, p_Z
-        print(f"initial_params: {initial_params}")
+        # print(f"initial_params: {initial_params}")
         skr = calculate_skr(initial_params, total_bit_sequence_length)
         
         return skr
@@ -696,12 +717,13 @@ class DataProcessor:
     def calc_SKR_old(self, len_wrong_x_dec, len_wrong_x_non_dec, len_wrong_z_dec, len_wrong_z_non_dec, 
                  len_Z_checked_dec, len_Z_checked_non_dec, X_P_calc_dec, X_P_calc_non_dec, total_symbols):
         block_size = None  
-        #factor to get up to a billion symbols
-        # if len_Z_checked_non_dec != 0:
-        #     factor = 1e9 / len_Z_checked_non_dec
-        # else:
-        factor = 1e4
-        print(f"factor: {factor}")
+        # factor to get up to a billion symbols
+        if len_Z_checked_non_dec != 0:
+            factor = 1e9 / len_Z_checked_non_dec
+        else:
+            factor = 1
+        # factor = 1e4
+        # print(f"factor: {factor}")
         total_bit_sequence_length = total_symbols * factor  # Number of detections in key generating basis
         eta_bob = 4.5 / 100  # Transmittance in Bob’s side, including internal transmittance of optical components and detector efficiency
         y_0 = 1.7e-6  # Background rate, which includes the detector dark count and other background contributions such as the stray light from timing pulses
@@ -839,7 +861,7 @@ class DataProcessor:
             return skr
         
         initial_params = [self.config.mean_photon_nr, self.config.mean_photon_decoy, 1-self.config.p_decoy, self.config.p_z_alice]  # mus, mud, p_mus, p_Z
-        print(f"initial_params: {initial_params}")
+        # print(f"initial_params: {initial_params}")
         skr = calculate_skr(initial_params, total_bit_sequence_length)
         
         return skr

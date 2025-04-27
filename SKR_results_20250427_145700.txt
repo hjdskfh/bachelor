@@ -1,0 +1,12 @@
+OG_length_multiply: 10000000.0, mpn_s: 0.15, mpn_d: 0.075, desired_p_decoy: 0.38, desired_p_z_alice: 0.98, factor_x_mud: 1, SKR: 465032.7050718994
+OG_length_multiply: 10000000.0, mpn_s: 0.15, mpn_d: 0.075, desired_p_decoy: 0.4, desired_p_z_alice: 0.98, factor_x_mud: 1, SKR: 428330.169079867
+OG_length_multiply: 10000000.0, mpn_s: 0.15, mpn_d: 0.075, desired_p_decoy: 0.42000000000000004, desired_p_z_alice: 0.98, factor_x_mud: 1, SKR: 375317.040868435
+OG_length_multiply: 10000000.0, mpn_s: 0.15, mpn_d: 0.075, desired_p_decoy: 0.44, desired_p_z_alice: 0.98, factor_x_mud: 1, SKR: 312964.29679210554
+OG_length_multiply: 10000000.0, mpn_s: 0.15, mpn_d: 0.075, desired_p_decoy: 0.46, desired_p_z_alice: 0.98, factor_x_mud: 1, SKR: 244859.5049892588
+OG_length_multiply: 10000000.0, mpn_s: 0.15, mpn_d: 0.075, desired_p_decoy: 0.48000000000000004, desired_p_z_alice: 0.98, factor_x_mud: 1, SKR: 173015.0531204438
+OG_length_multiply: 10000000.0, mpn_s: 0.15, mpn_d: 0.075, desired_p_decoy: 0.5, desired_p_z_alice: 0.98, factor_x_mud: 1, SKR: 98640.77847737784
+OG_length_multiply: 10000000.0, mpn_s: 0.15, mpn_d: 0.075, desired_p_decoy: 0.52, desired_p_z_alice: 0.98, factor_x_mud: 1, SKR: 22507.569330018072
+OG_length_multiply: 100000000.0, mpn_s: 0.15, mpn_d: 0.075, desired_p_decoy: 0.02, desired_p_z_alice: 0.74, factor_x_mud: 1, SKR: 399424.8332371817
+OG_length_multiply: 100000000.0, mpn_s: 0.15, mpn_d: 0.075, desired_p_decoy: 0.02, desired_p_z_alice: 0.76, factor_x_mud: 1, SKR: 355178.4396786006
+OG_length_multiply: 100000000.0, mpn_s: 0.15, mpn_d: 0.075, desired_p_decoy: 0.04, desired_p_z_alice: 0.92, factor_x_mud: 1, SKR: 1317847.0234248375
+OG_length_multiply: 100000000.0, mpn_s: 0.15, mpn_d: 0.075, desired_p_decoy: 0.06, desired_p_z_alice: 0.9600000000000001, factor_x_mud: 1, SKR: 1626040.689618324
