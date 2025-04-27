@@ -137,11 +137,4 @@ def start_simulation_batches(total_batches=300, simulations_in_batch=2, max_conc
     print(f"Execution time for simulation: {execution_time_simulation:.9f} seconds")
 
 # eahc 1h44min hours for 50 batches of 2 simulations with 12 concurrent tasks
-start_simulation_batches(total_batches=50, simulations_in_batch=2, max_concurrent_tasks=12, max_concurrent_tasks=3, mean_photon_nr=0.182, mean_photon_decoy=0.1, fiber_attenuation=-3)
-start_simulation_batches(total_batches=50, simulations_in_batch=2, max_concurrent_tasks=12, max_concurrent_tasks=3, mean_photon_nr=0.182, mean_photon_decoy=0.1, fiber_attenuation=-3)
-start_simulation_batches(total_batches=50, simulations_in_batch=2, max_concurrent_tasks=12, max_concurrent_tasks=3, mean_photon_nr=0.182, mean_photon_decoy=0.1, fiber_attenuation=-3)
-start_simulation_batches(total_batches=50, simulations_in_batch=2, max_concurrent_tasks=12, max_concurrent_tasks=3, mean_photon_nr=0.182, mean_photon_decoy=0.1, fiber_attenuation=-3)
-start_simulation_batches(total_batches=50, simulations_in_batch=2, max_concurrent_tasks=12, max_concurrent_tasks=3, mean_photon_nr=0.182, mean_photon_decoy=0.1, fiber_attenuation=-3)
-start_simulation_batches(total_batches=50, simulations_in_batch=2, max_concurrent_tasks=12, max_concurrent_tasks=3, mean_photon_nr=0.182, mean_photon_decoy=0.1, fiber_attenuation=-3)
-start_simulation_batches(total_batches=50, simulations_in_batch=2, max_concurrent_tasks=12, max_concurrent_tasks=3, mean_photon_nr=0.182, mean_photon_decoy=0.1, fiber_attenuation=-3)
-
+start_simulation_batches(total_batches=50, simulations_in_batch=2, max_concurrent_tasks=12, mean_photon_nr=0.182, mean_photon_decoy=0.1, fiber_attenuation=-3)
