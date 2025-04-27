@@ -1,0 +1,13 @@
+[Before everything] Memory used: 146.96 MB
+Base path: C:\Users\leavi\bachelor\code
+Configuration saved to C:\Users\leavi\bachelor\logs\simulation_config_20250427_210124.json
+Execution time for reading: 0.008449554 seconds for 100000 samples
+Error: The difference between non_signal_voltage and voltage is not 1
+seed: 589490
+T1_dampening at initialize end: 75.3205269575119
+voltage at initialize end: 0.2
+Voltage_decoy at initialize end: -0.1606449395418167
+Voltage_decoy_sup at initialize end: -0.4039086729288101
+Voltage_sup at initialize end: -0.2262105733156204
+random_laser, fixed: None, times: [8.02700184 0.8970217  9.19421804 ... 8.90388836 3.57282423 8.53503961]
+no_date: True

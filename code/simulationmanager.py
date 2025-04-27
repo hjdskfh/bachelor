@@ -1,5 +1,3 @@
-from codecs import lookup
-from tkinter import font
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator
@@ -37,7 +35,7 @@ class SimulationManager:
                 {"title": "State: X+ decoy", "basis": 0, "value": -1, "decoy": 1},
                 ]
     
-        def process_state(state):
+        def process_state(state): #fixed wieder rein
             optical_power, peak_wavelength, chosen_voltage, chosen_current = self.simulation_engine.random_laser_output('current_power', 'voltage_shift', fixed = True)
 
             basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=state["basis"], value=state["value"], decoy=state["decoy"])

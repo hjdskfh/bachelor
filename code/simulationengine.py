@@ -78,6 +78,18 @@ class SimulationEngine:
         optical_power = np.repeat(optical_power_short, self.config.batchsize)
         peak_wavelength = np.repeat(peak_wavelength_short, self.config.batchsize)
         # self.config.batchsize = self.config.batchsize/10
+        #plot histo
+        # plt.hist(chosen_voltage, bins=100, alpha=0.5) 
+        # # plt.hist(chosen_current, bins=100, alpha=0.5) #density=True,
+        # plt.xlabel("Chosen Voltage Values (V)")
+        # # plt.xlabel("Chosen Current Values (mA)")
+        # plt.ylabel("Counts")
+        # plt.legend()
+        # plt.grid(True)
+        # plt.tight_layout()
+        # Saver.save_plot(f'histogram_chosen_voltage', no_date=True)
+        # Saver.save_plot(f'histogram_chosen_current', no_date=True)
+
         return optical_power * 1e-3, peak_wavelength * 1e-9, chosen_voltage, chosen_current  # in W and m
 
     def generate_alice_choices(self, basis=None, value=None, decoy=None):
