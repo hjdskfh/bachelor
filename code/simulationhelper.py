@@ -520,7 +520,7 @@ class SimulationHelper:
         # only overlaps between Z0 vs Z1 sent and measured
         ind_Z0_verified_long = Z_indices_measured_long[mask_Z0_long]
         ind_Z1_verified_long = Z_indices_measured_long[mask_Z1_long]
-        if mask_x_short.size != 0:
+        if get_original_indexing_x.size != 0:
             # check if no detection in late_bin X basis
             one_in_x_short = np.where(np.any(detected_indices_x_det_x_basis == 1, axis=1))[0]
             one_in_x_long = get_original_indexing_x[one_in_x_short]
@@ -567,11 +567,11 @@ class SimulationHelper:
         # X basis
         # empty late in x basis
         # print(f"detected_indices_x_det_x_basis: {detected_indices_x_det_x_basis}")
-        one_in_x_short = np.where(np.any(detected_indices_x_det_x_basis == 1, axis=1))[0]
-        one_in_x_long = get_original_indexing_x[one_in_x_short]
-        all_ind = np.arange(self.config.n_samples)
-        no_one_in_x_long = np.setdiff1d(all_ind, one_in_x_long)
-        if mask_z_short.size != 0:
+        if get_original_indexing_z.size != 0:
+            one_in_x_short = np.where(np.any(detected_indices_x_det_x_basis == 1, axis=1))[0]
+            one_in_x_long = get_original_indexing_x[one_in_x_short]
+            all_ind = np.arange(self.config.n_samples)
+            no_one_in_x_long = np.setdiff1d(all_ind, one_in_x_long)    
             # no detection in Z basis
             zero_or_one_in_z_short = np.where(np.any(detected_indices_z_det_z_basis == 1, axis=1) | np.any(detected_indices_z_det_z_basis == 0))[0]
             zero_or_one_in_z_long = get_original_indexing_z[zero_or_one_in_z_short]
@@ -591,7 +591,7 @@ class SimulationHelper:
 
         # sort out symbols for p_indep_x_states
         # create signal Z0X+ and then X+Z1
-        if mask_x_short.size != 0:
+        if get_original_indexing_x.size != 0:
             Z0_alice_s = np.where((basis == 1) & (value == 1) & (decoy == 0))[0]  # Indices where Z0 was sent
             XP_alice_s = np.where((basis == 0) & (decoy == 0))[0]  # Indices where XP was sent
             Z0_XP_alice_s = XP_alice_s[np.isin(XP_alice_s - 1, Z0_alice_s)]  # Indices where Z1Z0 was sent (index of Z0 used aka the higher index at which time we measure the X+ state)
@@ -617,7 +617,7 @@ class SimulationHelper:
             X_P_calc_non_dec = 0
        
         # create signal Z0X+ and then X+Z1
-        if mask_x_short.size != 0:
+        if get_original_indexing_x.size != 0:
             Z0_alice_d = np.where((basis == 1) & (value == 1) & (decoy == 1))[0]  # Indices where Z0 was sent
             XP_alice_d = np.where((basis == 0) & (decoy == 1))[0]  # Indices where XP was sent
             Z0_XP_alice_d = XP_alice_d[np.isin(XP_alice_d - 1, Z0_alice_d)]  # Indices where Z1Z0 was sent (index of Z0 used aka the higher index at which time we measure the X+ state)
@@ -696,7 +696,7 @@ class SimulationHelper:
 
         #Step 1: Check for wrong detections in the Z basis (Z0 and Z1)
         #check if wrong_detection_mask is empty
-        if wrong_detection_mask_z.size != 0:
+        if get_original_indexing_z.size != 0:
             # measure in late for Z0 (wrong detection): value 1 für Z0
             has_1_short = np.where(np.any(detected_indices_z_det_z_basis == 1, axis=1))[0]
             has_1_long = get_original_indexing_z[has_1_short]       # detected indices has shape of time_photons_det
@@ -719,7 +719,7 @@ class SimulationHelper:
             wrong_detections_z_dec = np.array([])
             wrong_detections_z_non_dec = np.array([])
 
-        if wrong_detection_mask_x.size != 0:
+        if get_original_indexing_x.size != 0:
             #Condition 6: Late detection in X+ after X+ sent
             has_1_short = np.where(np.any(detected_indices_x_det_x_basis == 1, axis=1))[0]
             has_1_long = get_original_indexing_x[has_1_short]

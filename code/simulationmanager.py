@@ -1,4 +1,5 @@
 from codecs import lookup
+from tkinter import font
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator
@@ -86,69 +87,67 @@ class SimulationManager:
             fwhm = x[right_idx] - x[left_idx]
             return fwhm, x[left_idx], x[right_idx]
       
-        # Plotting results sequentially to avoid threading issues with Matplotlib
-        for state in states:
+        for idx, state in enumerate(states):
             state, t, signals, power_dampened, square_signals = process_state(state)
             chosen_index = 10
 
             # fwhm, left_x, right_x = find_fwhm_index(t, power_dampened[chosen_index], state["value"])
             # print(f"len(t): {len(t)}, len(power_dampened): {len(power_dampened[chosen_index])}, chosen_index: {chosen_index}")
             # print(f"FWHM for {state['title']}: {fwhm} ns, left indices: {left_x}, right indices: {right_x}")
-            
+
+            # figure 1
             fig, ax = plt.subplots(figsize=(8, 5))
 
-            # Plot voltage (left y-axis)
             ax.plot(t * 1e9, signals[chosen_index], color='green', label='Signal incl. BW')
-            ax.set_ylabel('Voltage (V)')
-
-            # Plot square signals (right y-axis)
             ax.plot(t * 1e9, square_signals[chosen_index], color='blue', label='Square Signal')
-   
-            # Titles and labels
-            # ax.set_title(state["title"])
-            ax.set_xlabel('Time (ns)')
-            # Save or show the plot
-            lines, labels = ax.get_legend_handles_labels()  # Get handles and labels from the first axis
-            if state["basis"] == 0:
-                ax.legend(lines, labels, loc='upper center')  # Combine and add the legend
-            else:
-                ax.legend(lines, labels)
+            ax.set_ylabel('Voltage (V)', fontsize=18)
+            ax.set_xlabel('Time (ns)', fontsize=18)
+            ax.tick_params(axis='both', labelsize=16)
 
-            # Save or show the plot
+            # Save limits for voltage+square figure
+            if idx == 0:
+                first_xlim_voltage = ax.get_xlim()
+                first_ylim_voltage = ax.get_ylim()
+            else:
+                ax.set_xlim(first_xlim_voltage)
+                ax.set_ylim(first_ylim_voltage)
+
+            lines, labels = ax.get_legend_handles_labels()
+            ax.legend(lines, labels, loc='upper center' if state["basis"] == 0 else 'best')
+
             Saver.save_plot(f"{state['title'].replace(' ', '_').replace(':', '').lower()}_voltage_and_square")
 
-            fig, ax = plt.subplots(figsize=(8, 5)) #8, 5
-            ax2 = ax.twinx()  # Create a second y-axis
+            #### SECOND PLOT (with transmission)
+            fig, ax = plt.subplots(figsize=(8, 5))
+            ax2 = ax.twinx()
 
-            # # Plot voltage (left y-axis)
-            # ax.plot(t * 1e9, signals[chosen_index], color='blue', label='Signal incl. BW')
-            # ax.set_ylabel('Voltage (V)', color='blue')
-            # ax.tick_params(axis='y', labelcolor='blue')
-
-            # Plot square signals (right y-axis)
             ax.plot(t * 1e9, square_signals[chosen_index], color='blue', label='Square Signal')
-            ax.set_ylabel('Voltage (V)', color='blue')
-            ax.tick_params(axis='y', labelcolor='blue')
+            ax.set_ylabel('Voltage (V)', color='blue', fontsize=18)
+            ax.tick_params(axis='y', labelcolor='blue', labelsize=16)
 
-            # Plot transmission (right y-axis)
             ax2.plot(t * 1e9, power_dampened[chosen_index], color='red', label='Laser Pulse')
             # plt.axvline(left_x * 1e9, color='grey', linestyle='--', label=f'x1 = {left_x:.2e}')
             # plt.axvline(right_x * 1e9, color='grey', linestyle='--', label=f'x2 = {right_x:.2e} with FWHM = {fwhm:.2e}')
-            ax2.set_ylabel('Transmission', color='red')
-            ax2.tick_params(axis='y', labelcolor='red')
+            ax2.set_ylabel('Optical Power (W)', color='red', fontsize=18)
+            ax2.tick_params(axis='y', labelcolor='red', labelsize=16)
+            ax.set_xlabel('Time (ns)', fontsize=16)
 
-            # Titles and labels
-            #ax.set_title(state["title"])
-            ax.set_xlabel('Time (ns)')
-
-            # Save or show the plot
-            lines, labels = ax.get_legend_handles_labels()  # Get handles and labels from the first axis
-            lines2, labels2 = ax2.get_legend_handles_labels()  # Get handles and labels from the second axis
-            if state["basis"] == 0:
-                ax.legend(lines + lines2, labels + labels2, loc='upper center')  # Combine and add the legend
+            # Save limits separately for transmission figure
+            if idx == 0:
+                first_xlim_transmission = ax.get_xlim()
+                first_ylim_voltage_square = ax.get_ylim()
+                first_ylim_transmission = ax2.get_ylim()
             else:
-                ax.legend(lines + lines2, labels + labels2)
+                ax.set_xlim(first_xlim_transmission)
+                ax.set_ylim(first_ylim_voltage_square)
+                ax2.set_ylim(first_ylim_transmission)
+
+            lines, labels = ax.get_legend_handles_labels()
+            lines2, labels2 = ax2.get_legend_handles_labels()
+            ax.legend(lines + lines2, labels + labels2, loc='upper center' if state["basis"] == 0 else 'best')
+
             Saver.save_plot(f"{state['title'].replace(' ', '_').replace(':', '').lower()}_voltage_square_transmission")
+
 
     def run_simulation_histograms(self):
         #initialize
