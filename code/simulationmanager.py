@@ -1397,7 +1397,7 @@ class SimulationManager:
         start_time = time.time()  # Record start time
         T1_dampening = self.simulation_engine.initialize()
 
-        optical_power, peak_wavelength, chosen_voltage, chosen_current = self.simulation_engine.random_laser_output('current_power', 'voltage_shift', fixed = True)
+        optical_power, peak_wavelength, chosen_voltage, chosen_current = self.simulation_engine.random_laser_output('current_power', 'voltage_shift')
 
         # Generate Alice's choices
         # basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=np.array([0]), value=np.array([-1]), decoy=np.array([0]))

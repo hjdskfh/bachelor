@@ -671,7 +671,8 @@ class SimulationHelper:
     def classificator_errors(self, mask_x_short, mask_z_short, indices_z_long, indices_x_long, value, detected_indices_z_det_z_basis, detected_indices_x_det_x_basis, basis, decoy, get_original_indexing_x, get_original_indexing_z):
         wrong_detection_mask_z = np.zeros(len(basis), dtype=bool)
         wrong_detection_mask_x = np.zeros(len(basis), dtype=bool)
-
+        ind_sent_non_dec_long = np.where((decoy == 0))[0]
+        ind_sent_dec_long = np.where((decoy == 1))[0]
         #Step 1: Check for wrong detections in the Z basis (Z0 and Z1)
         #check if wrong_detection_mask is empty
         if get_original_indexing_z.size != 0:
@@ -689,9 +690,7 @@ class SimulationHelper:
             wrong_detection_mask_z[np.where(has_0_and_z1_long)[0]] = True
             # filter out decoy cases
             wrong_detections_z = np.where(wrong_detection_mask_z)[0]
-            ind_sent_dec_long = np.where((decoy == 1))[0]
             wrong_detections_z_dec = np.intersect1d(wrong_detections_z, ind_sent_dec_long)
-            ind_sent_non_dec_long = np.where((decoy == 0))[0]
             wrong_detections_z_non_dec = np.intersect1d(wrong_detections_z, ind_sent_non_dec_long)
         else:
             wrong_detections_z_dec = np.array([])
@@ -724,7 +723,6 @@ class SimulationHelper:
             wrong_detection_mask_x[np.where(has_0_z1z0_d)[0]] = True
             wrong_detections_x = np.where(wrong_detection_mask_x)[0]
                      
-
             # decoy and non-decoy
             wrong_detections_x_dec = np.intersect1d(wrong_detections_x, ind_sent_dec_long)
             wrong_detections_x_non_dec = np.intersect1d(wrong_detections_x, ind_sent_non_dec_long)
