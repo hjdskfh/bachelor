@@ -182,3 +182,5 @@ with open(f"deadtime_SKR_results_{timestamp}.txt", "a") as f:
     f.write(f"m_Z_mus_in: {m_Z_mus_in}, m_Z_mud_in: {m_Z_mud_in}, m_X_mus_in: {m_X_mus_in}, m_X_mud_in: {m_X_mud_in}\n")
     f.write(f"QBER_signal: {QBER_signal}, QBER_decoy: {QBER_decoy}, Pherr_signal: {Pherr_signal}, Pherr_decoy: {Pherr_decoy}\n")
     f.write(f"total symbols: {total_symbols}\n")
+
+

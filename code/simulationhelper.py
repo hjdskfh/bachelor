@@ -591,57 +591,56 @@ class SimulationHelper:
 
         # sort out symbols for p_indep_x_states
         # create signal Z0X+ and then X+Z1
-        Z0_alice_s = np.where((basis == 1) & (value == 1) & (decoy == 0))[0]  # Indices where Z0 was sent
-        XP_alice_s = np.where((basis == 0) & (decoy == 0))[0]  # Indices where XP was sent
-        Z0_XP_alice_s = XP_alice_s[np.isin(XP_alice_s - 1, Z0_alice_s)]  # Indices where Z1Z0 was sent (index of Z0 used aka the higher index at which time we measure the X+ state)
-        has_0_short = np.where(np.any(detected_indices_x_det_x_basis == 0, axis=1))[0]
-        # print(f"has_0_short: {has_0_short}, shape: {has_0_short.shape}")
-        if has_0_short.size == 0:
-            print("Warning: has_0_short is empty.")
-        if get_original_indexing_x.size == 0:
-            print("Error: get_original_indexing_x is empty.")
-        # print(f"get_original_indexing_x: {get_original_indexing_x}, shape: {get_original_indexing_x.shape}")
-        if has_0_short.size > 0 and has_0_short.max() >= get_original_indexing_x.size:
-            print("Error: Indices in has_0_short are out of bounds for get_original_indexing_x.")
-        has_0_long = get_original_indexing_x[has_0_short]
-        # print(f"has_0_long: {has_0_long}")
-        has_0_z0xp_s = np.intersect1d(has_0_long, Z0_XP_alice_s)
-        ind_has_0_z0xp_s = len(np.where(has_0_z0xp_s)[0])
-        
-        Z1_alice_s = np.where((basis == 1) & (value == 0) & (decoy == 0))[0]  # Indices where Z0 was sent
-        XP_Z1_alice_s = Z1_alice_s[np.isin(Z1_alice_s - 1, XP_alice_s)]  # Indices where Z1Z0 was sent (index of Z0 used aka the higher index at which time we measure the X+ state)
-        has_0_xpz1_s = np.intersect1d(has_0_long, XP_Z1_alice_s)
-        ind_has_0_xpz1_s = len(np.where(has_0_xpz1_s)[0])
-        print(f"ind_has_0_xpz1_s: {ind_has_0_xpz1_s}")
-        print(f"XP_Z1_alice_s: {XP_Z1_alice_s}, shape: {XP_Z1_alice_s.shape}")
+        if mask_x_short.size != 0:
+            Z0_alice_s = np.where((basis == 1) & (value == 1) & (decoy == 0))[0]  # Indices where Z0 was sent
+            XP_alice_s = np.where((basis == 0) & (decoy == 0))[0]  # Indices where XP was sent
+            Z0_XP_alice_s = XP_alice_s[np.isin(XP_alice_s - 1, Z0_alice_s)]  # Indices where Z1Z0 was sent (index of Z0 used aka the higher index at which time we measure the X+ state)
+            has_0_short = np.where(np.any(detected_indices_x_det_x_basis == 0, axis=1))[0]
+            # print(f"has_0_short: {has_0_short}, shape: {has_0_short.shape}")
+            has_0_long = get_original_indexing_x[has_0_short]
+            # print(f"has_0_long: {has_0_long}")
+            has_0_z0xp_s = np.intersect1d(has_0_long, Z0_XP_alice_s)
+            ind_has_0_z0xp_s = len(np.where(has_0_z0xp_s)[0])
+            
+            Z1_alice_s = np.where((basis == 1) & (value == 0) & (decoy == 0))[0]  # Indices where Z0 was sent
+            XP_Z1_alice_s = Z1_alice_s[np.isin(Z1_alice_s - 1, XP_alice_s)]  # Indices where Z1Z0 was sent (index of Z0 used aka the higher index at which time we measure the X+ state)
+            has_0_xpz1_s = np.intersect1d(has_0_long, XP_Z1_alice_s)
+            ind_has_0_xpz1_s = len(np.where(has_0_xpz1_s)[0])
+            print(f"ind_has_0_xpz1_s: {ind_has_0_xpz1_s}")
+            print(f"XP_Z1_alice_s: {XP_Z1_alice_s}, shape: {XP_Z1_alice_s.shape}")
 
-        print(f"ind_has_0_z0xp_s: {ind_has_0_z0xp_s}")
-        print(f"Z0_XP_alice_s: {Z0_XP_alice_s}, shape: {Z0_XP_alice_s.shape}")
+            print(f"ind_has_0_z0xp_s: {ind_has_0_z0xp_s}")
+            print(f"Z0_XP_alice_s: {Z0_XP_alice_s}, shape: {Z0_XP_alice_s.shape}")
 
-        X_P_calc_non_dec = (ind_has_0_xpz1_s + ind_has_0_z0xp_s) / ( (1 / 4) * self.config.p_z_alice)
+            X_P_calc_non_dec = (ind_has_0_xpz1_s + ind_has_0_z0xp_s) / ( (1 / 4) * self.config.p_z_alice)
+        else:
+            X_P_calc_non_dec = 0
        
         # create signal Z0X+ and then X+Z1
-        Z0_alice_d = np.where((basis == 1) & (value == 1) & (decoy == 1))[0]  # Indices where Z0 was sent
-        XP_alice_d = np.where((basis == 0) & (decoy == 1))[0]  # Indices where XP was sent
-        Z0_XP_alice_d = XP_alice_d[np.isin(XP_alice_d - 1, Z0_alice_d)]  # Indices where Z1Z0 was sent (index of Z0 used aka the higher index at which time we measure the X+ state)
-        has_0_short = np.where(np.any(detected_indices_x_det_x_basis == 0, axis=1))[0]
-        has_0_long = get_original_indexing_x[has_0_short]
-        has_0_z0xp_d = np.intersect1d(has_0_long, Z0_XP_alice_d)
-        ind_has_0_z0xp_d = len(np.where(has_0_z0xp_d)[0])
-        
-        Z1_alice_d = np.where((basis == 1) & (value == 0) & (decoy == 1))[0]  # Indices where Z1 was sent
-        XP_Z1_alice_d = Z1_alice_d[np.isin(Z1_alice_d - 1, XP_alice_d)]  # Indices where Z1Z0 was sent (index of Z0 used aka the higher index at which time we measure the X+ state)
-        has_0_xpz1_d = np.intersect1d(has_0_long, XP_Z1_alice_d)
-        ind_has_0_xpz1_d = len(np.where(has_0_xpz1_d)[0])
-        print(f"ind_has_0_xpz1_d: {ind_has_0_xpz1_d}")
-        print(f"XP_Z1_alice_d: {XP_Z1_alice_d}, shape: {XP_Z1_alice_d.shape}")
+        if mask_x_short.size != 0:
+            Z0_alice_d = np.where((basis == 1) & (value == 1) & (decoy == 1))[0]  # Indices where Z0 was sent
+            XP_alice_d = np.where((basis == 0) & (decoy == 1))[0]  # Indices where XP was sent
+            Z0_XP_alice_d = XP_alice_d[np.isin(XP_alice_d - 1, Z0_alice_d)]  # Indices where Z1Z0 was sent (index of Z0 used aka the higher index at which time we measure the X+ state)
+            has_0_short = np.where(np.any(detected_indices_x_det_x_basis == 0, axis=1))[0]
+            has_0_long = get_original_indexing_x[has_0_short]
+            has_0_z0xp_d = np.intersect1d(has_0_long, Z0_XP_alice_d)
+            ind_has_0_z0xp_d = len(np.where(has_0_z0xp_d)[0])
+            
+            Z1_alice_d = np.where((basis == 1) & (value == 0) & (decoy == 1))[0]  # Indices where Z1 was sent
+            XP_Z1_alice_d = Z1_alice_d[np.isin(Z1_alice_d - 1, XP_alice_d)]  # Indices where Z1Z0 was sent (index of Z0 used aka the higher index at which time we measure the X+ state)
+            has_0_xpz1_d = np.intersect1d(has_0_long, XP_Z1_alice_d)
+            ind_has_0_xpz1_d = len(np.where(has_0_xpz1_d)[0])
+            print(f"ind_has_0_xpz1_d: {ind_has_0_xpz1_d}")
+            print(f"XP_Z1_alice_d: {XP_Z1_alice_d}, shape: {XP_Z1_alice_d.shape}")
 
-        print(f"ind_has_0_z0xp_d: {ind_has_0_z0xp_d}")
-        print(f"Z0_XP_alice_d: {Z0_XP_alice_d}, shape: {Z0_XP_alice_d.shape}")
+            print(f"ind_has_0_z0xp_d: {ind_has_0_z0xp_d}")
+            print(f"Z0_XP_alice_d: {Z0_XP_alice_d}, shape: {Z0_XP_alice_d.shape}")
 
-        X_P_calc_dec = (ind_has_0_xpz1_d + ind_has_0_z0xp_d) / ( (1 / 4) * self.config.p_z_alice)
-        print(f"X_P_calc_dec:{X_P_calc_dec}")
-        print(f"X_P_calc_non_dec:{X_P_calc_non_dec}")
+            X_P_calc_dec = (ind_has_0_xpz1_d + ind_has_0_z0xp_d) / ( (1 / 4) * self.config.p_z_alice)
+            print(f"X_P_calc_dec:{X_P_calc_dec}")
+            print(f"X_P_calc_non_dec:{X_P_calc_non_dec}")
+        else:
+            X_P_calc_dec = 0
 
         # gain non dec 
         ind_sent_non_dec_long = np.where((decoy == 0))[0]

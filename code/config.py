@@ -5,7 +5,7 @@ class SimulationConfig:
                  p_z_alice=0.5, p_decoy=0.5, p_z_bob = 0.5, sampling_rate_FPGA=6.5e9, bandwidth = 4e9, jitter=0, non_signal_voltage = -1.3, voltage_decoy=0.2,
                  voltage=0.2, voltage_decoy_sup=0.2, voltage_sup=0.2, 
                  mean_photon_nr=0.182, mean_photon_decoy=0.1, 
-                 fiber_attenuation = -3, detector_efficiency = 0.3, dark_count_frequency = 1000, detection_time = 1e-10, detector_jitter = 5e-12, 
+                 fiber_attenuation = -3, detector_efficiency = 0.3, dark_count_frequency = 1000, detection_time = 25 * 1e-9, detector_jitter = 5e-12, 
                  mlp = "C:\\Users\\leavi\\bachelor\\code\\Presentation_style_1_adjusted_no_grid.mplstyle", 
                  script_name = None, job_id = None
                  ):
