@@ -15,7 +15,7 @@ class Saver:
         self.config = config
 
     @staticmethod
-    def save_plot(filename, dpi=600):
+    def save_plot(filename, dpi=600, no_date=False):
         """Saves the current Matplotlib plot to a file in a folder next to 'code'."""
         
         # Get the script's parent directory (the directory where the script is located)
@@ -26,12 +26,14 @@ class Saver:
         
         # Create the directory if it doesn't exist
         target_dir.mkdir(exist_ok=True)
-        
+        print(f"no_date: {no_date}")
         # Generate a timestamp (e.g., '20231211_153012' for 11th December 2023 at 15:30:12)
-        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-        
-        # Append the timestamp to the filename
-        filename_with_timestamp = f"{timestamp}_{filename}"
+        if not no_date:
+            timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+            # Append the timestamp to the filename
+            filename_with_timestamp = f"{timestamp}_{filename}"
+        else:
+            filename_with_timestamp = filename
         
         # Define the file path
         filepath = target_dir / filename_with_timestamp

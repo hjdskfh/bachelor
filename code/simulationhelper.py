@@ -567,17 +567,18 @@ class SimulationHelper:
         # X basis
         # empty late in x basis
         # print(f"detected_indices_x_det_x_basis: {detected_indices_x_det_x_basis}")
-        if get_original_indexing_z.size != 0:
+        if get_original_indexing_x.size != 0:
             one_in_x_short = np.where(np.any(detected_indices_x_det_x_basis == 1, axis=1))[0]
             one_in_x_long = get_original_indexing_x[one_in_x_short]
             all_ind = np.arange(self.config.n_samples)
             no_one_in_x_long = np.setdiff1d(all_ind, one_in_x_long)    
-            # no detection in Z basis
-            zero_or_one_in_z_short = np.where(np.any(detected_indices_z_det_z_basis == 1, axis=1) | np.any(detected_indices_z_det_z_basis == 0))[0]
-            zero_or_one_in_z_long = get_original_indexing_z[zero_or_one_in_z_short]
-            all_ind = np.arange(self.config.n_samples)
-            no_zero_or_one_in_z_long = np.setdiff1d(all_ind, zero_or_one_in_z_long)
-            X_P_prime_checked_long = np.intersect1d(no_one_in_x_long, no_zero_or_one_in_z_long)
+            if get_original_indexing_z.size != 0:
+                # no detection in Z basis
+                zero_or_one_in_z_short = np.where(np.any(detected_indices_z_det_z_basis == 1, axis=1) | np.any(detected_indices_z_det_z_basis == 0))[0]
+                zero_or_one_in_z_long = get_original_indexing_z[zero_or_one_in_z_short]
+                all_ind = np.arange(self.config.n_samples)
+                no_zero_or_one_in_z_long = np.setdiff1d(all_ind, zero_or_one_in_z_long)
+                X_P_prime_checked_long = np.intersect1d(no_one_in_x_long, no_zero_or_one_in_z_long)
         else:
             X_P_prime_checked_long = no_one_in_x_long
         # print(f"X_P_prime_checked_long part: {X_P_prime_checked_long[:10]}")

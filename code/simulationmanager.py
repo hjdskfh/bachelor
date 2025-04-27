@@ -115,7 +115,7 @@ class SimulationManager:
             lines, labels = ax.get_legend_handles_labels()
             ax.legend(lines, labels, loc='upper center' if state["basis"] == 0 else 'best')
 
-            Saver.save_plot(f"{state['title'].replace(' ', '_').replace(':', '').lower()}_voltage_and_square")
+            Saver.save_plot(f"{state['title'].replace(' ', '_').replace(':', '').lower()}_voltage_and_square", no_date=True)
 
             #### SECOND PLOT (with transmission)
             fig, ax = plt.subplots(figsize=(8, 5))
@@ -130,7 +130,7 @@ class SimulationManager:
             # plt.axvline(right_x * 1e9, color='grey', linestyle='--', label=f'x2 = {right_x:.2e} with FWHM = {fwhm:.2e}')
             ax2.set_ylabel('Optical Power (W)', color='red', fontsize=18)
             ax2.tick_params(axis='y', labelcolor='red', labelsize=16)
-            ax.set_xlabel('Time (ns)', fontsize=16)
+            ax.set_xlabel('Time (ns)', fontsize=18)
 
             # Save limits separately for transmission figure
             if idx == 0:
@@ -145,8 +145,7 @@ class SimulationManager:
             lines, labels = ax.get_legend_handles_labels()
             lines2, labels2 = ax2.get_legend_handles_labels()
             ax.legend(lines + lines2, labels + labels2, loc='upper center' if state["basis"] == 0 else 'best')
-
-            Saver.save_plot(f"{state['title'].replace(' ', '_').replace(':', '').lower()}_voltage_square_transmission")
+            Saver.save_plot(f"{state['title'].replace(' ', '_').replace(':', '').lower()}_voltage_square_transmission", no_date=True)
 
 
     def run_simulation_histograms(self):
