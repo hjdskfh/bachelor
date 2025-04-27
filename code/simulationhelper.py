@@ -767,22 +767,22 @@ class SimulationHelper:
         if len_Z_checked_dec != 0:
             qber_z_dec = len(wrong_detections_z_dec) / len_Z_checked_dec
         else:
-            qber_z_dec = -999
+            qber_z_dec = 0
 
         if len_Z_checked_non_dec != 0:
             qber_z_non_dec = len(wrong_detections_z_non_dec) / len_Z_checked_non_dec
         else:
-            qber_z_non_dec = -999
+            qber_z_non_dec = 0
 
         if X_P_calc_dec != 0:
             qber_x_dec = len(wrong_detections_x_dec) / X_P_calc_dec
         else:
-            qber_x_dec = -999
+            qber_x_dec = 0
 
         if X_P_calc_non_dec != 0:
             qber_x_non_dec = len(wrong_detections_x_non_dec) / X_P_calc_non_dec
         else:
-            qber_x_non_dec = -999
+            qber_x_non_dec = 0
 
         total_amount_detections = len_Z_checked_dec + len_Z_checked_non_dec + X_P_calc_dec + X_P_calc_non_dec   
 

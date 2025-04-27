@@ -14,6 +14,7 @@ import math
 import json
 import re
 from collections import defaultdict
+import datetime
 
 def extract_last_cumulative_totals(log_file_path):
     cumulative_totals = defaultdict(float)
@@ -99,15 +100,24 @@ def combine_cumulative_totals(log_files):
 
 config = SimulationConfig(None)
 data_processor = DataProcessor(config)
-json_filepath = r'C:\Users\leavi\OneDrive\Dokumente\Uni\Semester 7\NeuMoQP\Programm\stuff_from_cluster\2025_04_26\simfor_200000_batch_sims_simulation_config_20250425_120954.json'
+# json_filepath = r'C:\Users\leavi\OneDrive\Dokumente\Uni\Semester 7\NeuMoQP\Programm\stuff_from_cluster\2025_04_26\simfor_200000_batch_sims_simulation_config_20250425_120954.json'
+# json_filepath = r'C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_27\repeat_uhr_10_15\simulation_config_20250426_215842.json'
+# json_filepath = r'C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_27\repeat_uhr_10_15\simulation_config_20250426_215909.json'
+json_filepath = r'C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_27\repeat_uhr_10_15\simulation_config_20250426_215945.json'
 # Load the JSON file
 with open(json_filepath, 'r') as file:
     config_loaded = json.load(file)
 
-file1 = r'C:\Users\leavi\OneDrive\Dokumente\Uni\Semester 7\NeuMoQP\Programm\stuff_from_cluster\2025_04_26\simulation_tracking_20250425_120949.log'
-file2 = r'C:\Users\leavi\OneDrive\Dokumente\Uni\Semester 7\NeuMoQP\Programm\stuff_from_cluster\2025_04_26\simulation_tracking_20250425_120954.log'
-file3 = r'C:\Users\leavi\OneDrive\Dokumente\Uni\Semester 7\NeuMoQP\Programm\stuff_from_cluster\2025_04_26\simulation_tracking_20250425_120957.log'
-log_files = [file1, file2, file3]
+# file1 = r'C:\Users\leavi\OneDrive\Dokumente\Uni\Semester 7\NeuMoQP\Programm\stuff_from_cluster\2025_04_26\simulation_tracking_20250425_120949.log'
+# file2 = r'C:\Users\leavi\OneDrive\Dokumente\Uni\Semester 7\NeuMoQP\Programm\stuff_from_cluster\2025_04_26\simulation_tracking_20250425_120954.log'
+# file3 = r'C:\Users\leavi\OneDrive\Dokumente\Uni\Semester 7\NeuMoQP\Programm\stuff_from_cluster\2025_04_26\simulation_tracking_20250425_120957.log'
+#alle nicht funktioniert
+# file1 = r'C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_27\repeat_uhr_10_15\simulation_tracking_mpn_0_7_mpn_d_0_1_20250426_215842.log'
+# file1 = r'C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_27\repeat_uhr_10_15\simulation_tracking_mpn_0_35_mpn_d_0_175_20250426_215909.log'
+file1 = r'C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_27\repeat_uhr_10_15\simulation_tracking_mpn_0_15_mpn_d_0_075_20250426_215944.log'
+
+# log_files = [file1, file2, file3]
+log_files = [file1]
 cumulative_data = combine_cumulative_totals(log_files)
 # cumulative_data = extract_last_cumulative_totals("simulation_tracking_20250425_120949.log")
 
@@ -139,10 +149,11 @@ print(f"total_symbols: {total_symbols}")
 
 # total_symbols = 1200000
 
-manual_mpn_s = 0.182
-manual_mpn_d = 0.1
+manual_mpn_s = 0.15
+manual_mpn_d = 0.075
 config.mean_photon_nr = config_loaded.get("mean_photon_nr", manual_mpn_s )
 config.mean_photon_decoy = config_loaded.get("mean_photon_decoy", manual_mpn_d)
+print(f"config.mean_photon_nr: {config.mean_photon_nr}, config.mean_photon_decoy: {config.mean_photon_decoy}")
 
 
 # Weighting factors
@@ -157,7 +168,7 @@ weight_s = 1 - desired_p_decoy
 weighted_n_Z_mus = 4 * n_Z_mus_in * weight_Z * weight_s  # Z basis, signal
 weighted_n_Z_mud = 4 * n_Z_mud_in * weight_Z * weight_d  # Z basis, decoy
 weighted_n_X_mus = 4 * n_X_mus_in * weight_X * weight_s  # X basis, signal
-weighted_n_X_mud = 4 * n_X_mud_in * weight_X * weight_d  *1.04# X basis, decoy
+weighted_n_X_mud = 4 * n_X_mud_in * weight_X * weight_d  # X basis, decoy
 weighted_m_Z_mus = 4 * m_Z_mus_in * weight_Z * weight_s  # Z basis, signal
 weighted_m_Z_mud = 4 * m_Z_mud_in * weight_Z * weight_d  # Z basis, decoy
 weighted_m_X_mus = 4 * m_X_mus_in * weight_X * weight_s  # X basis, signal
@@ -242,3 +253,62 @@ print(f"SKR: {skr} ")#for factor {factor} and ")#total factor {factor_total}
 # factor: 100000
 # skl: 39458439.52749339, secret_key_length: 182115874.74227718, total_bit_sequence_length: 120000000000
 # SKR: 39458439.52749339
+desired_p_decoy_arr =  np.arange(0.02, 1, 0.02)
+desired_p_z_alice_arr = np.arange(0.02, 1, 0.02)
+# factor_x_mud_arr = np.arange(0, 100, 1)
+factor_x_mud_arr = np.array([1])
+
+for factor_x_mud_value in factor_x_mud_arr:
+    for desired_p_decoy in desired_p_decoy_arr:
+        for desired_p_z_alice in desired_p_z_alice_arr:
+            print(f"desired_p_decoy: {desired_p_decoy}, desired_p_z_alice: {desired_p_z_alice}")
+            weight_Z = desired_p_z_alice
+            weight_X = 1 - desired_p_z_alice
+            weight_d = desired_p_decoy
+            weight_s = 1 - desired_p_decoy
+
+            # Apply the weights accordingly
+            weighted_n_Z_mus = 4 * n_Z_mus_in * weight_Z * weight_s  # Z basis, signal
+            weighted_n_Z_mud = 4 * n_Z_mud_in * weight_Z * weight_d  # Z basis, decoy
+            weighted_n_X_mus = 4 * n_X_mus_in * weight_X * weight_s  # X basis, signal
+            weighted_n_X_mud = 4 * n_X_mud_in * weight_X * weight_d  * factor_x_mud_value # X basis, decoy
+            weighted_m_Z_mus = 4 * m_Z_mus_in * weight_Z * weight_s  # Z basis, signal
+            weighted_m_Z_mud = 4 * m_Z_mud_in * weight_Z * weight_d  # Z basis, decoy
+            weighted_m_X_mus = 4 * m_X_mus_in * weight_X * weight_s  # X basis, signal
+            weighted_m_X_mud = 4 * m_X_mud_in * weight_X * weight_d  # X basis, decoy
+
+            print(f"weighted_n_Z_mus: {weighted_n_Z_mus}, weighted_n_Z_mud: {weighted_n_Z_mud}, weighted_n_X_mus: {weighted_n_X_mus}, weighted_n_X_mud: {weighted_n_X_mud}")
+            print(f"weighted_m_Z_mus: {weighted_m_Z_mus}, weighted_m_Z_mud: {weighted_m_Z_mud}, weighted_m_X_mus: {weighted_m_X_mus}, weighted_m_X_mud: {weighted_m_X_mud}")
+
+            # put desired p_decoy and p_z_alice in the config
+            config.p_decoy = desired_p_decoy
+            config.p_z_alice = desired_p_z_alice
+
+            # factor to get up to a billion symbols
+            if weighted_n_Z_mus != 0:
+                factor = 1e8 / weighted_n_Z_mus
+            else:
+                factor = 1
+            # factor = 1
+
+            print(f"factor: {factor}")
+            # funktionierte auch mit 10^6
+
+            skr = data_processor.calc_SKR(  weighted_n_Z_mus,
+                                            weighted_n_Z_mud,
+                                            weighted_n_X_mus,
+                                            weighted_n_X_mud,
+                                            weighted_m_Z_mus,
+                                            weighted_m_Z_mud,
+                                            weighted_m_X_mus,
+                                            weighted_m_X_mud,
+                                            total_symbols,
+                                            factor
+                                        )
+
+            print(f"SKR: {skr} ")#for factor {factor} and ")#total factor {factor_total}
+            if not math.isnan(skr) and skr > 0:
+                timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+                with open(f"SKR_results_{timestamp}.txt", "a") as f:
+                    f.write(f"mpn_s: {config.mean_photon_nr}, mpn_d: {config.mean_photon_decoy}, desired_p_decoy: {desired_p_decoy}, desired_p_z_alice: {desired_p_z_alice}, factor_x_mud: {factor_x_mud_value}, SKR: {skr}\n")
+                # raise ValueError(f"SKR: {skr} is not NaN and > 0 for p_decoy: {desired_p_decoy}, p_z_alice: {desired_p_z_alice}")
