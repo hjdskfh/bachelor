@@ -550,7 +550,7 @@ class SimulationHelper:
         if len(ind_Z_sent_non_dec) != 0:
             gain_Z_non_dec = len_Z_checked_non_dec / len(ind_Z_sent_non_dec)	
         else:
-            gain_Z_non_dec =-999 #raise ValueError("No Z sent detected")
+            gain_Z_non_dec = 0 #raise ValueError("No Z sent detected")
         
         # gain Z dec
         ind_Z_sent_dec = np.intersect1d(indices_z_long, ind_sent_dec)
@@ -559,7 +559,7 @@ class SimulationHelper:
         if len(ind_Z_sent_dec) != 0:
             gain_Z_dec = len_Z_checked_dec / len(ind_Z_sent_dec)	
         else:
-            gain_Z_dec = -999 #raise ValueError("No Z decoy sent detected")
+            gain_Z_dec = 0 #raise ValueError("No Z decoy sent detected")
         
         return gain_Z_non_dec, gain_Z_dec, len_Z_checked_dec, len_Z_checked_non_dec
 
@@ -579,8 +579,10 @@ class SimulationHelper:
                 all_ind = np.arange(self.config.n_samples)
                 no_zero_or_one_in_z_long = np.setdiff1d(all_ind, zero_or_one_in_z_long)
                 X_P_prime_checked_long = np.intersect1d(no_one_in_x_long, no_zero_or_one_in_z_long)
+            else: 
+                X_P_prime_checked_long = no_one_in_x_long
         else:
-            X_P_prime_checked_long = no_one_in_x_long
+            X_P_prime_checked_long = np.array([])
         # print(f"X_P_prime_checked_long part: {X_P_prime_checked_long[:10]}")
 
         # decoy or not
@@ -650,7 +652,7 @@ class SimulationHelper:
         if len(ind_x_sent_non_dec_long) != 0:
             gain_X_non_dec = X_P_calc_non_dec / len(ind_x_sent_non_dec_long)
         else:
-            gain_X_non_dec = -999 #raise ValueError("No Z sent detected")
+            gain_X_non_dec = 0 #raise ValueError("No Z sent detected")
         
         # gain X dec
         ind_sent_dec_long = np.where((decoy == 1))[0]
@@ -659,34 +661,9 @@ class SimulationHelper:
         if len(ind_x_sent_dec_long) != 0:
             gain_X_dec = X_P_calc_dec / len(ind_x_sent_dec_long)
         else:
-            gain_X_dec = -999 #raise ValueError("No Z decoy sent detected")
+            gain_X_dec = 0 #raise ValueError("No Z decoy sent detected")
         # print(f"Returning: {X_P_calc_non_dec}, {X_P_calc_dec}, {gain_X_non_dec}, {gain_X_dec}")
 
-        if len(has_0_short) > 100:
-            has_0_short = has_0_short[:100]
-        if len(has_0_long) > 100:
-            has_0_long = has_0_long[:100]
-
-        '''with np.printoptions(threshold=100):  
-            Saver.save_results_to_txt(  # Save the results to a text file
-                function_used = "identify_x",
-                n_samples=self.config.n_samples,
-                seed=self.config.seed,
-                non_signal_voltage=self.config.non_signal_voltage,
-                voltage_decoy=self.config.voltage_decoy, 
-                voltage=self.config.voltage, 
-                voltage_decoy_sup=self.config.voltage_decoy_sup, 
-                voltage_sup=self.config.voltage_sup,
-                p_indep_x_states_non_dec=self.config.p_indep_x_states_non_dec,
-                p_indep_x_states_dec=self.config.p_indep_x_states_dec,
-                Z0_XP_alice_s=Z0_XP_alice_s,
-                XP_Z1_alice_s=XP_Z1_alice_s,
-                has_0_short=has_0_short,
-                has_0_long=has_0_long,
-                ind_has_0_z0xp=ind_has_0_z0xp,
-                get_original_indexing_x=get_original_indexing_x,
-                get_original_indexing_z=get_original_indexing_z,
-                indices_x_long=indices_x_long)'''
             
         return X_P_calc_non_dec, X_P_calc_dec, gain_X_non_dec, gain_X_dec
     
