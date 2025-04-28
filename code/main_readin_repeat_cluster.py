@@ -16,11 +16,28 @@ import re
 from collections import defaultdict
 import datetime
 import csv
+# 909
+# json_filepath = r"C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_27\repeat_14_0_mpn_0_7_20db_att\simulation_config_20250427_115026.json"
+#900
+# json_filepath = r"C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_27\repeat_900_deadtime_25ns\simulation_config_20250427_113247.json"
+# 14
+# json_filepath = r'C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_28\repeat\14_simulation_config_20250428_075954.json'
+# 1
+# json_filepath = r'C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_28\repeat\1_simulation_config_20250428_041909.json'
+# 10
+json_filepath = r'C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_28\repeat\10_simulation_config_20250428_104035.json'
+
 
 # 909
 # file_name = r"C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_27\repeat_14_0_mpn_0_7_20db_att\20250427_133436_counts_repeat_max_12_2_50_20db.npz"
 #900
-file_name = r"C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_27\repeat_900_deadtime_25ns\20250427_144011_counts_repeat.npz"
+# file_name = r"C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_27\repeat_900_deadtime_25ns\20250427_144011_counts_repeat.npz"
+# 14
+# file_name = r'C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_28\repeat\14_20250428_094849_counts_repeat_mpn_0.07_decoy_0.035_att_-3_total_2000000_batch_50_max_12_volt_0.0011_current_0.00041.npz'
+# 1 
+# file_name = r'C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_28\repeat\1_20250428_060659_counts_repeat_mpn_0.15_decoy_0.075_att_-3_total_2000000_batch_50_max_12_volt_0.011_current_0.00041.npz'
+# 10
+file_name = r'C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_28\repeat\10_20250428_122458_counts_repeat_mpn_0.3_decoy_0.15_att_-6_total_2000000_batch_50_max_12_volt_0.0011_current_0.00041.npz'
 
 if os.path.exists(file_name):
     print("File exists!")
@@ -54,10 +71,7 @@ print(f"total_symbols: {total_symbols}")
 
 config = SimulationConfig(None)
 data_processor = DataProcessor(config)
-# 909
-# json_filepath = r"C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_27\repeat_14_0_mpn_0_7_20db_att\simulation_config_20250427_115026.json"
-#900
-json_filepath = r"C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_27\repeat_900_deadtime_25ns\simulation_config_20250427_113247.json"
+
 
 # Load the JSON file
 with open(json_filepath, 'r') as file:
@@ -130,29 +144,29 @@ for length_multiply in length_multiply_arr:
 #                     with open(f"deadtime_SKR_results_{timestamp}.txt", "a") as f:
 #                         f.write(f"length_multiply: {length_multiply:.2e}, mpn_s: {config.mean_photon_nr:.2f}, mpn_d: {config.mean_photon_decoy:.2f}, desired_p_decoy: {desired_p_decoy:.2f}, desired_p_z_alice: {desired_p_z_alice:.2f}, factor_x_mud: {factor_x_mud_value}, SKR: {skr}\n")
 #                     # raise ValueError(f"SKR: {skr} is not NaN and > 0 for p_decoy: {desired_p_decoy}, p_z_alice: {desired_p_z_alice}"
-                timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M")
-                # csv_filename = f"deadtime_SKR_results_{timestamp}_tot_sym_{total_symbols}.csv"
-                # # Check if the file already exists to write the header only once
-                # file_exists = os.path.isfile(csv_filename)
-                # # Open the CSV file in append mode
-                # with open(csv_filename, "a", newline="") as csvfile:
-                #     csv_writer = csv.writer(csvfile)
+                timestamp = datetime.datetime.now().strftime("%Y%m%d_%H")
+                csv_filename = f"deadtime_SKR_results_{timestamp}_tot_sym_{total_symbols}.csv"
+                # Check if the file already exists to write the header only once
+                file_exists = os.path.isfile(csv_filename)
+                # Open the CSV file in append mode
+                with open(csv_filename, "a", newline="") as csvfile:
+                    csv_writer = csv.writer(csvfile)
 
-                #     # Write the header if the file is being created for the first time
-                #     if not file_exists:
-                #         csv_writer.writerow(["length_multiply", "mpn_s", "mpn_d", "desired_p_decoy", "desired_p_z_alice", "factor_x_mud", "SKR"])
+                    # Write the header if the file is being created for the first time
+                    if not file_exists:
+                        csv_writer.writerow(["length_multiply", "mpn_s", "mpn_d", "desired_p_decoy", "desired_p_z_alice", "factor_x_mud", "SKR"])
 
-                #     # Write the data row
-                #     if not math.isnan(skr) and skr > 0:
-                #         csv_writer.writerow([
-                #             length_multiply,
-                #             config.mean_photon_nr,
-                #             config.mean_photon_decoy,
-                #             desired_p_decoy,
-                #             desired_p_z_alice,
-                #               factor_x_mud_value,
-                #               skr
-                #         ])
+                    # Write the data row
+                    if not math.isnan(skr) and skr > 0:
+                        csv_writer.writerow([
+                            length_multiply,
+                            config.mean_photon_nr,
+                            config.mean_photon_decoy,
+                            desired_p_decoy,
+                            desired_p_z_alice,
+                              factor_x_mud_value,
+                              skr
+                        ])
 # Calculate the ratios
 if n_Z_mus_in != 0:
     QBER_signal = m_Z_mus_in / n_Z_mus_in

@@ -1,0 +1,8 @@
+n_Z_mus_in: [173], n_Z_mud_in: [76], n_X_mus_in: [0.], n_X_mud_in: [0.]
+m_Z_mus_in: [10], m_Z_mud_in: [16], m_X_mus_in: [0], m_X_mud_in: [0]
+QBER_signal: [0.05780347], QBER_decoy: [0.21052632], Pherr_signal: None, Pherr_decoy: None
+total symbols: 2000000
+n_Z_mus_in: [184], n_Z_mud_in: [89], n_X_mus_in: [0.], n_X_mud_in: [0.]
+m_Z_mus_in: [13], m_Z_mud_in: [13], m_X_mus_in: [0], m_X_mud_in: [0]
+QBER_signal: [0.07065217], QBER_decoy: [0.14606742], Pherr_signal: None, Pherr_decoy: None
+total symbols: 2000000
