@@ -49,11 +49,11 @@ max_concurrent_tasks = 12
 simulations_in_batch = 2  # adjust this to increase per-task workload
 
 # Total number of batches to run (total simulations = simulations_in_batch * total_batches)
-total_batches = 200 # e.g., total simulations = 2 * 50 = 100
+total_batches = 700 # e.g., total simulations = 2 * 50 = 100
 
 length_of_chain = 6*6 +1
 n_rep = 500
-bins_per_symbol_hist = 30
+bins_per_symbol_hist = 40
 amount_bins_hist = bins_per_symbol_hist * length_of_chain
 
 # Define file name
@@ -64,7 +64,7 @@ base_path = os.path.dirname(os.path.abspath(__file__))
 
 best_batchsize = Saver.find_best_batchsize(length_of_chain, n_rep)
 
-config = SimulationConfig(database, n_samples=int(length_of_chain*n_rep), batchsize=best_batchsize, 
+config = SimulationConfig(database, n_samples=int(length_of_chain*n_rep), batchsize=best_batchsize, mean_photon_nr = 0.7, mean_photon_decoy = 0.35,
                   detector_jitter=detector_jitter,
                 mlp=os.path.join(base_path, style_file), script_name=os.path.basename(__file__), job_id=job_id
                 )
@@ -79,10 +79,10 @@ end_time_read = time.time()  # Record end time
 execution_time_read = end_time_read - start_time  # Calculate execution time for reading
 print(f"Execution time for reading: {execution_time_read:.9f} seconds for {config.n_samples} samples")
 
-def run_simulation_and_update_hist(i, length_of_chain, n_rep, base_path, style_file, database, jitter,
+def run_simulation_and_update_hist(i, length_of_chain, n_rep, base_path, style_file, database,
                                    detector_jitter, best_batchsize, bins_per_symbol, amount_bins):
     # Create the simulation config locally
-    config = SimulationConfig(database, n_samples=int(length_of_chain*n_rep), batchsize=best_batchsize, 
+    config = SimulationConfig(database, n_samples=int(length_of_chain*n_rep), batchsize=best_batchsize, mean_photon_nr = 0.7, mean_photon_decoy = 0.35,
                  detector_jitter=detector_jitter,
                 mlp=os.path.join(base_path, style_file), script_name=os.path.basename(__file__), job_id=job_id
                 )
@@ -100,7 +100,7 @@ def run_simulation_and_update_hist(i, length_of_chain, n_rep, base_path, style_f
     return local_hist_x, local_hist_z, time_one_symbol, lookup_arr
 
 def run_simulation_batch(batch_id, simulations_in_batch, length_of_chain, n_rep, base_path, style_file,
-                         database, jitter, detector_jitter, best_batchsize, bins_per_symbol, amount_bins):
+                         database, detector_jitter, best_batchsize, bins_per_symbol, amount_bins):
     """
     Run a batch of simulations sequentially and aggregate the local histograms.
     """
@@ -113,7 +113,7 @@ def run_simulation_batch(batch_id, simulations_in_batch, length_of_chain, n_rep,
     for j in range(simulations_in_batch):
         # We pass a unique identifier if needed (here simply j)
         local_hist_x, local_hist_z, time_one_symbol, lookup_arr = run_simulation_and_update_hist(
-            j, length_of_chain, n_rep, base_path, style_file, database, jitter,
+            j, length_of_chain, n_rep, base_path, style_file, database, 
             detector_jitter, best_batchsize, bins_per_symbol, amount_bins
         )
         local_hist_total_x += local_hist_x
