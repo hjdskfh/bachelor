@@ -1086,8 +1086,9 @@ class SimulationManager:
         optical_power, peak_wavelength, chosen_voltage, chosen_current = self.simulation_engine.random_laser_output('current_power', 'voltage_shift', fixed = True)
     
         # Generate Alice's choices
-        _, _, _, lookup_array = self.simulation_helper.create_all_symbol_combinations_for_hist()
-        basis, value, decoy = self.simulation_engine.generate_alice_choices()
+        _, _, _, lookup_array_alt = self.simulation_helper.create_all_symbol_combinations_for_hist()
+        basis_array, value_array, decoy_array, lookup_array_new =  self.simulation_helper.create_all_symbol_combinations_for_hist_random()
+        basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=basis_array, value=value_array, decoy=decoy_array)
 
         # Simulate signal and transmission
         Saver.memory_usage("before simulating signal: " + str("{:.3f}".format(time.time() - start_time)))
@@ -1179,7 +1180,7 @@ class SimulationManager:
         print("Data saved to simulation_data.npz")'''
         gc.collect()
         time_one_symbol = t[-1]
-        return time_one_symbol, time_photons_det_z, time_photons_det_x, index_where_photons_det_z, index_where_photons_det_x, lookup_array, basis, value, decoy
+        return time_one_symbol, time_photons_det_z, time_photons_det_x, index_where_photons_det_z, index_where_photons_det_x, lookup_array_alt, basis, value, decoy
     
     def lookup(self):
          # Generate Alice's choices

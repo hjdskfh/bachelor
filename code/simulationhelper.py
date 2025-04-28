@@ -95,6 +95,65 @@ class SimulationHelper:
         print("Decoy Array (sample):", decoy_array[:10])
 
         return basis_array, value_array, decoy_array, lookup_array
+    
+    def create_all_symbol_combinations_for_hist_random(self):
+        def de_bruijn(k, n):
+            """
+            Generate a de Bruijn sequence for alphabet size k and subsequences of length n.
+            """
+            alphabet = list(range(k))
+            a = [0] * k * n
+            sequence = []
+
+            def db(t, p):
+                if t > n:
+                    if n % p == 0:
+                        sequence.extend(a[1:p + 1])
+                else:
+                    a[t] = a[t - p]
+                    db(t + 1, p)
+                    for j in range(a[t - p] + 1, k):
+                        a[t] = j
+                        db(t + 1, t)
+
+            db(1, 1)
+            return sequence
+
+        # Generate de Bruijn sequence for 8 symbols (order 2)
+
+        # Map numbers to your symbols
+        symbols = ['Z0', 'Z1', 'X+', 'Z0*', 'Z1*', 'X+*']
+        seq = de_bruijn(len(symbols), 2)
+        symbol_sequence = [symbols[i] for i in seq]
+
+        # Assuming symbols dictionary as before
+        symbols_dict = {
+            'Z0':  (1, 1, 0),
+            'Z1':  (1, 0, 0),
+            'X+':  (0, -1, 0),
+            'Z0*': (1, 1, 1),
+            'Z1*': (1, 0, 1),
+            'X+*': (0, -1, 1),
+        }
+
+        basis_array = np.empty(len(symbols_dict)**2, dtype=int)
+        value_array = np.empty(len(symbols_dict)**2, dtype=int)
+        decoy_array = np.empty(len(symbols_dict)**2, dtype=int)
+        lookup_array = []  # Here is your lookup array!
+
+        # Flatten basis, value, decoy
+        for idx, sym in enumerate(symbol_sequence):
+            b, v, d = symbols_dict[sym]
+            basis_array[idx] = b
+            value_array[idx] = v
+            decoy_array[idx] = d
+            lookup_array.append(sym)
+
+        print("Basis Array (sample):", basis_array[:10])
+        print("Value Array (sample):", value_array[:10])
+        print("Decoy Array (sample):", decoy_array[:10])
+
+        return basis_array, value_array, decoy_array, lookup_array
         
     # ========== Main Helper Functions for signal generation ==========
 
@@ -440,7 +499,7 @@ class SimulationHelper:
             detected_indices_z_det_z_basis[row, selected_index] = detected_indices_z_det_z_basis[row, selected_index]
 
         total_sift_z_basis_short = np.union1d(np.union1d(early_indices_short, late_indices_short), rows_with_multiple_detections)                  
-        get_original_indexing_z = index_where_photons_det_z[basis[index_where_photons_det_z] == 1]
+        get_original_indexing_z = np.where(mask_z_short)[0]  # Get the original indices of the Z basis detections
 
         # get vacuums
         indices_z_long = np.where(basis == 1)[0]
@@ -480,7 +539,7 @@ class SimulationHelper:
             detected_indices_x_det_x_basis[row, selected_index] = detected_indices_x_det_x_basis[row, selected_index]
 
         vacuum_indices_x_long = np.union1d(indices_x_no_photons_long, nothing_in_det_indices_long)
-        get_original_indexing_x = index_where_photons_det_x[basis[index_where_photons_det_x] == 1]
+        get_original_indexing_x = np.where(mask_x_short)[0]  # Get the original indices of the X basis detections
 
         '''with np.printoptions(threshold=100):
             Saver.save_results_to_txt(  # Save the results to a text file
