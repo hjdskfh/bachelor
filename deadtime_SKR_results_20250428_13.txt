@@ -6,3 +6,15 @@ n_Z_mus_in: [184], n_Z_mud_in: [89], n_X_mus_in: [0.], n_X_mud_in: [0.]
 m_Z_mus_in: [13], m_Z_mud_in: [13], m_X_mus_in: [0], m_X_mud_in: [0]
 QBER_signal: [0.07065217], QBER_decoy: [0.14606742], Pherr_signal: None, Pherr_decoy: None
 total symbols: 2000000
+n_Z_mus_in: [173], n_Z_mud_in: [76], n_X_mus_in: [0.], n_X_mud_in: [0.]
+m_Z_mus_in: [10], m_Z_mud_in: [16], m_X_mus_in: [0], m_X_mud_in: [0]
+QBER_signal: [0.05780347], QBER_decoy: [0.21052632], Pherr_signal: None, Pherr_decoy: None
+total symbols: 2000000
+n_Z_mus_in: [173], n_Z_mud_in: [76], n_X_mus_in: [0.], n_X_mud_in: [0.]
+m_Z_mus_in: [10], m_Z_mud_in: [16], m_X_mus_in: [0], m_X_mud_in: [0]
+QBER_signal: [0.05780347], QBER_decoy: [0.21052632], Pherr_signal: None, Pherr_decoy: None
+total symbols: 2000000
+n_Z_mus_in: [16140], n_Z_mud_in: [8285], n_X_mus_in: [344.], n_X_mud_in: [160.]
+m_Z_mus_in: [531], m_Z_mud_in: [532], m_X_mus_in: [12], m_X_mud_in: [13]
+QBER_signal: [0.03289963], QBER_decoy: [0.06421243], Pherr_signal: [0.03488372], Pherr_decoy: [0.08125]
+total symbols: 4000000

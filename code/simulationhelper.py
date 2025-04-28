@@ -419,7 +419,7 @@ class SimulationHelper:
 
     def classificator_sift_z_vacuum(self, basis, detected_indices_z, index_where_photons_det_z):
         # nur z basis sendung
-        mask_z_short = basis[index_where_photons_det_z] == 1
+        mask_z_short = basis[index_where_photons_det_z] == 1 # alle indices bei denen was detected und das gesendete in X basis
         detected_indices_z_det_z_basis = detected_indices_z[mask_z_short]
         early_indices_short = np.where(np.sum(detected_indices_z == 0, axis=1) >= 1)[0]
         late_indices_short = np.where(np.sum(detected_indices_z == 1, axis=1) >= 1)[0]
@@ -582,7 +582,8 @@ class SimulationHelper:
             else: 
                 X_P_prime_checked_long = no_one_in_x_long
         else:
-            X_P_prime_checked_long = np.array([])
+            no_one_in_x_long = np.arange(self.config.n_samples)
+            X_P_prime_checked_long = no_one_in_x_long
         # print(f"X_P_prime_checked_long part: {X_P_prime_checked_long[:10]}")
 
         # decoy or not

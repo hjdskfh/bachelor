@@ -1,0 +1,29 @@
+[Before everything] Memory used: 143.38 MB
+Base path: C:\Users\leavi\bachelor\code
+Configuration saved to C:\Users\leavi\bachelor\logs\simulation_config_20250428_140344.json
+Execution time for reading: 0.008927345 seconds for 20 samples
+Error: The difference between non_signal_voltage and voltage is not 1
+seed: 532527
+T1_dampening at initialize end: 75.3205269575119
+voltage at initialize end: 0.2
+Voltage_decoy at initialize end: -0.16064520180225372
+Voltage_decoy_sup at initialize end: -0.4039088696241378
+Voltage_sup at initialize end: -0.22621077001094814
+random_laser, fixed: True, times: [3.76267853 6.6416902 ]
+signals: [[-1.38468124 -1.38405124 -1.38341935 ... -1.39359615 -1.39316267
+  -1.39272771]
+ [-1.39229124 -1.39185329 -1.39141384 ... -1.3860236  -1.38644653
+  -1.386868  ]
+ [-1.38728801 -1.38770657 -1.38812368 ... -1.42515404 -1.4253019
+  -1.42544647]
+ ...
+ [-1.38682521 -1.38639863 -1.38597059 ... -1.38562895 -1.38605284
+  -1.38647528]
+ [-1.38689627 -1.38731582 -1.38773392 ... -1.4223483  -1.42248603
+  -1.42262048]
+ [-1.42275168 -1.4228796  -1.42300426 ... -1.38655983 -1.38593553
+  -1.38530933]]
+f_0: 193308628729901.22, i: 0, batchsize: 10, peak_wavelength[i]: 1.5508488160602616e-06
+f_0: 193308628729901.22, i: 10, batchsize: 10, peak_wavelength[i]: 1.5508488160602616e-06
+no_date: False
+Execution time for simulation: 3.014142513 seconds for 20 samples
