@@ -541,24 +541,6 @@ class SimulationHelper:
         vacuum_indices_x_long = np.union1d(indices_x_no_photons_long, nothing_in_det_indices_long)
         get_original_indexing_x = np.where(mask_x_short)[0]  # Get the original indices of the X basis detections
 
-        '''with np.printoptions(threshold=100):
-            Saver.save_results_to_txt(  # Save the results to a text file
-                function_used = "sift_vac_x",
-                n_samples=self.config.n_samples,
-                seed=self.config.seed,
-                non_signal_voltage=self.config.non_signal_voltage,
-                voltage_decoy=self.config.voltage_decoy, 
-                voltage=self.config.voltage, 
-                voltage_decoy_sup=self.config.voltage_decoy_sup, 
-                voltage_sup=self.config.voltage_sup,
-                p_indep_x_states_non_dec=self.config.p_indep_x_states_non_dec,
-                p_indep_x_states_dec=self.config.p_indep_x_states_dec,
-                get_original_indexing_x = get_original_indexing_x,
-                detected_indices_x_det_x_basis = detected_indices_x_det_x_basis,
-                index_where_photons_det_x = index_where_photons_det_x,
-                detected_indices_x = detected_indices_x.shape
-                )'''
-
         # 1 or 2 signals in X basis
         sum_det_ind = np.sum(detected_indices_x >= 0, axis=1)
         one_or_two_in_x_short = np.where((sum_det_ind == 1) | (sum_det_ind == 2))[0]
