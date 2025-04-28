@@ -23,6 +23,7 @@ with open(output_file, "w") as f:
     original_stdout = sys.stdout  # Save the original stdout
     sys.stdout = f
     
+    # plt.style.use("C:\\Users\\leavi\\bachelor\\code\\Presentation_style_1_adjusted_no_grid.mplstyle")
     Saver.memory_usage("Before everything")
 
     #measure execution time
@@ -48,7 +49,7 @@ with open(output_file, "w") as f:
     print(f"Base path: {base_path}")
 
     #create simulation mean current 0.08 , mena_voltage = 0.98 weil aus voltage_sweep, 0.9835 # mean voltage mit skript 1.6094623981710416 rausbekommen
-    config = SimulationConfig(database, n_samples=20, batchsize=10, 
+    config = SimulationConfig(database, n_samples=10000, batchsize=1000, mean_photon_nr=0.7, mean_photon_decoy=0.1, 
                             detector_jitter=detector_jitter, mlp=os.path.join(base_path, style_file), script_name = os.path.basename(__file__))
     simulation = SimulationManager(config)
 
@@ -81,6 +82,9 @@ with open(output_file, "w") as f:
     # simulation.run_simulation_detector()
     len_wrong_x_dec, len_wrong_x_non_dec, len_wrong_z_dec, len_wrong_z_non_dec, len_Z_checked_dec, len_Z_checked_non_dec, X_P_calc_non_dec, X_P_calc_dec = simulation.run_simulation_repeat(save_output = False)
 
+    print(f"len_wrong_x_dec: {len_wrong_x_dec}, len_wrong_x_non_dec: {len_wrong_x_non_dec}, len_wrong_z_dec: {len_wrong_z_dec}, len_wrong_z_non_dec: {len_wrong_z_non_dec}")
+    print(f"len_Z_checked_dec: {len_Z_checked_dec}, len_Z_checked_non_dec: {len_Z_checked_non_dec}")
+    print(f"X_P_calc_non_dec: {X_P_calc_non_dec}, X_P_calc_dec: {X_P_calc_dec}")
 
     end_time_simulation = time.time()  # Record end time for simulation
     execution_time_simulation = end_time_simulation - end_time_read  # Calculate execution time for simulation

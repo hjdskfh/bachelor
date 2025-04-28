@@ -1,3 +1,4 @@
+from codecs import lookup
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator
@@ -35,7 +36,7 @@ class SimulationManager:
                 {"title": "State: X+ decoy", "basis": 0, "value": -1, "decoy": 1},
                 ]
     
-        def process_state(state): #fixed wieder rein
+        def process_state(state):
             optical_power, peak_wavelength, chosen_voltage, chosen_current = self.simulation_engine.random_laser_output('current_power', 'voltage_shift', fixed = True)
 
             basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=state["basis"], value=state["value"], decoy=state["decoy"])
@@ -85,66 +86,69 @@ class SimulationManager:
             fwhm = x[right_idx] - x[left_idx]
             return fwhm, x[left_idx], x[right_idx]
       
-        for idx, state in enumerate(states):
+        # Plotting results sequentially to avoid threading issues with Matplotlib
+        for state in states:
             state, t, signals, power_dampened, square_signals = process_state(state)
             chosen_index = 10
 
             # fwhm, left_x, right_x = find_fwhm_index(t, power_dampened[chosen_index], state["value"])
             # print(f"len(t): {len(t)}, len(power_dampened): {len(power_dampened[chosen_index])}, chosen_index: {chosen_index}")
             # print(f"FWHM for {state['title']}: {fwhm} ns, left indices: {left_x}, right indices: {right_x}")
-
-            # figure 1
+            
             fig, ax = plt.subplots(figsize=(8, 5))
 
+            # Plot voltage (left y-axis)
             ax.plot(t * 1e9, signals[chosen_index], color='green', label='Signal incl. BW')
-            ax.plot(t * 1e9, square_signals[chosen_index], color='blue', label='Square Signal')
-            ax.set_ylabel('Voltage (V)', fontsize=18)
-            ax.set_xlabel('Time (ns)', fontsize=18)
-            ax.tick_params(axis='both', labelsize=16)
+            ax.set_ylabel('Voltage (V)')
 
-            # Save limits for voltage+square figure
-            if idx == 0:
-                first_xlim_voltage = ax.get_xlim()
-                first_ylim_voltage = ax.get_ylim()
+            # Plot square signals (right y-axis)
+            ax.plot(t * 1e9, square_signals[chosen_index], color='blue', label='Square Signal')
+   
+            # Titles and labels
+            # ax.set_title(state["title"])
+            ax.set_xlabel('Time (ns)')
+            # Save or show the plot
+            lines, labels = ax.get_legend_handles_labels()  # Get handles and labels from the first axis
+            if state["basis"] == 0:
+                ax.legend(lines, labels, loc='upper center')  # Combine and add the legend
             else:
-                ax.set_xlim(first_xlim_voltage)
-                ax.set_ylim(first_ylim_voltage)
+                ax.legend(lines, labels)
 
-            lines, labels = ax.get_legend_handles_labels()
-            ax.legend(lines, labels, loc='upper center' if state["basis"] == 0 else 'best')
+            # Save or show the plot
+            Saver.save_plot(f"{state['title'].replace(' ', '_').replace(':', '').lower()}_voltage_and_square")
 
-            Saver.save_plot(f"{state['title'].replace(' ', '_').replace(':', '').lower()}_voltage_and_square", no_date=True)
+            fig, ax = plt.subplots(figsize=(8, 5)) #8, 5
+            ax2 = ax.twinx()  # Create a second y-axis
 
-            #### SECOND PLOT (with transmission)
-            fig, ax = plt.subplots(figsize=(8, 5))
-            ax2 = ax.twinx()
+            # # Plot voltage (left y-axis)
+            # ax.plot(t * 1e9, signals[chosen_index], color='blue', label='Signal incl. BW')
+            # ax.set_ylabel('Voltage (V)', color='blue')
+            # ax.tick_params(axis='y', labelcolor='blue')
 
+            # Plot square signals (right y-axis)
             ax.plot(t * 1e9, square_signals[chosen_index], color='blue', label='Square Signal')
-            ax.set_ylabel('Voltage (V)', color='blue', fontsize=18)
-            ax.tick_params(axis='y', labelcolor='blue', labelsize=16)
+            ax.set_ylabel('Voltage (V)', color='blue')
+            ax.tick_params(axis='y', labelcolor='blue')
 
+            # Plot transmission (right y-axis)
             ax2.plot(t * 1e9, power_dampened[chosen_index], color='red', label='Laser Pulse')
             # plt.axvline(left_x * 1e9, color='grey', linestyle='--', label=f'x1 = {left_x:.2e}')
             # plt.axvline(right_x * 1e9, color='grey', linestyle='--', label=f'x2 = {right_x:.2e} with FWHM = {fwhm:.2e}')
-            ax2.set_ylabel('Optical Power (W)', color='red', fontsize=18)
-            ax2.tick_params(axis='y', labelcolor='red', labelsize=16)
-            ax.set_xlabel('Time (ns)', fontsize=18)
+            ax2.set_ylabel('Transmission', color='red')
+            ax2.tick_params(axis='y', labelcolor='red')
 
-            # Save limits separately for transmission figure
-            if idx == 0:
-                first_xlim_transmission = ax.get_xlim()
-                first_ylim_voltage_square = ax.get_ylim()
-                first_ylim_transmission = ax2.get_ylim()
+            # Titles and labels
+            #ax.set_title(state["title"])
+            ax.set_xlabel('Time (ns)')
+
+            # Save or show the plot
+            lines, labels = ax.get_legend_handles_labels()  # Get handles and labels from the first axis
+            lines2, labels2 = ax2.get_legend_handles_labels()  # Get handles and labels from the second axis
+            if state["basis"] == 0:
+                ax.legend(lines + lines2, labels + labels2, loc='upper center')  # Combine and add the legend
             else:
-                ax.set_xlim(first_xlim_transmission)
-                ax.set_ylim(first_ylim_voltage_square)
-                ax2.set_ylim(first_ylim_transmission)
-
-            lines, labels = ax.get_legend_handles_labels()
-            lines2, labels2 = ax2.get_legend_handles_labels()
-            ax.legend(lines + lines2, labels + labels2, loc='upper center' if state["basis"] == 0 else 'best')
-            Saver.save_plot(f"{state['title'].replace(' ', '_').replace(':', '').lower()}_voltage_square_transmission", no_date=True)
-
+                ax.legend(lines + lines2, labels + labels2)
+            Saver.save_plot(f"{state['title'].replace(' ', '_').replace(':', '').lower()}_voltage_square_transmission")
 
     def run_simulation_histograms(self):
         #initialize
@@ -1082,8 +1086,9 @@ class SimulationManager:
         optical_power, peak_wavelength, chosen_voltage, chosen_current = self.simulation_engine.random_laser_output('current_power', 'voltage_shift', fixed = True)
     
         # Generate Alice's choices
-        _, _, _, lookup_array = self.simulation_helper.create_all_symbol_combinations_for_hist()
-        basis, value, decoy = self.simulation_engine.generate_alice_choices()
+        _, _, _, lookup_array_alt = self.simulation_helper.create_all_symbol_combinations_for_hist()
+        basis_array, value_array, decoy_array, lookup_array_new =  self.simulation_helper.create_all_symbol_combinations_for_hist_random()
+        basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=basis_array, value=value_array, decoy=decoy_array)
 
         # Simulate signal and transmission
         Saver.memory_usage("before simulating signal: " + str("{:.3f}".format(time.time() - start_time)))
@@ -1175,7 +1180,7 @@ class SimulationManager:
         print("Data saved to simulation_data.npz")'''
         gc.collect()
         time_one_symbol = t[-1]
-        return time_one_symbol, time_photons_det_z, time_photons_det_x, index_where_photons_det_z, index_where_photons_det_x, lookup_array, basis, value, decoy
+        return time_one_symbol, time_photons_det_z, time_photons_det_x, index_where_photons_det_z, index_where_photons_det_x, lookup_array_alt, basis, value, decoy
     
     def lookup(self):
          # Generate Alice's choices

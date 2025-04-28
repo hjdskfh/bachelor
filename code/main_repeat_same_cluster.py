@@ -40,20 +40,20 @@ n_samples_set = 20000
 # To be safe, use up to ~75% of 256 GB → ~192 GB usable.
 # Maximum concurrent simulations ≈ 192 / 6 ≈ 32.
 # Here we choose a conservative maximum number of parallel tasks.
-max_concurrent_tasks = 3
+max_concurrent_tasks = 12
 
 # How many simulations per batch (each batch runs sequentially inside one task)
 simulations_in_batch = 2  # adjust this to increase per-task workload
 
 # Total number of batches to run (total simulations = simulations_in_batch * total_batches)
-total_batches = 300  # e.g., total simulations = 2 * 50 = 100  # 340 circa 4,5 stunden mit 2 sim per batch
+total_batches = 50  # e.g., total simulations = 2 * 50 = 100  # 340 circa 4,5 stunden mit 2 sim per batch
 
 # Define file name
 style_file = "Presentation_style_1_adjusted_no_grid.mplstyle"
 
 base_path = os.path.dirname(os.path.abspath(__file__))
 
-config = SimulationConfig(database, n_samples=n_samples_set, p_z_alice=0.5, p_decoy=0.5, mean_photon_nr=0.182, mean_photon_decoy=0.1,
+config = SimulationConfig(database, n_samples=n_samples_set, mean_photon_nr=0.15, mean_photon_decoy=0.075,
                  detector_jitter=detector_jitter,
                 mlp=os.path.join(base_path, style_file), script_name = os.path.basename(__file__), job_id=job_id
                 )
@@ -151,7 +151,7 @@ Saver.save_results_to_txt(function_used = "max_4_batch_100", global_len_wrong_x_
                         global_len_wrong_z_non_dec=global_len_wrong_z_non_dec, global_len_Z_checked_dec=global_len_Z_checked_dec, global_len_Z_checked_non_dec=global_len_Z_checked_non_dec,
                         global_X_P_calc_dec=global_X_P_calc_dec, global_X_P_calc_non_dec=global_X_P_calc_non_dec, total_symbols=total_symbols)
 
-Saver.save_array_as_npz_data("counts_repeat",
+Saver.save_array_as_npz_data(f"counts_repeat_mpn_{config.mean_photon_nr}_decoy_{config.mean_photon_decoy}_att_{config.fiber_attenuation}_total_{total_symbols}_batch_{total_batches}_max_{max_concurrent_tasks}_volt_{config.voltage_amplitude}_current_{config.current_amplitude}",
                         global_len_wrong_x_dec=global_len_wrong_x_dec, global_len_wrong_x_non_dec=global_len_wrong_x_non_dec,
                         global_len_wrong_z_dec=global_len_wrong_z_dec, global_len_wrong_z_non_dec=global_len_wrong_z_non_dec,
                         global_len_Z_checked_dec=global_len_Z_checked_dec, global_len_Z_checked_non_dec=global_len_Z_checked_non_dec,

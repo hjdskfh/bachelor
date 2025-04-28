@@ -1,0 +1,24 @@
+[Before everything] Memory used: 139.94 MB
+Base path: C:\Users\leavi\OneDrive\Dokumente\Uni\Semester 7\NeuMoQP\Programm\code
+Configuration saved to C:\Users\leavi\OneDrive\Dokumente\Uni\Semester 7\NeuMoQP\Programm\logs\simulation_config_20250428_004231.json
+Execution time for reading: 0.022342920 seconds for 2000 samples
+Error: The difference between non_signal_voltage and voltage is not 1
+seed: 780807
+T1_dampening at initialize end: 75.3205269575119
+voltage at initialize end: 0.2
+Voltage_decoy at initialize end: -0.1606449395418167
+Voltage_decoy_sup at initialize end: -0.4039086729288101
+Voltage_sup at initialize end: -0.2262105733156204
+random_laser, fixed: None, times: [8.14436466 7.65084381]
+[before simulating signal: 2.771] Memory used: 142.97 MB
+[before eam: 10.209] Memory used: 471.54 MB
+[before fiber: 11.588] Memory used: 471.54 MB
+[before detector z: 11.622] Memory used: 471.54 MB
+[in choose photon after pre-allocate arrays] Memory used: 471.57 MB
+[after choose: 11.810953140258789] Memory used: 471.57 MB
+[before detection time:11.811275482177734] Memory used: 471.57 MB
+[before jitter detector: 11.81338906288147] Memory used: 471.58 MB
+[before darkcount: 11.8138587474823] Memory used: 471.59 MB
+total darkcounts: 0
+[before DLI: 11.844] Memory used: 471.77 MB
+f_0: 193308845725717.34, i: 0, batchsize: 1000, peak_wavelength[i]: 1.550847075179221e-06

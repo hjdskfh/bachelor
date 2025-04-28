@@ -74,7 +74,7 @@ class DataProcessor:
         assert 0 <= start_symbol <= end_symbol <= 36
         def normalize_histogram(histogram_counts, slice_start, slice_end, bins_per_symbol):
             # Get the maximum value in the specified slice
-            max_in_slice = np.max(histogram_counts[slice_start * bins_per_symbol:(slice_end + 1) * bins_per_symbol]) if np.max(histogram_counts[slice_start * bins_per_symbol:(slice_end + 1) * bins_per_symbol]) > 0 else 1
+            max_in_slice = np.max(histogram_counts) if np.max(histogram_counts) > 0 else 1
             # Normalize the entire histogram using the maximum value in the slice
             normalized_histogram = histogram_counts / max_in_slice
             return normalized_histogram
@@ -111,15 +111,17 @@ class DataProcessor:
                     y_max = 1  # Default value if neither histogram is plotted
                 basis = symbol[0]  # assuming symbol is like 'X0' or 'Z1'
                 color = 'green' if basis == 'X' else 'purple'
+                
+                plt.text(x_mid, y_max * 0.915, symbol, ha='center', va='bottom', fontsize=18, color=color, fontweight='bold')
 
-                plt.text(x_mid, y_max * 0.9, symbol, ha='center', va='bottom', fontsize=14, color=color, fontweight='bold')
-
-        plt.xlabel("Time ")
-        plt.ylabel("Cumulative Counts")
-        plt.title(f"Cumulative Histogram for {start_symbol} to {end_symbol} for {total_symbols} {name} symbols")
+        plt.xlabel("Time (s)", fontsize = 18)
+        plt.ylabel("Cumulative Photon Counts", fontsize = 18)
+        # plt.title(f"Cumulative Histogram for {start_symbol} to {end_symbol} for {total_symbols} {name} symbols")
         plt.legend()
+        plt.ylim(0, 1.1)
+        plt.tick_params(axis='both', which='major', labelsize=18)  # Increase tick size for major ticks
         plt.tight_layout()
-        Saver.save_plot(f"hist_symbols_{start_symbol}_to_{end_symbol}")
+        Saver.save_plot(f"hist_fixed_symbols_{start_symbol}_to_{end_symbol}", no_time = True)
 
     @staticmethod
     def get_all_pair_indices(lookup_arr):
@@ -316,16 +318,16 @@ class DataProcessor:
         bins = np.linspace(0, amount_symbols * time_one_symbol, bins_per_symbol * amount_symbols + 1)    
         
         # Normalize histogram counts so the highest peak is at 1
-        norm_histogram_counts_x = normalize_histogram(histogram_counts_x, start_symbol, end_symbol + 1, bins_per_symbol)
-        norm_histogram_counts_z = normalize_histogram(histogram_counts_z, start_symbol, end_symbol + 1, bins_per_symbol)
+        # histogram_counts_x = normalize_histogram(histogram_counts_x, start_symbol, end_symbol + 1, bins_per_symbol)
+        # histogram_counts_z = normalize_histogram(histogram_counts_z, start_symbol, end_symbol + 1, bins_per_symbol)
 
         plt.figure(figsize=(10, 6))
         # Plot as bar chart; you can also use plt.hist with precomputed counts.
         width = (bins[1] - bins[0])
         if leave_x == False:
-            plt.bar(bins[:-1], norm_histogram_counts_x[(start_symbol) * bins_per_symbol :((end_symbol) + 1) * bins_per_symbol], width=width, alpha=0.6, label='X basis', color='blue')
+            plt.bar(bins[:-1], histogram_counts_x[(start_symbol) * bins_per_symbol :((end_symbol) + 1) * bins_per_symbol], width=width, alpha=0.6, label='X basis', color='blue')
         if leave_z == False:
-            plt.bar(bins[:-1], norm_histogram_counts_z[(start_symbol) * bins_per_symbol :((end_symbol) + 1) * bins_per_symbol], width=width, alpha=0.6, label='Z basis', color='red')
+            plt.bar(bins[:-1], histogram_counts_z[(start_symbol) * bins_per_symbol :((end_symbol) + 1) * bins_per_symbol], width=width, alpha=0.6, label='Z basis', color='red')
 
         for i in range(amount_symbols):
             if (start_symbol + i) % 2 == 0:
@@ -345,47 +347,26 @@ class DataProcessor:
                 print(f"symbol: {symbol}")
 
                 if leave_x == False and leave_z == False:
-                    y_max = max(max(norm_histogram_counts_x), max(norm_histogram_counts_z))
+                    y_max = max(max(histogram_counts_x), max(histogram_counts_z))
                 elif leave_x == False:
-                    y_max = max(norm_histogram_counts_x)
+                    y_max = max(histogram_counts_x)
                 elif leave_z == False:
-                    y_max = max(norm_histogram_counts_z)
+                    y_max = max(histogram_counts_z)
                 else:
                     y_max = 1  # Default value if neither histogram is plotted
                 basis = symbol[0]  # assuming symbol is like 'X0' or 'Z1'
                 color = 'green' if basis == 'X' else 'purple'
                 print(f"blub2")
-                plt.text(x_mid, y_max * 0.9, symbol, ha='center', va='bottom', fontsize=14, color=color, fontweight='bold')
+                plt.text(x_mid, y_max * 0.5, symbol, ha='center', va='bottom', fontsize=14, color=color, fontweight='bold')
         
         plt.axvline(x=amount_symbols * time_one_symbol, color='grey', linestyle='--', linewidth=3)
 
-        plt.xlabel("Time ")
+        plt.xlabel("Time (s)")
         plt.ylabel("Cumulative Counts")
-        plt.title(f"Cumulative Histogram for {start_pair} to {end_pair} for {total_symbols} {name} symbols")
+        # plt.title(f"Cumulative Histogram for {start_pair} to {end_pair} for {total_symbols} {name} symbols")
         plt.legend()
         plt.tight_layout()
-        Saver.save_plot(f"hist_symbols_{start_pair}_to_{end_pair}")
-
-    def combine_bins(histogram_counts, bins_per_symbol):
-        """
-        Combine every two adjacent bins into one, reducing the number of bins per symbol by half.
-
-        Parameters:
-        - histogram_counts: 1D numpy array of histogram counts.
-        - bins_per_symbol: int, the original number of bins per symbol.
-
-        Returns:
-        - combined_histogram: 1D numpy array with reduced bins per symbol.
-        """
-        assert bins_per_symbol % 2 == 0, "bins_per_symbol must be even to combine bins."
-
-        # Reshape the histogram to group every two bins together
-        reshaped = histogram_counts.reshape(-1, 2)
-
-        # Sum adjacent bins
-        combined_histogram = reshaped.sum(axis=1)
-
-        return combined_histogram, bins_per_symbol // 2
+        Saver.save_plot(f"hist_symbols_{start_pair}_to_{end_pair}", no_time = True)
 
     #  -------SKR ------
     # Entropy function
@@ -717,13 +698,12 @@ class DataProcessor:
     def calc_SKR_old(self, len_wrong_x_dec, len_wrong_x_non_dec, len_wrong_z_dec, len_wrong_z_non_dec, 
                  len_Z_checked_dec, len_Z_checked_non_dec, X_P_calc_dec, X_P_calc_non_dec, total_symbols):
         block_size = None  
-        # factor to get up to a billion symbols
-        if len_Z_checked_non_dec != 0:
-            factor = 1e9 / len_Z_checked_non_dec
-        else:
-            factor = 1
-        # factor = 1e4
-        # print(f"factor: {factor}")
+        #factor to get up to a billion symbols
+        # if len_Z_checked_non_dec != 0:
+        #     factor = 1e9 / len_Z_checked_non_dec
+        # else:
+        factor = 1e4
+        print(f"factor: {factor}")
         total_bit_sequence_length = total_symbols * factor  # Number of detections in key generating basis
         eta_bob = 4.5 / 100  # Transmittance in Bob’s side, including internal transmittance of optical components and detector efficiency
         y_0 = 1.7e-6  # Background rate, which includes the detector dark count and other background contributions such as the stray light from timing pulses
@@ -861,7 +841,7 @@ class DataProcessor:
             return skr
         
         initial_params = [self.config.mean_photon_nr, self.config.mean_photon_decoy, 1-self.config.p_decoy, self.config.p_z_alice]  # mus, mud, p_mus, p_Z
-        # print(f"initial_params: {initial_params}")
+        print(f"initial_params: {initial_params}")
         skr = calculate_skr(initial_params, total_bit_sequence_length)
         
         return skr

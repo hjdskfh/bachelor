@@ -78,18 +78,6 @@ class SimulationEngine:
         optical_power = np.repeat(optical_power_short, self.config.batchsize)
         peak_wavelength = np.repeat(peak_wavelength_short, self.config.batchsize)
         # self.config.batchsize = self.config.batchsize/10
-        #plot histo
-        # plt.hist(chosen_voltage, bins=100, alpha=0.5) 
-        # # plt.hist(chosen_current, bins=100, alpha=0.5) #density=True,
-        # plt.xlabel("Chosen Voltage Values (V)")
-        # # plt.xlabel("Chosen Current Values (mA)")
-        # plt.ylabel("Counts")
-        # plt.legend()
-        # plt.grid(True)
-        # plt.tight_layout()
-        # Saver.save_plot(f'histogram_chosen_voltage', no_date=True)
-        # Saver.save_plot(f'histogram_chosen_current', no_date=True)
-
         return optical_power * 1e-3, peak_wavelength * 1e-9, chosen_voltage, chosen_current  # in W and m
 
     def generate_alice_choices(self, basis=None, value=None, decoy=None):
@@ -429,8 +417,8 @@ class SimulationEngine:
             print(f"detected_indices_x_det_x_basis: {detected_indices_x_det_x_basis}")
             print(f"get_original_indexing_x part: {get_original_indexing_x[:10]}")
             print(f"XP_alice_s part {np.where((basis == 0) & (decoy == 1))[0][:10]}")'''
-        gain_Z_non_dec, gain_Z_dec, len_Z_checked_dec, len_Z_checked_non_dec = self.simulation_helper.classificator_identify_z(mask_x_short, value, total_sift_z_basis_short, 
-                                                                                                                               detected_indices_x_det_x_basis, index_where_photons_det_z, decoy, indices_z_long, get_original_indexing_z, get_original_indexing_x)
+        gain_Z_non_dec, gain_Z_dec, len_Z_checked_dec, len_Z_checked_non_dec = self.simulation_helper.classificator_identify_z(mask_x_short, value, total_sift_z_basis_short, detected_indices_z_det_z_basis,
+                                                                                                                               detected_indices_x_det_x_basis, index_where_photons_det_z, basis, decoy, indices_z_long, get_original_indexing_z, get_original_indexing_x)
 
         X_P_calc_non_dec, X_P_calc_dec, gain_X_non_dec, gain_X_dec = self.simulation_helper.classificator_identify_x(mask_x_short, mask_z_short, detected_indices_x_det_x_basis, 
                                                                                                                      detected_indices_z_det_z_basis, basis, value, decoy, indices_x_long, get_original_indexing_x, get_original_indexing_z)

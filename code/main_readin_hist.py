@@ -1,4 +1,5 @@
 import time
+from tracemalloc import start
 from datamanager import DataManager
 from config import SimulationConfig
 from simulationmanager import SimulationManager
@@ -11,6 +12,8 @@ import os
 import math
 import json
 
+plt.style.use("C:\\Users\\leavi\\bachelor\\code\\Presentation_style_1_adjusted_no_grid.mplstyle")
+
 # file_name = '../stuff_from_cluster/2025_04_13/20250410_190215_histograms.npz'
 # file_name = r'C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_13\20250413_150050_histograms_fixed.npz'
 # file_name = r'C:\Users\leavi\OneDrive\Dokumente\Uni\Semester 7\NeuMoQP\Programm\stuff_from_cluster\2025_04_13\random\20250413_172141_histograms_random.npz'
@@ -20,7 +23,14 @@ import json
 # file_name = r'C:\Users\leavi\bachelor\results_data\20250415_112451_histograms_random.npz'
 # file_name = r'C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_23\hist_rand\20250423_041529_histograms_random.npz'
 # file_name = r'C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_18\20250417_160300_histograms_fixed.npz'
-file_name = r"C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_27\hist_Random_usable_80 bins\20250427_131925_histograms_random_con_12_12_total_batches_100_100_bins_80_80_mpn0_7_0_1.npz"
+# 27.
+# file_name = r'C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_28_neu\20250428_093031_histograms_random_con_12_12_total_batches_300_600_bins_60_80.npz'
+# 28.
+# file_name = r'C:\Users\leavi\bachelor\rest_cluster\results_data\20250428_093031_histograms_random_con_12_12_total_batches_300_600_bins_60_80.npz'
+# # 18. hist fixed
+# file_name = r'C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_18\20250417_160300_histograms_fixed.npz'
+# # 16. hist fixed
+file_name = r'C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_16\20250415_210351_histograms_fixed.npz'
 
 if os.path.exists(file_name):
     print("File exists!")
@@ -42,23 +52,28 @@ for key in data.keys():
 # print(f"t_sym: {t_sym}")
 # print(f"lookup_array: {lookup_array}")
 
-
 bins_per_symbol_hist = data["bins_per_symbol_hist"]
 final_time_one_symbol = data["final_time_one_symbol"]
 global_histogram_counts_x = data["global_histogram_counts_x"]
 global_histogram_counts_z = data["global_histogram_counts_z"]
-# # final_lookup_array = data["final_lookup_array"]
+final_lookup_array = data["final_lookup_array"]
 total_symbols = data["total_symbols"]
 # # total_symbols = data["total_samples"]
-final_combined_list_array = data["final_combined_list_array"]
+# final_combined_list_array = data["final_combined_list_array"]
 print(f"total_symbols: {total_symbols}")
 
-# DataProcessor.plot_histogram_batch(bins_per_symbol_hist, final_time_one_symbol,
-#                             global_histogram_counts_x, global_histogram_counts_z,
-#                             final_lookup_array, total_symbols, start_symbol=0, end_symbol=4, name="random")
+start_pair_arr = np.array([0,6,12,18,24,30])
+for i in start_pair_arr:
+    DataProcessor.plot_histogram_batch(bins_per_symbol_hist, final_time_one_symbol,
+                                global_histogram_counts_x, global_histogram_counts_z,
+                                final_lookup_array, total_symbols, start_symbol=i, end_symbol=i+5, name="random")
 # global_histogram_counts_x, bins_per_symbol_hist = DataProcessor.combine_bins(global_histogram_counts_x, bins_per_symbol_hist)
 # global_histogram_counts_z, bins_per_symbol_hist = DataProcessor.combine_bins(global_histogram_counts_z, bins_per_symbol_hist)
 
-DataProcessor.plot_histogram_batch_random(bins_per_symbol_hist, final_time_one_symbol,
-                            global_histogram_counts_x, global_histogram_counts_z,
-                            final_combined_list_array, total_symbols, start_pair=0, end_pair=0, name="random")
+# start_pair_arr = np.array([0,6,12,18,24,30])
+# for i in start_pair_arr:
+#     DataProcessor.plot_histogram_batch_random(bins_per_symbol_hist, final_time_one_symbol,
+#                                 global_histogram_counts_x, global_histogram_counts_z,
+#                                 final_combined_list_array, total_symbols, start_pair=i, end_pair=i+2, name="random")
+#0to2
+#6to8
