@@ -151,7 +151,7 @@ Saver.save_results_to_txt(function_used = "max_4_batch_100", global_len_wrong_x_
                         global_len_wrong_z_non_dec=global_len_wrong_z_non_dec, global_len_Z_checked_dec=global_len_Z_checked_dec, global_len_Z_checked_non_dec=global_len_Z_checked_non_dec,
                         global_X_P_calc_dec=global_X_P_calc_dec, global_X_P_calc_non_dec=global_X_P_calc_non_dec, total_symbols=total_symbols)
 
-Saver.save_array_as_npz_data("counts_repeat",
+Saver.save_array_as_npz_data(f"counts_repeat_mpn_{config.mean_photon_nr}_decoy_{config.mean_photon_decoy}_att_{config.fiber_attenuation}_total_{total_symbols}_batch_{total_batches}_max_{max_concurrent_tasks}_volt_{config.voltage_amplitude}_current_{config.current_amplitude}",,
                         global_len_wrong_x_dec=global_len_wrong_x_dec, global_len_wrong_x_non_dec=global_len_wrong_x_non_dec,
                         global_len_wrong_z_dec=global_len_wrong_z_dec, global_len_wrong_z_non_dec=global_len_wrong_z_non_dec,
                         global_len_Z_checked_dec=global_len_Z_checked_dec, global_len_Z_checked_non_dec=global_len_Z_checked_non_dec,
