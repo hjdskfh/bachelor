@@ -36,7 +36,15 @@ import csv
 # Mo nach 3 att
 # json_filepath = r'C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_28_neu\repeat_diff_att\simulation_config_20250428_145417.json'
 # Mo nach 4 att
-json_filepath = r'C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_28_neu\repeat_diff_att\simulation_config_20250428_145457.json'
+# json_filepath = r'C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_28_neu\repeat_diff_att\simulation_config_20250428_145457.json'
+# Mo Abend 1 att
+# json_filepath = r'C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_28_neu\repeat_diff_att_neu\simulation_config_20250428_180803.json'
+# Mo abend 2 att
+# json_filepath = r'C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_28_neu\repeat_diff_att_neu\simulation_config_20250428_180905.json'
+# Mo abend 3 att
+# json_filepath = r'C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_28_neu\repeat_diff_att_neu\simulation_config_20250428_180945.json'
+# Mo abend 4 att
+json_filepath = r'C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_28_neu\repeat_diff_att_neu\simulation_config_20250428_181019.json'
 
 # 909
 # file_name = r"C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_27\repeat_14_0_mpn_0_7_20db_att\20250427_133436_counts_repeat_max_12_2_50_20db.npz"
@@ -55,27 +63,69 @@ json_filepath = r'C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_28_neu\repe
 # Mo nach 3 att -> gar nicht
 # file_name = r'C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_28_neu\repeat_diff_att\20250428_164252_counts_repeat_job_id_6760987_fiber_attenuation_-6_decoy_0.15_non_decoy_0.3_samples_20000_simulations_in_batch_2_total_batches_50.npz'
 # Mo nach 4 att
-file_name = r'C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_28_neu\repeat_diff_att\20250428_164512_counts_repeat_job_id_6760988_fiber_attenuation_-6_decoy_0.3_non_decoy_0.6_samples_20000_simulations_in_batch_2_total_batches_50.npz'
+# file_name = r'C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_28_neu\repeat_diff_att\20250428_164512_counts_repeat_job_id_6760988_fiber_attenuation_-6_decoy_0.3_non_decoy_0.6_samples_20000_simulations_in_batch_2_total_batches_50.npz'
 
-if os.path.exists(file_name):
-    print("File exists!")
-else:
-    print("File does not exist!")
-data = np.load(file_name, allow_pickle=True)
-# for key in data.keys():
-#     print(f"{key}")
+# if os.path.exists(file_name):
+#     print("File exists!")
+# else:
+#     print("File does not exist!")
+# data = np.load(file_name, allow_pickle=True)
+# # for key in data.keys():
+# #     print(f"{key}")
 
+# print(data)
+
+
+# ---------- TXT --------------
+# Define the path to the text file
+# Mo abend 1 att
+# txt_file_path = r'C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_28_neu\repeat_diff_att_neu\output_20250428_195044_n_samples_None_function_max_4_batch_100.txt'
+# Mo abend 2 att
+# txt_file_path = r'C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_28_neu\repeat_diff_att_neu\output_20250428_195241_n_samples_None_function_max_4_batch_100.txt'
+# Mo abend 3 att
+# txt_file_path = r'C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_28_neu\repeat_diff_att_neu\output_20250428_195343_n_samples_None_function_max_4_batch_100.txt'
+# Mo abend 4 att
+txt_file_path = r'C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_28_neu\repeat_diff_att_neu\output_20250428_195900_n_samples_None_function_max_4_batch_100.txt'
+
+
+# Initialize a dictionary to store the parsed data
+data = {}
+
+
+# Read the file line by line
+with open(txt_file_path, 'r') as file:
+    for line in file:
+        # Split the line into key and value based on the colon
+        if ':' in line:
+            key, value = line.strip().split(':', 1)
+            key = key.strip()  # Remove extra spaces around the key
+            value = value.strip()  # Remove extra spaces around the value
+
+            # Parse the value
+            if value.startswith('[') and value.endswith(']'):  # Handle lists
+                value = eval(value)  # Convert string representation of list to actual list
+                if len(value) == 1:  # Convert single-element lists to scalars
+                    value = value[0]
+            elif value == 'None':  # Handle None values
+                value = None
+            elif value.replace('.', '', 1).isdigit():  # Handle numeric values
+                value = float(value) if '.' in value else int(value)
+            # Store the key-value pair in the dictionary
+            data[key] = value
+
+# Print the parsed data
 print(data)
 
-m_X_mud_in = data["global_len_wrong_x_dec"]
-m_X_mus_in = data["global_len_wrong_x_non_dec"]
-m_Z_mud_in = data["global_len_wrong_z_dec"]
-m_Z_mus_in = data["global_len_wrong_z_non_dec"]
-n_Z_mud_in = data["global_len_Z_checked_dec"]
-n_Z_mus_in = data["global_len_Z_checked_non_dec"]
-n_X_mud_in = data["global_X_P_calc_dec"]
-n_X_mus_in = data["global_X_P_calc_non_dec"]
-total_symbols = data["total_symbols"]
+# Access specific variables like in the marked code
+m_X_mud_in = data.get("global_len_wrong_x_dec", None)
+m_X_mus_in = data.get("global_len_wrong_x_non_dec", None)
+m_Z_mud_in = data.get("global_len_wrong_z_dec", None)
+m_Z_mus_in = data.get("global_len_wrong_z_non_dec", None)
+n_Z_mud_in = data.get("global_len_Z_checked_dec", None)
+n_Z_mus_in = data.get("global_len_Z_checked_non_dec", None)
+n_X_mud_in = data.get("global_X_P_calc_dec", None)
+n_X_mus_in = data.get("global_X_P_calc_non_dec", None)
+total_symbols = data.get("total_symbols", None)
 print(f"m_X_mud_in: {m_X_mud_in}")
 print(f"m_X_mus_in: {m_X_mus_in}")
 print(f"m_Z_mud_in: {m_Z_mud_in}")
@@ -85,6 +135,28 @@ print(f"n_Z_mus_in: {n_Z_mus_in}")
 print(f"n_X_mud_in: {n_X_mud_in}")
 print(f"n_X_mus_in: {n_X_mus_in}")
 print(f"total_symbols: {total_symbols}")
+
+# ------------- ende TXT --------------
+
+
+# m_X_mud_in = data["global_len_wrong_x_dec"]
+# m_X_mus_in = data["global_len_wrong_x_non_dec"]
+# m_Z_mud_in = data["global_len_wrong_z_dec"]
+# m_Z_mus_in = data["global_len_wrong_z_non_dec"]
+# n_Z_mud_in = data["global_len_Z_checked_dec"]
+# n_Z_mus_in = data["global_len_Z_checked_non_dec"]
+# n_X_mud_in = data["global_X_P_calc_dec"]
+# n_X_mus_in = data["global_X_P_calc_non_dec"]
+# total_symbols = data["total_symbols"]
+# print(f"m_X_mud_in: {m_X_mud_in}")
+# print(f"m_X_mus_in: {m_X_mus_in}")
+# print(f"m_Z_mud_in: {m_Z_mud_in}")
+# print(f"m_Z_mus_in: {m_Z_mus_in}")
+# print(f"n_Z_mud_in: {n_Z_mud_in}")
+# print(f"n_Z_mus_in: {n_Z_mus_in}")
+# print(f"n_X_mud_in: {n_X_mud_in}")
+# print(f"n_X_mus_in: {n_X_mus_in}")
+# print(f"total_symbols: {total_symbols}")
 
 
 config = SimulationConfig(None)
@@ -107,7 +179,7 @@ desired_p_z_alice_arr = np.arange(0.02, 1, 0.02)
 # factor_x_mud_arr = np.arange(0, 100, 1)
 factor_x_mud_arr = np.array([1])
 length_multiply_arr = np.array([1e7, 1e8, 1e9])
-scale_factor_symbol_arr = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]) #np.arange(1, 1000, 1)
+scale_factor_symbol_arr = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 50, 100, 1000]) #np.arange(1, 1000, 1)
 
 for scale_factor_symbol in scale_factor_symbol_arr:
     for length_multiply in length_multiply_arr:

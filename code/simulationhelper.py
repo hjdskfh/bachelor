@@ -480,8 +480,8 @@ class SimulationHelper:
         # nur z basis sendung
         mask_z_short = basis[index_where_photons_det_z] == 1
         detected_indices_z_det_z_basis = detected_indices_z[mask_z_short]
-        early_indices_short = np.where(np.sum(detected_indices_z == 0, axis=1) >= 1)[0]
-        late_indices_short = np.where(np.sum(detected_indices_z == 1, axis=1) >= 1)[0]
+        early_indices_short = np.where(np.sum(detected_indices_z_det_z_basis == 0, axis=1) >= 1)[0]
+        late_indices_short = np.where(np.sum(detected_indices_z_det_z_basis == 1, axis=1) >= 1)[0]
         # assign random value to double counts
         non_negative_counts = np.sum(detected_indices_z_det_z_basis != -1, axis=1)
         # Identify rows with more than one non-`-1` value
@@ -573,7 +573,7 @@ class SimulationHelper:
             return 0, 0, 0, 0
         # Z basis
         # all indices
-        Z_indices_measured_long = index_where_photons_det_z[total_sift_z_basis_short]
+        Z_indices_measured_long = get_original_indexing_z[total_sift_z_basis_short]
         mask_Z0_long = value[Z_indices_measured_long] == 1
         mask_Z1_long = value[Z_indices_measured_long] == 0
         # only overlaps between Z0 vs Z1 sent and measured

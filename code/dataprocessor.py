@@ -406,7 +406,7 @@ class DataProcessor:
         epsilon_sec = 1e-9  # 
         epsilon_cor = 1e-15  # Secret key are identical except of probability epsilon_cor
         repetition_rate = self.config.sampling_rate_FPGA / self.config.n_pulses  # Pulse (symbol) repetition rate
-        print(f"self.config.sampling_rate_FPGA: {self.config.sampling_rate_FPGA}, self.config.n_pulses: {self.config.n_pulses}, repetition_rate: {repetition_rate}")	
+        # print(f"self.config.sampling_rate_FPGA: {self.config.sampling_rate_FPGA}, self.config.n_pulses: {self.config.n_pulses}, repetition_rate: {repetition_rate}")	
         fEC = 1.19  # Error correction effciency
         epsilon_1 = epsilon_sec / 19
 
@@ -437,7 +437,7 @@ class DataProcessor:
             # n_X_mud = p_X * q_X * p_mud * gain_X_mud * total_bit_sequence_length
             # n_Z = n_Z_mus + n_Z_mud
             # n_X = n_X_mus + n_X_mud
-            print(f"factor: {factor}")
+            # print(f"factor: {factor}")
             n_Z_mus = n_Z_mus_in * factor
             n_Z_mud = n_Z_mud_in * factor
             n_X_mus = n_X_mus_in * factor
