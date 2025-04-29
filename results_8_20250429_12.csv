@@ -1,0 +1,3 @@
+length_multiply,mpn_s,mpn_d,desired_p_decoy,desired_p_z_alice,factor_x_mud,factor_total,SKR
+10000000.0,0.15,0.075,0.04,0.08,1,2,[2.25242024e-07]
+10000000.0,0.15,0.075,0.04,0.13999999999999999,1,2,[3.44885623e-07]

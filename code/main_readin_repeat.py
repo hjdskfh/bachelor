@@ -46,7 +46,13 @@ import csv
 # Mo abend 4 att
 # json_filepath = r'C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_28_neu\repeat_diff_att_neu\simulation_config_20250428_181019.json'
 # Di morgen 1
-json_filepath = r'C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_29\simulation_config_20250429_004546.json'
+# json_filepath = r'C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_29\simulation_config_20250429_004546.json'
+# Di morgen 2
+# json_filepath = r'C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_29\simulation_config_20250429_004745.json'
+# Di morgen 3
+# json_filepath = r'C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_29\simulation_config_20250429_004815.json'
+# di morgen 4
+json_filepath = r'C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_29\simulation_config_20250429_005346.json'
 
 # 909
 # file_name = r"C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_27\repeat_14_0_mpn_0_7_20db_att\20250427_133436_counts_repeat_max_12_2_50_20db.npz"
@@ -67,7 +73,13 @@ json_filepath = r'C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_29\simulati
 # Mo nach 4 att
 # file_name = r'C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_28_neu\repeat_diff_att\20250428_164512_counts_repeat_job_id_6760988_fiber_attenuation_-6_decoy_0.3_non_decoy_0.6_samples_20000_simulations_in_batch_2_total_batches_50.npz'
 # Di morgen 1
-file_name = r'C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_29\20250429_022916_counts_repeat_mpn_0.15_decoy_0.075_att_-3_total_2000000_batch_50_max_12_volt_0.0011_current_0.00041.npz'
+# file_name = r'C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_29\20250429_022916_counts_repeat_mpn_0.15_decoy_0.075_att_-3_total_2000000_batch_50_max_12_volt_0.0011_current_0.00041.npz'
+# Di morgen 2
+# file_name = r'C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_29\20250429_023121_counts_repeat_mpn_0.6_decoy_0.3_att_-9_total_2000000_batch_50_max_12_volt_0.0011_current_0.00041.npz'
+# Di morgen 3
+# file_name = r'C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_29\20250429_023208_counts_repeat_mpn_0.6_decoy_0.3_att_-10_total_2000000_batch_50_max_12_volt_0.0011_current_0.00041.npz'
+# Di morgen 4
+file_name = r'C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_29\20250429_041256_counts_repeat_mpn_0.2_decoy_0.1_att_-3_total_2000000_batch_50_max_12_volt_0.0011_current_0.00041.npz'
 
 if os.path.exists(file_name):
     print("File exists!")
@@ -183,7 +195,7 @@ desired_p_z_alice_arr = np.arange(0.02, 1, 0.02)
 # factor_x_mud_arr = np.arange(0, 100, 1)
 factor_x_mud_arr = np.array([1])
 length_multiply_arr = np.array([1e7, 1e8, 1e9])
-scale_factor_symbol_arr = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 50, 100, 1000]) #
+scale_factor_symbol_arr = np.array([1]) #, 2, 3, 4, 5
 
 for scale_factor_symbol in scale_factor_symbol_arr:
     for length_multiply in length_multiply_arr:
@@ -232,6 +244,7 @@ for scale_factor_symbol in scale_factor_symbol_arr:
                                                     total_symbols,
                                                     factor
                                                 )
+                    skr = skr[0] if isinstance(skr, list) else skr
                     # print(f"skr: {skr}")
 
                     # print(f"SKR: {skr} ")#for factor {factor} and ")#total factor {factor_total}

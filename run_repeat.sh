@@ -5,6 +5,7 @@
 #SBATCH --cpus-per-task=64
 #SBATCH --gres=gpu:1
 #SBATCH --time=24:00:00
+#SBATCH --qos=deadlinespecial
 #SBATCH --output=output_repeat_%j.log
 #SBATCH --error=error_repeat_%j.log
 

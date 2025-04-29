@@ -2,6 +2,7 @@
 #SBATCH -p einc
 #SBATCH --job-name=sim_run
 #SBATCH --mem=256G
+#SBATCH --qos=deadlinespecial
 #SBATCH --cpus-per-task=64
 #SBATCH --gres=gpu:1
 #SBATCH --time=12:00:00

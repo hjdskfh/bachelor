@@ -3,6 +3,7 @@
 #SBATCH --output=output_sweep_%j.log               # Stdout log file
 #SBATCH --error=error_sweep_%j.log                 # Stderr log file
 #SBATCH --partition=einc                  # Partition to run on
+#SBATCH --qos=deadlinespecial
 #SBATCH -c 128                            # Number of cores
 #SBATCH --mem=950G                        # Memory you request
 #SBATCH --time=15:00:00                   # Time limit (hh:mm:ss)
