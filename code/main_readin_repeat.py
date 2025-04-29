@@ -44,7 +44,9 @@ import csv
 # Mo abend 3 att
 # json_filepath = r'C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_28_neu\repeat_diff_att_neu\simulation_config_20250428_180945.json'
 # Mo abend 4 att
-json_filepath = r'C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_28_neu\repeat_diff_att_neu\simulation_config_20250428_181019.json'
+# json_filepath = r'C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_28_neu\repeat_diff_att_neu\simulation_config_20250428_181019.json'
+# Di morgen 1
+json_filepath = r'C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_29\simulation_config_20250429_004546.json'
 
 # 909
 # file_name = r"C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_27\repeat_14_0_mpn_0_7_20db_att\20250427_133436_counts_repeat_max_12_2_50_20db.npz"
@@ -64,16 +66,18 @@ json_filepath = r'C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_28_neu\repe
 # file_name = r'C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_28_neu\repeat_diff_att\20250428_164252_counts_repeat_job_id_6760987_fiber_attenuation_-6_decoy_0.15_non_decoy_0.3_samples_20000_simulations_in_batch_2_total_batches_50.npz'
 # Mo nach 4 att
 # file_name = r'C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_28_neu\repeat_diff_att\20250428_164512_counts_repeat_job_id_6760988_fiber_attenuation_-6_decoy_0.3_non_decoy_0.6_samples_20000_simulations_in_batch_2_total_batches_50.npz'
+# Di morgen 1
+file_name = r'C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_29\20250429_022916_counts_repeat_mpn_0.15_decoy_0.075_att_-3_total_2000000_batch_50_max_12_volt_0.0011_current_0.00041.npz'
 
-# if os.path.exists(file_name):
-#     print("File exists!")
-# else:
-#     print("File does not exist!")
-# data = np.load(file_name, allow_pickle=True)
-# # for key in data.keys():
-# #     print(f"{key}")
+if os.path.exists(file_name):
+    print("File exists!")
+else:
+    print("File does not exist!")
+data = np.load(file_name, allow_pickle=True)
+# for key in data.keys():
+#     print(f"{key}")
 
-# print(data)
+print(data)
 
 
 # ---------- TXT --------------
@@ -85,36 +89,36 @@ json_filepath = r'C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_28_neu\repe
 # Mo abend 3 att
 # txt_file_path = r'C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_28_neu\repeat_diff_att_neu\output_20250428_195343_n_samples_None_function_max_4_batch_100.txt'
 # Mo abend 4 att
-txt_file_path = r'C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_28_neu\repeat_diff_att_neu\output_20250428_195900_n_samples_None_function_max_4_batch_100.txt'
+# txt_file_path = r'C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_28_neu\repeat_diff_att_neu\output_20250428_195900_n_samples_None_function_max_4_batch_100.txt'
 
 
-# Initialize a dictionary to store the parsed data
-data = {}
+# # Initialize a dictionary to store the parsed data
+# data = {}
 
 
-# Read the file line by line
-with open(txt_file_path, 'r') as file:
-    for line in file:
-        # Split the line into key and value based on the colon
-        if ':' in line:
-            key, value = line.strip().split(':', 1)
-            key = key.strip()  # Remove extra spaces around the key
-            value = value.strip()  # Remove extra spaces around the value
+# # Read the file line by line
+# with open(txt_file_path, 'r') as file:
+#     for line in file:
+#         # Split the line into key and value based on the colon
+#         if ':' in line:
+#             key, value = line.strip().split(':', 1)
+#             key = key.strip()  # Remove extra spaces around the key
+#             value = value.strip()  # Remove extra spaces around the value
 
-            # Parse the value
-            if value.startswith('[') and value.endswith(']'):  # Handle lists
-                value = eval(value)  # Convert string representation of list to actual list
-                if len(value) == 1:  # Convert single-element lists to scalars
-                    value = value[0]
-            elif value == 'None':  # Handle None values
-                value = None
-            elif value.replace('.', '', 1).isdigit():  # Handle numeric values
-                value = float(value) if '.' in value else int(value)
-            # Store the key-value pair in the dictionary
-            data[key] = value
+#             # Parse the value
+#             if value.startswith('[') and value.endswith(']'):  # Handle lists
+#                 value = eval(value)  # Convert string representation of list to actual list
+#                 if len(value) == 1:  # Convert single-element lists to scalars
+#                     value = value[0]
+#             elif value == 'None':  # Handle None values
+#                 value = None
+#             elif value.replace('.', '', 1).isdigit():  # Handle numeric values
+#                 value = float(value) if '.' in value else int(value)
+#             # Store the key-value pair in the dictionary
+            # data[key] = value
 
-# Print the parsed data
-print(data)
+# # Print the parsed data
+# print(data)
 
 # Access specific variables like in the marked code
 m_X_mud_in = data.get("global_len_wrong_x_dec", None)
@@ -179,7 +183,7 @@ desired_p_z_alice_arr = np.arange(0.02, 1, 0.02)
 # factor_x_mud_arr = np.arange(0, 100, 1)
 factor_x_mud_arr = np.array([1])
 length_multiply_arr = np.array([1e7, 1e8, 1e9])
-scale_factor_symbol_arr = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 50, 100, 1000]) #np.arange(1, 1000, 1)
+scale_factor_symbol_arr = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 50, 100, 1000]) #
 
 for scale_factor_symbol in scale_factor_symbol_arr:
     for length_multiply in length_multiply_arr:
@@ -228,6 +232,7 @@ for scale_factor_symbol in scale_factor_symbol_arr:
                                                     total_symbols,
                                                     factor
                                                 )
+                    # print(f"skr: {skr}")
 
                     # print(f"SKR: {skr} ")#for factor {factor} and ")#total factor {factor_total}
                     # print(f"total symbols: {total_symbols}")
