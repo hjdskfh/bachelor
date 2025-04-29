@@ -117,7 +117,7 @@ class DataProcessor:
         plt.xlabel("Time (s)", fontsize = 18)
         plt.ylabel("Cumulative Photon Counts", fontsize = 18)
         # plt.title(f"Cumulative Histogram for {start_symbol} to {end_symbol} for {total_symbols} {name} symbols")
-        plt.legend()
+        plt.legend(fontsize = 16)
         plt.ylim(0, 1.1)
         plt.tick_params(axis='both', which='major', labelsize=18)  # Increase tick size for major ticks
         plt.tight_layout()

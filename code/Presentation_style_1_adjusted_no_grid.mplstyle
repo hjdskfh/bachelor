@@ -1,9 +1,9 @@
 axes.titlesize : 16
-axes.labelsize : 14 # 16
+axes.labelsize : 16
 lines.linewidth : 3    # lines.marker : o
 lines.markersize : 4
-xtick.labelsize : 12 # 14
-ytick.labelsize : 12 # 14
+xtick.labelsize : 14
+ytick.labelsize : 14
 errorbar.capsize: 5
 figure.autolayout: True
 figure.dpi : 100
@@ -12,7 +12,7 @@ figure.frameon:     True
 # figure.raise_window : True
 
 legend.fancybox : True
-legend.fontsize : 11
+legend.fontsize : 14
 xtick.bottom:        True
 xtick.labelbottom:   True
 xtick.major.size:    3.5

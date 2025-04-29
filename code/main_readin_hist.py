@@ -62,11 +62,11 @@ total_symbols = data["total_symbols"]
 # final_combined_list_array = data["final_combined_list_array"]
 print(f"total_symbols: {total_symbols}")
 
-start_pair_arr = np.array([0,6,12,18,24,30])
-for i in start_pair_arr:
-    DataProcessor.plot_histogram_batch(bins_per_symbol_hist, final_time_one_symbol,
+# start_pair_arr = np.array([0,6,12,18,24,30])
+# for i in start_pair_arr:
+DataProcessor.plot_histogram_batch(bins_per_symbol_hist, final_time_one_symbol,
                                 global_histogram_counts_x, global_histogram_counts_z,
-                                final_lookup_array, total_symbols, start_symbol=i, end_symbol=i+5, name="random")
+                                final_lookup_array, total_symbols, start_symbol=20, end_symbol=21, name="random")
 # global_histogram_counts_x, bins_per_symbol_hist = DataProcessor.combine_bins(global_histogram_counts_x, bins_per_symbol_hist)
 # global_histogram_counts_z, bins_per_symbol_hist = DataProcessor.combine_bins(global_histogram_counts_z, bins_per_symbol_hist)
 
