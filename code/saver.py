@@ -91,7 +91,7 @@ class Saver:
 
 
     @staticmethod
-    def save_to_json(config_object):
+    def save_to_json(config_object, number = None):
         """Save data to a JSON file with timestamp in the 'logs' folder next to the code."""
         
         # Get the directory of the current script (code folder)
@@ -105,8 +105,12 @@ class Saver:
 
         timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
 
-        # Construct the filename with the timestamp
-        filename_with_timestamp = f"simulation_config_{timestamp}.json"
+        if number is None:
+            # Construct the filename with the timestamp
+            filename_with_timestamp = f"simulation_config_{timestamp}.json"
+        else:
+            # Construct the filename with the timestamp and number
+            filename_with_timestamp = f"{number}_simulation_config_{timestamp}.json"
 
         try:                   
             

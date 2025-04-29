@@ -12,7 +12,7 @@ from saver import Saver
 # Ensure print is always flushed
 print = functools.partial(print, flush=True)
 
-def start_simulation_batches(total_batches=300, simulations_in_batch=2, max_concurrent_tasks=3, mean_photon_nr=0.182, mean_photon_decoy=0.1, fiber_attenuation=-3, voltage_amplitude=0.0011, current_amplitude = 0.00041):
+def start_simulation_batches(number = None, total_batches=300, simulations_in_batch=2, max_concurrent_tasks=3, mean_photon_nr=0.182, mean_photon_decoy=0.1, fiber_attenuation=-3, voltage_amplitude=0.0011, current_amplitude = 0.00041, voltage_non_signal = -1.3, voltage_signal = 0.2):
     print("Starting simulation batches...")
 
     Saver.memory_usage("START of Simulation: Before everything")
@@ -36,6 +36,7 @@ def start_simulation_batches(total_batches=300, simulations_in_batch=2, max_conc
     n_samples_set = 20000
 
     config = SimulationConfig(database, n_samples=n_samples_set, mean_photon_nr=mean_photon_nr, mean_photon_decoy=mean_photon_decoy, fiber_attenuation=fiber_attenuation,
+                               non_signal_voltage = voltage_non_signal, voltage_decoy=voltage_signal, voltage=voltage_signal, voltage_decoy_sup=voltage_signal, voltage_sup=voltage_signal, 
                                 voltage_amplitude=voltage_amplitude, current_amplitude=current_amplitude,
                                detector_jitter=detector_jitter,
                                mlp=os.path.join(base_path, style_file), 
@@ -44,7 +45,7 @@ def start_simulation_batches(total_batches=300, simulations_in_batch=2, max_conc
     
     simulation = SimulationManager(config)
     config_params = config.to_dict()
-    Saver.save_to_json(config_params)
+    Saver.save_to_json(config_params, number = number)
 
     end_time_read = time.time()
     execution_time_read = end_time_read - start_time
@@ -52,6 +53,7 @@ def start_simulation_batches(total_batches=300, simulations_in_batch=2, max_conc
 
     def run_simulation_and_update_hist(i):
         config = SimulationConfig(database, n_samples=n_samples_set, mean_photon_nr=mean_photon_nr, mean_photon_decoy=mean_photon_decoy, fiber_attenuation=fiber_attenuation,
+                                non_signal_voltage = voltage_non_signal, voltage_decoy=voltage_signal, voltage=voltage_signal, voltage_decoy_sup=voltage_signal, voltage_sup=voltage_signal, 
                                   voltage_amplitude=voltage_amplitude, current_amplitude=current_amplitude,
                                   detector_jitter=detector_jitter,
                                   mlp=os.path.join(base_path, style_file), 
@@ -140,11 +142,11 @@ def start_simulation_batches(total_batches=300, simulations_in_batch=2, max_conc
 
 # eahc 1h44min hours for 50 batches of 2 simulations with 12 concurrent tasks
 # batch 1
-start_simulation_batches(total_batches=50, simulations_in_batch=2, max_concurrent_tasks=12, mean_photon_nr=0.15, mean_photon_decoy=0.075, fiber_attenuation=-3, voltage_amplitude=0.0011, current_amplitude = 0.00041)
-start_simulation_batches(total_batches=50, simulations_in_batch=2, max_concurrent_tasks=12, mean_photon_nr=0.2, mean_photon_decoy=0.1, fiber_attenuation=-3, voltage_amplitude=0.0011, current_amplitude = 0.00041)
-start_simulation_batches(total_batches=50, simulations_in_batch=2, max_concurrent_tasks=12, mean_photon_nr=0.25, mean_photon_decoy=0.175, fiber_attenuation=-6, voltage_amplitude=0.0011, current_amplitude = 0.00041)
-start_simulation_batches(total_batches=50, simulations_in_batch=2, max_concurrent_tasks=12, mean_photon_nr=0.3, mean_photon_decoy=0.15, fiber_attenuation=-6, voltage_amplitude=0.0011, current_amplitude = 0.00041)
-start_simulation_batches(total_batches=50, simulations_in_batch=2, max_concurrent_tasks=12, mean_photon_nr=0.5, mean_photon_decoy=0.25, fiber_attenuation=-9, voltage_amplitude=0.0011, current_amplitude = 0.00041)
+# start_simulation_batches(total_batches=50, simulations_in_batch=2, max_concurrent_tasks=12, mean_photon_nr=0.15, mean_photon_decoy=0.075, fiber_attenuation=-3, voltage_amplitude=0.0011, current_amplitude = 0.00041)
+# start_simulation_batches(total_batches=50, simulations_in_batch=2, max_concurrent_tasks=12, mean_photon_nr=0.2, mean_photon_decoy=0.1, fiber_attenuation=-3, voltage_amplitude=0.0011, current_amplitude = 0.00041)
+# start_simulation_batches(total_batches=50, simulations_in_batch=2, max_concurrent_tasks=12, mean_photon_nr=0.25, mean_photon_decoy=0.175, fiber_attenuation=-6, voltage_amplitude=0.0011, current_amplitude = 0.00041)
+# start_simulation_batches(total_batches=50, simulations_in_batch=2, max_concurrent_tasks=12, mean_photon_nr=0.3, mean_photon_decoy=0.15, fiber_attenuation=-6, voltage_amplitude=0.0011, current_amplitude = 0.00041)
+# start_simulation_batches(total_batches=50, simulations_in_batch=2, max_concurrent_tasks=12, mean_photon_nr=0.5, mean_photon_decoy=0.25, fiber_attenuation=-9, voltage_amplitude=0.0011, current_amplitude = 0.00041)
 #batch 2
 # start_simulation_batches(total_batches=50, simulations_in_batch=2, max_concurrent_tasks=12, mean_photon_nr=0.6, mean_photon_decoy=0.3, fiber_attenuation=-9, voltage_amplitude=0.0011, current_amplitude = 0.00041)
 # start_simulation_batches(total_batches=50, simulations_in_batch=2, max_concurrent_tasks=12, mean_photon_nr=0.15, mean_photon_decoy=0.075, fiber_attenuation=-3, voltage_amplitude=0.0055, current_amplitude = 0.00041)
@@ -157,3 +159,21 @@ start_simulation_batches(total_batches=50, simulations_in_batch=2, max_concurren
 # start_simulation_batches(total_batches=50, simulations_in_batch=2, max_concurrent_tasks=12, mean_photon_nr=0.7, mean_photon_decoy=0.35, fiber_attenuation=-15, voltage_amplitude=0.0011, current_amplitude = 0.00041)
 # start_simulation_batches(total_batches=50, simulations_in_batch=2, max_concurrent_tasks=12, mean_photon_nr=0.15, mean_photon_decoy=0.075, fiber_attenuation=-3, voltage_amplitude=0.007, current_amplitude = 0.00041)
 # start_simulation_batches(total_batches=50, simulations_in_batch=2, max_concurrent_tasks=12, mean_photon_nr=0.15, mean_photon_decoy=0.075, fiber_attenuation=-3, voltage_amplitude=0.004, current_amplitude = 0.00041)
+
+# batch dienstag mittag 
+#1
+start_simulation_batches(number = 1, total_batches=50, simulations_in_batch=2, max_concurrent_tasks=12, mean_photon_nr=0.1, mean_photon_decoy=0.07, fiber_attenuation=-1, voltage_amplitude=0.0011, current_amplitude = 0.00041, voltage_non_signal = -1.3, voltage_signal = 0.2)
+#2
+start_simulation_batches(number = 2, total_batches=50, simulations_in_batch=2, max_concurrent_tasks=12, mean_photon_nr=0.125, mean_photon_decoy=0.0875, fiber_attenuation=-3, voltage_amplitude=0.0011, current_amplitude = 0.00041, voltage_non_signal = -1.3, voltage_signal = 0.2)
+# 3
+start_simulation_batches(number = 3, total_batches=50, simulations_in_batch=2, max_concurrent_tasks=12, mean_photon_nr=0.25, mean_photon_decoy=0.075, fiber_attenuation=-6, voltage_amplitude=0.0011, current_amplitude = 0.00041, voltage_non_signal = -1.3, voltage_signal = 0.2)
+# 4
+start_simulation_batches(number = 4, total_batches=50, simulations_in_batch=2, max_concurrent_tasks=12, mean_photon_nr=0.5, mean_photon_decoy=0.35, fiber_attenuation=-9, voltage_amplitude=0.0011, current_amplitude = 0.00041, voltage_non_signal = -1.3, voltage_signal = 0.2)
+# 5
+start_simulation_batches(number = 5, total_batches=50, simulations_in_batch=2, max_concurrent_tasks=12, mean_photon_nr=0.25, mean_photon_decoy=0.175, fiber_attenuation=-6, voltage_amplitude=0.011, current_amplitude = 0.00041, voltage_non_signal = -1.3, voltage_signal = 0.2)
+# 6
+start_simulation_batches(number = 6, total_batches=50, simulations_in_batch=2, max_concurrent_tasks=12, mean_photon_nr=0.25, mean_photon_decoy=0.175, fiber_attenuation=-6, voltage_amplitude=0.0055, current_amplitude = 0.00041, voltage_non_signal = -1.3, voltage_signal = 0.2)
+# 7
+start_simulation_batches(number = 7, total_batches=50, simulations_in_batch=2, max_concurrent_tasks=12, mean_photon_nr=0.25, mean_photon_decoy=0.175, fiber_attenuation=-6, voltage_amplitude=0.07, current_amplitude = 0.00041, voltage_non_signal = -1.3, voltage_signal = 0.2)
+# 8
+start_simulation_batches(number = 8, total_batches=50, simulations_in_batch=2, max_concurrent_tasks=12, mean_photon_nr=0.25, mean_photon_decoy=0.175, fiber_attenuation=-6, voltage_amplitude=0.0011, current_amplitude = 0.00041, voltage_non_signal = -2.1, voltage_signal = 0.4)
