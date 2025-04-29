@@ -20,7 +20,8 @@ data_processor = DataProcessor(config)
 
 
 # Define the directory containing the input files
-input_dir = r"C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_29\morning_files"
+# input_dir = r"C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_29\morning_files"
+input_dir = r'C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_29\abend_files'
 
 # Get all files in the directory
 all_files = os.listdir(input_dir)
