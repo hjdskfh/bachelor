@@ -72,6 +72,11 @@ for prefix in prefixes:
         n_X_mud_in = data["global_X_P_calc_dec"]
         n_X_mus_in = data["global_X_P_calc_non_dec"]
         total_symbols = data["total_symbols"]
+        print(f"m_X_mud_in: {m_X_mud_in}, m_X_mus_in: {m_X_mus_in}")
+        print(f"m_Z_mud_in: {m_Z_mud_in}, m_Z_mus_in: {m_Z_mus_in}")
+        print(f"n_Z_mud_in: {n_Z_mud_in}, n_Z_mus_in: {n_Z_mus_in}")
+        print(f"n_X_mud_in: {n_X_mud_in}, n_X_mus_in: {n_X_mus_in}")
+        print(f"total_symbols: {total_symbols}")
 
         # Load the JSON file
         with open(json_path, 'r') as file:
@@ -89,7 +94,7 @@ for prefix in prefixes:
         desired_p_z_alice_arr = np.arange(0.02, 1, 0.02)
         factor_x_mud_arr = np.array([1])
         length_multiply_arr = np.array([1e7, 1e8, 1e9])
-        factor_total_arr = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
+        factor_total_arr = np.array([1])
 
         for factor_total in factor_total_arr:
             for length_multiply in length_multiply_arr:
