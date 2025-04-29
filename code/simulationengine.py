@@ -445,7 +445,7 @@ class SimulationEngine:
         print('T1_dampening at initialize end: ' +str(T1_dampening))
 
         # with simulated decoy state: calculate decoy height
-        lower_limit, upper_limit, tol = -1.2, 1, 1e-7
+        lower_limit, upper_limit, tol = -1.5, 1, 1e-7
         var_voltage_decoy = self.config.voltage_decoy
         var_voltage_sup = self.config.voltage_sup
         var_voltage_decoy_sup = self.config.voltage_decoy_sup
@@ -490,76 +490,13 @@ class SimulationEngine:
         plt.xlabel('Time (ns)')
         Saver.save_plot(f"signal_after_init_1010_power")'''
 
+        lower_EAM_peak = 10 * np.log10(self.get_interpolated_value(self.config.non_signal_voltage, 'eam_transmission')) 
+        higher_EAM_peak = 10 * np.log10(self.get_interpolated_value(self.config.voltage, 'eam_transmission'))
+        difference_EAM_peak = higher_EAM_peak - lower_EAM_peak
+        print(f"Difference EAM Peak dB: {difference_EAM_peak}")
+        print(f"Lower EAM Peak dB: {lower_EAM_peak}")
+        print(f"Higher EAM Peak dB: {higher_EAM_peak}")
+
         return T1_dampening
     
-    def find_p_indep_states_x_for_classifier(self, T1_dampening, simulation_length_factor=1000, is_decoy=False):
-        # create signal Z0X+ and then X+Z1
-        # Generate the repeating pattern for basis: [1, 0, 0, 1]
-        basis_pattern = [1, 0, 0, 1]
-        copy_old_n_samples = self.config.n_samples
-        self.config.n_samples = len(basis_pattern) * simulation_length_factor
-
-        # Generate the repeating pattern for value: [1, -1, -1, 0]
-        value_pattern = [1, -1, -1, 0]
-
-        # Set decoy array to all zeros
-        if is_decoy:
-            decoy_pattern = 1
-        else:
-            decoy_pattern = 0
-
-        optical_power, peak_wavelength, chosen_voltage, chosen_current = self.random_laser_output('current_power', 'voltage_shift', 'current_wavelength')
-        basis, value, decoy = self.generate_alice_choices(basis=basis_pattern, value=value_pattern, decoy=decoy_pattern)
-        signals, t, _ = self.signal_bandwidth_jitter(basis, value, decoy)
-        power_dampened, norm_transmission, _, _ = self.eam_transmission(signals, optical_power, T1_dampening, peak_wavelength, t)
-        power_dampened = self.fiber_attenuation(power_dampened)
-
-        # Z basis
-        power_dampened = power_dampened * self.config.p_z_bob
-        time_photons_det_z, _,_, index_where_photons_det_z,_,_, _ = self.detector(t, norm_transmission, peak_wavelength, power_dampened)
-        power_dampened = power_dampened / self.config.p_z_bob
-
-        # X basis
-        power_dampened = power_dampened * (1 - self.config.p_z_bob)
-
-        amount_symbols_in_first_part = 20
-        first_power = power_dampened[:amount_symbols_in_first_part]
-
-        power_dampened, _ = self.delay_line_interferometer(power_dampened, t, peak_wavelength)
-
-        self.plotter.plot_power(power_dampened, amount_symbols_in_plot=amount_symbols_in_first_part, where_plot_1='before DLI',  shortened_first_power=first_power, where_plot_2='after DLI,', title_rest='- in fft, mean_volt: ' + str("{:.3f}".format(self.config.mean_voltage)) + ' voltage: ' + str("{:.3f}".format(chosen_voltage[0])) + ' V and ' + str("{:.3f}".format(peak_wavelength[0])))
-
-
-        time_photons_det_x, _, _, index_where_photons_det_x, _, _, _ = self.detector(t, norm_transmission, peak_wavelength, power_dampened)        
-
-
-        # classificator
-        num_segments = self.config.n_pulses // 2
-        timebins = np.linspace(t[-1] / num_segments, t[-1], num_segments)        
-        
-        detected_indices_z = np.where(
-            np.isnan(time_photons_det_z),                                         # Check for NaN values
-            -1,                                                                 # Assign -1 for undetected photons
-            np.digitize(time_photons_det_z, timebins) - 1                         # Early = 0, Late = 1
-            )
-        
-        detected_indices_x = np.where(
-            np.isnan(time_photons_det_x),                                         # Check for NaN values
-            -1,                                                                 # Assign -1 for undetected photons
-            np.digitize(time_photons_det_x, timebins) - 1                         # Early = 0, Late = 1
-            )
-        
-        detected_indices_x_det_x_basis, total_sift_x_basis_long, vacuum_indices_x_long, indices_x_long, mask_x_short = self.simulation_helper.classificator_sift_x_vacuum(basis, detected_indices_x, index_where_photons_det_x)
-        p_indep_x_states, len_ind_has_one_0_and_every_second_symbol, len_ind_every_second_symbol = self.simulation_helper.classificator_identify_x_calc_p_indep_states_x(mask_x_short, detected_indices_x_det_x_basis)
-
-
-        # set n_samples to normal
-        self.config.n_samples = copy_old_n_samples
-        print(f"type p_indep_x_states: {type(p_indep_x_states)}")
-        print(f"len_ind_has_one_0_and_every_second_symbol: {len_ind_has_one_0_and_every_second_symbol}")
-        print(f"len_ind_every_second_symbol: {len_ind_every_second_symbol}")
-        print(f"Returning values: {p_indep_x_states}, {len_ind_has_one_0_and_every_second_symbol}, {len_ind_every_second_symbol}")
-        
-        return p_indep_x_states, len_ind_has_one_0_and_every_second_symbol, len_ind_every_second_symbol
    
- 

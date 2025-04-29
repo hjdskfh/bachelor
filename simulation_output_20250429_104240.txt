@@ -1,0 +1,6 @@
+[Before everything] Memory used: 143.27 MB
+Base path: C:\Users\leavi\bachelor\code
+Configuration saved to C:\Users\leavi\bachelor\logs\simulation_config_20250429_104240.json
+Execution time for reading: 0.008311272 seconds for 200 samples
+Error: The difference between non_signal_voltage and voltage is not 1
+seed: 92714

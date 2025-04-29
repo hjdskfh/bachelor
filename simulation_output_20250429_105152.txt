@@ -1,0 +1,11 @@
+[Before everything] Memory used: 143.30 MB
+Base path: C:\Users\leavi\bachelor\code
+Configuration saved to C:\Users\leavi\bachelor\logs\simulation_config_20250429_105152.json
+Execution time for reading: 0.008307219 seconds for 200 samples
+Error: The difference between non_signal_voltage and voltage is not 1
+seed: 554513
+T1_dampening at initialize end: 9.671971201896667
+voltage at initialize end: -0.2
+Voltage_decoy at initialize end: -1.499999962747097
+Voltage_decoy_sup at initialize end: -1.499999962747097
+Voltage_sup at initialize end: -0.4349958673119545
