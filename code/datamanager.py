@@ -77,7 +77,7 @@ class DataManager:
             'x_min': x_min,  # Store minimum x-value
             'x_max': x_max   # Store maximum x-value
             }
-        
+        # plt.style.use("C:\\Users\\leavi\\bachelor\\code\\Presentation_style_1_adjusted_no_grid.mplstyle")
         # # Plot the data
         # title = ''
         # if name == 'voltage_shift':
@@ -88,11 +88,11 @@ class DataManager:
         #     title = 'Optical Transmission depending on Voltage given to the EAM'
         # if name == 'wavelength_neff':
         #     title = 'Effective Refractive Index in Fiber depending on Wavelength'
-        # plt.plot(df[column1], df[column2], marker='o')
+        # plt.plot(df[column1], df[column2])
         # plt.xlabel(column1)
         # plt.ylabel(column2)
         # plt.grid(True)
-        # Saver.save_plot(f'{name}_data_plot.png')
+        # Saver.save_plot(f'{name}_data_plot.png', no_time = True)
     
     def add_jitter(self, jitter, name): #Gaussian
         # Calculate standard deviation based on FWHM

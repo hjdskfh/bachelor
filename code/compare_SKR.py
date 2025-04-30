@@ -29,24 +29,24 @@ def find_max_skr(file_path):
     return max_skr, max_skr_row
 
 # Load the two files into DataFrames
-# filepath_1 = r"C:\Users\leavi\bachelor\wichtig\gute_Messungen\results_1_20250429_20.csv"  #0.1
-# filepath_2 = r"C:\Users\leavi\bachelor\wichtig\gute_Messungen\results_2_20250429_20.csv"
-filepath_3 = r"C:\Users\leavi\bachelor\wichtig\gute_Messungen\results_7_20250429_12.csv"
-# filepath_4 = r"C:\Users\leavi\bachelor\wichtig\gute_Messungen\results_4_20250429_20.csv"
+# # filepath_1 = r"C:\Users\leavi\bachelor\wichtig\gute_Messungen\results_1_20250429_20.csv"  #0.1
+# # filepath_2 = r"C:\Users\leavi\bachelor\wichtig\gute_Messungen\results_2_20250429_20.csv"
+# filepath_3 = r"C:\Users\leavi\bachelor\wichtig\gute_Messungen\results_7_20250429_12.csv"
+# # filepath_4 = r"C:\Users\leavi\bachelor\wichtig\gute_Messungen\results_4_20250429_20.csv"
 
-# file1 = pd.read_csv(filepath_1)
-# file2 = pd.read_csv(filepath_2)
-file3 = pd.read_csv(filepath_3)
-# file4 = pd.read_csv(filepath_4)
+# # file1 = pd.read_csv(filepath_1)
+# # file2 = pd.read_csv(filepath_2)
+# file3 = pd.read_csv(filepath_3)
+# # file4 = pd.read_csv(filepath_4)
 
-# max_skr_file1, max_skr_row_file1 = find_max_skr(filepath_1)
-# max_skr_file2, max_skr_row_file2 = find_max_skr(filepath_2)
-max_skr_file3, max_skr_row_file3 = find_max_skr(filepath_3)
-# max_skr_file4, max_skr_row_file4 = find_max_skr(filepath_4)
-# print(f"Max SKR in file 1: {max_skr_file1}, Row: {max_skr_row_file1}")
-# print(f"Max SKR in file 2: {max_skr_file2}, Row: {max_skr_row_file2}")
-print(f"Max SKR in file 3: {max_skr_file3}, Row: {max_skr_row_file3}")
-# print(f"Max SKR in file 4: {max_skr_file4}, Row: {max_skr_row_file4}")
+# # max_skr_file1, max_skr_row_file1 = find_max_skr(filepath_1)
+# # max_skr_file2, max_skr_row_file2 = find_max_skr(filepath_2)
+# max_skr_file3, max_skr_row_file3 = find_max_skr(filepath_3)
+# # max_skr_file4, max_skr_row_file4 = find_max_skr(filepath_4)
+# # print(f"Max SKR in file 1: {max_skr_file1}, Row: {max_skr_row_file1}")
+# # print(f"Max SKR in file 2: {max_skr_file2}, Row: {max_skr_row_file2}")
+# print(f"Max SKR in file 3: {max_skr_file3}, Row: {max_skr_row_file3}")
+# # print(f"Max SKR in file 4: {max_skr_file4}, Row: {max_skr_row_file4}")
 
 
 
@@ -118,6 +118,36 @@ print(f"Max SKR in file 3: {max_skr_file3}, Row: {max_skr_row_file3}")
 # print(f"Max SKR in file 4: {max_skr_file4}, Row: {max_skr_row_file4}")
 
 
+# voltage essungen mi 5 uhr
+# filepath_1 = r'C:\Users\leavi\bachelor\wichtig\voltage_messungen\mi_5_uhr_results_1_20250430_16.csv'
+# file1 = pd.read_csv(filepath_1)
+# max_skr_file1, max_skr_row_file1 = find_max_skr(filepath_1)
+# print(f"Max SKR in file 1: {max_skr_file1}, Row: {max_skr_row_file1}")
+
+
+# EAM extinction ratio
+# filepath_4 = r'C:\Users\leavi\bachelor\wichtig\extinction_ratio\mi_5_uhr_results_4_20250430_16.csv'
+# file4 = pd.read_csv(filepath_4)
+# max_skr_file4, max_skr_row_file4 = find_max_skr(filepath_4)
+# print(f"Max SKR in file 4: {max_skr_file4}, Row: {max_skr_row_file4}")
+# filepath_5 = r'C:\Users\leavi\bachelor\wichtig\extinction_ratio\mi_5_uhr_results_5_20250430_16.csv'
+# file5 = pd.read_csv(filepath_5)
+# max_skr_file5, max_skr_row_file5 = find_max_skr(filepath_5)
+# print(f"Max SKR in file 5: {max_skr_file5}, Row: {max_skr_row_file5}")
+# filepath_6 = r'C:\Users\leavi\bachelor\wichtig\extinction_ratio\mi_5_uhr_results_6_20250430_16.csv'
+# file6 = pd.read_csv(filepath_6)
+# max_skr_file6, max_skr_row_file6 = find_max_skr(filepath_6)
+# print(f"Max SKR in file 6: {max_skr_file6}, Row: {max_skr_row_file6}")
+# filepath_7 = r'C:\Users\leavi\bachelor\wichtig\extinction_ratio\mi_5_uhr_results_7_20250430_16.csv'
+# file7 = pd.read_csv(filepath_7)
+# max_skr_file7, max_skr_row_file7 = find_max_skr(filepath_7)
+# print(f"Max SKR in file 7: {max_skr_file7}, Row: {max_skr_row_file7}")
+
+# mi letze
+filepath_1 = r'C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_30\mi_letzte_results_1_20250430_19.csv'
+file1 = pd.read_csv(filepath_1)
+max_skr_file1, max_skr_row_file1 = find_max_skr(filepath_1)
+print(f"Max SKR in file 1: {max_skr_file1}, Row: {max_skr_row_file1}")
 
 
 # # Select the relevant columns for comparison

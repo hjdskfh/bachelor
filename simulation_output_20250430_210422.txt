@@ -1,0 +1,52 @@
+[Before everything] Memory used: 142.91 MB
+Base path: C:\Users\leavi\bachelor\code
+Configuration saved to C:\Users\leavi\bachelor\logs\simulation_config_20250430_210422.json
+Execution time for reading: 0.008543491 seconds for 20 samples
+Error: The difference between non_signal_voltage and voltage is not 1
+seed: 546180
+T1_dampening at initialize end: 48.93951117992401
+voltage at initialize end: 0.4
+Voltage_decoy at initialize end: 0.0036257728934288025
+Voltage_decoy_sup at initialize end: -0.37418750673532486
+Voltage_sup at initialize end: -0.2635495141148567
+Difference EAM Peak dB: 20.749686094310686
+Lower EAM Peak dB: -21.056637623259007
+Higher EAM Peak dB: -0.30695152894832106
+random_laser, fixed: True, times: [7.4971569  8.55814987 8.80028064 5.10322838 8.21227436 6.62565078
+ 8.38947803 8.04528421 4.86004843 3.6413925  5.8030268  4.30016773
+ 1.11619032 3.72801753 5.9563774  9.70788498 9.79040048 8.23594594
+ 8.79774563 3.38309061]
+signals: [[-2.25328679 -2.25214567 -2.25100132 ... -2.2566908  -2.25555935
+  -2.25442468]
+ [-2.32603875 -2.32603402 -2.32602454 ... -2.32602454 -2.32603402
+  -2.32603875]
+ [-2.25442468 -2.25555935 -2.2566908  ... -2.25100132 -2.25214567
+  -2.25328679]
+ ...
+ [-2.32603875 -2.32603402 -2.32602454 ... -2.32602454 -2.32603402
+  -2.32603875]
+ [-2.25442468 -2.25555935 -2.2566908  ... -2.25100132 -2.25214567
+  -2.25328679]
+ [-2.22898321 -2.22802302 -2.22706011 ... -2.23184752 -2.23089547
+  -2.2299407 ]]
+f_0: 193308750132054.03, i: 0, batchsize: 1, peak_wavelength[i]: 1.550847842093047e-06
+f_0: 193308750132054.03, i: 1, batchsize: 1, peak_wavelength[i]: 1.550847842093047e-06
+f_0: 193308750132054.03, i: 2, batchsize: 1, peak_wavelength[i]: 1.550847842093047e-06
+f_0: 193308750132054.03, i: 3, batchsize: 1, peak_wavelength[i]: 1.550847842093047e-06
+f_0: 193308750132054.03, i: 4, batchsize: 1, peak_wavelength[i]: 1.550847842093047e-06
+f_0: 193308750132054.03, i: 5, batchsize: 1, peak_wavelength[i]: 1.550847842093047e-06
+f_0: 193308750132054.03, i: 6, batchsize: 1, peak_wavelength[i]: 1.550847842093047e-06
+f_0: 193308750132054.03, i: 7, batchsize: 1, peak_wavelength[i]: 1.550847842093047e-06
+f_0: 193308750132054.03, i: 8, batchsize: 1, peak_wavelength[i]: 1.550847842093047e-06
+f_0: 193308750132054.03, i: 9, batchsize: 1, peak_wavelength[i]: 1.550847842093047e-06
+f_0: 193308750132054.03, i: 10, batchsize: 1, peak_wavelength[i]: 1.550847842093047e-06
+f_0: 193308750132054.03, i: 11, batchsize: 1, peak_wavelength[i]: 1.550847842093047e-06
+f_0: 193308750132054.03, i: 12, batchsize: 1, peak_wavelength[i]: 1.550847842093047e-06
+f_0: 193308750132054.03, i: 13, batchsize: 1, peak_wavelength[i]: 1.550847842093047e-06
+f_0: 193308750132054.03, i: 14, batchsize: 1, peak_wavelength[i]: 1.550847842093047e-06
+f_0: 193308750132054.03, i: 15, batchsize: 1, peak_wavelength[i]: 1.550847842093047e-06
+f_0: 193308750132054.03, i: 16, batchsize: 1, peak_wavelength[i]: 1.550847842093047e-06
+f_0: 193308750132054.03, i: 17, batchsize: 1, peak_wavelength[i]: 1.550847842093047e-06
+f_0: 193308750132054.03, i: 18, batchsize: 1, peak_wavelength[i]: 1.550847842093047e-06
+f_0: 193308750132054.03, i: 19, batchsize: 1, peak_wavelength[i]: 1.550847842093047e-06
+Execution time for simulation: 3.119743586 seconds for 20 samples

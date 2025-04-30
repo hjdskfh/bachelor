@@ -1,4 +1,4 @@
-# import pandas as pd
+import pandas as pd
 
 # # Load the CSV file
 # file_path = r"c:\Users\leavi\Downloads\eam_static_results [MConverter.eu].csv"
@@ -17,14 +17,14 @@
 # print(f"Renormalized data saved to {output_file_path}")
 
 
-import pandas as pd
+# import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 
 plt.style.use("C:\\Users\\leavi\\bachelor\\code\\Presentation_style_1_adjusted_no_grid.mplstyle")
 
 
-# Load the CSV file
+# # Load the CSV file
 file_path = r"c:\Users\leavi\bachelor\data\eam_static_results_renormalized.csv"
 data = pd.read_csv(file_path)
 
@@ -34,17 +34,17 @@ data['Transmission (dB)'] = 10 * np.log10(data['Transmission'])
 # Plot the data
 # Plot the data
 plt.figure(figsize=(10, 6))
-plt.plot(data['Voltage (V)'], data['Transmission (dB)'], color = 'green', label='Transmission (dB)')
+plt.plot(data['Voltage (V)'], data['Transmission (dB)'], label='Transmission (dB)', fontsize = 20)
 
-# Add vertical lines
-plt.axvline(x=-1.3, color='red',  label='Original EAM Voltage Setting')
-plt.axvline(x=0.2, color='red')
-plt.axvline(x=-2.1, color='blue', label='Modified EAM Voltage Settings')
-plt.axvline(x=0.4, color='blue')
+# # Add vertical lines
+# plt.axvline(x=-1.3, color='red',  label='Original EAM Voltage Setting')
+# plt.axvline(x=0.2, color='red')
+# plt.axvline(x=-2.1, color='blue', label='Modified EAM Voltage Settings')
+# plt.axvline(x=0.4, color='blue')
 
 # Add labels, title, and grid
-plt.xlabel('Voltage (V)')
-plt.ylabel('Transmission (dB)')
+plt.xlabel('Voltage (V)', fontsize = 20)
+plt.ylabel('Transmission (dB)', fontsize = 20)
 # plt.title('Transmission vs Voltage (in dB)')
 plt.grid(True, which='both', linestyle='--', linewidth=0.5)
 plt.legend()
@@ -95,3 +95,33 @@ plt.savefig(r"c:\Users\leavi\Downloads\transmission_vs_voltage.png")
         
 #         # Show the plot
 #         plt.show()
+
+ # # Generate time values
+# times = np.linspace(0, 1, 1000)  # 1 second with 1000 points
+# mean_voltage = -1.755  # 50 mV
+# voltage_amplitude = 0.011  # 20 mV
+# mean_current = 0.082111  # 10 mA
+# current_amplitude = 0.00041  # 5 mA
+
+# # # Generate sinusoidal signals
+# chosen_voltage = mean_voltage + voltage_amplitude * np.sin(2 * np.pi * 1 * times)
+# chosen_current = (mean_current + current_amplitude * np.sin(2 * np.pi * 1 * times)) * 1e3  # Convert to mA
+
+# # Plot the signals
+# plt.style.use("C:\\Users\\leavi\\bachelor\\code\\Presentation_style_1_adjusted_no_grid.mplstyle")
+# plt.figure(figsize=(10, 6))
+# plt.plot(times, chosen_voltage)
+# plt.xlabel("Time (s)")
+# plt.ylabel("Voltage (V)")
+# plt.legend()
+# plt.grid(True)
+# plt.tight_layout()
+# plt.savefig(f'sinus_voltage_data_plot.png')
+# plt.figure(figsize=(10, 6))
+# plt.plot(times, chosen_current)
+# plt.xlabel("Time (s)")
+# plt.ylabel("Current (A)")
+# plt.legend()
+# plt.grid(True)
+# plt.tight_layout()
+# plt.savefig(f'sinus_current_data_plot.png')

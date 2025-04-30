@@ -39,11 +39,11 @@ class SimulationEngine:
         if fixed is None:
             chosen_voltage = self.config.mean_voltage + self.config.voltage_amplitude * np.sin(2 * np.pi * 1 * times)  # 50 mV passt
             chosen_current = ((self.config.mean_current) + self.config.current_amplitude * np.sin(2 * np.pi * 1 * times)) * 1e3
-            # # # plot sinuses
-            # mean_voltage = self.config.mean_voltage  # 50 mV
-            # voltage_amplitude = 0.01  # 20 mV
-            # mean_current = self.config.mean_current  # 10 mA
-            # current_amplitude = self.config.current_amplitude  # 5 mA
+            # # plot sinuses
+            mean_voltage = self.config.mean_voltage  # 50 mV
+            voltage_amplitude = 0.01  # 20 mV
+            mean_current = self.config.mean_current  # 10 mA
+            current_amplitude = self.config.current_amplitude  # 5 mA
 
             # # Generate time values
             # times = np.linspace(0, 1, 1000)  # 1 second with 1000 points
@@ -53,6 +53,7 @@ class SimulationEngine:
             # chosen_current = (mean_current + current_amplitude * np.sin(2 * np.pi * 1 * times)) * 1e3  # Convert to mA
 
             # # Plot the signals
+            # plt.style.use("C:\\Users\\leavi\\bachelor\\code\\Presentation_style_1_adjusted_no_grid.mplstyle")
             # plt.figure(figsize=(10, 6))
             # plt.plot(times, chosen_voltage)
             # plt.xlabel("Time (s)")
@@ -69,7 +70,7 @@ class SimulationEngine:
             # plt.legend()
             # plt.grid(True)
             # plt.tight_layout()
-            # Saver.save_plot(f'sinus_current_data_plot.png')
+            # Saver.save_plot(f'sinus_current_data_plot.png', no_time = True)
         else:
             chosen_voltage = np.ones(self.config.n_samples // self.config.batchsize) * self.config.mean_voltage
             chosen_current = np.ones(self.config.n_samples // self.config.batchsize) * (self.config.mean_current) * 1e3

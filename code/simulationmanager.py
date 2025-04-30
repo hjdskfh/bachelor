@@ -1059,7 +1059,7 @@ class SimulationManager:
         plt.subplot(1, 2, 1)
         plt.plot(voltage_values, amplitudes_port1, marker='o')
         plt.xlabel("Mean Voltage (V)")
-        plt.ylabel("amplitude on special point")
+        plt.ylabel("res. power of destr. interfered pulse (W)")
         # plt.title("Power vs Mean Voltage")
         plt.grid(True)
         plt.minorticks_on()
@@ -1068,12 +1068,11 @@ class SimulationManager:
 
         # Plot peak_wavelength vs voltage
         plt.subplot(1, 2, 2)
-        plt.plot(voltage_values, wavelengths_nm, marker='x', color='orange')
+        plt.plot(voltage_values, wavelengths_nm * 1e9, marker='x', color='orange')
         plt.xlabel("Mean Voltage (V)")
         plt.ylabel("Peak Wavelength (nm)")
         # plt.title("Wavelength vs Mean Voltage")
         plt.grid(True)
-        plt.legend()
 
         plt.tight_layout()
         Saver.save_plot("DLI_power_wavelength_vs_voltage")
