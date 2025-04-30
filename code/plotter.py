@@ -62,7 +62,7 @@ class Plotter:
         plt.ylabel('Power (mW)')
         plt.xlabel('Time (ns)')
         plt.gca().yaxis.set_major_locator(MaxNLocator(integer=True))
-        plt.legend()
+        plt.legend(loc="upper right")
         plt.tight_layout()
         if shortened_first_power is None:
             Saver.save_plot(f"power_{where_plot_1.replace(' ', '_').lower()}_for_{amount_symbols_in_plot}_symbols")

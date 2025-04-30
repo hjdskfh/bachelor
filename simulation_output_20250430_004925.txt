@@ -1,0 +1,179 @@
+[Before everything] Memory used: 143.23 MB
+Base path: C:\Users\leavi\bachelor\code
+Configuration saved to C:\Users\leavi\bachelor\logs\simulation_config_20250430_004925.json
+Execution time for reading: 0.008635044 seconds for 200 samples
+Error: The difference between non_signal_voltage and voltage is not 1
+seed: 22506
+T1_dampening at initialize end: 48.93951117992401
+voltage at initialize end: 0.4
+Voltage_decoy at initialize end: 0.0036257728934288025
+Voltage_decoy_sup at initialize end: -0.37418750673532486
+Voltage_sup at initialize end: -0.2635495141148567
+Difference EAM Peak dB: 20.749686094310686
+Lower EAM Peak dB: -21.056637623259007
+Higher EAM Peak dB: -0.30695152894832106
+random_laser, fixed: True, times: [7.37938949 2.60508856]
+f_0: 193307090379603.8, i: 0, batchsize: 100, peak_wavelength[i]: 1.5508611578152007e-06
+f_0: 193307090379603.8, i: 100, batchsize: 100, peak_wavelength[i]: 1.5508611578152007e-06
+random_laser, fixed: True, times: [4.19676273 9.37994272]
+f_0: 193307312210219.0, i: 0, batchsize: 100, peak_wavelength[i]: 1.550859378117988e-06
+f_0: 193307312210219.0, i: 100, batchsize: 100, peak_wavelength[i]: 1.550859378117988e-06
+random_laser, fixed: True, times: [3.60334622 9.35230323]
+f_0: 193307533878237.5, i: 0, batchsize: 100, peak_wavelength[i]: 1.5508575997293323e-06
+f_0: 193307533878237.5, i: 100, batchsize: 100, peak_wavelength[i]: 1.5508575997293323e-06
+random_laser, fixed: True, times: [6.35047664 1.68995063]
+f_0: 193307755383348.97, i: 0, batchsize: 100, peak_wavelength[i]: 1.5508558226517142e-06
+f_0: 193307755383348.97, i: 100, batchsize: 100, peak_wavelength[i]: 1.5508558226517142e-06
+random_laser, fixed: True, times: [5.08446735 0.91270754]
+f_0: 193307976725243.0, i: 0, batchsize: 100, peak_wavelength[i]: 1.550854046887615e-06
+f_0: 193307976725243.0, i: 100, batchsize: 100, peak_wavelength[i]: 1.550854046887615e-06
+random_laser, fixed: True, times: [4.61859422 8.22620485]
+f_0: 193308197903609.22, i: 0, batchsize: 100, peak_wavelength[i]: 1.5508522724395158e-06
+f_0: 193308197903609.22, i: 100, batchsize: 100, peak_wavelength[i]: 1.5508522724395158e-06
+random_laser, fixed: True, times: [2.39667234 5.00157929]
+f_0: 193308418918137.34, i: 0, batchsize: 100, peak_wavelength[i]: 1.550850499309897e-06
+f_0: 193308418918137.34, i: 100, batchsize: 100, peak_wavelength[i]: 1.550850499309897e-06
+random_laser, fixed: True, times: [5.14563642 6.55604984]
+f_0: 193308639768516.9, i: 0, batchsize: 100, peak_wavelength[i]: 1.5508487275012397e-06
+f_0: 193308639768516.9, i: 100, batchsize: 100, peak_wavelength[i]: 1.5508487275012397e-06
+random_laser, fixed: True, times: [0.29622416 5.35476569]
+f_0: 193308860454437.62, i: 0, batchsize: 100, peak_wavelength[i]: 1.550846957016025e-06
+f_0: 193308860454437.62, i: 100, batchsize: 100, peak_wavelength[i]: 1.550846957016025e-06
+random_laser, fixed: True, times: [6.22786592 1.72101926]
+f_0: 193309080975589.06, i: 0, batchsize: 100, peak_wavelength[i]: 1.550845187856734e-06
+f_0: 193309080975589.06, i: 100, batchsize: 100, peak_wavelength[i]: 1.550845187856734e-06
+random_laser, fixed: True, times: [4.83721053 3.90805963]
+f_0: 193309301331660.88, i: 0, batchsize: 100, peak_wavelength[i]: 1.5508434200258472e-06
+f_0: 193309301331660.88, i: 100, batchsize: 100, peak_wavelength[i]: 1.5508434200258472e-06
+random_laser, fixed: True, times: [7.28952781 7.61214937]
+f_0: 193309521522335.75, i: 0, batchsize: 100, peak_wavelength[i]: 1.5508416535259014e-06
+f_0: 193309521522335.75, i: 100, batchsize: 100, peak_wavelength[i]: 1.5508416535259014e-06
+random_laser, fixed: True, times: [6.78776342 8.63675811]
+f_0: 193309741547268.56, i: 0, batchsize: 100, peak_wavelength[i]: 1.5508398883596564e-06
+f_0: 193309741547268.56, i: 100, batchsize: 100, peak_wavelength[i]: 1.5508398883596564e-06
+random_laser, fixed: True, times: [6.15774655 4.47091861]
+f_0: 193309961406107.22, i: 0, batchsize: 100, peak_wavelength[i]: 1.5508381245299276e-06
+f_0: 193309961406107.22, i: 100, batchsize: 100, peak_wavelength[i]: 1.5508381245299276e-06
+random_laser, fixed: True, times: [6.91377108 6.38579256]
+f_0: 193310181098499.72, i: 0, batchsize: 100, peak_wavelength[i]: 1.55083636203953e-06
+f_0: 193310181098499.72, i: 100, batchsize: 100, peak_wavelength[i]: 1.55083636203953e-06
+random_laser, fixed: True, times: [3.60224472 8.92684237]
+f_0: 193310400624093.88, i: 0, batchsize: 100, peak_wavelength[i]: 1.5508346008912796e-06
+f_0: 193310400624093.88, i: 100, batchsize: 100, peak_wavelength[i]: 1.5508346008912796e-06
+random_laser, fixed: True, times: [0.51364858 4.87381694]
+f_0: 193310619982537.72, i: 0, batchsize: 100, peak_wavelength[i]: 1.5508328410879913e-06
+f_0: 193310619982537.72, i: 100, batchsize: 100, peak_wavelength[i]: 1.5508328410879913e-06
+random_laser, fixed: True, times: [5.96401408 0.15432522]
+f_0: 193310839173479.1, i: 0, batchsize: 100, peak_wavelength[i]: 1.550831082632481e-06
+f_0: 193310839173479.1, i: 100, batchsize: 100, peak_wavelength[i]: 1.550831082632481e-06
+random_laser, fixed: True, times: [6.67182044 1.43011159]
+f_0: 193311058196566.0, i: 0, batchsize: 100, peak_wavelength[i]: 1.5508293255275633e-06
+f_0: 193311058196566.0, i: 100, batchsize: 100, peak_wavelength[i]: 1.5508293255275633e-06
+random_laser, fixed: True, times: [6.79284876 6.43828568]
+f_0: 193311277051446.28, i: 0, batchsize: 100, peak_wavelength[i]: 1.5508275697760545e-06
+f_0: 193311277051446.28, i: 100, batchsize: 100, peak_wavelength[i]: 1.5508275697760545e-06
+random_laser, fixed: True, times: [3.19622232 7.97387402]
+f_0: 193311495737767.9, i: 0, batchsize: 100, peak_wavelength[i]: 1.5508258153807692e-06
+f_0: 193311495737767.9, i: 100, batchsize: 100, peak_wavelength[i]: 1.5508258153807692e-06
+random_laser, fixed: True, times: [7.20279747 2.56701688]
+f_0: 193311714255178.7, i: 0, batchsize: 100, peak_wavelength[i]: 1.5508240623445237e-06
+f_0: 193311714255178.7, i: 100, batchsize: 100, peak_wavelength[i]: 1.5508240623445237e-06
+random_laser, fixed: True, times: [8.54487439 2.33500466]
+f_0: 193311932603326.66, i: 0, batchsize: 100, peak_wavelength[i]: 1.5508223106701327e-06
+f_0: 193311932603326.66, i: 100, batchsize: 100, peak_wavelength[i]: 1.5508223106701327e-06
+random_laser, fixed: True, times: [7.19632965 2.86913514]
+f_0: 193312150781859.7, i: 0, batchsize: 100, peak_wavelength[i]: 1.5508205603604115e-06
+f_0: 193312150781859.7, i: 100, batchsize: 100, peak_wavelength[i]: 1.5508205603604115e-06
+random_laser, fixed: True, times: [7.99670692 2.66744067]
+f_0: 193312368790425.62, i: 0, batchsize: 100, peak_wavelength[i]: 1.5508188114181761e-06
+f_0: 193312368790425.62, i: 100, batchsize: 100, peak_wavelength[i]: 1.5508188114181761e-06
+random_laser, fixed: True, times: [3.62896789 6.19986269]
+f_0: 193312586628672.47, i: 0, batchsize: 100, peak_wavelength[i]: 1.5508170638462414e-06
+f_0: 193312586628672.47, i: 100, batchsize: 100, peak_wavelength[i]: 1.5508170638462414e-06
+random_laser, fixed: True, times: [0.13862041 1.37554341]
+f_0: 193312804296248.0, i: 0, batchsize: 100, peak_wavelength[i]: 1.5508153176474233e-06
+f_0: 193312804296248.0, i: 100, batchsize: 100, peak_wavelength[i]: 1.5508153176474233e-06
+random_laser, fixed: True, times: [0.35293997 0.1286975 ]
+f_0: 193313021792800.2, i: 0, batchsize: 100, peak_wavelength[i]: 1.5508135728245367e-06
+f_0: 193313021792800.2, i: 100, batchsize: 100, peak_wavelength[i]: 1.5508135728245367e-06
+random_laser, fixed: True, times: [5.95236158 2.68581528]
+f_0: 193313239117976.97, i: 0, batchsize: 100, peak_wavelength[i]: 1.550811829380397e-06
+f_0: 193313239117976.97, i: 100, batchsize: 100, peak_wavelength[i]: 1.550811829380397e-06
+random_laser, fixed: True, times: [5.04597559 6.42304577]
+f_0: 193313456271426.16, i: 0, batchsize: 100, peak_wavelength[i]: 1.5508100873178202e-06
+f_0: 193313456271426.16, i: 100, batchsize: 100, peak_wavelength[i]: 1.5508100873178202e-06
+random_laser, fixed: True, times: [4.07275386 5.32901156]
+f_0: 193313673252795.7, i: 0, batchsize: 100, peak_wavelength[i]: 1.5508083466396209e-06
+f_0: 193313673252795.7, i: 100, batchsize: 100, peak_wavelength[i]: 1.5508083466396209e-06
+random_laser, fixed: True, times: [6.12698777 8.6462754 ]
+f_0: 193313890061733.44, i: 0, batchsize: 100, peak_wavelength[i]: 1.550806607348615e-06
+f_0: 193313890061733.44, i: 100, batchsize: 100, peak_wavelength[i]: 1.550806607348615e-06
+random_laser, fixed: True, times: [5.82715077 1.44237171]
+f_0: 193314106697887.28, i: 0, batchsize: 100, peak_wavelength[i]: 1.550804869447618e-06
+f_0: 193314106697887.28, i: 100, batchsize: 100, peak_wavelength[i]: 1.550804869447618e-06
+random_laser, fixed: True, times: [1.43755121 7.34761153]
+f_0: 193314323160905.16, i: 0, batchsize: 100, peak_wavelength[i]: 1.5508031329394448e-06
+f_0: 193314323160905.16, i: 100, batchsize: 100, peak_wavelength[i]: 1.5508031329394448e-06
+random_laser, fixed: True, times: [8.99073425 3.70587504]
+f_0: 193314539450434.9, i: 0, batchsize: 100, peak_wavelength[i]: 1.5508013978269112e-06
+f_0: 193314539450434.9, i: 100, batchsize: 100, peak_wavelength[i]: 1.5508013978269112e-06
+random_laser, fixed: True, times: [4.12453785 7.51716093]
+f_0: 193314755566124.38, i: 0, batchsize: 100, peak_wavelength[i]: 1.5507996641128325e-06
+f_0: 193314755566124.38, i: 100, batchsize: 100, peak_wavelength[i]: 1.5507996641128325e-06
+random_laser, fixed: True, times: [3.8158164  7.45571134]
+f_0: 193314971507621.5, i: 0, batchsize: 100, peak_wavelength[i]: 1.550797931800024e-06
+f_0: 193314971507621.5, i: 100, batchsize: 100, peak_wavelength[i]: 1.550797931800024e-06
+random_laser, fixed: True, times: [3.45413564 2.18047451]
+f_0: 193315187274574.12, i: 0, batchsize: 100, peak_wavelength[i]: 1.5507962008913012e-06
+f_0: 193315187274574.12, i: 100, batchsize: 100, peak_wavelength[i]: 1.5507962008913012e-06
+random_laser, fixed: True, times: [8.60138745 8.00682482]
+f_0: 193315402866630.16, i: 0, batchsize: 100, peak_wavelength[i]: 1.5507944713894795e-06
+f_0: 193315402866630.16, i: 100, batchsize: 100, peak_wavelength[i]: 1.5507944713894795e-06
+random_laser, fixed: True, times: [2.84856753 9.55028082]
+f_0: 193315618283437.44, i: 0, batchsize: 100, peak_wavelength[i]: 1.5507927432973743e-06
+f_0: 193315618283437.44, i: 100, batchsize: 100, peak_wavelength[i]: 1.5507927432973743e-06
+random_laser, fixed: True, times: [2.12383    9.59124823]
+f_0: 193315833524643.84, i: 0, batchsize: 100, peak_wavelength[i]: 1.550791016617801e-06
+f_0: 193315833524643.84, i: 100, batchsize: 100, peak_wavelength[i]: 1.550791016617801e-06
+random_laser, fixed: True, times: [4.39039617 8.93111983]
+f_0: 193316048589897.25, i: 0, batchsize: 100, peak_wavelength[i]: 1.550789291353575e-06
+f_0: 193316048589897.25, i: 100, batchsize: 100, peak_wavelength[i]: 1.550789291353575e-06
+random_laser, fixed: True, times: [6.72030182 0.95339113]
+f_0: 193316263478845.53, i: 0, batchsize: 100, peak_wavelength[i]: 1.5507875675075114e-06
+f_0: 193316263478845.53, i: 100, batchsize: 100, peak_wavelength[i]: 1.5507875675075114e-06
+random_laser, fixed: True, times: [3.83232287 9.11022948]
+f_0: 193316478191136.5, i: 0, batchsize: 100, peak_wavelength[i]: 1.550785845082426e-06
+f_0: 193316478191136.5, i: 100, batchsize: 100, peak_wavelength[i]: 1.550785845082426e-06
+random_laser, fixed: True, times: [6.3050267  8.91756461]
+f_0: 193316692726418.06, i: 0, batchsize: 100, peak_wavelength[i]: 1.5507841240811342e-06
+f_0: 193316692726418.06, i: 100, batchsize: 100, peak_wavelength[i]: 1.5507841240811342e-06
+random_laser, fixed: True, times: [3.76508996 0.20497363]
+f_0: 193316907084338.1, i: 0, batchsize: 100, peak_wavelength[i]: 1.5507824045064511e-06
+f_0: 193316907084338.1, i: 100, batchsize: 100, peak_wavelength[i]: 1.5507824045064511e-06
+t: [0.e+00 1.e-13 2.e-13 3.e-13 4.e-13] with 200 samples
+t_all_symbols: [0.e+00 1.e-13 2.e-13 3.e-13 4.e-13] with 200 samples
+shape of t: (6152,)
+target_time_ns:0.46153846153846156, target_index: 4615, len(t_all_symbols): 1230400, len(t): 6152
+wavelengths_nm: [1.55086116e-06 1.55085938e-06 1.55085760e-06 1.55085582e-06
+ 1.55085405e-06 1.55085227e-06 1.55085050e-06 1.55084873e-06
+ 1.55084696e-06 1.55084519e-06 1.55084342e-06 1.55084165e-06
+ 1.55083989e-06 1.55083812e-06 1.55083636e-06 1.55083460e-06
+ 1.55083284e-06 1.55083108e-06 1.55082933e-06 1.55082757e-06
+ 1.55082582e-06 1.55082406e-06 1.55082231e-06 1.55082056e-06
+ 1.55081881e-06 1.55081706e-06 1.55081532e-06 1.55081357e-06
+ 1.55081183e-06 1.55081009e-06 1.55080835e-06 1.55080661e-06
+ 1.55080487e-06 1.55080313e-06 1.55080140e-06 1.55079966e-06
+ 1.55079793e-06 1.55079620e-06 1.55079447e-06 1.55079274e-06
+ 1.55079102e-06 1.55078929e-06 1.55078757e-06 1.55078585e-06
+ 1.55078412e-06 1.55078240e-06]
+wavelengths_nm shape: (46,)
+amplitudes_port1 shape: (46,)
+idx_max: 38, idx_min: 8
+selected_data: [{'voltage': np.float64(-1.694), 'wavelength': np.float64(1.5507944713894795e-06), 'destructive_port': array([1.68761832e-12, 1.68761832e-12, 1.68761832e-12, ...,
+       1.55427778e-12, 1.55421677e-12, 1.55416064e-12], shape=(1230400,))}, {'voltage': np.float64(-1.754), 'wavelength': np.float64(1.550846957016025e-06), 'destructive_port': array([5.06728358e-15, 5.06728358e-15, 5.06728358e-15, ...,
+       1.00206781e-15, 1.00170801e-15, 1.00135080e-15], shape=(1230400,))}, {'voltage': np.float64(-1.724), 'wavelength': np.float64(1.5508205603604115e-06), 'destructive_port': array([8.59996036e-13, 8.59996036e-13, 8.59996036e-13, ...,
+       7.90244141e-13, 7.90212984e-13, 7.90184278e-13], shape=(1230400,))}]
+1.5507944713894795e-06
+1.550846957016025e-06
+1.5508205603604115e-06
+Execution time for simulation: 349.448902369 seconds for 200 samples

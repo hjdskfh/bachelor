@@ -979,7 +979,9 @@ class SimulationManager:
         #voltage_values = np.arange(-1.73, -1.67, 0.001)  # Example range of mean_voltage
         # voltage_values = np.arange(-1.712, -1.7031, 0.0003)
         # voltage_values = np.arange(-1.77, -1.735, 0.0005)  # Example range of mean_voltage
-        voltage_values = np.arange(-1.77, -1.68, 0.002)  # Example range of mean_voltage
+        # voltage_values = np.arange(-1.77, -1.68, 0.002)  # Example range of mean_voltage
+        voltage_values = np.arange(-1.87, -1.58, 0.004)  # Example range of mean_voltage
+
         results = []
         wavelengths_nm = []
         
@@ -1058,7 +1060,7 @@ class SimulationManager:
         plt.plot(voltage_values, amplitudes_port1, marker='o')
         plt.xlabel("Mean Voltage (V)")
         plt.ylabel("amplitude on special point")
-        plt.title("Power vs Mean Voltage")
+        # plt.title("Power vs Mean Voltage")
         plt.grid(True)
         plt.minorticks_on()
         plt.grid(True, which='both', linestyle='--', linewidth=0.5)
@@ -1069,7 +1071,7 @@ class SimulationManager:
         plt.plot(voltage_values, wavelengths_nm, marker='x', color='orange')
         plt.xlabel("Mean Voltage (V)")
         plt.ylabel("Peak Wavelength (nm)")
-        plt.title("Wavelength vs Mean Voltage")
+        # plt.title("Wavelength vs Mean Voltage")
         plt.grid(True)
         plt.legend()
 

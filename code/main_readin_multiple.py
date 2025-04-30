@@ -21,7 +21,8 @@ data_processor = DataProcessor(config)
 
 # Define the directory containing the input files
 # input_dir = r"C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_29\morning_files"
-input_dir = r'C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_29\abend_files'
+# input_dir = r'C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_29\abend_files'
+input_dir = r'C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_29\10_abends_files'
 
 # Get all files in the directory
 all_files = os.listdir(input_dir)
@@ -77,6 +78,38 @@ for prefix in prefixes:
         print(f"n_Z_mud_in: {n_Z_mud_in}, n_Z_mus_in: {n_Z_mus_in}")
         print(f"n_X_mud_in: {n_X_mud_in}, n_X_mus_in: {n_X_mus_in}")
         print(f"total_symbols: {total_symbols}")
+
+        # Calculate the ratios
+        if n_Z_mus_in != 0:
+            QBER_signal = m_Z_mus_in / n_Z_mus_in
+        else:
+            QBER_signal = None  # Avoid division by zero
+
+        # Calculate QBER_decoy (ratio_m_Z_mud_in)
+        if n_Z_mud_in != 0:
+            QBER_decoy = m_Z_mud_in / n_Z_mud_in
+        else:
+            QBER_decoy = None
+
+        # Calculate Pherr_signal (ratio_m_X_mus_in)
+        if n_X_mus_in != 0:
+            Pherr_signal = m_X_mus_in / n_X_mus_in
+        else:
+            Pherr_signal = None
+
+        # Calculate Pherr_decoy (ratio_m_X_mud_in)
+        if n_X_mud_in != 0:
+            Pherr_decoy = m_X_mud_in / n_X_mud_in
+        else:
+            Pherr_decoy = None
+        
+        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H")
+        txt_filename = f"results_{prefix}_{timestamp}.txt"
+        with open(txt_filename, "a") as f:
+            f.write(f"n_Z_mus_in: {n_Z_mus_in}, n_Z_mud_in: {n_Z_mud_in}, n_X_mus_in: {n_X_mus_in}, n_X_mud_in: {n_X_mud_in}\n")
+            f.write(f"m_Z_mus_in: {m_Z_mus_in}, m_Z_mud_in: {m_Z_mud_in}, m_X_mus_in: {m_X_mus_in}, m_X_mud_in: {m_X_mud_in}\n")
+            f.write(f"QBER_signal: {QBER_signal}, QBER_decoy: {QBER_decoy}, Pherr_signal: {Pherr_signal}, Pherr_decoy: {Pherr_decoy}\n")
+            f.write(f"total symbols: {total_symbols}\n")
 
         # Load the JSON file
         with open(json_path, 'r') as file:
@@ -163,3 +196,4 @@ for prefix in prefixes:
                                         factor_total,
                                         skr
                                     ])
+
