@@ -55,7 +55,7 @@ def find_max_skr(file_path):
 # max_skr_file8, max_skr_row_file8 = find_max_skr(filepath_8)
 # print(f"Max SKR in file 8: {max_skr_file8}, Row: {max_skr_row_file8}")
 
-# estinction ratio 10 uhr 9 10 11
+estinction ratio 10 uhr 9 10 11
 filepath_9 = r'C:\Users\leavi\bachelor\wichtig\extinction_ratio\results_9_20250429_23.csv'
 file9 = pd.read_csv(filepath_9)
 max_skr_file9, max_skr_row_file9 = find_max_skr(filepath_9)
@@ -68,6 +68,22 @@ filepath_11 = r'C:\Users\leavi\bachelor\wichtig\extinction_ratio\results_11_2025
 file11 = pd.read_csv(filepath_11)
 max_skr_file11, max_skr_row_file11 = find_max_skr(filepath_11)
 print(f"Max SKR in file 11: {max_skr_file11}, Row: {max_skr_row_file11}")
+
+# nachtmessung auf mittwoch
+# filepath_1 = r"C:\Users\leavi\bachelor\wichtig\gute_Messungen\new_results_1_20250430_10.csv"  #0.1
+# filepath_2 = r"C:\Users\leavi\bachelor\wichtig\gute_Messungen\new_results_2_20250430_10.csv"
+# filepath_3 = r"C:\Users\leavi\bachelor\wichtig\gute_Messungen\new_results_3_20250430_10.csv"
+
+# file1 = pd.read_csv(filepath_1)
+# file2 = pd.read_csv(filepath_2)
+# file3 = pd.read_csv(filepath_3)
+
+# max_skr_file1, max_skr_row_file1 = find_max_skr(filepath_1)
+# max_skr_file2, max_skr_row_file2 = find_max_skr(filepath_2)
+# max_skr_file3, max_skr_row_file3 = find_max_skr(filepath_3)
+# print(f"Max SKR in file 1: {max_skr_file1}, Row: {max_skr_row_file1}")
+# print(f"Max SKR in file 2: {max_skr_file2}, Row: {max_skr_row_file2}")
+# print(f"Max SKR in file 3: {max_skr_file3}, Row: {max_skr_row_file3}")
 
 
 # voltages 6

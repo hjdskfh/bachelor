@@ -21,8 +21,9 @@ data_processor = DataProcessor(config)
 
 # Define the directory containing the input files
 # input_dir = r"C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_29\morning_files"
-# input_dir = r'C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_29\abend_files'
-input_dir = r'C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_29\10_abends_files'
+input_dir = r'C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_29\abend_files'
+# input_dir = r'C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_29\10_abends_files'
+# input_dir = r'C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_30\nachtmessung'
 
 # Get all files in the directory
 all_files = os.listdir(input_dir)
@@ -104,7 +105,7 @@ for prefix in prefixes:
             Pherr_decoy = None
         
         timestamp = datetime.datetime.now().strftime("%Y%m%d_%H")
-        txt_filename = f"results_{prefix}_{timestamp}.txt"
+        txt_filename = f"new_results_{prefix}_{timestamp}.txt"
         with open(txt_filename, "a") as f:
             f.write(f"n_Z_mus_in: {n_Z_mus_in}, n_Z_mud_in: {n_Z_mud_in}, n_X_mus_in: {n_X_mus_in}, n_X_mud_in: {n_X_mud_in}\n")
             f.write(f"m_Z_mus_in: {m_Z_mus_in}, m_Z_mud_in: {m_Z_mud_in}, m_X_mus_in: {m_X_mus_in}, m_X_mud_in: {m_X_mud_in}\n")
@@ -175,7 +176,7 @@ for prefix in prefixes:
 
                             # Save results to a CSV file
                             timestamp = datetime.datetime.now().strftime("%Y%m%d_%H")
-                            csv_filename = f"results_{prefix}_{timestamp}.csv"
+                            csv_filename = f"new_results_{prefix}_{timestamp}.csv"
                             file_exists = os.path.isfile(csv_filename)
                             with open(csv_filename, "a", newline="") as csvfile:
                                 csv_writer = csv.writer(csvfile)
