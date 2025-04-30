@@ -31,22 +31,23 @@ def find_max_skr(file_path):
 # Load the two files into DataFrames
 # filepath_1 = r"C:\Users\leavi\bachelor\wichtig\gute_Messungen\results_1_20250429_20.csv"  #0.1
 # filepath_2 = r"C:\Users\leavi\bachelor\wichtig\gute_Messungen\results_2_20250429_20.csv"
-# filepath_3 = r"C:\Users\leavi\bachelor\wichtig\gute_Messungen\results_7_20250429_12.csv"
+filepath_3 = r"C:\Users\leavi\bachelor\wichtig\gute_Messungen\results_7_20250429_12.csv"
 # filepath_4 = r"C:\Users\leavi\bachelor\wichtig\gute_Messungen\results_4_20250429_20.csv"
 
 # file1 = pd.read_csv(filepath_1)
 # file2 = pd.read_csv(filepath_2)
-# file3 = pd.read_csv(filepath_3)
+file3 = pd.read_csv(filepath_3)
 # file4 = pd.read_csv(filepath_4)
 
 # max_skr_file1, max_skr_row_file1 = find_max_skr(filepath_1)
 # max_skr_file2, max_skr_row_file2 = find_max_skr(filepath_2)
-# max_skr_file3, max_skr_row_file3 = find_max_skr(filepath_3)
+max_skr_file3, max_skr_row_file3 = find_max_skr(filepath_3)
 # max_skr_file4, max_skr_row_file4 = find_max_skr(filepath_4)
 # print(f"Max SKR in file 1: {max_skr_file1}, Row: {max_skr_row_file1}")
 # print(f"Max SKR in file 2: {max_skr_file2}, Row: {max_skr_row_file2}")
-# print(f"Max SKR in file 3: {max_skr_file3}, Row: {max_skr_row_file3}")
+print(f"Max SKR in file 3: {max_skr_file3}, Row: {max_skr_row_file3}")
 # print(f"Max SKR in file 4: {max_skr_file4}, Row: {max_skr_row_file4}")
+
 
 
 # extinction ratio abend 18 uhr run nr 8
@@ -96,6 +97,27 @@ def find_max_skr(file_path):
 # max_skr_file6, max_skr_row_file6 = find_max_skr(filepath_6)
 # print(f"Max SKR in file 6: {max_skr_file6}, Row: {max_skr_row_file6}")
 
+# mi mittag messung
+# filepath_1 = r"C:\Users\leavi\bachelor\wichtig\extinction_ratio\new_results_1_20250430_13.csv"  #0.1
+# filepath_2 = r"C:\Users\leavi\bachelor\wichtig\extinction_ratio\new_results_2_20250430_13.csv"
+# filepath_3 = r"C:\Users\leavi\bachelor\wichtig\extinction_ratio\new_results_3_20250430_13.csv"
+# filepath_4 = r"C:\Users\leavi\bachelor\wichtig\extinction_ratio\new_results_4_20250430_13.csv"
+
+# file1 = pd.read_csv(filepath_1)
+# file2 = pd.read_csv(filepath_2)
+# file3 = pd.read_csv(filepath_3)
+# file4 = pd.read_csv(filepath_4)
+
+# max_skr_file1, max_skr_row_file1 = find_max_skr(filepath_1)
+# max_skr_file2, max_skr_row_file2 = find_max_skr(filepath_2)
+# max_skr_file3, max_skr_row_file3 = find_max_skr(filepath_3)
+# max_skr_file4, max_skr_row_file4 = find_max_skr(filepath_4)
+# print(f"Max SKR in file 1: {max_skr_file1}, Row: {max_skr_row_file1}")
+# print(f"Max SKR in file 2: {max_skr_file2}, Row: {max_skr_row_file2}")
+# print(f"Max SKR in file 3: {max_skr_file3}, Row: {max_skr_row_file3}")
+# print(f"Max SKR in file 4: {max_skr_file4}, Row: {max_skr_row_file4}")
+
+
 
 
 # # Select the relevant columns for comparison
@@ -114,52 +136,3 @@ def find_max_skr(file_path):
 # # Optionally, save the differences to a new CSV file
 # skr_differences.to_csv("skr_differences.csv", index=False)
 
-
-# add up counts
-import os
-import re
-
-# Define the folder containing the .txt files
-input_dir = r"C:\Users\leavi\bachelor\wichtig\gute_Messungen"
-
-# Updated regular expression to match the desired values
-pattern = re.compile(
-    r"n_Z_mus_in:\s*\[(.*?)\],\s*n_Z_mud_in:\s*\[(.*?)\],\s*n_X_mus_in:\s*\[(.*?)\],\s*n_X_mud_in:\s*\[(.*?)\],\s*"
-    r"m_Z_mus_in:\s*\[(.*?)\],\s*m_Z_mud_in:\s*\[(.*?)\],\s*m_X_mus_in:\s*\[(.*?)\],\s*m_X_mud_in:\s*\[(.*?)\]"
-)
-
-# Iterate through all files in the folder
-for file_name in os.listdir(input_dir):
-    if file_name.endswith(".txt"):  # Process only .txt files
-        file_path = os.path.join(input_dir, file_name)
-        with open(file_path, 'r') as file:
-            content = file.read()
-            print(f"Processing file: {file_name}")
-            match = pattern.search(content)
-            if match:
-                print(f"Match found in {file_name}")
-
-                # Extract the values
-                n_Z_mus_in = float(match.group(1))
-                n_Z_mud_in = float(match.group(2))
-                n_X_mus_in = float(match.group(3))
-                n_X_mud_in = float(match.group(4))
-                m_Z_mus_in = float(match.group(5))
-                m_Z_mud_in = float(match.group(6))
-                m_X_mus_in = float(match.group(7))
-                m_X_mud_in = float(match.group(8))
-
-                # Calculate the sum
-                total_sum = n_Z_mus_in + n_Z_mud_in + n_X_mus_in + n_X_mud_in + m_Z_mus_in + m_Z_mud_in + m_X_mus_in + m_X_mud_in
-
-                # Save the result to a new file with a similar name
-                output_file_name = f"{os.path.splitext(file_name)[0]}_sum.txt"
-                output_file_path = os.path.join(input_dir, output_file_name)
-                with open(output_file_path, 'w') as output_file:
-                    output_file.write(f"File: {file_name}\n")
-                    output_file.write(f"Sum: {total_sum}\n")
-
-                # Print confirmation
-                print(f"Processed {file_name}, saved result to {output_file_name}")
-            else:
-                print(f"No match found in {file_name}")

@@ -213,3 +213,20 @@ start_simulation_batches(number = 8, total_batches=250, simulations_in_batch=2, 
 # start_simulation_batches(number = 3, total_batches=50, simulations_in_batch=2, max_concurrent_tasks=12, mean_photon_nr=0.25, mean_photon_decoy=0.175, fiber_attenuation=-6, voltage_amplitude=0.0011, current_amplitude = 0.00041, voltage_non_signal = -2.1, voltage_signal = 0.4)
 # 4
 # start_simulation_batches(number = 4, total_batches=50, simulations_in_batch=2, max_concurrent_tasks=12, mean_photon_nr=0.5, mean_photon_decoy=0.35, fiber_attenuation=-9, voltage_amplitude=0.0011, current_amplitude = 0.00041, voltage_non_signal = -2.1, voltage_signal = 0.4)
+
+
+# Mittwoch nachmittag
+# 1
+start_simulation_batches(number = 1, total_batches=50, simulations_in_batch=2, max_concurrent_tasks=12, mean_photon_nr=0.25, mean_photon_decoy=0.175, fiber_attenuation=-6, voltage_amplitude=0.0011, current_amplitude = 0.00041, voltage_non_signal = -2.1, voltage_signal = 0.4)
+# 2
+# start_simulation_batches(number = 2, total_batches=50, simulations_in_batch=2, max_concurrent_tasks=12, mean_photon_nr=0.125, mean_photon_decoy=0.075, fiber_attenuation=-3, voltage_amplitude=0.0011, current_amplitude = 0.00041, voltage_non_signal = -2.1, voltage_signal = 0.4)
+# 3
+# start_simulation_batches(number = 3, total_batches=50, simulations_in_batch=2, max_concurrent_tasks=12, mean_photon_nr=0.5, mean_photon_decoy=0.3, fiber_attenuation=-9, voltage_amplitude=0.0011, current_amplitude = 0.00041, voltage_non_signal = -2.1, voltage_signal = 0.4)
+# 4
+# start_simulation_batches(number = 4, total_batches=50, simulations_in_batch=2, max_concurrent_tasks=12, mean_photon_nr=0.1, mean_photon_decoy=0.07, fiber_attenuation=-1, voltage_amplitude=0.0011, current_amplitude = 0.00041, voltage_non_signal = -2.1, voltage_signal = 0.4)
+# 5
+# start_simulation_batches(number = 5, total_batches=50, simulations_in_batch=2, max_concurrent_tasks=12, mean_photon_nr=0.125, mean_photon_decoy=0.075, fiber_attenuation=-3, voltage_amplitude=0.0011, current_amplitude = 0.00041, voltage_non_signal = -2.1, voltage_signal = 0.4)
+# 6
+# start_simulation_batches(number = 6, total_batches=50, simulations_in_batch=2, max_concurrent_tasks=12, mean_photon_nr=0.25, mean_photon_decoy=0.175, fiber_attenuation=-6, voltage_amplitude=0.0011, current_amplitude = 0.00041, voltage_non_signal = -2.1, voltage_signal = 0.4)
+# 7
+# start_simulation_batches(number = 7, total_batches=50, simulations_in_batch=2, max_concurrent_tasks=12, mean_photon_nr=0.5, mean_photon_decoy=0.35, fiber_attenuation=-9, voltage_amplitude=0.0011, current_amplitude = 0.00041, voltage_non_signal = -2.1, voltage_signal = 0.4)
