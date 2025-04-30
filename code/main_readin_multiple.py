@@ -21,8 +21,8 @@ data_processor = DataProcessor(config)
 
 # Define the directory containing the input files
 # input_dir = r"C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_29\morning_files"
-input_dir = r'C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_29\abend_files'
-# input_dir = r'C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_29\10_abends_files'
+# input_dir = r'C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_29\abend_files'
+input_dir = r'C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_29\10_abends_files'
 # input_dir = r'C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_30\nachtmessung'
 
 # Get all files in the directory
@@ -104,13 +104,16 @@ for prefix in prefixes:
         else:
             Pherr_decoy = None
         
+        total_counts = n_Z_mus_in + n_Z_mud_in + n_X_mus_in + n_X_mud_in + m_Z_mus_in + m_Z_mud_in + m_X_mus_in + m_X_mud_in
+        
         timestamp = datetime.datetime.now().strftime("%Y%m%d_%H")
-        txt_filename = f"new_results_{prefix}_{timestamp}.txt"
+        txt_filename = f"10_abends_results_{prefix}_{timestamp}.txt"
         with open(txt_filename, "a") as f:
             f.write(f"n_Z_mus_in: {n_Z_mus_in}, n_Z_mud_in: {n_Z_mud_in}, n_X_mus_in: {n_X_mus_in}, n_X_mud_in: {n_X_mud_in}\n")
             f.write(f"m_Z_mus_in: {m_Z_mus_in}, m_Z_mud_in: {m_Z_mud_in}, m_X_mus_in: {m_X_mus_in}, m_X_mud_in: {m_X_mud_in}\n")
             f.write(f"QBER_signal: {QBER_signal}, QBER_decoy: {QBER_decoy}, Pherr_signal: {Pherr_signal}, Pherr_decoy: {Pherr_decoy}\n")
             f.write(f"total symbols: {total_symbols}\n")
+            f.write(f"total_counts: {total_counts}\n")
 
         # Load the JSON file
         with open(json_path, 'r') as file:
@@ -130,71 +133,71 @@ for prefix in prefixes:
         length_multiply_arr = np.array([1e7, 1e8, 1e9])
         factor_total_arr = np.array([1])
 
-        for factor_total in factor_total_arr:
-            for length_multiply in length_multiply_arr:
-                for factor_x_mud_value in factor_x_mud_arr:
-                    for desired_p_decoy in desired_p_decoy_arr:
-                        for desired_p_z_alice in desired_p_z_alice_arr:
-                            weight_Z = desired_p_z_alice
-                            weight_X = 1 - desired_p_z_alice
-                            weight_d = desired_p_decoy
-                            weight_s = 1 - desired_p_decoy
+        # for factor_total in factor_total_arr:
+        #     for length_multiply in length_multiply_arr:
+        #         for factor_x_mud_value in factor_x_mud_arr:
+        #             for desired_p_decoy in desired_p_decoy_arr:
+        #                 for desired_p_z_alice in desired_p_z_alice_arr:
+        #                     weight_Z = desired_p_z_alice
+        #                     weight_X = 1 - desired_p_z_alice
+        #                     weight_d = desired_p_decoy
+        #                     weight_s = 1 - desired_p_decoy
 
-                            # Apply weights
-                            weighted_n_Z_mus = 4 * n_Z_mus_in * weight_Z * weight_s  # Z basis, signal
-                            weighted_n_Z_mud = 4 * n_Z_mud_in * weight_Z * weight_d  # Z basis, decoy
-                            weighted_n_X_mus = 4 * n_X_mus_in * weight_X * weight_s  # X basis, signal
-                            weighted_n_X_mud = 4 * n_X_mud_in * weight_X * weight_d  * factor_x_mud_value # X basis, decoy
-                            weighted_m_Z_mus = 4 * m_Z_mus_in * weight_Z * weight_s  # Z basis, signal
-                            weighted_m_Z_mud = 4 * m_Z_mud_in * weight_Z * weight_d  # Z basis, decoy
-                            weighted_m_X_mus = 4 * m_X_mus_in * weight_X * weight_s  # X basis, signal
-                            weighted_m_X_mud = 4 * m_X_mud_in * weight_X * weight_d  # X basis, decoy
-                            total_symbols = total_symbols * factor_total
+        #                     # Apply weights
+        #                     weighted_n_Z_mus = 4 * n_Z_mus_in * weight_Z * weight_s  # Z basis, signal
+        #                     weighted_n_Z_mud = 4 * n_Z_mud_in * weight_Z * weight_d  # Z basis, decoy
+        #                     weighted_n_X_mus = 4 * n_X_mus_in * weight_X * weight_s  # X basis, signal
+        #                     weighted_n_X_mud = 4 * n_X_mud_in * weight_X * weight_d  * factor_x_mud_value # X basis, decoy
+        #                     weighted_m_Z_mus = 4 * m_Z_mus_in * weight_Z * weight_s  # Z basis, signal
+        #                     weighted_m_Z_mud = 4 * m_Z_mud_in * weight_Z * weight_d  # Z basis, decoy
+        #                     weighted_m_X_mus = 4 * m_X_mus_in * weight_X * weight_s  # X basis, signal
+        #                     weighted_m_X_mud = 4 * m_X_mud_in * weight_X * weight_d  # X basis, decoy
+        #                     total_symbols = total_symbols * factor_total
 
-                            # put desired p_decoy and p_z_alice in the config
-                            config.p_decoy = desired_p_decoy
-                            config.p_z_alice = desired_p_z_alice
-                            # print(f"p_decoy: {config.p_decoy}, p_z_alice: {config.p_z_alice}")
+        #                     # put desired p_decoy and p_z_alice in the config
+        #                     config.p_decoy = desired_p_decoy
+        #                     config.p_z_alice = desired_p_z_alice
+        #                     # print(f"p_decoy: {config.p_decoy}, p_z_alice: {config.p_z_alice}")
 
-                            # Calculate SKR (example)
-                            if weighted_n_Z_mus != 0:
-                                factor = length_multiply / weighted_n_Z_mus
-                            else:
-                                factor = 1
+        #                     # Calculate SKR (example)
+        #                     if weighted_n_Z_mus != 0:
+        #                         factor = length_multiply / weighted_n_Z_mus
+        #                     else:
+        #                         factor = 1
 
-                            skr = data_processor.calc_SKR(  weighted_n_Z_mus,
-                                                    weighted_n_Z_mud,
-                                                    weighted_n_X_mus,
-                                                    weighted_n_X_mud,
-                                                    weighted_m_Z_mus,
-                                                    weighted_m_Z_mud,
-                                                    weighted_m_X_mus,
-                                                    weighted_m_X_mud,
-                                                    total_symbols,
-                                                    factor
-                                                )
+        #                     skr = data_processor.calc_SKR(  weighted_n_Z_mus,
+        #                                             weighted_n_Z_mud,
+        #                                             weighted_n_X_mus,
+        #                                             weighted_n_X_mud,
+        #                                             weighted_m_Z_mus,
+        #                                             weighted_m_Z_mud,
+        #                                             weighted_m_X_mus,
+        #                                             weighted_m_X_mud,
+        #                                             total_symbols,
+        #                                             factor
+        #                                         )
 
-                            # Save results to a CSV file
-                            timestamp = datetime.datetime.now().strftime("%Y%m%d_%H")
-                            csv_filename = f"new_results_{prefix}_{timestamp}.csv"
-                            file_exists = os.path.isfile(csv_filename)
-                            with open(csv_filename, "a", newline="") as csvfile:
-                                csv_writer = csv.writer(csvfile)
+        #                     # Save results to a CSV file
+        #                     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H")
+        #                     csv_filename = f"new_results_{prefix}_{timestamp}.csv"
+        #                     file_exists = os.path.isfile(csv_filename)
+        #                     with open(csv_filename, "a", newline="") as csvfile:
+        #                         csv_writer = csv.writer(csvfile)
 
-                                # Write the header if the file is being created for the first time
-                                if not file_exists:
-                                    csv_writer.writerow(["length_multiply", "mpn_s", "mpn_d", "desired_p_decoy", "desired_p_z_alice", "factor_x_mud", "factor_total", "SKR"])
+        #                         # Write the header if the file is being created for the first time
+        #                         if not file_exists:
+        #                             csv_writer.writerow(["length_multiply", "mpn_s", "mpn_d", "desired_p_decoy", "desired_p_z_alice", "factor_x_mud", "factor_total", "SKR"])
 
-                                # Write the data row
-                                if not math.isnan(skr) and skr > 0:
-                                    csv_writer.writerow([
-                                        length_multiply,
-                                        mean_photon_nr,
-                                        mean_photon_decoy,
-                                        desired_p_decoy,
-                                        desired_p_z_alice,
-                                        factor_x_mud_value,
-                                        factor_total,
-                                        skr
-                                    ])
+        #                         # Write the data row
+        #                         if not math.isnan(skr) and skr > 0:
+        #                             csv_writer.writerow([
+        #                                 length_multiply,
+        #                                 mean_photon_nr,
+        #                                 mean_photon_decoy,
+        #                                 desired_p_decoy,
+        #                                 desired_p_z_alice,
+        #                                 factor_x_mud_value,
+        #                                 factor_total,
+        #                                 skr
+        #                             ])
 
