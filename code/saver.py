@@ -77,14 +77,15 @@ class Saver:
         # Create the directory if it doesn't exist
         target_dir.mkdir(exist_ok=True)
 
-        # Generate a timestamp (e.g., '20231211_153012' for 11th December 2023 at 15:30:12)
-        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        # # Generate a timestamp (e.g., '20231211_153012' for 11th December 2023 at 15:30:12)
+        # timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
 
         # Append the timestamp to the filename
-        filename_with_timestamp = f"{timestamp}_{filename}.npz"
+        #filename_with_timestamp = f"{timestamp}_{filename}.npz"
 
         # Define the file path
-        filepath = target_dir / filename_with_timestamp
+        # filepath = target_dir / filename_with_timestamp
+        filepath = target_dir / filename
 
         # Save all provided arrays into the file
         np.savez(filepath, **kwargs)
