@@ -126,7 +126,7 @@ def start_simulation_batches(number = None, total_batches=50, simulations_in_bat
 
     total_symbols = n_samples_set * simulations_in_batch * total_batches
 
-    Saver.save_array_as_npz_data(f"counts_repeat_mpn_{mean_photon_nr}_decoy_{mean_photon_decoy}_att_{fiber_attenuation}_total_{total_symbols}_batch_{total_batches}_max_{max_concurrent_tasks}_volt_{voltage_amplitude}_current_{current_amplitude}",
+    Saver.save_array_as_npz_data(f"{number}_counts_repeat_mpn_{mean_photon_nr}_decoy_{mean_photon_decoy}_att_{fiber_attenuation}_total_{total_symbols}_batch_{total_batches}_max_{max_concurrent_tasks}_volt_{voltage_amplitude}_current_{current_amplitude}",
                                  global_len_wrong_x_dec=global_len_wrong_x_dec,
                                  global_len_wrong_x_non_dec=global_len_wrong_x_non_dec,
                                  global_len_wrong_z_dec=global_len_wrong_z_dec,
