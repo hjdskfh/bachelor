@@ -26,7 +26,8 @@ data_processor = DataProcessor(config)
 # input_dir = r'C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_30\nachtmessung'
 # input_dir = r'C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_30\mittagsmessung'
 # input_dir = r'C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_30\5_Uhr_messung'
-input_dir = r'C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_30'
+# input_dir = r'C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_30'
+input_dir = r'C:\Users\leavi\OneDrive\Dokumente\Uni\Semester 7\NeuMoQP\Programm\stuff_from_cluster\2025_05_06'
 
 # Get all files in the directory
 all_files = os.listdir(input_dir)
@@ -110,7 +111,7 @@ for prefix in prefixes:
         total_counts = n_Z_mus_in + n_Z_mud_in + n_X_mus_in + n_X_mud_in + m_Z_mus_in + m_Z_mud_in + m_X_mus_in + m_X_mud_in
         
         timestamp = datetime.datetime.now().strftime("%Y%m%d_%H")
-        txt_filename = f"mi_letzte_results_{prefix}_{timestamp}.txt"
+        txt_filename = os.path.join(input_dir, f"results_{prefix}_{timestamp}.txt")
         with open(txt_filename, "a") as f:
             f.write(f"n_Z_mus_in: {n_Z_mus_in}, n_Z_mud_in: {n_Z_mud_in}, n_X_mus_in: {n_X_mus_in}, n_X_mud_in: {n_X_mud_in}\n")
             f.write(f"m_Z_mus_in: {m_Z_mus_in}, m_Z_mud_in: {m_Z_mud_in}, m_X_mus_in: {m_X_mus_in}, m_X_mud_in: {m_X_mud_in}\n")
@@ -168,7 +169,7 @@ for prefix in prefixes:
                             else:
                                 factor = 1
 
-                            skr = data_processor.calc_SKR(  weighted_n_Z_mus,
+                            skr = data_processor.calc_SKR(weighted_n_Z_mus,
                                                     weighted_n_Z_mud,
                                                     weighted_n_X_mus,
                                                     weighted_n_X_mud,
@@ -182,7 +183,7 @@ for prefix in prefixes:
 
                             # Save results to a CSV file
                             timestamp = datetime.datetime.now().strftime("%Y%m%d_%H")
-                            csv_filename = f"mi_letzte_results_{prefix}_{timestamp}.csv"
+                            csv_filename = os.path.join(input_dir, f"results_{prefix}_{timestamp}.csv")
                             file_exists = os.path.isfile(csv_filename)
                             with open(csv_filename, "a", newline="") as csvfile:
                                 csv_writer = csv.writer(csvfile)
