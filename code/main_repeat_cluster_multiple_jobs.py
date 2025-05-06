@@ -175,3 +175,6 @@ def run_simulations_from_excel(file_path, run_id):
 
 # Usage
 run_simulations_from_excel('qkd_simulation_inputs.xlsx', run_id=1)
+run_simulations_from_excel('qkd_simulation_inputs.xlsx', run_id=2)
+run_simulations_from_excel('qkd_simulation_inputs.xlsx', run_id=3)
+run_simulations_from_excel('qkd_simulation_inputs.xlsx', run_id=4)
