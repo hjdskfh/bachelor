@@ -8,11 +8,12 @@ from datamanager import DataManager
 from config import SimulationConfig
 from simulationmanager import SimulationManager
 from saver import Saver
+import pandas as pd
 
 # Ensure print is always flushed
 print = functools.partial(print, flush=True)
 
-def start_simulation_batches(number = None, total_batches=300, simulations_in_batch=2, max_concurrent_tasks=3, mean_photon_nr=0.182, mean_photon_decoy=0.1, fiber_attenuation=-3, voltage_amplitude=0.0011, current_amplitude = 0.00041, voltage_non_signal = -1.3, voltage_signal = 0.2):
+def start_simulation_batches(number = None, total_batches=50, simulations_in_batch=2, max_concurrent_tasks=3, mean_photon_nr=0.182, mean_photon_decoy=0.1, fiber_attenuation=-3, voltage_amplitude=0.0011, current_amplitude = 0.00041, voltage_non_signal = -1.3, voltage_signal = 0.2):
     print("Starting simulation batches...")
 
     Saver.memory_usage("START of Simulation: Before everything")
@@ -140,38 +141,37 @@ def start_simulation_batches(number = None, total_batches=300, simulations_in_ba
     execution_time_simulation = end_time_simulation - start_time
     print(f"Execution time for simulation: {execution_time_simulation:.9f} seconds")
 
-# start_simulation_batches(number = 1, total_batches=50, simulations_in_batch=2, max_concurrent_tasks=12, mean_photon_nr=0.1, mean_photon_decoy=0.02, fiber_attenuation=-1, voltage_amplitude=0.0011, current_amplitude = 0.00041)
-# start_simulation_batches(number = 2, total_batches=50, simulations_in_batch=2, max_concurrent_tasks=12, mean_photon_nr=0.1, mean_photon_decoy=0.03, fiber_attenuation=-1, voltage_amplitude=0.0011, current_amplitude = 0.00041)
-# start_simulation_batches(number = 3, total_batches=50, simulations_in_batch=2, max_concurrent_tasks=12, mean_photon_nr=0.1, mean_photon_decoy=0.04, fiber_attenuation=-1, voltage_amplitude=0.0011, current_amplitude = 0.00041)
-# start_simulation_batches(number = 4, total_batches=50, simulations_in_batch=2, max_concurrent_tasks=12, mean_photon_nr=0.1, mean_photon_decoy=0.05, fiber_attenuation=-1, voltage_amplitude=0.0011, current_amplitude = 0.00041)
-# start_simulation_batches(number = 5, total_batches=50, simulations_in_batch=2, max_concurrent_tasks=12, mean_photon_nr=0.1, mean_photon_decoy=0.06, fiber_attenuation=-1, voltage_amplitude=0.0011, current_amplitude = 0.00041)
-# start_simulation_batches(number = 6, total_batches=50, simulations_in_batch=2, max_concurrent_tasks=12, mean_photon_nr=0.1, mean_photon_decoy=0.07, fiber_attenuation=-1, voltage_amplitude=0.0011, current_amplitude = 0.00041)
-# start_simulation_batches(number = 7, total_batches=50, simulations_in_batch=2, max_concurrent_tasks=12, mean_photon_nr=0.1, mean_photon_decoy=0.08, fiber_attenuation=-1, voltage_amplitude=0.0011, current_amplitude = 0.00041)
-# start_simulation_batches(number = 8, total_batches=50, simulations_in_batch=2, max_concurrent_tasks=12, mean_photon_nr=0.1, mean_photon_decoy=0.09, fiber_attenuation=-1, voltage_amplitude=0.0011, current_amplitude = 0.00041)
+def load_simulation_inputs(filename: str, run_id: int):
+    df = pd.read_excel(filename)
+    if run_id not in df['Run ID'].values:
+        raise ValueError(f"Run ID {run_id} not found in the dataset!")
+    return df[df['Run ID'] == run_id]
 
-# start_simulation_batches(number = 9,total_batches=50, simulations_in_batch=2, max_concurrent_tasks=12, mean_photon_nr=0.11, mean_photon_decoy=0.025, fiber_attenuation=-1, voltage_amplitude=0.0011, current_amplitude = 0.00041)
-# start_simulation_batches(number = 10,total_batches=50, simulations_in_batch=2, max_concurrent_tasks=12, mean_photon_nr=0.11, mean_photon_decoy=0.035, fiber_attenuation=-1, voltage_amplitude=0.0011, current_amplitude = 0.00041)
-# start_simulation_batches(number = 11,total_batches=50, simulations_in_batch=2, max_concurrent_tasks=12, mean_photon_nr=0.11, mean_photon_decoy=0.045, fiber_attenuation=-1, voltage_amplitude=0.0011, current_amplitude = 0.00041)
-# start_simulation_batches(number = 12,total_batches=50, simulations_in_batch=2, max_concurrent_tasks=12, mean_photon_nr=0.11, mean_photon_decoy=0.055, fiber_attenuation=-1, voltage_amplitude=0.0011, current_amplitude = 0.00041)
-# start_simulation_batches(number = 13,total_batches=50, simulations_in_batch=2, max_concurrent_tasks=12, mean_photon_nr=0.11, mean_photon_decoy=0.065, fiber_attenuation=-1, voltage_amplitude=0.0011, current_amplitude = 0.00041)
-# start_simulation_batches(number = 14,total_batches=50, simulations_in_batch=2, max_concurrent_tasks=12, mean_photon_nr=0.11, mean_photon_decoy=0.075, fiber_attenuation=-1, voltage_amplitude=0.0011, current_amplitude = 0.00041)
-# start_simulation_batches(number = 15,total_batches=50, simulations_in_batch=2, max_concurrent_tasks=12, mean_photon_nr=0.11, mean_photon_decoy=0.085, fiber_attenuation=-1, voltage_amplitude=0.0011, current_amplitude = 0.00041)
-# start_simulation_batches(number = 16,total_batches=50, simulations_in_batch=2, max_concurrent_tasks=12, mean_photon_nr=0.11, mean_photon_decoy=0.095, fiber_attenuation=-1, voltage_amplitude=0.0011, current_amplitude = 0.00041)
+def run_simulations_from_excel(file_path, run_id):
+    try:
+        # Load input data for the specified run_id
+        input_data = load_simulation_inputs(file_path, run_id)
 
-# start_simulation_batches(number = 17,total_batches=50, simulations_in_batch=2, max_concurrent_tasks=12, mean_photon_nr=0.12, mean_photon_decoy=0.025, fiber_attenuation=-1, voltage_amplitude=0.0011, current_amplitude = 0.00041)
-# start_simulation_batches(number = 18,total_batches=50, simulations_in_batch=2, max_concurrent_tasks=12, mean_photon_nr=0.12, mean_photon_decoy=0.035, fiber_attenuation=-1, voltage_amplitude=0.0011, current_amplitude = 0.00041)
-# start_simulation_batches(number = 19,total_batches=50, simulations_in_batch=2, max_concurrent_tasks=12, mean_photon_nr=0.12, mean_photon_decoy=0.045, fiber_attenuation=-1, voltage_amplitude=0.0011, current_amplitude = 0.00041)
-# start_simulation_batches(number = 20,total_batches=50, simulations_in_batch=2, max_concurrent_tasks=12, mean_photon_nr=0.12, mean_photon_decoy=0.055, fiber_attenuation=-1, voltage_amplitude=0.0011, current_amplitude = 0.00041)
-# start_simulation_batches(number = 21,total_batches=50, simulations_in_batch=2, max_concurrent_tasks=12, mean_photon_nr=0.12, mean_photon_decoy=0.065, fiber_attenuation=-1, voltage_amplitude=0.0011, current_amplitude = 0.00041)
-# start_simulation_batches(number = 22,total_batches=50, simulations_in_batch=2, max_concurrent_tasks=12, mean_photon_nr=0.12, mean_photon_decoy=0.075, fiber_attenuation=-1, voltage_amplitude=0.0011, current_amplitude = 0.00041)
-# start_simulation_batches(number = 23,total_batches=50, simulations_in_batch=2, max_concurrent_tasks=12, mean_photon_nr=0.12, mean_photon_decoy=0.085, fiber_attenuation=-1, voltage_amplitude=0.0011, current_amplitude = 0.00041)
-# start_simulation_batches(number = 24,total_batches=50, simulations_in_batch=2, max_concurrent_tasks=12, mean_photon_nr=0.12, mean_photon_decoy=0.095, fiber_attenuation=-1, voltage_amplitude=0.0011, current_amplitude = 0.00041)
+        for _, row in input_data.iterrows():
+            nr = row['number']
+            att = row['att']
+            mpn_s = row['mpn_S']
+            mpn_d = row['mpn_d']
+            # Assuming default values for others or read from additional columns
+            start_simulation_batches(
+                number = run_id*100 + nr,
+                total_batches=50,
+                simulations_in_batch=2,
+                max_concurrent_tasks=12,
+                mean_photon_nr=mpn_s,
+                mean_photon_decoy=mpn_d,
+                fiber_attenuation=att,
+                voltage_amplitude=0.0011,  # adjust if column exists
+                current_amplitude=0.00041  # adjust if column exists
+            )
 
-start_simulation_batches(number = 25,total_batches=50, simulations_in_batch=2, max_concurrent_tasks=12, mean_photon_nr=0.12, mean_photon_decoy=0.105, fiber_attenuation=-1, voltage_amplitude=0.0011, current_amplitude = 0.00041)
-start_simulation_batches(number = 26,total_batches=50, simulations_in_batch=2, max_concurrent_tasks=12, mean_photon_nr=0.13, mean_photon_decoy=0.03, fiber_attenuation=-1, voltage_amplitude=0.0011, current_amplitude = 0.00041)
-start_simulation_batches(number = 27,total_batches=50, simulations_in_batch=2, max_concurrent_tasks=12, mean_photon_nr=0.13, mean_photon_decoy=0.05, fiber_attenuation=-1, voltage_amplitude=0.0011, current_amplitude = 0.00041)
-start_simulation_batches(number = 28,total_batches=50, simulations_in_batch=2, max_concurrent_tasks=12, mean_photon_nr=0.13, mean_photon_decoy=0.065, fiber_attenuation=-1, voltage_amplitude=0.0011, current_amplitude = 0.00041)
-start_simulation_batches(number = 29,total_batches=50, simulations_in_batch=2, max_concurrent_tasks=12, mean_photon_nr=0.13, mean_photon_decoy=0.075, fiber_attenuation=-1, voltage_amplitude=0.0011, current_amplitude = 0.00041)
-start_simulation_batches(number = 30,total_batches=50, simulations_in_batch=2, max_concurrent_tasks=12, mean_photon_nr=0.13, mean_photon_decoy=0.085, fiber_attenuation=-1, voltage_amplitude=0.0011, current_amplitude = 0.00041)
-start_simulation_batches(number = 31,total_batches=50, simulations_in_batch=2, max_concurrent_tasks=12, mean_photon_nr=0.13, mean_photon_decoy=0.095, fiber_attenuation=-1, voltage_amplitude=0.0011, current_amplitude = 0.00041)
-start_simulation_batches(number = 32,total_batches=50, simulations_in_batch=2, max_concurrent_tasks=12, mean_photon_nr=0.13, mean_photon_decoy=0.11, fiber_attenuation=-1, voltage_amplitude=0.0011, current_amplitude = 0.00041)
+    except ValueError as e:
+        print(e)
+
+# Usage
+run_simulations_from_excel('qkd_simulation_inputs.xlsx', run_id=1)
