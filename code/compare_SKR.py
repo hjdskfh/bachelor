@@ -32,7 +32,7 @@ def find_max_skr(file_path):
     return max_skr, max_skr_row
 
 # Directory containing the CSV files
-csv_dir =  r'C:\Users\leavi\OneDrive\Dokumente\Uni\Semester 7\NeuMoQP\Programm\stuff_from_cluster\2025_05_06'
+csv_dir = r'C:\Users\leavi\OneDrive\Dokumente\Uni\Semester 7\NeuMoQP\Programm\stuff_from_cluster\2025_05_06\dienstagtag'
 timestamp = datetime.datetime.now().strftime("%Y%m%d_%H")
 summary_file = os.path.join(csv_dir, f"max_skr_summary_{timestamp}.csv")
 
