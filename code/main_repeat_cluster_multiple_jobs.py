@@ -157,11 +157,12 @@ def run_simulations_from_excel(file_path, run_id):
             att = row['att']
             mpn_s = row['mpn_S']
             mpn_d = row['mpn_d']
+            batches = row['batches']
             print(f"Starting simulation for run_id {run_id}, number {nr} with attenuation {att}, mpn_S {mpn_s}, mpn_d {mpn_d}")
             # Assuming default values for others or read from additional columns
             start_simulation_batches(
                 number = run_id*100 + nr,
-                total_batches=50,
+                total_batches=batches,
                 simulations_in_batch=2,
                 max_concurrent_tasks=12,
                 mean_photon_nr=mpn_s,
@@ -175,7 +176,5 @@ def run_simulations_from_excel(file_path, run_id):
         print(e)
 
 # Usage
-run_simulations_from_excel('qkd_simulation_inputs.xlsx', run_id=1)
-run_simulations_from_excel('qkd_simulation_inputs.xlsx', run_id=2)
-run_simulations_from_excel('qkd_simulation_inputs.xlsx', run_id=3)
-run_simulations_from_excel('qkd_simulation_inputs.xlsx', run_id=4)
+run_simulations_from_excel('qkd_simulation_inputs.xlsx', run_id=9)
+# run_simulations_from_excel('qkd_simulation_inputs.xlsx', run_id=10)
