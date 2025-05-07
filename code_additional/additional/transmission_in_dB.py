@@ -34,7 +34,7 @@ data['Transmission (dB)'] = 10 * np.log10(data['Transmission'])
 # Plot the data
 # Plot the data
 plt.figure(figsize=(10, 6))
-plt.plot(data['Voltage (V)'], data['Transmission (dB)'], label='Transmission (dB)', fontsize = 20)
+plt.plot(data['Voltage (V)'], data['Transmission (dB)'], label='Transmission (dB)')
 
 # # Add vertical lines
 # plt.axvline(x=-1.3, color='red',  label='Original EAM Voltage Setting')
