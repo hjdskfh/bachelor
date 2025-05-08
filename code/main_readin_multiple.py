@@ -29,7 +29,7 @@ data_processor = DataProcessor(config)
 # input_dir = r'C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_30\5_Uhr_messung'
 # input_dir = r'C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_30'
 # input_dir = r'C:\Users\leavi\OneDrive\Dokumente\Uni\Semester 7\NeuMoQP\Programm\stuff_from_cluster\2025_05_06'
-input_dir = r'C:\Users\leavi\OneDrive\Dokumente\Uni\Semester 7\NeuMoQP\Programm\stuff_from_cluster\2025_05_06\dienstagtag'
+input_dir = r'C:\Users\leavi\OneDrive\Dokumente\Uni\Semester 7\NeuMoQP\Programm\stuff_from_cluster\2025_05_07\compiled_results'
 
 # Get all files in the directory
 all_files = os.listdir(input_dir)
@@ -234,23 +234,22 @@ def find_max_skr(file_path):
     return max_skr, max_skr_row
 
 # Directory containing the CSV files
-csv_dir = r'C:\Users\leavi\OneDrive\Dokumente\Uni\Semester 7\NeuMoQP\Programm\stuff_from_cluster\2025_05_06\dienstagtag'
 timestamp = datetime.datetime.now().strftime("%Y%m%d_%H")
-summary_file = os.path.join(csv_dir, f"max_skr_summary_{timestamp}.csv")
+summary_file = os.path.join(input_dir, f"max_skr_summary_{timestamp}.csv")
 
 # Process all CSV files in the directory
-for file_name in os.listdir(csv_dir):
+for file_name in os.listdir(input_dir):
     if file_name.endswith('.csv'):  # Only process CSV files
-        file_path = os.path.join(csv_dir, file_name)
+        file_path = os.path.join(input_dir, file_name)
         max_skr, max_skr_row = find_max_skr(file_path)
         print(f"File: {file_name}")
         print(f"Max SKR: {max_skr}")
         print(f"Row with Max SKR: {max_skr_row}\n")
 
 results = []
-for file_name in os.listdir(csv_dir):
+for file_name in os.listdir(input_dir):
     if file_name.endswith('.csv'):
-        file_path = os.path.join(csv_dir, file_name)
+        file_path = os.path.join(input_dir, file_name)
         max_skr, max_skr_row = find_max_skr(file_path)
         results.append({
             'File': file_name,
@@ -259,7 +258,7 @@ for file_name in os.listdir(csv_dir):
         })
 
 # Save results to a CSV file
-summary_file_excel = os.path.join(csv_dir, f"max_skr_summary_{timestamp}.xlsx")
+summary_file_excel = os.path.join(input_dir, f"max_skr_summary_{timestamp}.xlsx")
 summary_df = pd.DataFrame(results)
 summary_df.to_excel(summary_file_excel, index=False)
 print(f"Summary saved to {summary_file_excel}")

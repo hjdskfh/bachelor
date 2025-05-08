@@ -1,0 +1,5 @@
+n_Z_mus_in: [7518], n_Z_mud_in: [4618], n_X_mus_in: [448.], n_X_mud_in: [248.]
+m_Z_mus_in: [259], m_Z_mud_in: [288], m_X_mus_in: [3], m_X_mud_in: [1]
+QBER_signal: [0.03445065], QBER_decoy: [0.06236466], Pherr_signal: [0.00669643], Pherr_decoy: [0.00403226]
+total symbols: 2000000
+total_counts: [13383.]
