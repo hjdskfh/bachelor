@@ -1,0 +1,57 @@
+[Before everything] Memory used: 140.30 MB
+Base path: C:\Users\leavi\OneDrive\Dokumente\Uni\Semester 7\NeuMoQP\Programm\code
+Configuration saved to C:\Users\leavi\OneDrive\Dokumente\Uni\Semester 7\NeuMoQP\Programm\logs\simulation_config_20250509_141231.json
+Execution time for reading: 0.017294884 seconds for 20 samples
+Error: The difference between non_signal_voltage and voltage is not 1
+seed: 213056
+T1_dampening at initialize end: 48.93951117992401
+voltage at initialize end: 0.4
+Voltage_decoy at initialize end: 0.0036257728934288025
+Voltage_decoy_sup at initialize end: -0.37418750673532486
+Voltage_sup at initialize end: -0.2635495141148567
+Difference EAM Peak dB: 20.749686094310686
+Lower EAM Peak dB: -21.056637623259007
+Higher EAM Peak dB: -0.30695152894832106
+random_laser, fixed: None, times: [3.09775691 9.32531783]
+[in choose photon after pre-allocate arrays] Memory used: 151.86 MB
+[after choose: 3.1951041221618652] Memory used: 151.91 MB
+[before detection time:3.195380210876465] Memory used: 151.91 MB
+[before jitter detector: 3.1955478191375732] Memory used: 151.91 MB
+[before darkcount: 3.1956920623779297] Memory used: 151.91 MB
+total darkcounts: 0
+f_0: 193308820076551.75, i: 0, batchsize: 10, peak_wavelength[i]: 1.5508472809532433e-06
+f_0: 193308858149998.66, i: 10, batchsize: 10, peak_wavelength[i]: 1.5508469755037041e-06
+[in choose photon after pre-allocate arrays] Memory used: 178.41 MB
+[after choose: 6.36079740524292] Memory used: 178.41 MB
+[before detection time:6.361200571060181] Memory used: 178.41 MB
+[before jitter detector: 6.361401081085205] Memory used: 178.41 MB
+[before darkcount: 6.3615641593933105] Memory used: 178.41 MB
+total darkcounts: 0
+len(get_original_indexing_z): 1
+len(get_original_indexing_x): 0
+Z_0_alice: [ 1  7  9 13 14 15]
+Z_1_alice: [ 2  3 10 11 12 16 17 18]
+has_0_long: [13]
+has_1_long: []
+ind_Z0_verified_long: [13]
+ind_Z1_verified_long: []
+ind_Z0_checked: [13]
+ind_Z1_checked: []
+ind_sent_non_dec: [ 0  1  3  4  5  6  7  9 10 12 15 16 18]
+ind_Z0_checked_non_dec: []
+ind_Z1_checked_non_dec: []
+ind_sent_dec: [ 2  8 11 13 14 17 19]
+ind_Z0_checked_dec: [13]
+ind_Z1_checked_dec: []
+Warning: has_0_short is empty.
+Error: get_original_indexing_x is empty.
+ind_has_0_xpz1_s: 0
+XP_Z1_alice_s: [], shape: (0,)
+ind_has_0_z0xp_s: 0
+Z0_XP_alice_s: [], shape: (0,)
+ind_has_0_xpz1_d: 0
+XP_Z1_alice_d: [], shape: (0,)
+ind_has_0_z0xp_d: 0
+Z0_XP_alice_d: [], shape: (0,)
+X_P_calc_dec:0.0
+X_P_calc_non_dec:0.0

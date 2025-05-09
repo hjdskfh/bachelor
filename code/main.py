@@ -49,8 +49,8 @@ with open(output_file, "w") as f:
     print(f"Base path: {base_path}")
 
     #create simulation mean current 0.08 , mena_voltage = 0.98 weil aus voltage_sweep, 0.9835 # mean voltage mit skript 1.6094623981710416 rausbekommen
-    config = SimulationConfig(database, n_samples=20, batchsize=1, mean_photon_nr=0.25, mean_photon_decoy=0.175, 
-                              non_signal_voltage = -2.1, voltage_decoy=0.4, voltage=0.4, voltage_decoy_sup=0.4, voltage_sup=0.4, 
+    config = SimulationConfig(database, n_samples=20, batchsize=10, mean_photon_nr=0.25, mean_photon_decoy=0.175, 
+                             #non_signal_voltage = -2.1, voltage_decoy=0.4, voltage=0.4, voltage_decoy_sup=0.4, voltage_sup=0.4, 
                             detector_jitter=detector_jitter, mlp=os.path.join(base_path, style_file), script_name = os.path.basename(__file__))
     simulation = SimulationManager(config)
 
@@ -68,12 +68,12 @@ with open(output_file, "w") as f:
     # Run the simulation
     # lookup_results = simulation.lookup()
     # print(lookup_results)
-    # len_wrong_x_dec, len_wrong_x_non_dec, len_wrong_z_dec, len_wrong_z_non_dec, \
-    # len_Z_checked_dec, len_Z_checked_non_dec, X_P_calc_non_dec, X_P_calc_dec = simulation.run_simulation_classificator()
+    len_wrong_x_dec, len_wrong_x_non_dec, len_wrong_z_dec, len_wrong_z_non_dec, \
+    len_Z_checked_dec, len_Z_checked_non_dec, X_P_calc_non_dec, X_P_calc_dec = simulation.run_simulation_classificator()
     # print(f"len_wrong_x_dec: {len_wrong_x_dec}, len_wrong_x_non_dec: {len_wrong_x_non_dec}, len_wrong_z_dec: {len_wrong_z_dec}, len_wrong_z_non_dec: {len_wrong_z_non_dec}")
     # print(f"len_Z_checked_dec: {len_Z_checked_dec}, len_Z_checked_non_dec: {len_Z_checked_non_dec}")
     # print(f"X_P_calc_non_dec: {X_P_calc_non_dec}, X_P_calc_dec: {X_P_calc_dec}")
-    simulation.run_DLI()
+    # simulation.run_DLI()
     # simulation.run_simulation_till_DLI()
     # len_wrong_x_dec, len_wrong_x_non_dec, len_wrong_z_dec, len_wrong_z_non_dec, len_Z_checked_dec, len_Z_checked_non_dec, X_P_calc_non_dec, X_P_calc_dec, time_photons_det_x, time_photons_det_z, time_one_symbol, index_where_photons_det_z, index_where_photons_det_x, \
     #                 basis, value, decoy, lookup_array = simulation.run_simulation_detection_tester()

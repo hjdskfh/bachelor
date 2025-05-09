@@ -439,9 +439,9 @@ class SimulationManager:
         # Generate Alice's choices
         # basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=np.array([1, 0, 0, 1, 1, 1, 1, 0, 0, 1]), value=np.array([1, -1, -1, 0, 0, 1, 1, -1, -1, 0]), decoy=np.array([0, 0, 0, 0, 0, 0, 1, 1, 1, 1]))
         # basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=np.array([1, 0, 0, 1, 1, 0, 0, 1]), value=np.array([1, -1, -1, 0, 1, -1, -1, 0]), decoy=np.array([0, 0, 0, 0, 1, 1, 1, 1]))
-        # basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=np.array([1,0,1]), value=np.array([1,-1, 0]), decoy=np.array([0,0,0]))
+        basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=np.array([1,0,1]), value=np.array([1,-1, 0]), decoy=np.array([0,0,0]))
         # basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=np.array([0,1]), value=np.array([-1, 0]), decoy=np.array([0,0]))
-        basis, value, decoy = self.simulation_engine.generate_alice_choices()
+        # basis, value, decoy = self.simulation_engine.generate_alice_choices()
 
         # Simulate signal and transmission
         # Saver.memory_usage("before simulating signal: " + str("{:.3f}".format(time.time() - start_time)))
@@ -485,6 +485,8 @@ class SimulationManager:
 
 
         # self.plotter.plot_power(t, power_dampened, amount_symbols_in_plot=5, where_plot_1='after EAM')
+  
+
 
         time_eam = time.time() - start_time
         # Saver.memory_usage("before fiber: " + str("{:.3f}".format(time_eam)))
@@ -509,10 +511,26 @@ class SimulationManager:
         # self.plotter.plot_power(t, power_dampened, amount_symbols_in_plot=20, where_plot_1='bob basis X')
 
         #plot
-        amount_symbols_in_first_part = 30
-        first_power = power_dampened[:amount_symbols_in_first_part].copy()
-
-        # DLI
+        amount_symbols_in_first_part = 3
+        amount_symbols_in_plot = amount_symbols_in_first_part
+        first_power = power_dampened[1:1 + amount_symbols_in_first_part].copy()
+        
+        step_size = t[1] - t[0]
+        # Calculate the new length
+        new_length = len(t) * amount_symbols_in_plot
+        # Generate the new array with the same step size
+        t_plot1 = np.arange(t[0], t[0] + step_size * new_length, step_size)
+        shortened_first_power = first_power.reshape(-1)
+        plt.plot(t_plot1 * 1e9, shortened_first_power * 1e3)
+           
+        plt.ylabel('Power (mW)')
+        plt.xlabel('Time (ns)')
+        plt.gca().yaxis.set_major_locator(MaxNLocator(integer=True))
+        plt.legend(loc="upper right")
+        plt.tight_layout()
+        plt.savefig(f"power_before_DLI_in_mW", dpi=300)  # Save the figure with high resolution
+        
+        #DLI
         power_dampened, f_0 = self.simulation_engine.delay_line_interferometer(power_dampened, t, peak_wavelength, value)
 
         # plot

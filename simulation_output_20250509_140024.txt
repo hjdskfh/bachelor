@@ -1,0 +1,21 @@
+[Before everything] Memory used: 140.68 MB
+Base path: c:\Users\leavi\OneDrive\Dokumente\Uni\Semester 7\NeuMoQP\Programm\code
+Configuration saved to c:\Users\leavi\OneDrive\Dokumente\Uni\Semester 7\NeuMoQP\Programm\logs\simulation_config_20250509_140024.json
+Execution time for reading: 0.019941568 seconds for 20 samples
+Error: The difference between non_signal_voltage and voltage is not 1
+seed: 609109
+T1_dampening at initialize end: 48.93951117992401
+voltage at initialize end: 0.4
+Voltage_decoy at initialize end: 0.0036257728934288025
+Voltage_decoy_sup at initialize end: -0.37418750673532486
+Voltage_sup at initialize end: -0.2635495141148567
+Difference EAM Peak dB: 20.749686094310686
+Lower EAM Peak dB: -21.056637623259007
+Higher EAM Peak dB: -0.30695152894832106
+random_laser, fixed: True, times: [8.62875445 4.38677399]
+random_laser, fixed: True, times: [6.4054062 0.4775478]
+random_laser, fixed: True, times: [7.53068445 1.17523654]
+random_laser, fixed: True, times: [5.13065863 8.50401693]
+random_laser, fixed: True, times: [5.5920521  3.89332996]
+random_laser, fixed: True, times: [6.1571647  4.50386068]
+Execution time for simulation: 27.132188320 seconds for 20 samples
