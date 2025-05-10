@@ -158,6 +158,7 @@ def run_simulations_from_excel(file_path, run_id):
             mpn_s = row['mpn_S']
             mpn_d = row['mpn_d']
             batches = row['batches']
+            amplitude = row['amplitude'] if 'amplitude' in row else 0.0011  # Default value if not present
             print(f"Starting simulation for run_id {run_id}, number {nr} with attenuation {att}, mpn_S {mpn_s}, mpn_d {mpn_d}")
             # Assuming default values for others or read from additional columns
             start_simulation_batches(
@@ -168,7 +169,7 @@ def run_simulations_from_excel(file_path, run_id):
                 mean_photon_nr=mpn_s,
                 mean_photon_decoy=mpn_d,
                 fiber_attenuation=att,
-                voltage_amplitude=0.0011,  # adjust if column exists
+                voltage_amplitude=amplitude,  # adjust if column exists
                 current_amplitude=0.00041  # adjust if column exists
             )
 

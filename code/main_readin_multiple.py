@@ -29,7 +29,9 @@ data_processor = DataProcessor(config)
 # input_dir = r'C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_30\5_Uhr_messung'
 # input_dir = r'C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_30'
 # input_dir = r'C:\Users\leavi\OneDrive\Dokumente\Uni\Semester 7\NeuMoQP\Programm\stuff_from_cluster\2025_05_06'
-input_dir = r'C:\Users\leavi\OneDrive\Dokumente\Uni\Semester 7\NeuMoQP\Programm\stuff_from_cluster\2025_05_07\compiled_results'
+# input_dir = r'C:\Users\leavi\OneDrive\Dokumente\Uni\Semester 7\NeuMoQP\Programm\stuff_from_cluster\2025_05_07\compiled_results'
+# input_dir = r'C:\Users\leavi\OneDrive\Dokumente\Uni\Semester 7\NeuMoQP\Programm\stuff_from_cluster\2025_05_09'
+input_dir = r'C:\Users\leavi\OneDrive\Dokumente\Uni\Semester 7\NeuMoQP\Programm\stuff_from_cluster\2025_05_10'
 
 # Get all files in the directory
 all_files = os.listdir(input_dir)
