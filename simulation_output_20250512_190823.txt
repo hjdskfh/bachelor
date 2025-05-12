@@ -1,0 +1,74 @@
+[Before everything] Memory used: 143.79 MB
+Base path: C:\Users\leavi\bachelor\code
+Configuration saved to C:\Users\leavi\bachelor\logs\simulation_config_20250512_190823.json
+Execution time for reading: 0.008260012 seconds for 20000 samples
+Error: The difference between non_signal_voltage and voltage is not 1
+seed: 700666
+T1_dampening at initialize end: 54.83366549015045
+voltage at initialize end: 0.2
+Voltage_decoy at initialize end: -0.0648244246840477
+Voltage_decoy_sup at initialize end: -0.33451443165540695
+Voltage_sup at initialize end: -0.2262086197733879
+Difference EAM Peak dB: 16.713026226022922
+Lower EAM Peak dB: -17.896626229109497
+Higher EAM Peak dB: -1.1836000030865748
+random_laser, fixed: None, times: [4.09356943 1.96085863 5.34411364 ... 5.34107371 4.80282065 0.70414076]
+peak_wavelength[0]: 1550.8473020777196, peak_wavelength[-1]: 1550.8487758990727
+optical_power[0]: 2.259336211255595e-05, optical_power[-1]: 2.1985013175670255e-05
+[in choose photon after pre-allocate arrays] Memory used: 2060.77 MB
+[after choose: 20.772427082061768] Memory used: 2060.79 MB
+[before detection time:20.77273201942444] Memory used: 2060.79 MB
+[before jitter detector: 20.773603200912476] Memory used: 2060.83 MB
+[before darkcount: 20.773722887039185] Memory used: 2060.84 MB
+total darkcounts: 0
+f_0: 193308817443444.25, i: 0, batchsize: 1, peak_wavelength[i]: 1.5508473020777198e-06
+f_0: 193308720579969.2, i: 1, batchsize: 1, peak_wavelength[i]: 1.5508480791790247e-06
+f_0: 193308850882059.16, i: 2, batchsize: 1, peak_wavelength[i]: 1.5508470338117535e-06
+f_0: 193308850704767.25, i: 3, batchsize: 1, peak_wavelength[i]: 1.5508470352341022e-06
+f_0: 193308653991869.84, i: 4, batchsize: 1, peak_wavelength[i]: 1.5508486133921797e-06
+f_0: 193308635667433.06, i: 5, batchsize: 1, peak_wavelength[i]: 1.5508487604028255e-06
+f_0: 193308765445870.72, i: 6, batchsize: 1, peak_wavelength[i]: 1.550847719235713e-06
+f_0: 193308865893563.28, i: 7, batchsize: 1, peak_wavelength[i]: 1.5508469133798916e-06
+f_0: 193308845639950.97, i: 8, batchsize: 1, peak_wavelength[i]: 1.5508470758672938e-06
+f_0: 193308865396969.16, i: 9, batchsize: 1, peak_wavelength[i]: 1.550846917363886e-06
+f_0: 193308846900982.22, i: 10, batchsize: 1, peak_wavelength[i]: 1.5508470657504953e-06
+f_0: 193308838169830.25, i: 11, batchsize: 1, peak_wavelength[i]: 1.5508471357973776e-06
+f_0: 193308677051843.12, i: 12, batchsize: 1, peak_wavelength[i]: 1.5508484283899949e-06
+f_0: 193308819876724.8, i: 13, batchsize: 1, peak_wavelength[i]: 1.5508472825563832e-06
+f_0: 193308692489445.78, i: 14, batchsize: 1, peak_wavelength[i]: 1.5508483045394765e-06
+f_0: 193308639428674.12, i: 15, batchsize: 1, peak_wavelength[i]: 1.5508487302276816e-06
+f_0: 193308663118948.25, i: 16, batchsize: 1, peak_wavelength[i]: 1.5508485401687833e-06
+f_0: 193308674605299.06, i: 17, batchsize: 1, peak_wavelength[i]: 1.550848448017769e-06
+f_0: 193308800828852.94, i: 18, batchsize: 1, peak_wavelength[i]: 1.5508474353706377e-06
+f_0: 193308801124548.22, i: 19, batchsize: 1, peak_wavelength[i]: 1.55084743299838e-06
+f_0: 193308639297144.75, i: 20, batchsize: 1, peak_wavelength[i]: 1.5508487312828964e-06
+f_0: 193308845041460.9, i: 21, batchsize: 1, peak_wavelength[i]: 1.5508470806687634e-06
+f_0: 193308711189522.84, i: 22, batchsize: 1, peak_wavelength[i]: 1.5508481545152864e-06
+f_0: 193308778189227.7, i: 23, batchsize: 1, peak_wavelength[i]: 1.5508476170002828e-06
+f_0: 193308853121391.34, i: 24, batchsize: 1, peak_wavelength[i]: 1.550847015846401e-06
+f_0: 193308695968740.9, i: 25, batchsize: 1, peak_wavelength[i]: 1.550848276626304e-06
+f_0: 193308645339766.1, i: 26, batchsize: 1, peak_wavelength[i]: 1.550848682805025e-06
+f_0: 193308628969354.3, i: 27, batchsize: 1, peak_wavelength[i]: 1.5508488141392116e-06
+f_0: 193308698974288.06, i: 28, batchsize: 1, peak_wavelength[i]: 1.5508482525138474e-06
+f_0: 193308638096499.44, i: 29, batchsize: 1, peak_wavelength[i]: 1.5508487409152608e-06
+f_0: 193308865845756.5, i: 30, batchsize: 1, peak_wavelength[i]: 1.550846913763428e-06
+f_0: 193308668471670.38, i: 31, batchsize: 1, peak_wavelength[i]: 1.5508484972257462e-06
+f_0: 193308723984475.62, i: 32, batchsize: 1, peak_wavelength[i]: 1.5508480518658637e-06
+f_0: 193308866673968.12, i: 33, batchsize: 1, peak_wavelength[i]: 1.5508469071189866e-06
+f_0: 193308748648440.53, i: 34, batchsize: 1, peak_wavelength[i]: 1.5508478539955543e-06
+f_0: 193308793018577.2, i: 35, batchsize: 1, peak_wavelength[i]: 1.5508474980296919e-06
+f_0: 193308696801184.28, i: 36, batchsize: 1, peak_wavelength[i]: 1.5508482699479011e-06
+f_0: 193308834412165.1, i: 37, batchsize: 1, peak_wavelength[i]: 1.5508471659437712e-06
+f_0: 193308673063262.53, i: 38, batchsize: 1, peak_wavelength[i]: 1.5508484603889936e-06
+f_0: 193308826967362.38, i: 39, batchsize: 1, peak_wavelength[i]: 1.5508472256707448e-06
+f_0: 193308870945078.2, i: 40, batchsize: 1, peak_wavelength[i]: 1.5508468728534209e-06
+f_0: 193308710710527.3, i: 41, batchsize: 1, peak_wavelength[i]: 1.5508481583581e-06
+f_0: 193308673163341.66, i: 42, batchsize: 1, peak_wavelength[i]: 1.5508484595860934e-06
+f_0: 193308839079187.8, i: 43, batchsize: 1, peak_wavelength[i]: 1.5508471285019296e-06
+f_0: 193308699308994.84, i: 44, batchsize: 1, peak_wavelength[i]: 1.5508482498286117e-06
+f_0: 193308777148258.5, i: 45, batchsize: 1, peak_wavelength[i]: 1.5508476253516086e-06
+f_0: 193308867511499.3, i: 46, batchsize: 1, peak_wavelength[i]: 1.5508469003997777e-06
+f_0: 193308868131704.47, i: 47, batchsize: 1, peak_wavelength[i]: 1.5508468954240967e-06
+f_0: 193308679025322.9, i: 48, batchsize: 1, peak_wavelength[i]: 1.5508484125574518e-06
+f_0: 193308870296080.44, i: 49, batchsize: 1, peak_wavelength[i]: 1.550846878060094e-06
+f_0: 193308845293102.6, i: 50, batchsize: 1, peak_wavelength[i]: 1.550847078649933e-06

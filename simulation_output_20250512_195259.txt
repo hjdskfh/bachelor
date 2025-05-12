@@ -1,0 +1,49 @@
+[Before everything] Memory used: 142.94 MB
+Base path: C:\Users\leavi\bachelor\code
+Configuration saved to C:\Users\leavi\bachelor\logs\simulation_config_20250512_195259.json
+Execution time for reading: 0.016813755 seconds for 10 samples
+Error: The difference between non_signal_voltage and voltage is not 1
+seed: 317850
+T1_dampening at initialize end: 19.583478569984436
+voltage at initialize end: 0.2
+Voltage_decoy at initialize end: -0.40767719596624374
+Voltage_decoy_sup at initialize end: -0.6070890054106712
+Voltage_sup at initialize end: -0.2262081727385521
+Difference EAM Peak dB: 16.713026226022922
+Lower EAM Peak dB: -17.896626229109497
+Higher EAM Peak dB: -1.1836000030865748
+random_laser, fixed: None, times: [7.10373023 3.36307832 0.27666091 7.44703199 2.36243501]
+peak_wavelength[0]: 1550.8472514957148, peak_wavelength[-1]: 1550.8471014926658
+optical_power[0]: 2.261436912923167e-05, optical_power[-1]: 2.2676706299254876e-05
+[in choose photon after pre-allocate arrays] Memory used: 184.00 MB
+[after choose: 2.0335397720336914] Memory used: 184.00 MB
+[before detection time:2.0337491035461426] Memory used: 184.02 MB
+[before jitter detector: 2.0338311195373535] Memory used: 184.02 MB
+[before darkcount: 2.033890962600708] Memory used: 184.02 MB
+total darkcounts: 0
+f_0: 193308823748351.2, i: 0, batchsize: 2, peak_wavelength[i]: 1.5508472514957148e-06
+f_0: 193308842126691.22, i: 2, batchsize: 2, peak_wavelength[i]: 1.5508471040529087e-06
+f_0: 193308869786072.28, i: 4, batchsize: 2, peak_wavelength[i]: 1.5508468821517043e-06
+f_0: 193308789783110.4, i: 6, batchsize: 2, peak_wavelength[i]: 1.5508475239866883e-06
+f_0: 193308842445818.47, i: 8, batchsize: 2, peak_wavelength[i]: 1.550847101492666e-06
+[in choose photon after pre-allocate arrays] Memory used: 192.85 MB
+[after choose: 2.9549126625061035] Memory used: 192.85 MB
+[before detection time:2.9550962448120117] Memory used: 192.85 MB
+[before jitter detector: 2.955181837081909] Memory used: 192.85 MB
+[before darkcount: 2.9552500247955322] Memory used: 192.85 MB
+total darkcounts: 0
+len(get_original_indexing_z): 0
+len(get_original_indexing_x): 0
+Warning: has_0_short is empty.
+Error: get_original_indexing_x is empty.
+ind_has_0_xpz1_s: 0
+XP_Z1_alice_s: [1 6], shape: (2,)
+ind_has_0_z0xp_s: 0
+Z0_XP_alice_s: [3 8], shape: (2,)
+ind_has_0_xpz1_d: 0
+XP_Z1_alice_d: [], shape: (0,)
+ind_has_0_z0xp_d: 0
+Z0_XP_alice_d: [], shape: (0,)
+X_P_calc_dec:0.0
+X_P_calc_non_dec:0.0
+Execution time for simulation: 2.955889463 seconds for 10 samples

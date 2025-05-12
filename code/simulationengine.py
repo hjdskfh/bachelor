@@ -78,6 +78,25 @@ class SimulationEngine:
         peak_wavelength_short =  1550 + self.get_interpolated_value(chosen_voltage, voltage_shift)  # self.get_interpolated_value(chosen_current, current_wavelength) +
         optical_power = np.repeat(optical_power_short, self.config.batchsize)
         peak_wavelength = np.repeat(peak_wavelength_short, self.config.batchsize)
+
+        plt.figure(figsize=(10, 6))
+        plt.hist(optical_power, bins=50, alpha=0.7)
+        plt.xlabel('Optical Power (mW)')
+        plt.ylabel('Counts')
+        plt.tight_layout()
+        output_dir = r"C:\Users\leavi\bachelor\plots"
+        os.makedirs(output_dir, exist_ok=True)  # Create the directory if it doesn't exist
+        plt.savefig(os.path.join(output_dir, 'optical_power_data_plot.png'))
+        print(f"peak_wavelength[0]: {peak_wavelength[0]}, peak_wavelength[-1]: {peak_wavelength[-1]}")
+        print(f"optical_power[0]: {optical_power[0]}, optical_power[-1]: {optical_power[-1]}")
+        # Plot histogram for peak_wavelength
+        plt.figure(figsize=(10, 6))
+        plt.hist(peak_wavelength, bins=50, alpha=0.7)
+        plt.xlabel('Peak Wavelength (nm)')
+        plt.ylabel('Counts')
+        plt.tight_layout()
+        plt.savefig(os.path.join(output_dir, 'peak_wavelength_data_plot.png'))
+
         # self.config.batchsize = self.config.batchsize/10
         return optical_power * 1e-3, peak_wavelength * 1e-9, chosen_voltage, chosen_current  # in W and m
 

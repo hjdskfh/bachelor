@@ -1,0 +1,25 @@
+[Before everything] Memory used: 142.74 MB
+Base path: C:\Users\leavi\bachelor\code
+Configuration saved to C:\Users\leavi\bachelor\logs\simulation_config_20250512_195557.json
+Execution time for reading: 0.008414507 seconds for 1000 samples
+Error: The difference between non_signal_voltage and voltage is not 1
+seed: 684725
+T1_dampening at initialize end: 19.583478569984436
+voltage at initialize end: 0.2
+Voltage_decoy at initialize end: -0.40767719596624374
+Voltage_decoy_sup at initialize end: -0.6070890054106712
+Voltage_sup at initialize end: -0.2262081727385521
+Difference EAM Peak dB: 16.713026226022922
+Lower EAM Peak dB: -17.896626229109497
+Higher EAM Peak dB: -1.1836000030865748
+random_laser, fixed: None, times: [6.86142139 2.29344004]
+peak_wavelength[0]: 1550.8485869372807, peak_wavelength[-1]: 1550.8469045588415
+optical_power[0]: 2.2062542141882734e-05, optical_power[-1]: 2.2758631972893787e-05
+[in choose photon after pre-allocate arrays] Memory used: 344.06 MB
+[after choose: 4.665623426437378] Memory used: 344.08 MB
+[before detection time:4.665828704833984] Memory used: 344.08 MB
+[before jitter detector: 4.6660850048065186] Memory used: 344.09 MB
+[before darkcount: 4.666169881820679] Memory used: 344.09 MB
+total darkcounts: 0
+f_0: 193308657289394.16, i: 0, batchsize: 500, peak_wavelength[i]: 1.5508485869372808e-06
+f_0: 193308866993083.25, i: 500, batchsize: 500, peak_wavelength[i]: 1.5508469045588416e-06

@@ -49,7 +49,7 @@ with open(output_file, "w") as f:
     print(f"Base path: {base_path}")
 
     #create simulation mean current 0.08 , mena_voltage = 0.98 weil aus voltage_sweep, 0.9835 # mean voltage mit skript 1.6094623981710416 rausbekommen
-    config = SimulationConfig(database, n_samples=20, batchsize=10, mean_photon_nr=0.25, mean_photon_decoy=0.175, 
+    config = SimulationConfig(database, n_samples=200, batchsize=100, mean_photon_nr=0.7, mean_photon_decoy=0.2, 
                              #non_signal_voltage = -2.1, voltage_decoy=0.4, voltage=0.4, voltage_decoy_sup=0.4, voltage_sup=0.4, 
                             detector_jitter=detector_jitter, mlp=os.path.join(base_path, style_file), script_name = os.path.basename(__file__))
     simulation = SimulationManager(config)
@@ -68,8 +68,8 @@ with open(output_file, "w") as f:
     # Run the simulation
     # lookup_results = simulation.lookup()
     # print(lookup_results)
-    len_wrong_x_dec, len_wrong_x_non_dec, len_wrong_z_dec, len_wrong_z_non_dec, \
-    len_Z_checked_dec, len_Z_checked_non_dec, X_P_calc_non_dec, X_P_calc_dec = simulation.run_simulation_classificator()
+    len_wrong_x_dec, len_wrong_x_non_dec, len_wrong_z_dec, len_wrong_z_non_dec, len_Z_checked_dec, len_Z_checked_non_dec, X_P_calc_non_dec, X_P_calc_dec, gain_Z_non_dec, gain_Z_dec, gain_X_non_dec, \
+    gain_X_dec, qber_z_dec, qber_z_non_dec, qber_x_dec, qber_x_non_dec, raw_key_rate, total_amount_detections = simulation.run_simulation_classificator()
     # print(f"len_wrong_x_dec: {len_wrong_x_dec}, len_wrong_x_non_dec: {len_wrong_x_non_dec}, len_wrong_z_dec: {len_wrong_z_dec}, len_wrong_z_non_dec: {len_wrong_z_non_dec}")
     # print(f"len_Z_checked_dec: {len_Z_checked_dec}, len_Z_checked_non_dec: {len_Z_checked_non_dec}")
     # print(f"X_P_calc_non_dec: {X_P_calc_non_dec}, X_P_calc_dec: {X_P_calc_dec}")

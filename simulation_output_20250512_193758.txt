@@ -1,0 +1,45 @@
+[Before everything] Memory used: 142.83 MB
+Base path: C:\Users\leavi\bachelor\code
+Configuration saved to C:\Users\leavi\bachelor\logs\simulation_config_20250512_193758.json
+Execution time for reading: 0.008484364 seconds for 4 samples
+Error: The difference between non_signal_voltage and voltage is not 1
+seed: 884497
+T1_dampening at initialize end: 19.583478569984436
+voltage at initialize end: 0.2
+Voltage_decoy at initialize end: -0.40767719596624374
+Voltage_decoy_sup at initialize end: -0.6070890054106712
+Voltage_sup at initialize end: -0.2262081727385521
+Difference EAM Peak dB: 16.713026226022922
+Lower EAM Peak dB: -17.896626229109497
+Higher EAM Peak dB: -1.1836000030865748
+random_laser, fixed: None, times: [1.29230145 7.62425414]
+peak_wavelength[0]: 1550.8469027057026, peak_wavelength[-1]: 1550.8485275150774
+optical_power[0]: 2.2759403324390748e-05, optical_power[-1]: 2.2086954532819937e-05
+[in choose photon after pre-allocate arrays] Memory used: 182.09 MB
+[after choose: 2.1169052124023438] Memory used: 182.11 MB
+[before detection time:2.117081880569458] Memory used: 182.11 MB
+[before jitter detector: 2.1171653270721436] Memory used: 182.11 MB
+[before darkcount: 2.117231607437134] Memory used: 182.11 MB
+total darkcounts: 0
+f_0: 193308867224072.0, i: 0, batchsize: 2, peak_wavelength[i]: 1.5508469027057027e-06
+f_0: 193308664696195.1, i: 2, batchsize: 2, peak_wavelength[i]: 1.5508485275150776e-06
+[in choose photon after pre-allocate arrays] Memory used: 191.29 MB
+[after choose: 2.8927533626556396] Memory used: 191.30 MB
+[before detection time:2.892923355102539] Memory used: 191.30 MB
+[before jitter detector: 2.8929924964904785] Memory used: 191.30 MB
+[before darkcount: 2.8930535316467285] Memory used: 191.30 MB
+total darkcounts: 0
+len(get_original_indexing_z): 0
+len(get_original_indexing_x): 0
+Warning: has_0_short is empty.
+Error: get_original_indexing_x is empty.
+ind_has_0_xpz1_s: 0
+XP_Z1_alice_s: [2], shape: (1,)
+ind_has_0_z0xp_s: 0
+Z0_XP_alice_s: [1], shape: (1,)
+ind_has_0_xpz1_d: 0
+XP_Z1_alice_d: [], shape: (0,)
+ind_has_0_z0xp_d: 0
+Z0_XP_alice_d: [], shape: (0,)
+X_P_calc_dec:0.0
+X_P_calc_non_dec:0.0

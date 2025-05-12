@@ -1,0 +1,46 @@
+[Before everything] Memory used: 142.95 MB
+Base path: C:\Users\leavi\bachelor\code
+Configuration saved to C:\Users\leavi\bachelor\logs\simulation_config_20250512_194729.json
+Execution time for reading: 0.010242701 seconds for 4 samples
+Error: The difference between non_signal_voltage and voltage is not 1
+seed: 655980
+T1_dampening at initialize end: 19.583478569984436
+voltage at initialize end: 0.2
+Voltage_decoy at initialize end: -0.40767719596624374
+Voltage_decoy_sup at initialize end: -0.6070890054106712
+Voltage_sup at initialize end: -0.2262081727385521
+Difference EAM Peak dB: 16.713026226022922
+Lower EAM Peak dB: -17.896626229109497
+Higher EAM Peak dB: -1.1836000030865748
+random_laser, fixed: None, times: [9.76503474 6.69409279]
+peak_wavelength[0]: 1550.848811716842, peak_wavelength[-1]: 1550.8487565731104
+optical_power[0]: 2.197033550578171e-05, optical_power[-1]: 2.1992935126015036e-05
+[in choose photon after pre-allocate arrays] Memory used: 183.57 MB
+[after choose: 2.027339458465576] Memory used: 183.57 MB
+[before detection time:2.027545213699341] Memory used: 183.59 MB
+[before jitter detector: 2.027627944946289] Memory used: 183.59 MB
+[before darkcount: 2.027696371078491] Memory used: 183.59 MB
+total darkcounts: 0
+f_0: 193308629271295.38, i: 0, batchsize: 2, peak_wavelength[i]: 1.550848811716842e-06
+f_0: 193308636144795.53, i: 2, batchsize: 2, peak_wavelength[i]: 1.5508487565731106e-06
+[in choose photon after pre-allocate arrays] Memory used: 192.27 MB
+[after choose: 2.7727198600769043] Memory used: 192.27 MB
+[before detection time:2.7728936672210693] Memory used: 192.27 MB
+[before jitter detector: 2.7729737758636475] Memory used: 192.27 MB
+[before darkcount: 2.7730441093444824] Memory used: 192.27 MB
+total darkcounts: 0
+len(get_original_indexing_z): 0
+len(get_original_indexing_x): 0
+Warning: has_0_short is empty.
+Error: get_original_indexing_x is empty.
+ind_has_0_xpz1_s: 0
+XP_Z1_alice_s: [], shape: (0,)
+ind_has_0_z0xp_s: 0
+Z0_XP_alice_s: [], shape: (0,)
+ind_has_0_xpz1_d: 0
+XP_Z1_alice_d: [], shape: (0,)
+ind_has_0_z0xp_d: 0
+Z0_XP_alice_d: [], shape: (0,)
+X_P_calc_dec:0.0
+X_P_calc_non_dec:0.0
+Execution time for simulation: 2.773589134 seconds for 4 samples

@@ -439,7 +439,10 @@ class SimulationManager:
         # Generate Alice's choices
         # basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=np.array([1, 0, 0, 1, 1, 1, 1, 0, 0, 1]), value=np.array([1, -1, -1, 0, 0, 1, 1, -1, -1, 0]), decoy=np.array([0, 0, 0, 0, 0, 0, 1, 1, 1, 1]))
         # basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=np.array([1, 0, 0, 1, 1, 0, 0, 1]), value=np.array([1, -1, -1, 0, 1, -1, -1, 0]), decoy=np.array([0, 0, 0, 0, 1, 1, 1, 1]))
-        basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=np.array([1,0,1]), value=np.array([1,-1, 0]), decoy=np.array([0,0,0]))
+        # basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=np.array([1,0,1]), value=np.array([1,-1, 0]), decoy=np.array([0,0,0]))
+        # basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=np.array([0,1,1,0,0]), value=np.array([-1,0,1,-1,-1]), decoy=np.array([0,0,0,0,0]))
+        basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=np.array([1,0,1,1]), value=np.array([1,-1,0,1]), decoy=np.array([0,0,0,1]))
+
         # basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=np.array([0,1]), value=np.array([-1, 0]), decoy=np.array([0,0]))
         # basis, value, decoy = self.simulation_engine.generate_alice_choices()
 
@@ -513,7 +516,8 @@ class SimulationManager:
         #plot
         amount_symbols_in_first_part = 3
         amount_symbols_in_plot = amount_symbols_in_first_part
-        first_power = power_dampened[1:1 + amount_symbols_in_first_part].copy()
+        shift = 4
+        first_power = power_dampened[shift:shift + amount_symbols_in_first_part].copy()
         
         step_size = t[1] - t[0]
         # Calculate the new length
@@ -522,7 +526,6 @@ class SimulationManager:
         t_plot1 = np.arange(t[0], t[0] + step_size * new_length, step_size)
         shortened_first_power = first_power.reshape(-1)
         plt.plot(t_plot1 * 1e9, shortened_first_power * 1e3)
-           
         plt.ylabel('Power (mW)')
         plt.xlabel('Time (ns)')
         plt.gca().yaxis.set_major_locator(MaxNLocator(integer=True))
@@ -535,7 +538,7 @@ class SimulationManager:
 
         # plot
         assert power_dampened.shape[1] == len(t), f"Mismatch: power_dampened has {power_dampened.shape[1]} samples per symbol, t has {len(t)}!"
-        self.plotter.plot_power(t, power_dampened, amount_symbols_in_plot=amount_symbols_in_first_part, where_plot_1='before DLI',  shortened_first_power=first_power, where_plot_2='after DLI,', title_rest='- in fft, mean_volt: ' + str("{:.4f}".format(self.config.mean_voltage)) + ' voltage: ' + str("{:.4f}".format(chosen_voltage[0])) + ' V and ' + str("{:.8f}".format(peak_wavelength[0])))
+        self.plotter.plot_power(t, power_dampened, amount_symbols_in_plot=amount_symbols_in_first_part,  where_plot_1='before DLI',  where_plot_2='after DLI',shortened_first_power=first_power, shift = shift)
         
         # plt.plot(first_power.reshape(-1) * 1e3, color='blue', label='0', linestyle='-', marker='o', markersize=1)
         # Saver.save_plot(f"power_before_DLI_in_mW_outside")
