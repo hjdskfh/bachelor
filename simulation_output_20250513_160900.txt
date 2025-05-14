@@ -1,0 +1,79 @@
+[Before everything] Memory used: 143.20 MB
+Base path: C:\Users\leavi\bachelor\code
+Configuration saved to C:\Users\leavi\bachelor\logs\simulation_config_20250513_160900.json
+Execution time for reading: 0.031009197 seconds for 200 samples
+Error: The difference between non_signal_voltage and voltage is not 1
+seed: 272677
+T1_dampening at initialize end: 19.583478569984436
+voltage at initialize end: 0.2
+Voltage_decoy at initialize end: -0.40767481178045273
+Voltage_decoy_sup at initialize end: -0.607087068259716
+Voltage_sup at initialize end: -0.22620631009340286
+Difference EAM Peak dB: 16.713026226022922
+Lower EAM Peak dB: -17.896626229109497
+Higher EAM Peak dB: -1.1836000030865748
+random_laser, fixed: None, times: [8.12649339 6.04886613]
+peak_wavelength[0]: 1550.8383140055137, peak_wavelength[-1]: 1550.8387130972892
+optical_power[0]: 2.2657702299365496e-05, optical_power[-1]: 2.249141280226459e-05
+[in choose photon after pre-allocate arrays] Memory used: 212.36 MB
+[after choose: 2.3793036937713623] Memory used: 212.38 MB
+[before detection time:2.3794853687286377] Memory used: 212.38 MB
+[before jitter detector: 2.3796520233154297] Memory used: 212.39 MB
+[before darkcount: 2.379737377166748] Memory used: 212.39 MB
+total darkcounts: 0
+f_0: 193309937788223.97, i: 0, batchsize: 100, peak_wavelength[i]: 1.5508383140055137e-06
+f_0: 193309888041976.56, i: 100, batchsize: 100, peak_wavelength[i]: 1.5508387130972893e-06
+[in choose photon after pre-allocate arrays] Memory used: 224.84 MB
+[after choose: 7.535226345062256] Memory used: 224.84 MB
+[before detection time:7.535395860671997] Memory used: 224.84 MB
+[before jitter detector: 7.5354931354522705] Memory used: 224.84 MB
+[before darkcount: 7.5355658531188965] Memory used: 224.84 MB
+total darkcounts: 0
+len(get_original_indexing_z): 9
+len(get_original_indexing_x): 2
+Z_0_alice: [  0   3   4   7   8  11  12  15  16  19  20  23  24  27  28  31  32  35
+  36  39  40  43  44  47  48  51  52  55  56  59  60  63  64  67  68  71
+  72  75  76  79  80  83  84  87  88  91  92  95  96  99 100 103 104 107
+ 108 111 112 115 116 119 120 123 124 127 128 131 132 135 136 139 140 143
+ 144 147 148 151 152 155 156 159 160 163 164 167 168 171 172 175 176 179
+ 180 183 184 187 188 191 192 195 196 199]
+Z_1_alice: [  2   6  10  14  18  22  26  30  34  38  42  46  50  54  58  62  66  70
+  74  78  82  86  90  94  98 102 106 110 114 118 122 126 130 134 138 142
+ 146 150 154 158 162 166 170 174 178 182 186 190 194 198]
+has_0_long: [ 20  96 100 135 152]
+has_1_long: [  2  14 166 186]
+ind_Z0_verified_long: [ 20  96 100 135 152]
+ind_Z1_verified_long: [  2  14 166 186]
+ind_Z0_checked: [ 20  96 100 135 152]
+ind_Z1_checked: [  2  14 166 186]
+ind_sent_non_dec: [  0   1   2   4   5   6   8   9  10  12  13  14  16  17  18  20  21  22
+  24  25  26  28  29  30  32  33  34  36  37  38  40  41  42  44  45  46
+  48  49  50  52  53  54  56  57  58  60  61  62  64  65  66  68  69  70
+  72  73  74  76  77  78  80  81  82  84  85  86  88  89  90  92  93  94
+  96  97  98 100 101 102 104 105 106 108 109 110 112 113 114 116 117 118
+ 120 121 122 124 125 126 128 129 130 132 133 134 136 137 138 140 141 142
+ 144 145 146 148 149 150 152 153 154 156 157 158 160 161 162 164 165 166
+ 168 169 170 172 173 174 176 177 178 180 181 182 184 185 186 188 189 190
+ 192 193 194 196 197 198]
+ind_Z0_checked_non_dec: [ 20  96 100 152]
+ind_Z1_checked_non_dec: [  2  14 166 186]
+ind_sent_dec: [  3   7  11  15  19  23  27  31  35  39  43  47  51  55  59  63  67  71
+  75  79  83  87  91  95  99 103 107 111 115 119 123 127 131 135 139 143
+ 147 151 155 159 163 167 171 175 179 183 187 191 195 199]
+ind_Z0_checked_dec: [135]
+ind_Z1_checked_dec: []
+ind_has_0_xpz1_s: 0
+XP_Z1_alice_s: [  2   6  10  14  18  22  26  30  34  38  42  46  50  54  58  62  66  70
+  74  78  82  86  90  94  98 102 106 110 114 118 122 126 130 134 138 142
+ 146 150 154 158 162 166 170 174 178 182 186 190 194 198], shape: (50,)
+ind_has_0_z0xp_s: 2
+Z0_XP_alice_s: [  1   5   9  13  17  21  25  29  33  37  41  45  49  53  57  61  65  69
+  73  77  81  85  89  93  97 101 105 109 113 117 121 125 129 133 137 141
+ 145 149 153 157 161 165 169 173 177 181 185 189 193 197], shape: (50,)
+ind_has_0_xpz1_d: 0
+XP_Z1_alice_d: [], shape: (0,)
+ind_has_0_z0xp_d: 0
+Z0_XP_alice_d: [], shape: (0,)
+X_P_calc_dec:0.0
+X_P_calc_non_dec:16.0
+Execution time for simulation: 7.537814856 seconds for 200 samples

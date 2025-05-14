@@ -42,6 +42,7 @@ plt.plot(att_sorted, skr_modified_sorted, marker='s', label='Modified (20.7 dB)'
 plt.xlabel('Attenuation (dB)', fontsize = 20)
 plt.ylabel('SKR (Mbit/s)', fontsize = 20)
 plt.ylim(0, 16)
+plt.yscale('log')
 plt.title('Secure Key Rate vs. Attenuation')
 plt.grid(True)
 plt.legend()

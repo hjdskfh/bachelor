@@ -90,9 +90,53 @@ class DataProcessor:
         # Plot as bar chart; you can also use plt.hist with precomputed counts.
         width = (bins[1] - bins[0])
         if leave_x == False:
-            plt.bar(bins[:-1], histogram_counts_x[start_symbol * bins_per_symbol :(end_symbol + 1) * bins_per_symbol], width=width, alpha=0.6, label='X basis', color='blue')
+            plt.bar(bins[:-1], histogram_counts_x[start_symbol * bins_per_symbol :(end_symbol + 1) * bins_per_symbol], width=width, alpha=0.6, label='X basis', color='blue', zorder = 2)
         if leave_z == False:
-            plt.bar(bins[:-1], histogram_counts_z[start_symbol * bins_per_symbol :(end_symbol + 1) * bins_per_symbol], width=width, alpha=0.6, label='Z basis', color='red')
+            plt.bar(bins[:-1], histogram_counts_z[start_symbol * bins_per_symbol :(end_symbol + 1) * bins_per_symbol], width=width, alpha=0.6, label='Z basis', color='darkorange', zorder = 3)
+
+        # if leave_x == False:
+        #     plt.bar(
+        #         bins[:-1],
+        #         histogram_counts_x[start_symbol * bins_per_symbol :(end_symbol + 1) * bins_per_symbol],
+        #         width=width,
+        #         alpha=0.6,
+        #         label='X basis',
+        #         fill=False,                # No fill
+        #         edgecolor='blue',          # Outline color
+        #         linewidth=2                # Outline thickness (optional)
+        #     )
+        # if leave_z == False:
+        #     plt.bar(
+        #         bins[:-1],
+        #         histogram_counts_z[start_symbol * bins_per_symbol :(end_symbol + 1) * bins_per_symbol],
+        #         width=width,
+        #         alpha=0.6,
+        #         label='Z basis',
+        #         fill=False,                # No fill
+        #         edgecolor='red',           # Outline color
+        #         linewidth=2                # Outline thickness (optional)
+        #     )
+
+        # if not leave_z:
+        #     plt.step(
+        #         bins[:-1],
+        #         histogram_counts_z[start_symbol * bins_per_symbol : (end_symbol + 1) * bins_per_symbol],
+        #         where='mid',
+        #         color='red',
+        #         linewidth=2,
+        #         label='Z basis',
+        #         zorder=1
+        #     )
+        # if not leave_x:
+        #     plt.step(
+        #         bins[:-1],
+        #         histogram_counts_x[start_symbol * bins_per_symbol : (end_symbol + 1) * bins_per_symbol],
+        #         where='mid',
+        #         color='blue',
+        #         linewidth=2,
+        #         label='X basis',
+        #         zorder=2  # X basis in front
+        #     )
 
         for i in range(amount_of_symbols_incl_start_and_end):
             plt.axvline(x=i * time_one_symbol, color='grey', linestyle='--', linewidth=1)
@@ -110,8 +154,9 @@ class DataProcessor:
                 else:
                     y_max = 1  # Default value if neither histogram is plotted
                 basis = symbol[0]  # assuming symbol is like 'X0' or 'Z1'
-                color = 'green' if basis == 'X' else 'purple'
-                
+                # color = 'green' if basis == 'X' else 'purple'
+                color = 'black'
+
                 plt.text(x_mid, y_max * 0.915, symbol, ha='center', va='bottom', fontsize=18, color=color, fontweight='bold')
 
         plt.xlabel("Time (s)", fontsize = 18)
@@ -121,7 +166,7 @@ class DataProcessor:
         plt.ylim(0, 1.1)
         plt.tick_params(axis='both', which='major', labelsize=18)  # Increase tick size for major ticks
         plt.tight_layout()
-        Saver.save_plot(f"hist_fixed_symbols_{start_symbol}_to_{end_symbol}", no_time = True)
+        Saver.save_plot(f"hist_{name}_symbols_{start_symbol}_to_{end_symbol}", no_time = True)
 
     @staticmethod
     def get_all_pair_indices(lookup_arr):
