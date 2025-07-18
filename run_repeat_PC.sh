@@ -10,5 +10,5 @@
 #SBATCH --error=error_repeat_PC_%j.log
 
 # Run Python script inside the Singularity container
-singularity exec --app dls /containers/stable/2025-02-19_1.img python ~/NeuMoQP/Programm/bachelor/code/main_repeat_but_PC.py
+singularity exec --app dls /containers/stable/2025-02-19_1.img python ~/NeuMoQP/Programm/bachelor/code/main_repeat_on_PC.py
 

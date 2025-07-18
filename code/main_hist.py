@@ -53,19 +53,6 @@ execution_time_read = end_time_read - start_time  # Calculate execution time for
 print(f"Execution time for reading: {execution_time_read:.9f} seconds for {config.n_samples} samples")
 
 # Run the simulation
-# lookup_results = simulation.lookup()
-# print(lookup_results)
-# len_wrong_x_dec, len_wrong_x_non_dec, len_wrong_z_dec, len_wrong_z_non_dec, \
-# len_Z_checked_dec, len_Z_checked_non_dec, X_P_calc_non_dec, X_P_calc_dec = simulation.run_simulation_classificator()
-# print(f"len_wrong_x_dec: {len_wrong_x_dec}, len_wrong_x_non_dec: {len_wrong_x_non_dec}, len_wrong_z_dec: {len_wrong_z_dec}, len_wrong_z_non_dec: {len_wrong_z_non_dec}")
-# print(f"len_Z_checked_dec: {len_Z_checked_dec}, len_Z_checked_non_dec: {len_Z_checked_non_dec}")
-# print(f"X_P_calc_non_dec: {X_P_calc_non_dec}, X_P_calc_dec: {X_P_calc_dec}")
-# simulation.run_DLI()
-# simulation.run_simulation_till_DLI()
-# len_wrong_x_dec, len_wrong_x_non_dec, len_wrong_z_dec, len_wrong_z_non_dec, len_Z_checked_dec, len_Z_checked_non_dec, X_P_calc_non_dec, X_P_calc_dec, time_photons_det_x, time_photons_det_z, time_one_symbol, index_where_photons_det_z, index_where_photons_det_x, \
-#                 basis, value, decoy, lookup_array = simulation.run_simulation_detection_tester()
-# simulation.run_simulation_states()
-# time_photons_det_x, time_photons_det_z, index_where_photons_det_x, index_where_photons_det_z, time_one_symbol, lookup_array, basis, value, decoy = simulation.run_simulation_hist_final()
 time_one_symbol, time_photons_det_z, time_photons_det_x, index_where_photons_det_z, index_where_photons_det_x, lookup_array, basis, value, decoy = simulation.run_simulation_hist_pick_symbols()
 
 length_of_chain = 6 * 6 + 1
