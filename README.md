@@ -15,7 +15,7 @@ This project simulates a Quantum Key Distribution (QKD) protocol, processes the 
 2. **Collect Results**
    - After simulation, results are saved in the cluster or PC.
    - Move or copy the results (e.g., `.npz`, `.json` files) into the `stuff_from_cluster/YYYY_MM_DD` folder.
-   - You can do this by copying files manually, or by updating the cluster repository and pulling from GitHub.
+   - You can do this by copying files manually, or through GitHub.
 
 3. **Evaluate Secret Key Rates**
    - Input the folder location in `calculate_evaluate_SKR_from_cluster.py`.
@@ -97,6 +97,3 @@ This will create a summary Excel file of maximum SKR values.
 - Check log outputs for malformed rows or missing files.
 - Adjust parameters in scripts as needed for your experiments.
 
-## License
-
-Specify your license here.
