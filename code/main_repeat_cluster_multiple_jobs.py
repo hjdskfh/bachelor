@@ -1,3 +1,9 @@
+"""
+main_repeat_cluster_multiple_jobs.py
+
+Runs multiple QKD simulation jobs on the Cluster, manages batch processing and parallel execution. Only works on Cluster, because it uses joblib for parallel processing.
+"""
+
 import time
 import os
 import functools

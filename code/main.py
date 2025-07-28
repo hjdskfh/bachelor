@@ -1,3 +1,9 @@
+"""
+main.py
+
+Most simple way to get all of the data to get a SKR. Outputs wrong detections and detctions in the X and Z basis and for decoy states and signal states.
+"""
+
 import cProfile
 import pstats
 import time

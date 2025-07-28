@@ -5,7 +5,7 @@ This project simulates a Quantum Key Distribution (QKD) protocol, processes the 
 
 ## Full Workflow
 
-1. **Simulation Setup**
+1. **Simulation Setup for SKR**
    - For cluster runs:
      - Edit `qkd_simulation_inputs.xlsx` to set the parameters you want to sweep for the QKD simulation.
      - Run `main_repeat_cluster_multiple_jobs` via the provided bash script on the cluster.
@@ -13,12 +13,12 @@ This project simulates a Quantum Key Distribution (QKD) protocol, processes the 
      - Run `main_repeat_on_PC.py` directly to perform the simulation.
 
 2. **Collect Results**
-   - After simulation, results are saved in the cluster or PC.
+   - After simulation, results are saved in the cluster or PC. The log files with all the starting parameters are in the logs file, the results in the results folder.
    - Move or copy the results (e.g., `.npz`, `.json` files) into the `stuff_from_cluster/YYYY_MM_DD` folder.
-   - You can do this by copying files manually, or through GitHub.
+   - You can do this by copying files manually, or by pushing everything on the cluster on GitHub and pulling it locally onto the PC.
 
 3. **Evaluate Secret Key Rates**
-   - Input the folder location in `calculate_evaluate_SKR_from_cluster.py`.
+   - Input the folder location `stuff_from_cluster/YYYY_MM_DD` in `calculate_evaluate_SKR_from_cluster.py` as input_file.
    - The script matches `.npz` and `.json` files, calculates SKR for each parameter set, and writes results to CSV and TXT files.
    - It also finds the best input parameters (highest SKR) and writes them to a `max_skr_summary_<timestamp>.csv` in the same folder.
 
@@ -38,26 +38,9 @@ This project simulates a Quantum Key Distribution (QKD) protocol, processes the 
 
 ## Usage Tips
 
-- Always organize results by date in `stuff_from_cluster`.
+- In `stuff_from_cluster` always ensure that the generated data from the simulation (`.npz` file) is numbered and this number matches the corresponding `.json`.
 - Use the provided scripts for both cluster and PC runs.
 - Aggregate best results manually in the Excel file for long-term comparison.
-
-## Workflow
-
-1. **Data Generation**
-   - Simulation scripts output `.npz` and `.json` files to a target folder (e.g., `stuff_from_cluster/YYYY_MM_DD`).
-
-2. **Data Processing**
-   - Use `calculate_evaluate_SKR_from_cluster.py` to:
-     - Match `.npz` and `.json` files by prefix (first part of filename).
-     - Calculate QBER, Pherr, and SKR for each pair.
-     - Output results to `results_<prefix>_<timestamp>.csv` and `.txt` files.
-
-3. **SKR Comparison**
-   - Use `compare_SKR.py` to:
-     - Scan all result CSVs in a folder.
-     - Find and summarize the maximum SKR values.
-     - Save summary to Excel.
 
 ## File Descriptions
 
@@ -65,35 +48,10 @@ This project simulates a Quantum Key Distribution (QKD) protocol, processes the 
 - `compare_SKR.py`: Script for comparing SKR values across multiple result files.
 - `requirements.txt`: Python dependencies.
 
-## Usage
-
-### 1. Prepare Data
-Run your simulation scripts to generate `.npz` and `.json` files in the target folder.
-
-### 2. Calculate SKR
-Edit `calculate_evaluate_SKR_from_cluster.py` to set `input_dir` to your data folder.
-Run:
-```bash
-python calculate_evaluate_SKR_from_cluster.py
-```
-This will create result CSVs and TXT files for each file pair.
-
-### 3. Compare SKR
-Edit `compare_SKR.py` to set `csv_dir` to your results folder.
-Run:
-```bash
-python compare_SKR.py
-```
-This will create a summary Excel file of maximum SKR values.
-
 ## Requirements
 
 - Python 3.x
 - See `requirements.txt` for dependencies (e.g., numpy, pandas).
 
-## Tips
 
-- Organize your data folders by date for clarity.
-- Check log outputs for malformed rows or missing files.
-- Adjust parameters in scripts as needed for your experiments.
 

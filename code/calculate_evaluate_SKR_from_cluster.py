@@ -1,3 +1,11 @@
+"""
+calculate_evaluate_SKR_from_cluster.py
+
+Processes QKD simulation results from a specified folder, matches .npz and .json files,
+calculates SKR for each parameter set, and outputs results to CSV and TXT files (e.g. results_<number>_<date>.csv and results_<number>_<date>.txt).
+Also finds the best input parameters and writes them to a summary file (max_skr_summary_<date>.xlsx).
+"""
+
 import os
 import numpy as np
 import json
@@ -19,19 +27,7 @@ print("Starting to read in the data")
 config = SimulationConfig(None)
 data_processor = DataProcessor(config)
 
-
 # Define the directory containing the input files
-# input_dir = r"C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_29\morning_files"
-# input_dir = r'C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_29\abend_files'
-# input_dir = r'C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_29\10_abends_files'
-# input_dir = r'C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_30\nachtmessung'
-# input_dir = r'C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_30\mittagsmessung'
-# input_dir = r'C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_30\5_Uhr_messung'
-# input_dir = r'C:\Users\leavi\bachelor\stuff_from_cluster\2025_04_30'
-# input_dir = r'C:\Users\leavi\OneDrive\Dokumente\Uni\Semester 7\NeuMoQP\Programm\stuff_from_cluster\2025_05_06'
-# input_dir = r'C:\Users\leavi\OneDrive\Dokumente\Uni\Semester 7\NeuMoQP\Programm\stuff_from_cluster\2025_05_07\compiled_results'
-# input_dir = r'C:\Users\leavi\OneDrive\Dokumente\Uni\Semester 7\NeuMoQP\Programm\stuff_from_cluster\2025_05_09'
-# input_dir = r'C:\Users\leavi\OneDrive\Dokumente\Uni\Semester 7\NeuMoQP\Programm\stuff_from_cluster\2025_05_10'
 input_dir = r'C:\Users\leavi\OneDrive\Dokumente\Uni\Semester 7\NeuMoQP\Programm\stuff_from_cluster\2025_05_11'
 
 # Get all files in the directory

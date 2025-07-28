@@ -1,3 +1,9 @@
+"""
+datamanager.py
+
+Defines the DataManager class for handling CSV data import and preprocessing for QKD simulations. 
+"""
+
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.interpolate import splrep, InterpolatedUnivariateSpline

@@ -1,3 +1,9 @@
+"""
+simulationsingle.py
+
+This implements functions for single symbols and not for batches that are a whole array of symbols. Needed for calibration purposes.
+"""
+
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.interpolate import splev

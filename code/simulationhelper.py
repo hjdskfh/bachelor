@@ -1,3 +1,9 @@
+"""
+simulationhelper.py
+
+Defines the SimulationHelper class for advanced QKD simulation utilities, including FFT, interpolation, and memory management.
+"""
+
 from matplotlib.pylab import f, norm
 from matplotlib import pyplot as plt
 import numpy as np
@@ -11,8 +17,6 @@ import psutil
 import os
 
 from saver import Saver
-
-
 
 class SimulationHelper:
     def __init__(self, config):
@@ -31,7 +35,8 @@ class SimulationHelper:
         XP_sent_dec = np.sum((basis == 0) & (decoy == 1))                # XP_sent_dec
 
         return Z1_sent_norm, Z1_sent_dec, Z0_sent_norm, Z0_sent_dec, XP_sent_norm, XP_sent_dec
-    
+
+    # ========= Main Helper Functions for histogramm creation ===========
     def create_all_symbol_combinations_for_hist(self):
         def de_bruijn(k, n):
             """
@@ -90,10 +95,6 @@ class SimulationHelper:
         decoy_array[-1] = decoy_array[0]
         lookup_array.append(lookup_array[0])
 
-        print("Basis Array (sample):", basis_array[:10])
-        print("Value Array (sample):", value_array[:10])
-        print("Decoy Array (sample):", decoy_array[:10])
-
         return basis_array, value_array, decoy_array, lookup_array
     
     def create_all_symbol_combinations_for_hist_random(self):
@@ -148,10 +149,6 @@ class SimulationHelper:
             value_array[idx] = v
             decoy_array[idx] = d
             lookup_array.append(sym)
-
-        print("Basis Array (sample):", basis_array[:10])
-        print("Value Array (sample):", value_array[:10])
-        print("Decoy Array (sample):", decoy_array[:10])
 
         return basis_array, value_array, decoy_array, lookup_array
         
@@ -261,12 +258,10 @@ class SimulationHelper:
         """
         # Time array
         t = np.arange(len(P_in)) * dt
-        # print(f"shape t: {t.shape}")
         
         # Input optical field (assuming carrier frequency)
         E0 = np.sqrt(P_in/2)
         E_in = E0 * np.exp(1j * 2 * np.pi * f_0 * t)
-        # print(f"shape E_in: {E_in.shape}")
         # Interpolate for delayed version
         interp_real = interp1d(t, np.real(E_in),kind='cubic', fill_value="extrapolate")
         interp_imag = interp1d(t, np.imag(E_in),kind='cubic', fill_value="extrapolate")
@@ -350,9 +345,6 @@ class SimulationHelper:
             wavelength_photons[i, :photon_count] = peak_wavelength[idx]
 
             norm_prob_time_symbol = np.divide(power_dampened[idx], power_dampened[idx].sum())
-            # print(f"norm_prob_time_symbol: {norm_prob_time_symbol.sum()}")
-            # plt.plot(t, norm_prob_time_symbol, label=f"Symbol {idx}")
-            # plt.show()
 
             time_photons[i, :photon_count] = self.config.rng.choice(t, size=photon_count, p=norm_prob_time_symbol) #t ist konstant
         
@@ -471,7 +463,6 @@ class SimulationHelper:
         index_where_photons_det = index_where_photons_det[sort_order]
         time_photons_det = time_photons_det[sort_order]
 
-        print(f"total darkcounts: {np.sum(num_dark_counts)}")
         return dark_count_times, num_dark_counts
 
     # ========== Classificator Helper ========== 
@@ -501,7 +492,6 @@ class SimulationHelper:
 
         total_sift_z_basis_short = np.union1d(early_indices_short, late_indices_short)                  
         get_original_indexing_z = index_where_photons_det_z[np.where(mask_z_short)[0]]  # Get the original indices of the Z basis detections
-        print(f"len(get_original_indexing_z): {len(get_original_indexing_z)}")
 
         # get vacuums
         indices_z_long = np.where(basis == 1)[0]
@@ -542,7 +532,7 @@ class SimulationHelper:
 
         vacuum_indices_x_long = np.union1d(indices_x_no_photons_long, nothing_in_det_indices_long)
         get_original_indexing_x = index_where_photons_det_x[np.where(mask_x_short)[0]]  # Get the original indices of the X basis detections
-        print(f"len(get_original_indexing_x): {len(get_original_indexing_x)}")
+
         # 1 or 2 signals in X basis
         sum_det_ind = np.sum(detected_indices_x >= 0, axis=1)
         one_or_two_in_x_short = np.where((sum_det_ind == 1) | (sum_det_ind == 2))[0]
@@ -556,24 +546,6 @@ class SimulationHelper:
         if index_where_photons_det_z.size == 0:
             return 0, 0, 0, 0
         # Z basis
-        # all indices
-        # Z_indices_measured_long = get_original_indexing_z[total_sift_z_basis_short]
-        # mask_Z0_long = value[Z_indices_measured_long] == 1
-        # mask_Z1_long = value[Z_indices_measured_long] == 0
-        # # only overlaps between Z0 vs Z1 sent and measured
-        # ind_Z0_verified_long = Z_indices_measured_long[mask_Z0_long]
-        # ind_Z1_verified_long = Z_indices_measured_long[mask_Z1_long]
-
-
-        # Z0_alice_s = np.where((basis == 1) & (value == 1) & (decoy == 0))[0]  # Indices where Z0 was sent
-        # XP_alice_s = np.where((basis == 0) & (decoy == 0))[0]  # Indices where XP was sent
-        # Z0_XP_alice_s = XP_alice_s[np.isin(XP_alice_s - 1, Z0_alice_s)]  # Indices where Z1Z0 was sent (index of Z0 used aka the higher index at which time we measure the X+ state)
-        # has_0_short = np.where(np.any(detected_indices_x_det_x_basis == 0, axis=1))[0]
-        # has_0_long = get_original_indexing_x[has_0_short]
-        # # print(f"has_0_long: {has_0_long}")
-        # has_0_z0xp_s = np.intersect1d(has_0_long, Z0_XP_alice_s)
-
-        # print(f"has_0_short: {has_0_short}, shape: {has_0_short.shape}")
         # all detections in early and in late
         Z_0_alice = np.where((basis == 1) & (value == 1))[0]  # Indices where Z0 was sent
         Z_1_alice = np.where((basis == 1) & (value == 0))[0]  # Indices where Z1 was sent
@@ -583,13 +555,6 @@ class SimulationHelper:
         has_1_long = get_original_indexing_z[has_1_short]
         ind_Z0_verified_long = np.intersect1d(has_0_long, Z_0_alice)
         ind_Z1_verified_long = np.intersect1d(has_1_long, Z_1_alice)
-        with np.printoptions(threshold=np.inf):
-            print(f"Z_0_alice: {Z_0_alice}")
-            print(f"Z_1_alice: {Z_1_alice}")
-            print(f"has_0_long: {has_0_long}")
-            print(f"has_1_long: {has_1_long}")
-            print(f"ind_Z0_verified_long: {ind_Z0_verified_long}")
-            print(f"ind_Z1_verified_long: {ind_Z1_verified_long}")
     
         if mask_x_short.size != 0:
             # check if no detection in late_bin X basis
@@ -610,25 +575,9 @@ class SimulationHelper:
         ind_sent_dec = np.where((decoy == 1))[0]
         ind_Z0_checked_dec = np.intersect1d(ind_Z0_checked, ind_sent_dec)
         ind_Z1_checked_dec = np.intersect1d(ind_Z1_checked, ind_sent_dec)
-        with np.printoptions(threshold=np.inf):
-            print(f"ind_Z0_checked: {ind_Z0_checked}")
-            print(f"ind_Z1_checked: {ind_Z1_checked}")
-            print(f"ind_sent_non_dec: {ind_sent_non_dec}")
-            print(f"ind_Z0_checked_non_dec: {ind_Z0_checked_non_dec}")
-            print(f"ind_Z1_checked_non_dec: {ind_Z1_checked_non_dec}")
-            print(f"ind_sent_dec: {ind_sent_dec}")
-            print(f"ind_Z0_checked_dec: {ind_Z0_checked_dec}")
-            print(f"ind_Z1_checked_dec: {ind_Z1_checked_dec}")
-
-
-
-
 
         # gain  
         ind_Z_sent_non_dec = np.intersect1d(indices_z_long, ind_sent_non_dec)
-        '''print(f"indices_z_long: {indices_z_long}")
-        print(f"ind_sent_non_dec: {ind_sent_non_dec}")
-        print(f"ind_Z_sent_non_dec: {ind_Z_sent_non_dec}")'''
         len_Z_checked_non_dec = len(ind_Z0_checked_non_dec) + len(ind_Z1_checked_non_dec)
 
         if len(ind_Z_sent_non_dec) != 0:
@@ -650,7 +599,6 @@ class SimulationHelper:
     def classificator_identify_x(self, mask_x_short, mask_z_short, detected_indices_x_det_x_basis, detected_indices_z_det_z_basis, basis, value, decoy, indices_x_long, get_original_indexing_x, get_original_indexing_z):
         # X basis
         # empty late in x basis
-        # print(f"detected_indices_x_det_x_basis: {detected_indices_x_det_x_basis}")
         one_in_x_short = np.where(np.any(detected_indices_x_det_x_basis == 1, axis=1))[0]
         one_in_x_long = get_original_indexing_x[one_in_x_short]
         all_ind = np.arange(self.config.n_samples)
@@ -664,7 +612,6 @@ class SimulationHelper:
             X_P_prime_checked_long = np.intersect1d(no_one_in_x_long, no_zero_or_one_in_z_long)
         else:
             X_P_prime_checked_long = no_one_in_x_long
-        # print(f"X_P_prime_checked_long part: {X_P_prime_checked_long[:10]}")
 
         # decoy or not
         ind_sent_non_dec_long = np.where((decoy == 0))[0]
@@ -679,16 +626,13 @@ class SimulationHelper:
         XP_alice_s = np.where((basis == 0) & (decoy == 0))[0]  # Indices where XP was sent
         Z0_XP_alice_s = XP_alice_s[np.isin(XP_alice_s - 1, Z0_alice_s)]  # Indices where Z1Z0 was sent (index of Z0 used aka the higher index at which time we measure the X+ state)
         has_0_short = np.where(np.any(detected_indices_x_det_x_basis == 0, axis=1))[0]
-        # print(f"has_0_short: {has_0_short}, shape: {has_0_short.shape}")
         if has_0_short.size == 0:
             print("Warning: has_0_short is empty.")
         if get_original_indexing_x.size == 0:
             print("Error: get_original_indexing_x is empty.")
-        # print(f"get_original_indexing_x: {get_original_indexing_x}, shape: {get_original_indexing_x.shape}")
         if has_0_short.size > 0 and has_0_short.max() >= get_original_indexing_x.size:
             print("Error: Indices in has_0_short are out of bounds for get_original_indexing_x.")
         has_0_long = get_original_indexing_x[has_0_short]
-        # print(f"has_0_long: {has_0_long}")
         has_0_z0xp_s = np.intersect1d(has_0_long, Z0_XP_alice_s)
         ind_has_0_z0xp_s = len(np.where(has_0_z0xp_s)[0])
         
@@ -696,11 +640,6 @@ class SimulationHelper:
         XP_Z1_alice_s = Z1_alice_s[np.isin(Z1_alice_s - 1, XP_alice_s)]  # Indices where Z1Z0 was sent (index of Z0 used aka the higher index at which time we measure the X+ state)
         has_0_xpz1_s = np.intersect1d(has_0_long, XP_Z1_alice_s)
         ind_has_0_xpz1_s = len(np.where(has_0_xpz1_s)[0])
-        print(f"ind_has_0_xpz1_s: {ind_has_0_xpz1_s}")
-        print(f"XP_Z1_alice_s: {XP_Z1_alice_s}, shape: {XP_Z1_alice_s.shape}")
-
-        print(f"ind_has_0_z0xp_s: {ind_has_0_z0xp_s}")
-        print(f"Z0_XP_alice_s: {Z0_XP_alice_s}, shape: {Z0_XP_alice_s.shape}")
 
         X_P_calc_non_dec = (ind_has_0_xpz1_s + ind_has_0_z0xp_s) / ( (1 / 4) * self.config.p_z_alice)
        
@@ -717,15 +656,7 @@ class SimulationHelper:
         XP_Z1_alice_d = Z1_alice_d[np.isin(Z1_alice_d - 1, XP_alice_d)]  # Indices where Z1Z0 was sent (index of Z0 used aka the higher index at which time we measure the X+ state)
         has_0_xpz1_d = np.intersect1d(has_0_long, XP_Z1_alice_d)
         ind_has_0_xpz1_d = len(np.where(has_0_xpz1_d)[0])
-        print(f"ind_has_0_xpz1_d: {ind_has_0_xpz1_d}")
-        print(f"XP_Z1_alice_d: {XP_Z1_alice_d}, shape: {XP_Z1_alice_d.shape}")
-
-        print(f"ind_has_0_z0xp_d: {ind_has_0_z0xp_d}")
-        print(f"Z0_XP_alice_d: {Z0_XP_alice_d}, shape: {Z0_XP_alice_d.shape}")
-
         X_P_calc_dec = (ind_has_0_xpz1_d + ind_has_0_z0xp_d) / ( (1 / 4) * self.config.p_z_alice)
-        print(f"X_P_calc_dec:{X_P_calc_dec}")
-        print(f"X_P_calc_non_dec:{X_P_calc_non_dec}")
 
         # gain non dec 
         ind_sent_non_dec_long = np.where((decoy == 0))[0]
@@ -744,31 +675,8 @@ class SimulationHelper:
             gain_X_dec = X_P_calc_dec / len(ind_x_sent_dec_long)
         else:
             gain_X_dec = 0 #raise ValueError("No Z decoy sent detected")
-        # print(f"Returning: {X_P_calc_non_dec}, {X_P_calc_dec}, {gain_X_non_dec}, {gain_X_dec}")
 
-        '''with np.printoptions(threshold=100):  
-            Saver.save_results_to_txt(  # Save the results to a text file
-                function_used = "identify_x",
-                n_samples=self.config.n_samples,
-                seed=self.config.seed,
-                non_signal_voltage=self.config.non_signal_voltage,
-                voltage_decoy=self.config.voltage_decoy, 
-                voltage=self.config.voltage, 
-                voltage_decoy_sup=self.config.voltage_decoy_sup, 
-                voltage_sup=self.config.voltage_sup,
-                p_indep_x_states_non_dec=self.config.p_indep_x_states_non_dec,
-                p_indep_x_states_dec=self.config.p_indep_x_states_dec,
-                Z0_XP_alice_s=Z0_XP_alice_s,
-                XP_Z1_alice_s=XP_Z1_alice_s,
-                has_0_short=has_0_short,
-                has_0_long=has_0_long,
-                ind_has_0_z0xp=ind_has_0_z0xp,
-                get_original_indexing_x=get_original_indexing_x,
-                get_original_indexing_z=get_original_indexing_z,
-                indices_x_long=indices_x_long)'''
-            
         return X_P_calc_non_dec, X_P_calc_dec, gain_X_non_dec, gain_X_dec
-    
     
     def classificator_errors(self, mask_x_short, mask_z_short, indices_z_long, indices_x_long, value, detected_indices_z_det_z_basis, detected_indices_x_det_x_basis, basis, decoy, get_original_indexing_x, get_original_indexing_z):
         wrong_detection_mask_z = np.zeros(len(basis), dtype=bool)

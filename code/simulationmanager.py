@@ -1,3 +1,9 @@
+"""
+simulationmanager.py
+
+Implements the SimulationManager class for orchestrating QKD simulations, including engine integration and result management. The different functions in here all let the simulation run for different amounts of time or plot different things.
+"""
+
 from codecs import lookup
 import numpy as np
 import matplotlib.pyplot as plt
@@ -23,7 +29,37 @@ class SimulationManager:
         self.simulation_single = SimulationSingle(config)
         self.simulation_helper = SimulationHelper(config)
         self.plotter = Plotter(config)
+    
+    # Simulation up until signal generation: Plot voltage signal with bandwidth and jitter
+    def run_simulation_initialize(self):
+        start_time = time.time()  # Record start time
 
+        T1_dampening = self.simulation_engine.initialize()
+        print(f"T1 dampening: {T1_dampening}")
+        optical_power, peak_wavelength, chosen_voltage, chosen_current = self.simulation_engine.random_laser_output('current_power', 'voltage_shift')
+    
+        # Generate Alice's choices
+        basis, value, decoy = self.simulation_engine.generate_alice_choices()
+
+        # Simulate signal and transmission
+        Saver.memory_usage("before simulating signal: " + str(time.time() - start_time))
+        signals, t, _ = self.simulation_engine.signal_bandwidth_jitter(basis, value, decoy)
+
+        amount_symbols_in_plot = 3
+        pulse_duration = 1 / self.config.sampling_rate_FPGA
+        sampling_rate_fft = 100e11
+        samples_per_pulse = int(pulse_duration * sampling_rate_fft)
+        total_samples = self.config.n_pulses * samples_per_pulse
+        t_plot1 = np.linspace(0, amount_symbols_in_plot * self.config.n_pulses * pulse_duration, amount_symbols_in_plot * total_samples, endpoint=False)
+        signals_part = signals[:amount_symbols_in_plot]
+        flattened_signals = signals_part.reshape(-1)
+        plt.plot(t_plot1 * 1e9, flattened_signals)
+        plt.title(f"Voltage Signal with Bandwidth and Jitter for {amount_symbols_in_plot} symbols")
+        plt.ylabel('Volt (V)')
+        plt.xlabel('Time (ns)')
+        Saver.save_plot(f"signal_after_bandwidth")
+
+    # Simulation only up until after EAM: Plot power and square signals for different states
     def run_simulation_states(self):
         T1_dampening = self.simulation_engine.initialize()        
         
@@ -150,6 +186,7 @@ class SimulationManager:
                 ax.legend(lines + lines2, labels + labels2)
             Saver.save_plot(f"{state['title'].replace(' ', '_').replace(':', '').lower()}_voltage_square_transmission")
 
+    # Simulation only up until detector: Plot histograms of mean photon numbers, measured time of photons etc for different states
     def run_simulation_histograms(self):
         #initialize
         T1_dampening = self.simulation_engine.initialize()
@@ -252,72 +289,8 @@ class SimulationManager:
             plt.legend()
             plt.tight_layout()
             Saver.save_plot(f"hist_wavelength_{state['title'].replace(' ', '_').replace(':', '').lower()}")         
-        
-    def run_simulation_parameter_sweep_amplitude(self):
-        #9.12. Parameter sweep von amplitudenschwankung 0,5 mA bis 5 mA für Z0 und Z0 decoy gebe spread in mean photon number wieder
-
-        #initialize
-        T1_dampening = self.simulation_engine.initialize()
-
-        # Define the states and their corresponding arguments
-        states = [
-                {"title": "State: Z0", "basis": 1, "value": 1, "decoy": 0},
-                {"title": "State: Z0 decoy", "basis": 1, "value": 1, "decoy": 1},
-                ]
-        
-        parameters_amplitude =  np.linspace(0.0005, 0.005, 20)
-        differences_mean_photon_nr = np.empty((len(states), len(parameters_amplitude)))
-        
-        for index, state in tqdm(enumerate(states), desc= "running simulation for different states", unit=" states", position=0):
-            mean_photon_nr_min = 1000
-            mean_photon_nr_max = 0
-           
-            for idx_param, param in tqdm(enumerate(parameters_amplitude), desc="parameters", unit="parameters", leave = False, position=1):
-                self.config.current_amplitude = param
-            
-                mean_of_mean_photon = np.empty(self.config.n_samples)
-
-                for i in range(self.config.n_samples):
-                    optical_power, peak_wavelength, chosen_voltage, chosen_current = self.simulation_engine.random_laser_output('current_power', 'voltage_shift')
-                    
-                    # Generate Alice's choices
-                    basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=state["basis"], value=state["value"], decoy=state["decoy"], fixed = True)
-                    
-                    # Simulate signal and transmission
-                    signals, t, jitter_shifts = self.simulation_engine.signal_bandwidth_jitter(basis, value, decoy)
-                    power_dampened = self.simulation_engine.eam_transmission(signals, optical_power, T1_dampening)
-                    power_dampened = self.simulation_engine.fiber_attenuation(power_dampened)
-                    start_time = 0
-
-                    calc_mean_photon_nr, wavelength_photons, time_photons, nr_photons, index_where_photons, all_time_max_nr_photons, sum_nr_photons_at_chosen = self.simulation_engine.choose_photons(t, power_dampened, peak_wavelength, start_time)
-            
-                    mean_of_mean_photon[i] = calc_mean_photon_nr
-
-                    if mean_photon_nr_min > calc_mean_photon_nr:
-                        mean_photon_nr_min = calc_mean_photon_nr
-                    if mean_photon_nr_max < calc_mean_photon_nr:
-                        mean_photon_nr_max = calc_mean_photon_nr
-
-                differences_mean_photon_nr[index][idx_param] = (mean_photon_nr_max-mean_photon_nr_min) / np.mean(mean_of_mean_photon)
-
-            plt.plot(parameters_amplitude*1e3, differences_mean_photon_nr[index], label= 'for ' + str(state['title'].replace(':', '').lower()))
-            
-            '''plt.title(f" spread of mean photon number for {state['title'].replace(':', '').lower()} over {self.config.n_samples} iterations")                    
-            plt.xlabel(r'$\Delta I \, (\mathrm{mA})$')  # ΔI (mA)
-            plt.ylabel(r'$\frac{\Delta \langle \mu \rangle}{\langle \mu \rangle}$')  # Δ⟨μ⟩
-            plt.tight_layout()
-            plt.legend()
-            all_titles = state['title'].replace(' ', '_').replace(':', '').lower()
-            save_plot(f"spread_photon_nr_{all_titles}")'''
-
-        plt.title(f" spread of mean photon number over {self.config.n_samples} iterations")
-        plt.xlabel(r'$\Delta I \, (\mathrm{mA})$')  # ΔI (mA)
-        plt.ylabel(r'$\frac{\Delta \langle \mu \rangle}{\langle \mu \rangle}$')  # Δ⟨μ⟩ / ⟨μ⟩
-        plt.tight_layout()
-        plt.legend()    
-        all_titles = "_".join([state['title'].replace(' ', '_').replace(':', '').lower() for state in states])
-        Saver.save_plot(f"spread_photon_nr_{all_titles}_for_4GHz_and_1e-11_jitter")
     
+    # Simulation only up until detector: Plot photons in fiber vs after detector
     def run_simulation_after_detector(self):
         T1_dampening = self.simulation_engine.initialize()
         time_in_simulation = 0 
@@ -395,34 +368,7 @@ class SimulationManager:
         # Show the plot
         Saver.save_plot(f"photons_in_fiber_vs_after detector")
 
-    def run_simulation_initialize(self):
-        start_time = time.time()  # Record start time
-
-        T1_dampening = self.simulation_engine.initialize()
-        print(f"T1 dampening: {T1_dampening}")
-        optical_power, peak_wavelength, chosen_voltage, chosen_current = self.simulation_engine.random_laser_output('current_power', 'voltage_shift')
-    
-        # Generate Alice's choices
-        basis, value, decoy = self.simulation_engine.generate_alice_choices()
-
-        # Simulate signal and transmission
-        Saver.memory_usage("before simulating signal: " + str(time.time() - start_time))
-        signals, t, _ = self.simulation_engine.signal_bandwidth_jitter(basis, value, decoy)
-
-        amount_symbols_in_plot = 3
-        pulse_duration = 1 / self.config.sampling_rate_FPGA
-        sampling_rate_fft = 100e11
-        samples_per_pulse = int(pulse_duration * sampling_rate_fft)
-        total_samples = self.config.n_pulses * samples_per_pulse
-        t_plot1 = np.linspace(0, amount_symbols_in_plot * self.config.n_pulses * pulse_duration, amount_symbols_in_plot * total_samples, endpoint=False)
-        signals_part = signals[:amount_symbols_in_plot]
-        flattened_signals = signals_part.reshape(-1)
-        plt.plot(t_plot1 * 1e9, flattened_signals)
-        plt.title(f"Voltage Signal with Bandwidth and Jitter for {amount_symbols_in_plot} symbols")
-        plt.ylabel('Volt (V)')
-        plt.xlabel('Time (ns)')
-        Saver.save_plot(f"signal_after_bandwidth")
-    
+    # Simulation up until classifier: Run simulation and plot results
     def run_simulation_classificator(self, save_output = False):
         
         start_time = time.time()  # Record start time
@@ -633,7 +579,8 @@ class SimulationManager:
             )
         
         return len_wrong_x_dec, len_wrong_x_non_dec, len_wrong_z_dec, len_wrong_z_non_dec, len_Z_checked_dec, len_Z_checked_non_dec, X_P_calc_non_dec, X_P_calc_dec, gain_Z_non_dec, gain_Z_dec, gain_X_non_dec, gain_X_dec, qber_z_dec, qber_z_non_dec, qber_x_dec, qber_x_non_dec, raw_key_rate, total_amount_detections
-        
+
+    # Simulation up until DLI: Run simulation and plot results
     def run_simulation_till_DLI(self):
         start_time = time.time()  # Record start time
         T1_dampening = self.simulation_engine.initialize()
@@ -691,83 +638,7 @@ class SimulationManager:
         # print(f"first 10 symbols of basis, value, decoy: {basis[:10]}, {value[:10]}, {decoy[:10]}")
         # inverse_voltage = self.simulation_engine.get_interpolated_value(1550.68030 - 1550, 'voltage_shift', inverse_flag=True)
         # print(f"inverse voltage: {inverse_voltage}")
-
-    def run_simulation_parameter_sweep_heater_transmission(self):
-        #initialize
-        T1_dampening = self.simulation_engine.initialize()
-        
-        # Define the states and their corresponding arguments
-        states = [
-            {"title": "State: Z0", "basis": 1, "value": 1, "decoy": 0},
-            {"title": "State: Z1", "basis": 1, "value": 0, "decoy": 0},
-            {"title": "State: X+", "basis": 0, "value": -1, "decoy": 0},
-            {"title": "State: Z0 decoy", "basis": 1, "value": 1, "decoy": 1},
-            {"title": "State: Z1 decoy", "basis": 1, "value": 0, "decoy": 1},
-            {"title": "State: X+ decoy", "basis": 0, "value": -1, "decoy": 1},
-        ]
-    
-        def laser_till_eam(state):
-            optical_power, peak_wavelength, chosen_voltage, chosen_current = self.simulation_engine.random_laser_output('current_power', 'voltage_shift')
-            basis, value, decoy = self.simulation_engine.generate_alice_choices(basis = 0, value = -1, decoy = 0)
-
-            signals, t, _ = self.simulation_engine.signal_bandwidth_jitter(basis, value, decoy)
-            power_dampened, calc_mean_photon_nr_eam, _ = self.simulation_engine.eam_transmission(signals, optical_power, T1_dampening, peak_wavelength, t)
-            
-            return state, power_dampened
-
-        parameters_amplitude =  np.linspace(0.0005, 0.005, 20)
-        differences_mean_photon_nr = np.empty((len(states), len(parameters_amplitude)))
-        
-        for index, state in tqdm(enumerate(states), desc= "running simulation for different states", unit=" states", position=0):
-            transmission_min = 1000
-            transmission_max = 0
-           
-            for idx_param, param in tqdm(enumerate(parameters_amplitude), desc="parameters", unit="parameters", leave = False, position=1):
-                self.config.current_amplitude = param
-            
-                mean_of_mean_photon = np.empty(self.config.n_samples)
-
-                for i in range(self.config.n_samples):
-                    optical_power, peak_wavelength, chosen_voltage, chosen_current = self.simulation_engine.random_laser_output('current_power', 'voltage_shift')
-                    
-                    # Generate Alice's choices
-                    basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=state["basis"], value=state["value"], decoy=state["decoy"], fixed = True)
-                    
-                    # Simulate signal and transmission
-                    signals, t, jitter_shifts = self.simulation_engine.signal_bandwidth_jitter(basis, value, decoy)
-                    power_dampened = self.simulation_engine.eam_transmission(signals, optical_power, T1_dampening)
-                    power_dampened = self.simulation_engine.fiber_attenuation(power_dampened)
-                    start_time = 0
-
-                    calc_mean_photon_nr, wavelength_photons, time_photons, nr_photons, index_where_photons, all_time_max_nr_photons, sum_nr_photons_at_chosen = self.simulation_engine.choose_photons(t, power_dampened, peak_wavelength, start_time)
-            
-                    mean_of_mean_photon[i] = calc_mean_photon_nr
-
-                    if mean_photon_nr_min > calc_mean_photon_nr:
-                        mean_photon_nr_min = calc_mean_photon_nr
-                    if mean_photon_nr_max < calc_mean_photon_nr:
-                        mean_photon_nr_max = calc_mean_photon_nr
-
-                differences_mean_photon_nr[index][idx_param] = (mean_photon_nr_max-mean_photon_nr_min) / np.mean(mean_of_mean_photon)
-
-            plt.plot(parameters_amplitude*1e3, differences_mean_photon_nr[index], label= 'for ' + str(state['title'].replace(':', '').lower()))
-            
-            '''plt.title(f" spread of mean photon number for {state['title'].replace(':', '').lower()} over {self.config.n_samples} iterations")                    
-            plt.xlabel(r'$\Delta I \, (\mathrm{mA})$')  # ΔI (mA)
-            plt.ylabel(r'$\frac{\Delta \langle \mu \rangle}{\langle \mu \rangle}$')  # Δ⟨μ⟩
-            plt.tight_layout()
-            plt.legend()
-            all_titles = state['title'].replace(' ', '_').replace(':', '').lower()
-            save_plot(f"spread_photon_nr_{all_titles}")'''
-
-        plt.title(f" spread of mean photon number over {self.config.n_samples} iterations")
-        plt.xlabel(r'$\Delta I \, (\mathrm{mA})$')  # ΔI (mA)
-        plt.ylabel(r'$\frac{\Delta \langle \mu \rangle}{\langle \mu \rangle}$')  # Δ⟨μ⟩ / ⟨μ⟩
-        plt.tight_layout()
-        plt.legend()    
-        all_titles = "_".join([state['title'].replace(' ', '_').replace(':', '').lower() for state in states])
-        Saver.save_plot(f"spread_photon_nr_{all_titles}_for_4GHz_and_1e-11_jitter")
-        
+  
     def run_simulation_det_peak_wave(self):
         
         start_time = time.time()  # Record start time
@@ -879,7 +750,8 @@ class SimulationManager:
         XP_sent_norm=XP_sent_norm,
         XP_sent_dec=XP_sent_dec,'''
         return peak_wavelength[0], amount_detection_x_late_bin
-        
+    
+    # used in main_hist_cluster.py: Simulation up until detector: Run simulation and return values
     def run_simulation_hist_final(self):
         
         start_time = time.time()  # Record start time
@@ -965,6 +837,7 @@ class SimulationManager:
         
         return time_photons_det_x, time_photons_det_z, index_where_photons_det_x, index_where_photons_det_z, t[-1], lookup_arr, basis, value, decoy
 
+    # Simulation up until DLI: Run simulation for different set voltage values and plot residual power of destructive interfered pulses
     def run_DLI(self):
         #need low n_samples and same batchsize!
         T1_dampening = self.simulation_engine.initialize()
@@ -1101,6 +974,7 @@ class SimulationManager:
             inverse_voltage = self.simulation_engine.get_interpolated_value(wave * 1e9 - 1550, 'voltage_shift', inverse_flag=True)
             print(f"inverse voltage: {inverse_voltage}")'''
 
+    # used in main_hist_random_sym_cluster.py: Simulation up until detector: Run simulation and return values
     def run_simulation_hist_pick_symbols(self):
         start_time = time.time()  # Record start time
         T1_dampening = self.simulation_engine.initialize()
@@ -1204,11 +1078,13 @@ class SimulationManager:
         time_one_symbol = t[-1]
         return time_one_symbol, time_photons_det_z, time_photons_det_x, index_where_photons_det_z, index_where_photons_det_x, lookup_array_alt, basis, value, decoy
     
+    # print the order of the symbols in the fixed order histogram
     def lookup(self):
          # Generate Alice's choices
         basis_arr, value_arr, decoy_arr, lookup_arr = self.simulation_helper.create_all_symbol_combinations_for_hist()
         return lookup_arr
     
+    # Simulation up until detector: Run simulation and return values to analyse if detector works correctly
     def run_simulation_detection_tester(self):
         
         start_time = time.time()  # Record start time
@@ -1417,8 +1293,8 @@ class SimulationManager:
         
         return len_wrong_x_dec, len_wrong_x_non_dec, len_wrong_z_dec, len_wrong_z_non_dec, len_Z_checked_dec, len_Z_checked_non_dec, X_P_calc_non_dec, X_P_calc_dec, time_photons_det_x, time_photons_det_z, time_one_symbol, index_where_photons_det_z, index_where_photons_det_x, \
                 basis, value, decoy, lookup_array
-        
 
+    # used in main_repeat_cluster_multiple_jobs.py: Simulation up until classifier: Runs simulation and returns values 
     def run_simulation_repeat(self, save_output = False):
         
         start_time = time.time()  # Record start time
@@ -1426,16 +1302,9 @@ class SimulationManager:
 
         optical_power, peak_wavelength, chosen_voltage, chosen_current = self.simulation_engine.random_laser_output('current_power', 'voltage_shift')
 
-        # Generate Alice's choices
-        # basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=np.array([0]), value=np.array([-1]), decoy=np.array([0]))
-        # basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=np.array([1, 0, 0, 1, 1, 1, 1, 0, 0, 1]), value=np.array([1, -1, -1, 0, 0, 1, 1, -1, -1, 0]), decoy=np.array([0, 0, 0, 0, 0, 0, 1, 1, 1, 1]))
-        # basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=np.array([1, 0, 0, 1, 1, 0, 0, 1]), value=np.array([1, -1, -1, 0, 1, -1, -1, 0]), decoy=np.array([0, 0, 0, 0, 1, 1, 1, 1]))
+        # Generate Alice's choices: either set to repeat the same choices or generate new ones
         # basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=np.array([1,0,1]), value=np.array([1,-1, 0]), decoy=np.array([0,0,0]))
-        # basis, value, decoy = self.simulation_engine.generate_alice_choices(basis=np.array([1]), value=np.array([1]), decoy=np.array([0]))
         basis, value, decoy = self.simulation_engine.generate_alice_choices()
-        # print(f"basis: {basis[:10]}")
-        # print(f"value: {value[:10]}")
-        # print(f"decoy: {decoy[:10]}")
 
         # Simulate signal and transmission
         Saver.memory_usage("before simulating signal: " + str("{:.3f}".format(time.time() - start_time)))
@@ -1448,7 +1317,6 @@ class SimulationManager:
         # plot so I can delete
         # self.plotter.plot_and_delete_mean_photon_histogram(calc_mean_photon_nr_eam, target_mean_photon_nr = np.array([self.config.mean_photon_nr, self.config.mean_photon_decoy]), 
         #                                         type_photon_nr = "Mean Photon Number at EAM")
-
 
         # self.plotter.plot_power(t, power_dampened, amount_symbols_in_plot=5, where_plot_1='after EAM')
 
@@ -1490,10 +1358,6 @@ class SimulationManager:
 
         Saver.memory_usage("before detector x: " + str(time.time() - start_time))
         time_photons_det_x, wavelength_photons_det_x, nr_photons_det_x, index_where_photons_det_x, calc_mean_photon_nr_detector_x, dark_count_times_x, num_dark_counts_x = self.simulation_engine.detector(t, peak_wavelength, power_dampened, start_time)        
-        # np.set_printoptions(threshold=np.inf)  # disable truncation
-        # print(f"calc_mean_photon_nr_detector_x part: {calc_mean_photon_nr_detector_x[:10]}")
-        # print(f"calc_mean_photon_nr_detector_z part: {calc_mean_photon_nr_detector_z[:10]}")
-        # print(f"nr_photons: {len(nr_photons_det_x)} {len(nr_photons_det_z)}")
         # plot so I can delete
         # self.plotter.plot_and_delete_mean_photon_histogram(calc_mean_photon_nr_detector_x, target_mean_photon_nr=None, type_photon_nr="Mean Photon Number at Detector X")
         # self.plotter.plot_and_delete_mean_photon_histogram(calc_mean_photon_nr_detector_z, target_mean_photon_nr=None, type_photon_nr="Mean Photon Number at Detector Z")
@@ -1520,90 +1384,6 @@ class SimulationManager:
         len_wrong_z_non_dec=len(wrong_detections_z_non_dec)
         len_wrong_x_dec=len(wrong_detections_x_dec)
         len_wrong_x_non_dec=len(wrong_detections_x_non_dec)
-        '''Saver.save_arrays_to_csv('results', 
-                                        p_vacuum_z=p_vacuum_z,
-                                        len_vacuum_indices_x_long=len(vacuum_indices_x_long),
-                                        len_Z_checked_dec=len_Z_checked_dec,
-                                        len_Z_checked_non_dec=len_Z_checked_non_dec,
-                                        XP_calc_non_dec=X_P_calc_non_dec,
-                                        XP_calc_dec=X_P_calc_dec,
-                                        gain_Z_non_dec=gain_Z_non_dec,
-                                        gain_Z_dec=gain_Z_dec,
-                                        gain_X_non_dec=gain_X_non_dec,
-                                        gain_X_dec=gain_X_dec,
-                                        wrong_detections_z_dec=wrong_detections_z_dec,
-                                        wrong_detections_z_non_dec=wrong_detections_z_non_dec,
-                                        wrong_detections_x_dec=wrong_detections_x_dec,
-                                        wrong_detections_x_non_dec=wrong_detections_x_non_dec,
-                                        )'''
-
-        '''if save_output == True:
-            function_name = inspect.currentframe().f_code.co_name
-            Saver.save_results_to_txt(  # Save the results to a text file
-                function_used = function_name,
-                n_samples=self.config.n_samples,
-                seed=self.config.seed,
-                non_signal_voltage=self.config.non_signal_voltage,
-                voltage_decoy=self.config.voltage_decoy, 
-                voltage=self.config.voltage, 
-                voltage_decoy_sup=self.config.voltage_decoy_sup, 
-                voltage_sup=self.config.voltage_sup,
-                p_vacuum_z=p_vacuum_z,
-                len_vacuum_indices_x_long=len(vacuum_indices_x_long),
-                len_Z_checked_dec=len_Z_checked_dec,
-                len_Z_checked_non_dec=len_Z_checked_non_dec,
-                XP_calc_non_dec=X_P_calc_non_dec,
-                XP_calc_dec=X_P_calc_dec,       
-                gain_Z_non_dec=gain_Z_non_dec,
-                gain_Z_dec=gain_Z_dec,
-                gain_X_non_dec=gain_X_non_dec,
-                gain_X_dec=gain_X_dec,
-                wrong_detections_z_dec=wrong_detections_z_dec,
-                wrong_detections_z_non_dec=wrong_detections_z_non_dec,
-                wrong_detections_x_dec=wrong_detections_x_dec,
-                wrong_detections_x_non_dec=wrong_detections_x_non_dec,
-                len_wrong_z_dec=len(wrong_detections_z_dec),
-                len_wrong_z_non_dec=len(wrong_detections_z_non_dec),
-                len_wrong_x_dec=len(wrong_detections_x_dec),
-                len_wrong_x_non_dec=len(wrong_detections_x_non_dec),
-                qber_z_dec=qber_z_dec,
-                qber_z_non_dec=qber_z_non_dec,
-                qber_x_dec=qber_x_dec,
-                qber_x_non_dec=qber_x_non_dec,
-                raw_key_rate=raw_key_rate,
-                total_amount_detections=total_amount_detections,
-                execution_time_run=execution_time_run
-            )'''
         
         return len_wrong_x_dec, len_wrong_x_non_dec, len_wrong_z_dec, len_wrong_z_non_dec, len_Z_checked_dec, len_Z_checked_non_dec, X_P_calc_non_dec, X_P_calc_dec
-    
-    def run_simulation_detector(self): # für mean photon number testen
-        start_time = time.time()  # Record start time
-        T1_dampening = self.simulation_engine.initialize()
-
-        optical_power, peak_wavelength, chosen_voltage, chosen_current = self.simulation_engine.random_laser_output('current_power', 'voltage_shift', fixed = True)
-
-        # Generate Alice's choices
-        basis, value, decoy = self.simulation_engine.generate_alice_choices()
-
-        # Simulate signal and transmission
-        signals, t, _ = self.simulation_engine.signal_bandwidth_jitter(basis, value, decoy)
-        print((f"signals: {signals[:10]}"))  # Check the first 10 values
-
-        power_dampened, calc_mean_photon_nr_eam, _ = self.simulation_engine.eam_transmission(signals, optical_power, T1_dampening, peak_wavelength, t)
-
-        power_dampened = self.simulation_engine.fiber_attenuation(power_dampened)
-
-        power_dampened = power_dampened * self.config.p_z_bob
-
-        time_photons_det_z, wavelength_photons_det_z, nr_photons_det_z, index_where_photons_det_z, \
-        calc_mean_photon_nr_detector_z, dark_count_times_z, num_dark_counts_z = self.simulation_engine.detector(t, peak_wavelength, power_dampened, start_time)
-
-        print(f"calc_mean_photon_nr_detector_z: {calc_mean_photon_nr_detector_z}")
-        print(f"nr_photons: {len(nr_photons_det_z)}")
-        print(f"dark_count_times_z: {dark_count_times_z}")
-        print(f"num_dark_counts_z: {num_dark_counts_z}")
-        print(f"time_photons_det_z: {time_photons_det_z}")
-        print(f"index_where_photons_det_z: {index_where_photons_det_z}")	
-        print(f"wavelength_photons_det_z: {wavelength_photons_det_z}")
 

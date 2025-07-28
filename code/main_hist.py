@@ -1,3 +1,9 @@
+"""
+main_hist.py
+
+File is made for being run on PC. Runs QKD simulation, collects histogram data, and manages profiling and memory usage. Handles database setup and execution timing.
+"""
+
 import cProfile
 import pstats
 import time

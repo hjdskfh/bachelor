@@ -1,3 +1,9 @@
+"""
+config.py
+
+Defines the SimulationConfig class for QKD simulation configuration, including parameters and random seed management.
+"""
+
 import numpy as np
 
 class SimulationConfig:
@@ -112,5 +118,4 @@ class SimulationConfig:
             print("Error: detection_time must be non negative.")
         if self.detector_jitter < 0:
             print("Error: detector_jitter cannot be negative.")
-       
-        
+

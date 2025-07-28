@@ -1,3 +1,9 @@
+"""
+saver.py
+
+Provides the Saver class for saving plots, results, and tracking memory usage during QKD simulations.
+"""
+
 import matplotlib.pyplot as plt
 from pathlib import Path
 import datetime

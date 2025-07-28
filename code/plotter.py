@@ -1,3 +1,9 @@
+"""
+plotter.py
+
+Contains the Plotter class for visualizing QKD simulation data.
+"""
+
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator
@@ -12,6 +18,7 @@ class Plotter:
     def __init__(self, config):
         self.config = config 
 
+    # Method to make data plottable
     def make_data_plottable(self, data):
             data = data[~np.isnan(data)]
             if str(data).startswith("nr_photons"):
@@ -37,7 +44,18 @@ class Plotter:
             # Flatten and concatenate all elements
             return np.concatenate([arr.flatten() for arr in data])
     
-    def plot_power(self, t, second_power, amount_symbols_in_plot=4, is_title=False, where_plot_1=None, shortened_first_power=None, where_plot_2=None, title_rest=None, shift=0):	
+    # Plot the power data
+    def plot_power(self, t, second_power, amount_symbols_in_plot=4, is_title=False, where_plot_1=None, shortened_first_power=None, where_plot_2=None, title_rest=None, shift=0):
+        """
+        Plots the power data over time.
+        Parameters:
+        - t: Time array.
+        - second_power: Power data array to compare the first power data against.
+        - amount_symbols_in_plot: Number of symbols to plot.
+        - is_title: Boolean to determine if a title should be added.
+        - where_plot_1: Label for the first power plot.
+        """
+
         step_size = t[1] - t[0]
         # Calculate the new length
         new_length = len(t) * amount_symbols_in_plot
@@ -96,12 +114,13 @@ class Plotter:
         del second_power
         gc.collect()
     
+    # Plot mean photon number
     def plot_and_delete_mean_photon_histogram(self, calc_mean_photon_nr, target_mean_photon_nr, type_photon_nr):
         """
         Plots a histogram of the mean photon number and saves the plot.
 
         Parameters:
-        - calc_mean_photon_nr: Array of calculated mean photon numbers.
+        - calc_mean_photon_nr: Array of calculated mean photon numbers. One mean photon number per symbol.
         - target_mean_photon_nr: Target mean photon number (vertical reference line).
         - filename: Name for saving the plot.
         """

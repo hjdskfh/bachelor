@@ -1,3 +1,9 @@
+"""
+main_repeat_on_PC.py
+
+Runs repeated QKD simulations on PC, manages threading, logging, and result tracking for batch jobs. Same as main_repeat_cluster_multiple_jobs.py, but for PC.
+"""
+
 import cProfile
 import pstats
 import time

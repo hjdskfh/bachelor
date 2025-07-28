@@ -1,3 +1,9 @@
+"""
+simulationengine.py
+
+Implements the SimulationEngine class for running QKD simulations, including core algorithms.
+"""
+
 from re import A
 import numpy as np
 import matplotlib.pyplot as plt
@@ -518,5 +524,4 @@ class SimulationEngine:
         print(f"Higher EAM Peak dB: {higher_EAM_peak}")
 
         return T1_dampening
-    
-   
+

@@ -1,3 +1,9 @@
+"""
+dataprocessor.py
+
+Implements the DataProcessor class for QKD simulation data analysis, histogram preparation, and SKR calculations.
+"""
+
 from math import comb
 from re import M
 from tracemalloc import start
@@ -15,6 +21,7 @@ class DataProcessor:
         self.config = config
 
     # ========== Prepare Data for Histogram ==========
+    # Update histogram counts for a batch of symbols
     @staticmethod
     def update_histogram_batches(length_of_chain, time_photons_det_x, time_photons_det_z, time_one_symbol, total_symbols,
                                 index_where_photons_det_x, index_where_photons_det_z, amount_bins_hist, bins_per_symbol = 30):
@@ -69,6 +76,7 @@ class DataProcessor:
 
         return local_histogram_counts_x, local_histogram_counts_z
 
+    # Plot histogram for a range of symbols
     @staticmethod
     def plot_histogram_batch(bins_per_symbol, time_one_symbol, histogram_counts_x, histogram_counts_z, lookup_arr, total_symbols, start_symbol=3, end_symbol=10, name=' ', leave_x = False, leave_z = False):
         assert 0 <= start_symbol <= end_symbol <= 36
@@ -168,6 +176,7 @@ class DataProcessor:
         plt.tight_layout()
         Saver.save_plot(f"hist_{name}_symbols_{start_symbol}_to_{end_symbol}", no_time = True)
 
+    # Fixed Order Histogram: Set order of symbols to appear
     @staticmethod
     def get_all_pair_indices(lookup_arr):
         """
@@ -192,7 +201,7 @@ class DataProcessor:
             pair_indices_dict[pair_tuple] = indices
         return pair_indices_dict
 
-
+    # Create all possible pairs from the raw_symbol_lookup dictionary and store them sequentially.
     def create_pair_mapping(raw_symbol_lookup):
         """
         Create all possible pairs from the raw_symbol_lookup dictionary and store them sequentially.
@@ -223,7 +232,7 @@ class DataProcessor:
 
         return pair_mapping, combined_list
 
-
+    # Fixed Order Historgram: Update histogram counts for all pairs in a batch
     def update_histogram_batches_all_pairs(length_of_chain, time_one_symbol, time_photons_det_z, time_photons_det_x,
                                         index_where_photons_det_z, index_where_photons_det_x, amount_bins_hist,
                                         bins_per_symbol, lookup_arr, basis, value, decoy):
@@ -342,6 +351,7 @@ class DataProcessor:
         
         return local_histogram_counts_z, local_histogram_counts_x, combined_list
     
+    # Fixed Order Histogram: Plot histogram for a range of symbols
     def plot_histogram_batch_random(bins_per_symbol, time_one_symbol, histogram_counts_x, histogram_counts_z, combined_list, total_symbols, start_pair=3, end_pair=10, name=' ', leave_x = False, leave_z = False, p_decoy = None):
         assert 0 <= start_pair <= end_pair <= 35
         def normalize_histogram(histogram_counts, slice_start, slice_end, bins_per_symbol):
@@ -413,7 +423,7 @@ class DataProcessor:
         plt.tight_layout()
         Saver.save_plot(f"hist_symbols_{start_pair}_to_{end_pair}", no_time = True)
 
-    #  -------SKR ------
+    #  -------SKR calculations ------
     # Entropy function
     @staticmethod
     def entropy(p):
@@ -442,6 +452,7 @@ class DataProcessor:
             * np.log((c + d) * 21**2 / (c * d * (1 - b) * a**2))
         )
     
+    # Calculate SKR
     def calc_SKR(self, n_Z_mus_in, n_Z_mud_in, n_X_mus_in, n_X_mud_in, m_Z_mus_in, m_Z_mud_in, m_X_mus_in, m_X_mud_in, total_symbols, factor):
         block_size = None  
         
@@ -602,7 +613,7 @@ class DataProcessor:
         epsilon_sec = 1e-9  # 
         epsilon_cor = 1e-15  # Secret key are identical except of probability epsilon_cor
         repetition_rate = self.config.sampling_rate_FPGA / self.config.n_pulses  # Pulse (symbol) repetition rate
-        print(f"self.config.sampling_rate_FPGA: {self.config.sampling_rate_FPGA}, self.config.n_pulses: {self.config.n_pulses}, repetition_rate: {repetition_rate}")	
+        # print(f"self.config.sampling_rate_FPGA: {self.config.sampling_rate_FPGA}, self.config.n_pulses: {self.config.n_pulses}, repetition_rate: {repetition_rate}")	
         fEC = 1.19  # Error correction effciency
         epsilon_1 = epsilon_sec / 19
 
@@ -633,7 +644,7 @@ class DataProcessor:
             # n_X_mud = p_X * q_X * p_mud * gain_X_mud * total_bit_sequence_length
             # n_Z = n_Z_mus + n_Z_mud
             # n_X = n_X_mus + n_X_mud
-            print(f"factor: {factor}")
+            # print(f"factor: {factor}")
             n_Z_mus = n_Z_mus_in * factor
             n_Z_mud = n_Z_mud_in * factor
             n_X_mus = n_X_mus_in * factor
@@ -735,7 +746,7 @@ class DataProcessor:
             return skr
         
         initial_params = [self.config.mean_photon_nr, self.config.mean_photon_decoy, 1-self.config.p_decoy, self.config.p_z_alice]  # mus, mud, p_mus, p_Z
-        print(f"initial_params: {initial_params}")
+        # print(f"initial_params: {initial_params}")
         skr = calculate_skr(initial_params, total_bit_sequence_length)
         
         return skr
@@ -890,4 +901,3 @@ class DataProcessor:
         skr = calculate_skr(initial_params, total_bit_sequence_length)
         
         return skr
-        
